@@ -1,0 +1,37 @@
+.container-dialog {
+  padding: 1rem;
+
+  .dialog-title {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 1rem;
+  }
+
+  .form-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+  }
+
+  .form-field {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .toggle-show {
+    margin-top: 1rem;
+    font-weight: 500;
+    color: #444;
+  }
+
+  .dialog-actions {
+    margin-top: 1rem;
+    padding-right: 1rem;
+
+    button {
+      margin-left: 0.5rem;
+    }
+  }
+}

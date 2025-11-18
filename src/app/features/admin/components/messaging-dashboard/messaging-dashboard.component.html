@@ -1,0 +1,29 @@
+<div class="sidebar">
+  <h3>Conversazioni</h3>
+  <mat-list>
+    <mat-list-item class="white" *ngFor="let thread of threads" (click)="selectThread(thread)" [class.unread]="thread.unread">
+      <span style="color: whitesmoke;">
+        {{ thread.userName }} ({{ thread.source }})
+      </span>
+    </mat-list-item>
+  </mat-list>
+</div>
+
+<div class="chat-window" *ngIf="selectedThread">
+  <h3>{{ selectedThread.userName }} – {{ selectedThread.source }}</h3>
+  <div class="messages">
+    <div *ngFor="let msg of selectedThread.messages">
+      <p [class.admin]="msg.sender === 'admin'" [class.chatbot]="msg.sender === 'chatbot'">
+        <strong>{{ msg.sender }}:</strong> {{ msg.text }}
+      </p>
+    </div>
+  </div>
+  <mat-form-field appearance="outline" class="message-input">
+    <input matInput placeholder="Scrivi una risposta..." [(ngModel)]="newMessage" />
+  </mat-form-field>
+  <button mat-flat-button color="primary" (click)="sendMessage()">Invia</button>
+</div>
+
+<div class="chat-window" *ngIf="!selectedThread">
+
+</div>

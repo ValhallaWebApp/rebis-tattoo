@@ -1,0 +1,42 @@
+<div class="dialog-container">
+  <h2>Azioni sulla conversazione</h2>
+
+  <div class="action-group">
+    <button mat-flat-button color="primary" *ngIf="data.status === 'aperto'" (click)="showNoteInput = true" class="gold-btn">
+      <mat-icon>lock</mat-icon> Chiudi conversazione
+    </button>
+
+    <div *ngIf="showNoteInput" class="note-input">
+      <mat-form-field appearance="outline" floatLabel="auto">
+        <mat-label>Nota di chiusura (opzionale)</mat-label>
+        <input matInput [(ngModel)]="note" />
+      </mat-form-field>
+
+      <button mat-stroked-button color="accent" (click)="confirm('close')">
+        Conferma chiusura
+      </button>
+    </div>
+
+    <button mat-flat-button color="accent" *ngIf="data.status === 'chiuso'" (click)="confirm('reopen')" class="gold-btn">
+      <mat-icon>lock_open</mat-icon> Riapri conversazione
+    </button>
+  </div>
+
+  <div class="action-group">
+    <button mat-button color="warn" (click)="confirmDelete = true" *ngIf="!confirmDelete">
+      <mat-icon>delete</mat-icon> Elimina conversazione
+    </button>
+
+    <div *ngIf="confirmDelete" class="delete-confirm">
+      <p>Confermi l'eliminazione? L'operazione è irreversibile.</p>
+      <div class="delete-buttons">
+        <button mat-stroked-button color="warn" (click)="confirm('delete')">Conferma</button>
+        <button mat-stroked-button (click)="confirmDelete = false">Annulla</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button mat-button (click)="cancel()">Annulla</button>
+  </div>
+</div>

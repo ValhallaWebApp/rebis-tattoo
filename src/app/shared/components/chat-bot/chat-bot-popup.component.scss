@@ -1,0 +1,26 @@
+.chat-popup {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 1000;
+
+  .chat-toggle {
+    position: relative;
+    z-index: 1001;
+  }
+
+  .chat-box {
+    position: absolute;
+    bottom: 70px;
+    right: 0;
+    width: 90vw;
+    min-height: 60vh;
+    max-width: 400px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+}

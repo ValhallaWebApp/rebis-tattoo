@@ -1,0 +1,72 @@
+.services-admin {
+  background-color: #0a0a0a;
+  padding:8vh 2rem;
+  color: #fff;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  min-height: 90vh;
+  .title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #BE9045;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+  }
+
+  .add-button {
+    margin-bottom: 2rem;
+    background-color: #BE9045;
+    color: #000;
+    font-weight: bold;
+
+    &:hover {
+      background-color: #d6b84c;
+    }
+  }
+
+  mat-expansion-panel {
+    margin-top: 2rem;
+    background-color: #1a1a1a;
+    color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(201, 169, 62, 0.2);
+    transition: transform 0.2s;
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: #BE9045;
+    }
+
+    .mat-expansion-panel-header {
+      font-weight: 600;
+      color: #BE9045;
+
+      .mat-panel-description {
+        color: #ccc;
+        font-size: 0.9rem;
+      }
+    }
+
+    .service-details {
+      padding: 1rem;
+      p {
+        font-size: 0.95rem;
+        color: #ccc;
+
+        strong {
+          color: #fff;
+        }
+      }
+    }
+
+    mat-action-row {
+      display: flex;
+      justify-content: flex-end;
+      padding: 0.5rem 1rem;
+
+      button {
+        margin-left: 0.5rem;
+      }
+    }
+  }
+}

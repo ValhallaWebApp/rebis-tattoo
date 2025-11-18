@@ -1,0 +1,13 @@
+.status {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+.status.confermata {
+  color: #4CAF50;
+}
+.status.in-attesa {
+  color: #FFC107;
+}
+.status.cancellata {
+  color: #F44336;
+}

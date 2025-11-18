@@ -1,0 +1,68 @@
+<section class="booking-form-section">
+  <h2 class="section-title"><span>{{'Prenota'.toUpperCase()}}</span> {{'un Appuntamento'.toUpperCase()}}</h2>
+
+<div *ngIf="loading" class="spinner-wrapper">
+  <mat-spinner diameter="40"></mat-spinner>
+</div>
+
+<!-- Form reso SOLO quando loading = false -->
+<form *ngIf="!loading" [formGroup]="bookingForm" (ngSubmit)="onSubmit()" class="form-grid">
+
+    <!-- Dati personali -->
+    <mat-form-field appearance="fill" class="form-group">
+      <mat-label>Nome completo</mat-label>
+      <input matInput formControlName="fullName" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="form-group">
+      <mat-label>Email</mat-label>
+      <input matInput type="email" formControlName="email" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="form-group">
+      <mat-label>Telefono</mat-label>
+      <input matInput type="tel" formControlName="phone" />
+    </mat-form-field>
+
+    <!-- Selezioni -->
+    <mat-form-field appearance="fill" class="form-group">
+      <mat-label>Procedura</mat-label>
+      <mat-select formControlName="procedure">
+        <mat-option *ngFor="let proc of procedures" [value]="proc">{{ proc }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+   <mat-form-field appearance="fill" class="form-group">
+  <mat-label>Artista</mat-label>
+  <mat-select formControlName="artist">
+    <mat-option *ngFor="let artist of staff" [value]="artist.name">
+      {{ artist.name }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+
+
+    <!-- <mat-form-field appearance="fill" class="form-group">
+      <mat-label>Data e Orario</mat-label>
+      <input matInput type="datetime-local" formControlName="date" />
+    </mat-form-field> -->
+
+    <!-- Commenti -->
+    <mat-form-field appearance="fill" class="form-group full-width">
+      <mat-label>Commenti</mat-label>
+      <textarea matInput rows="4" formControlName="comments"></textarea>
+    </mat-form-field>
+
+    <!-- Checkbox e bottone -->
+    <div class="form-footer full-width">
+      <mat-checkbox formControlName="privacyConsent">
+        Acconsento al trattamento dei dati personali
+      </mat-checkbox>
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="bookingForm.invalid">
+        Scegli la Data
+      </button>
+    </div>
+
+  </form>
+</section>

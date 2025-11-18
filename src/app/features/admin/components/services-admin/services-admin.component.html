@@ -1,0 +1,42 @@
+<div class="services-admin">
+<div style="background-color: rgb(38, 38, 38);padding: 1rem;">
+  <div >
+    <h2 mat-card-title class="title">Servizi Offerti</h2>
+    <button mat-flat-button color="accent" class="add-button" (click)="addService()">
+      <mat-icon>add</mat-icon> Aggiungi Servizio
+    </button>
+  </div>
+  <hr>
+
+
+  <mat-accordion>
+    <mat-expansion-panel *ngFor="let service of services">
+      <mat-expansion-panel-header>
+        <mat-panel-title style="color: #cca402;">
+          {{ service.name.toUpperCase() }}
+          <mat-chip color="warn" *ngIf="!service.visibile">Non visibile</mat-chip>
+
+        </mat-panel-title>
+        <mat-panel-description>
+          €{{ service.prezzo }} • {{ service.durata }} min
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="service-details">
+        <p><strong>Categoria:</strong> {{ service.categoria }}</p>
+        <p><strong>Descrizione:</strong> {{ service.description }}</p>
+        <p><strong>Visibile:</strong> {{ service.visibile ? 'Sì' : 'No' }}</p>
+      </div>
+
+      <mat-action-row>
+        <button mat-icon-button color="accent" (click)="editService(service)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deleteService(service.id)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-action-row>
+    </mat-expansion-panel>
+  </mat-accordion>
+</div>
+

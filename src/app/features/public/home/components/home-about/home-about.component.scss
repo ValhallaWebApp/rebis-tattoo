@@ -1,0 +1,75 @@
+.about-section {
+  background-color: black; // fondo scuro elegante
+  color: #ffffff;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  padding: 4rem;
+  .about-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 4rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+
+  .about-image img {
+    max-width: 450px;
+    border: 2px solid black;
+    padding: 10px;
+    background-color: #000;
+    box-shadow: 0 0 20px rgba(31, 31, 30, 0.15);
+  }
+
+  .about-text {
+    max-width: 500px;
+
+    .title {
+      font-size: 2.2rem;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+
+      .highlight {
+        color: #787878;
+        font-weight: 700;
+        letter-spacing: 2px;
+      }
+    }
+
+    p {
+      line-height: 1.6;
+      margin-bottom: 1.2rem;
+      color: #989898;
+    }
+
+    .cta {
+      font-weight: 500;
+      color: #989898;
+    }
+
+    .read-more {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      color: rgb(255, 255, 255);
+      font-weight: bold;
+      text-decoration: none;
+      border-bottom: 1px solid black;
+      padding-bottom: 3px;
+
+      .arrow {
+        font-size: 1.1rem;
+        transform: translateY(-2px);
+      }
+
+      &:hover {
+        color: white;
+        border-color: white;
+      }
+    }
+  }
+}

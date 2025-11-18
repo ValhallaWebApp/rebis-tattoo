@@ -1,0 +1,20 @@
+<section class="services-container">
+  <h2 class="services-title">
+    {{ lang.t('home.services.title') }}
+  </h2>
+  <p class="services-subtitle">
+    {{ lang.t('home.services.subtitle') }}
+  </p>
+
+  <div class="services-grid">
+    <div
+      class="service-card"
+      *ngFor="let service of services; let i = index"
+      [ngClass]="{ 'nbt': i < 3, 'nbb': i >= 3 }"
+    >
+      <img [src]="service.icon" [alt]="service.title + ' icon'" />
+      <h3>{{ service.title }}</h3>
+      <p>{{ service.desc }}</p>
+    </div>
+  </div>
+</section>

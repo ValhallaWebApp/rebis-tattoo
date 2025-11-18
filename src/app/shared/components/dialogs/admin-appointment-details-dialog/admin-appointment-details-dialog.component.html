@@ -1,0 +1,20 @@
+<h2 mat-dialog-title>Dettagli Prenotazione</h2>
+
+<mat-dialog-content>
+  <p><strong>ID Cliente:</strong> {{ data.idClient }}</p>
+  <p><strong>Data di nascita:</strong> {{ data.eta || '-' }}</p>
+  <p><strong>Descrizione:</strong> {{ data.description || '-' }}</p>
+  <p><strong>ID Artista:</strong> {{ data.idArtist || '-' }}</p>
+  <p><strong>Inizio:</strong> {{ data.start | date: 'medium' }}</p>
+  <p><strong>Fine:</strong> {{ data.end | date: 'medium' }}</p>
+  <p><strong>Stato:</strong>
+    <span class="status" [ngClass]="data.status">{{ data.status | titlecase }}</span>
+  </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button color="primary" (click)="editBooking()">Modifica</button>
+  <button mat-stroked-button color="warn" (click)="cancelBooking()">Annulla</button>
+  <button mat-flat-button color="accent" (click)="confirmBooking()">Conferma</button>
+  <button mat-button (click)="close()">Chiudi</button>
+</mat-dialog-actions>

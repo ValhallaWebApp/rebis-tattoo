@@ -1,0 +1,155 @@
+<section class="booking-history">
+
+  <h2 class="title">
+    <mat-icon>book_online</mat-icon> Le tue prenotazioni in Corso
+  </h2>
+
+<!-- 📌 Prenotazioni future con avatar artista -->
+<div class="horizontal-scroll">
+  <mat-card *ngIf="nextBooking" class="vertical-card highlight">
+    <img
+      *ngIf="artistPhotoMap[nextBooking.idArtist]"
+      [src]="artistPhotoMap[nextBooking.idArtist]"
+      alt="Avatar artista"
+      class="avatar"
+    />
+    <h3>{{ nextBooking.title }}</h3>
+    <p class="date">
+      <mat-icon>calendar_today</mat-icon>
+      {{ nextBooking.start | date:'fullDate' }}<br />
+      {{ nextBooking.start | date:'shortTime' }}
+    </p>
+    <p class="artist">
+      <mat-icon>person</mat-icon>
+      {{ artistMap[nextBooking.idArtist] || 'Sconosciuto' }}
+    </p>
+    <div class="actions">
+      <button mat-icon-button matTooltip="Modifica"><mat-icon>edit</mat-icon></button>
+      <button mat-icon-button matTooltip="Fattura" (click)="downloadInvoice(nextBooking)">
+        <mat-icon>receipt_long</mat-icon>
+      </button>
+      <button mat-icon-button matTooltip="Chat" (click)="openWhatsApp(nextBooking)">
+        <mat-icon>chat</mat-icon>
+      </button>
+    </div>
+  </mat-card>
+
+  <mat-card *ngFor="let b of otherUpcomingBookings" class="vertical-card">
+    <img
+      *ngIf="artistPhotoMap[b.idArtist]"
+      [src]="artistPhotoMap[b.idArtist]"
+      alt="Avatar artista"
+      class="avatar"
+    />
+    <h3>{{ b.title }}</h3>
+    <p class="date">
+      <mat-icon>calendar_today</mat-icon>
+      {{ b.start | date:'fullDate' }}<br />
+      {{ b.start | date:'shortTime' }}
+    </p>
+    <p class="artist">
+      <mat-icon>person</mat-icon>
+      {{ artistMap[b.idArtist] || 'Sconosciuto' }}
+    </p>
+    <div class="actions">
+      <button mat-icon-button matTooltip="Modifica"><mat-icon>edit</mat-icon></button>
+      <button mat-icon-button matTooltip="Fattura" (click)="downloadInvoice(b)">
+        <mat-icon>receipt_long</mat-icon>
+      </button>
+      <button mat-icon-button matTooltip="Chat" (click)="openWhatsApp(b)">
+        <mat-icon>chat</mat-icon>
+      </button>
+    </div>
+  </mat-card>
+</div>
+  <h3 class="title">
+    <mat-icon>book_online</mat-icon> Storico Prenotazioni
+  </h3>
+
+  <!-- 🔘 Toggle tabs -->
+  <div class="tab-toggle">
+      <button mat-button [class.active]="selectedView === 'late'" (click)="selectedView = 'late'">Ritardi</button>
+    <button mat-button [class.active]="selectedView === 'completed'" (click)="selectedView = 'completed'">Completate</button>
+    <button mat-button [class.active]="selectedView === 'cancelled'" (click)="selectedView = 'cancelled'">Annullate</button>
+  </div>
+
+  <!-- 📋 Liste dinamiche -->
+  <div class="booking-content" [@slideFade]>
+<ng-container [ngSwitch]="selectedView">
+<div class="empty" *ngIf="selectedView === 'late' && pastUncompleted.length === 0">
+  <p>Nessuna prenotazione in ritardo</p>
+</div>
+<div class="empty" *ngIf="selectedView === 'completed' && completedBookings.length === 0">
+  <p>Nessuna prenotazione completata</p>
+</div>
+<div class="empty" *ngIf="selectedView === 'cancelled' && cancelledBookings.length === 0">
+  <p>Nessuna prenotazione annullata</p>
+</div>
+
+  <!-- ⚠️ Ritardi -->
+  <div class="container-card" *ngSwitchCase="'late'" @slideFade>
+    <mat-card *ngFor="let b of pastUncompleted" class="booking-card late">
+      <div class="info">
+        <strong>{{ b.title }}</strong><br />
+        <small>{{ b.start | date:'short' }} – {{ artistMap[b.idArtist] }}</small>
+      </div>
+      <mat-chip color="warn" selected>In ritardo</mat-chip>
+    </mat-card>
+  </div>
+
+ <!-- ✅ Completate -->
+<div class="container-card" *ngSwitchCase="'completed'" @slideFade>
+  <mat-card *ngFor="let b of completedBookings" class="booking-card completed">
+    <div class="info">
+      <strong>{{ b.title }}</strong><br />
+      <small>{{ b.start | date:'short' }} – {{ artistMap[b.idArtist] }}</small>
+    </div>
+    <div class="actions">
+      <button mat-icon-button matTooltip="Scarica fattura" (click)="downloadInvoice(b)">
+        <mat-icon>receipt_long</mat-icon>
+      </button>
+<ng-container *ngIf="b.status === 'completed'">
+  <!-- Se NON recensito -->
+  <button
+    mat-icon-button
+    color="accent"
+    matTooltip="Lascia una recensione"
+    *ngIf="!reviewMap[b.id]"
+    (click)="openReviewDialog(b)"
+  >
+    <mat-icon>rate_review</mat-icon>
+  </button>
+
+  <!-- Se GIÀ recensito -->
+  <button
+    mat-icon-button
+    color="primary"
+    matTooltip="Visualizza recensione"
+    *ngIf="reviewMap[b.id]"
+    (click)="viewReview(reviewMap[b.id])"
+  >
+    <mat-icon>visibility</mat-icon>
+  </button>
+</ng-container>
+
+
+
+    </div>
+  </mat-card>
+</div>
+
+
+  <!-- ❌ Annullate -->
+  <div class="container-card" *ngSwitchCase="'cancelled'" @slideFade>
+    <mat-card *ngFor="let b of cancelledBookings" class="booking-card cancelled">
+      <div class="info">
+        <strong>{{ b.title }}</strong><br />
+        <small>{{ b.start | date:'short' }} – {{ artistMap[b.idArtist] }}</small>
+      </div>
+    </mat-card>
+  </div>
+
+</ng-container>
+  </div>
+
+</section>

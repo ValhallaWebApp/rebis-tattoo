@@ -1,0 +1,175 @@
+<mat-drawer-container class="calendar-container">
+
+  <mat-drawer-content class="calendar-view">
+    <div class="calendar-toolbar">
+      <!-- 🔙 Navigazione -->
+      <div class="nav-controls">
+        <button mat-icon-button (click)="prev()">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="calendar-title">{{ title }}</span>
+        <button mat-icon-button (click)="next()">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+
+      <!-- 🔧 Azioni -->
+      <div class="toolbar-actions">
+        <button mat-icon-button color="primary" matTooltip="Vai a oggi" (click)="goToDayView(today)">
+          <mat-icon>today</mat-icon>
+        </button>
+
+        <mat-form-field appearance="outline" class="view-select">
+          <mat-label>
+            <mat-icon>calendar_view_week</mat-icon>
+          </mat-label>
+          <mat-select [value]="view" (selectionChange)="setView($event.value)">
+            <mat-option value="day">
+              <mat-icon>calendar_today</mat-icon> DD
+            </mat-option>
+            <mat-option value="week">
+              <mat-icon>view_week</mat-icon> WW
+            </mat-option>
+            <mat-option value="month">
+              <mat-icon>calendar_month</mat-icon> MM
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+      </div>
+    </div>
+
+    <div class="container-views">
+      <mat-menu #eventContextMenu="matMenu">
+        <!-- Azioni comuni -->
+        <button mat-menu-item (click)="handleEventAction({ action: 'view', event: contextMenuData! })">
+          <mat-icon>info</mat-icon>
+          <span>Dettagli</span>
+        </button>
+
+        <!-- Solo Admin -->
+        <ng-container *ngIf="role === 'admin'">
+          <button mat-menu-item (click)="handleEventAction({ action: 'edit', event: contextMenuData! })">
+            <mat-icon>edit</mat-icon>
+            <span>Modifica</span>
+          </button>
+          <button mat-menu-item (click)="handleEventAction({ action: 'complete', event: contextMenuData! })">
+            <mat-icon>check_circle</mat-icon>
+            <span>Completa</span>
+          </button>
+          <button mat-menu-item (click)="handleEventAction({ action: 'cancel', event: contextMenuData! })">
+            <mat-icon>cancel</mat-icon>
+            <span>Annulla</span>
+          </button>
+          <button mat-menu-item [routerLink]="['/admin/event', contextMenuData?.id]">
+            <mat-icon>open_in_new</mat-icon>
+            <span>Apri scheda</span>
+          </button>
+        </ng-container>
+
+        <!-- Solo User -->
+        <ng-container *ngIf="role === 'user'">
+          <button mat-menu-item (click)="handleEventAction({ action: 'cancel', event: contextMenuData! })">
+            <mat-icon>cancel</mat-icon>
+            <span>Annulla prenotazione</span>
+          </button>
+        </ng-container>
+      </mat-menu>
+
+
+      <!-- DAY VIEW -->
+      <app-day-view *ngIf="view === 'day'" [dayData]="dayData"
+        (openDrawerWithDate)="openDrawerWithDate($event.date, $event.hour, $event.artistId)"
+        (eventDropped)="onEventDropped($event)" (openEventDetails)="openEventDetails($event)"></app-day-view>
+
+      <!-- WEEK VIEW -->
+      <week-view *ngIf="view === 'week'" [date]="selectedDate" [bookings]="events" [artistMap]="artistMap"
+        [artistPhotoMap]="artistPhotoMap" [totalArtists]="selectedArtists.length"
+        (eventDropped)="onEventDropped($event)" [selectedArtistIds]="selectedArtistIds" [contextMenu]="contextMenu"
+        (setContext)="contextMenuData = $event" (eventAction)="handleEventAction($event)"
+        (slotClick)="openDrawerWithDate($event.date, $event.start)">
+      </week-view>
+
+      <!-- MONTH VIEW -->
+      <month-view *ngIf="view === 'month'" [days]="getMonthDays()" [artistMap]="artistMap"
+        [artistPhotoMap]="artistPhotoMap" (eventClick)="openEventDetails($event)"
+        (dayClick)="goToDayView($event)"></month-view>
+
+    </div>
+  </mat-drawer-content>
+  <!-- SIDE DRAWER -->
+  <mat-drawer #drawer mode="side" position="end" class="drawer-form" [opened]="false">
+    <div class="drawer-header">
+      <button mat-icon-button (click)="drawer.close()">
+        <mat-icon>close</mat-icon>
+      </button>
+      <div class="type-toggle-wrapper">
+        <mat-button-toggle-group [value]="selectedType" (change)="onTypeChanged($event.value)"
+          class="type-toggle no-check" appearance="standard" disableRipple [disabled]="editMode">
+          <mat-button-toggle *ngFor="let type of bookingTypes" [value]="type">
+            <mat-icon *ngIf="type === 'booking'">event</mat-icon>
+            <mat-icon *ngIf="type === 'session'">medical_services</mat-icon>
+
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+
+      </div>
+
+    </div>
+    <mat-divider></mat-divider>
+
+    <!-- 📄 FORM -->
+    <div class="drawer-content">
+      <mat-card>
+        <mat-card-content>
+          <h4>{{selectedDate}}</h4>
+          <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()">
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Descrizione</mat-label>
+              <textarea matInput formControlName="description" rows="3"></textarea>
+            </mat-form-field>
+
+            <mat-form-field class="full-width" appearance="outline">
+              <mat-label>Artista</mat-label>
+              <mat-select formControlName="artist">
+                <mat-option *ngFor="let artist of filteredArtists" [value]="artist.value">{{ artist.label
+                  }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Orario</mat-label>
+              <mat-select formControlName="time">
+                <mat-option *ngFor="let opt of timeOptions" [value]="opt.value" [disabled]="opt.disabled">
+                  {{ opt.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <!-- Se type è 'session' mostra durata, prezzo ecc. -->
+            <ng-container *ngIf="bookingForm.get('type')?.value === 'session'">
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Durata (minuti)</mat-label>
+                <input matInput type="number" formControlName="duration" min="30" step="30"
+                  placeholder="Durata in minuti" />
+                <mat-hint>Es. 30, 60, 90, 120...</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Prezzo</mat-label>
+                <input matInput type="number" formControlName="price" />
+              </mat-form-field>
+            </ng-container>
+
+            <div class="drawer-actions">
+              <button mat-raised-button color="primary" type="submit" [disabled]="bookingForm.invalid">
+                Salva prenotazione
+              </button>
+            </div>
+          </form>
+
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </mat-drawer>
+
+</mat-drawer-container>

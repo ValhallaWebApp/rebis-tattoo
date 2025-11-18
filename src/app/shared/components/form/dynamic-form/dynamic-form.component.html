@@ -1,0 +1,89 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="dynamic-form">
+  <ng-container *ngFor="let field of fields">
+    <div class="form-field">
+      <ng-container [ngSwitch]="field.type">
+        <!-- Input -->
+        <mat-form-field *ngSwitchCase="'text'" appearance="outline" class="full-width">
+          <mat-label>{{ field.label }}</mat-label>
+          <input matInput [disabled]="field.disabled ? true : false" [formControlName]="field.name"
+            [placeholder]="field.placeholder || ''">
+        </mat-form-field>
+        <!-- Input -->
+        <mat-form-field *ngSwitchCase="'number'" appearance="outline" class="full-width">
+          <mat-label>{{ field.label }}</mat-label>
+          <input matInput [disabled]="field.disabled ? true : false" [formControlName]="field.name"
+            [placeholder]="field.placeholder || ''">
+        </mat-form-field>
+        <!-- Email -->
+        <mat-form-field *ngSwitchCase="'email'" appearance="outline" class="full-width">
+          <mat-label>{{ field.label }}</mat-label>
+          <input matInput [disabled]="field.disabled ? true : false" type="email" [formControlName]="field.name"
+            [placeholder]="field.placeholder || ''">
+        </mat-form-field>
+
+        <!-- Password -->
+        <mat-form-field *ngSwitchCase="'password'" appearance="outline" class="full-width">
+          <mat-label>{{ field.label }}</mat-label>
+          <input matInput [disabled]="field.disabled ? true : false" type="password" [formControlName]="field.name"
+            [placeholder]="field.placeholder || ''">
+        </mat-form-field>
+
+        <!-- Textarea -->
+        <mat-form-field *ngSwitchCase="'textarea'" appearance="outline" class="full-width">
+          <mat-label>{{ field.label }}</mat-label>
+          <textarea matInput [disabled]="field.disabled ? true : false" [formControlName]="field.name"
+            [placeholder]="field.placeholder || ''"></textarea>
+        </mat-form-field>
+
+        <!-- Select -->
+        <mat-form-field *ngSwitchCase="'select'" appearance="outline" class="full-width">
+          <mat-label>{{ field.label }}</mat-label>
+          <mat-select [formControlName]="field.name">
+            <mat-option *ngFor="let option of field.options" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Checkbox -->
+        <mat-checkbox *ngSwitchCase="'checkbox'" [formControlName]="field.name">
+          {{ field.label }}
+        </mat-checkbox>
+
+        <!-- Date -->
+        <mat-form-field *ngSwitchCase="'date'" appearance="outline" class="full-width">
+          <mat-label>{{ field.label }}</mat-label>
+          <input matInput [disabled]="field.disabled ? true : false" [matDatepicker]="picker"
+            [formControlName]="field.name">
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Autocomplete -->
+<mat-form-field *ngSwitchCase="'autocomplete'" appearance="outline" class="full-width">
+  <mat-label>{{ field.label }}</mat-label>
+
+  <input type="text"
+         matInput
+         [formControlName]="field.name"
+         [placeholder]="field.placeholder || ''"
+         [matAutocomplete]="auto" />
+
+  <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayWith(field.name)">
+    <mat-option *ngFor="let option of filteredOptionsMap[field.name] || []" [value]="option.value">
+      {{ option.label }}
+    </mat-option>
+  </mat-autocomplete>
+</mat-form-field>
+
+
+
+
+      </ng-container>
+    </div>
+  </ng-container>
+
+  <div class="actions">
+    <button mat-flat-button color="primary" type="submit">Salva</button>
+  </div>
+</form>

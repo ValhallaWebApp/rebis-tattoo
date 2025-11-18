@@ -1,0 +1,93 @@
+<mat-card>
+  <h2 class="settings-title">Impostazioni Generali</h2>
+  <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="settings-form">
+
+    <!-- INFORMAZIONI -->
+    <mat-form-field appearance="outline">
+      <mat-label>Nome Studio</mat-label>
+      <input matInput formControlName="studioName" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput type="email" formControlName="email" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Telefono</mat-label>
+      <input matInput formControlName="phone" />
+    </mat-form-field>
+
+    <!-- ORARI SETTIMANALI -->
+    <h3>Orari Settimanali</h3>
+    <div class="weekly-hours" formArrayName="weeklyHours">
+      <div *ngFor="let day of weeklyHours.controls; let i = index" [formGroupName]="i" class="day-row">
+        <label>{{ weekdays[i] }}</label>
+        <mat-checkbox formControlName="closed">Chiuso</mat-checkbox>
+        <mat-form-field appearance="outline">
+          <mat-label>Apertura</mat-label>
+          <input matInput type="time" formControlName="open" [disabled]="day.get('closed')?.value">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Chiusura</mat-label>
+          <input matInput type="time" formControlName="close" [disabled]="day.get('closed')?.value">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- TEMA COLORI -->
+    <h3>Personalizzazione Tema</h3>
+    <mat-form-field appearance="outline">
+      <mat-label>Colore Primario</mat-label>
+      <input matInput type="color" formControlName="primaryColor" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Colore Secondario</mat-label>
+      <input matInput type="color" formControlName="accentColor" />
+    </mat-form-field>
+
+    <!-- SOCIAL -->
+    <h3>Social</h3>
+    <div formGroupName="socialLinks">
+      <mat-form-field appearance="outline">
+        <mat-label>Instagram</mat-label>
+        <input matInput formControlName="instagram" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Facebook</mat-label>
+        <input matInput formControlName="facebook" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>WhatsApp</mat-label>
+        <input matInput formControlName="whatsapp" />
+      </mat-form-field>
+    </div>
+
+    <!-- TESTO NOTIFICA -->
+    <h3>Testo conferma prenotazione</h3>
+    <mat-form-field appearance="outline">
+      <mat-label>Testo Notifica</mat-label>
+      <textarea matInput formControlName="notificationText" rows="3"></textarea>
+    </mat-form-field>
+
+    <!-- VISIBILITÀ -->
+    <h3>Visibilità Sezioni</h3>
+    <div formGroupName="visibility">
+      <mat-slide-toggle formControlName="portfolio">Portfolio</mat-slide-toggle>
+      <mat-slide-toggle formControlName="reviews">Recensioni</mat-slide-toggle>
+      <mat-slide-toggle formControlName="chatbot">Chatbot</mat-slide-toggle>
+    </div>
+
+    <!-- NOTIFICHE -->
+    <h3>Notifiche</h3>
+    <mat-slide-toggle formControlName="notifyByEmail">Invia email</mat-slide-toggle>
+    <mat-slide-toggle formControlName="notifyByWhatsApp">Invia WhatsApp</mat-slide-toggle>
+
+    <!-- MANUTENZIONE -->
+    <mat-slide-toggle color="warn" formControlName="maintenanceMode">Modalità manutenzione</mat-slide-toggle>
+
+    <div class="actions">
+      <button mat-flat-button color="primary" type="submit">Salva Tutto</button>
+    </div>
+  </form>
+</mat-card>

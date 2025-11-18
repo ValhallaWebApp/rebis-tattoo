@@ -1,0 +1,67 @@
+.dialog-container {
+  background: #0a0a0a;
+  color: whitesmoke;
+  padding: 1.5rem;
+  border-radius: 20px;
+  max-width: 420px;
+  width: 100%;
+
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    color: #BE9045;
+  }
+}
+
+.action-group {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.gold-btn {
+  background-color: #BE9045;
+  color: #0a0a0a;
+
+  mat-icon {
+    margin-right: 6px;
+  }
+
+  &:hover {
+    background-color: #d5a65c;
+  }
+}
+
+.note-input {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.delete-confirm {
+  background: #1a1a1a;
+  padding: 1rem;
+  border: 1px solid #BE9045;
+  border-radius: 10px;
+  color: #f8d7da;
+
+  p {
+    margin: 0 0 1rem 0;
+  }
+
+  .delete-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+}

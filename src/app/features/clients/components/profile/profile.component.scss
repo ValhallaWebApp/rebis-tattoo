@@ -1,0 +1,233 @@
+// palette
+$gold: #ffffff;
+$dark: #0a0a0a;
+$card-bg: #111;
+$radius: 12px;
+
+.dashboard {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: 360px 1fr;
+  padding:8vh 2rem;
+  color: #fff;
+  background: whitesmokesmoke;
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+.tile-icon {
+  font-size: 2.4rem;     // dimensione icona
+  color: #ffffff;        // accent color oro
+  margin-bottom: .5rem;
+}
+
+// LEFT COLUMN
+.left-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.profile-card,
+.next-booking,
+.notice,
+.checklist,
+.tile {
+  background: $card-bg;
+  border-radius: $radius;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.profile-card {
+  .avatar-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1rem;
+
+    img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid $gold;
+    }
+
+    input[type='file'] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+  }
+
+  h2 {
+    text-align: center;
+    margin: 0.5rem 0 0.25rem;
+    font-size: 1.6rem;
+  }
+
+  .muted {
+    text-align: center;
+    opacity: 0.7;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .profile-form-fields {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    color: whitesmoke;
+    button{
+      color: whitesmoke!important;
+    }
+  }
+}
+
+// RIGHT COLUMN
+.right-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.tile-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.tile {
+  text-align: center;
+
+  .emoji {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  h4 {
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
+  }
+
+  p {
+    font-size: 0.85rem;
+    opacity: 0.75;
+    min-height: 40px;
+  }
+}
+.item-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgb(0, 0, 0);
+  [matBadge] {
+    transform: translateY(-2px);
+  }
+}
+.notifications-card {
+  margin-top: 24px;
+  padding: 16px;
+  .title{
+    color: black!important;
+
+  }
+
+  .notification {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 16px;
+
+    .notif-icon {
+      color: #3f51b5;
+      margin-right: 12px;
+      font-size: 28px;
+    }
+    .notif-content {
+      flex: 1;
+
+      .notif-message {
+        margin: 0;
+        font-weight: 500;
+        color: black!important;
+      }
+
+      .notif-date {
+        font-size: 12px;
+        color: gray;
+      }
+    }
+  }
+
+  .no-notif {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: gray;
+    padding: 12px 0;
+
+    mat-icon {
+      font-size: 20px;
+    }
+  }
+}
+
+// BOOKING
+.next-booking {
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+  }
+  .date {
+    font-weight: 600;
+  }
+  .artist {
+    opacity: 0.85;
+    margin-bottom: 1rem;
+  }
+}
+
+// NOTICE & CHECKLIST
+.notice,
+.checklist {
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+    color: whitesmoke!important;
+  }
+  p{
+
+    color: whitesmoke!important;
+  }
+  mat-list-item,
+  mat-list-option {
+    font-size: 0.9rem;
+
+  }
+}
+
+// GLOBAL MAT OVERRIDES
+.mat-form-field-appearance-fill {
+  .mat-form-field-flex {
+    background: #222;
+  }
+}
+
+button.mat-raised-button {
+  background: $gold;
+  color: #000;
+  font-weight: 600;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+}

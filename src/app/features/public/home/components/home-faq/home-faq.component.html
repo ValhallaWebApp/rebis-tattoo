@@ -1,0 +1,15 @@
+<section class="faq-section">
+  <h2 class="faq-title">
+    {{ lang.t('home.faqTitle') }}
+  </h2>
+
+  <div class="faq-item" *ngFor="let faq of faqs; let i = index" [class.active]="activeIndex === i">
+    <div class="question" (click)="toggle(i)">
+      {{ faq.question }}
+      <span class="toggle-icon">{{ activeIndex === i ? '✕' : '+' }}</span>
+    </div>
+    <div class="answer">
+      {{ faq.answer }}
+    </div>
+  </div>
+</section>

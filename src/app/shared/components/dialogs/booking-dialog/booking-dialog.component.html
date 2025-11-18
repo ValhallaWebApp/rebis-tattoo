@@ -1,0 +1,72 @@
+<mat-dialog-content class="booking-dialog">
+  <h2 class="dialog-title">Prenotazione Appuntamento</h2>
+
+  <!-- Barra di avanzamento -->
+  <mat-progress-bar
+    mode="determinate"
+    [value]="(stepIndex + 1) * 25"
+    color="accent"
+    class="progress-bar">
+  </mat-progress-bar>
+
+  <form [formGroup]="bookingForm">
+    <!-- Step 0 · Dati cliente -->
+    <app-dynamic-form
+      *ngIf="stepIndex === 0"
+      [fields]="step0Fields"
+      [formGroup]="bookingForm">
+    </app-dynamic-form>
+
+    <!-- Step 1 · Data e orario -->
+    <app-dynamic-form
+      *ngIf="stepIndex === 1"
+      [fields]="step1Fields"
+      [formGroup]="bookingForm">
+    </app-dynamic-form>
+
+    <!-- Step 2 · Conferma pagamento -->
+    <app-dynamic-form
+      *ngIf="stepIndex === 2"
+      [fields]="step2Fields"
+      [formGroup]="bookingForm">
+    </app-dynamic-form>
+
+    <!-- Step 3 · Riepilogo -->
+    <div *ngIf="stepIndex === 3" class="step">
+      <p><strong>Riepilogo:</strong></p>
+      <ul>
+        <li>Cliente: {{ bookingForm.value.clientName }}</li>
+        <li>Email: {{ bookingForm.value.email }}</li>
+        <li>Descrizione: {{ bookingForm.value.description }}</li>
+        <li>Artista: {{ bookingForm.value.artist }}</li>
+        <li>Data e Ora: {{ bookingForm.value.date | date }} alle {{ bookingForm.value.slot }}</li>
+      </ul>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Annulla</button>
+
+  <div class="step-controls">
+    <button mat-stroked-button color="primary"
+            (click)="previousStep()"
+            [disabled]="stepIndex === 0">
+      Indietro
+    </button>
+
+    <button mat-flat-button color="accent"
+            *ngIf="stepIndex < 3"
+            (click)="submitStep()"
+            [disabled]="!isStepValid()">
+      Avanti
+    </button>
+
+    <button mat-flat-button color="primary"
+            *ngIf="stepIndex === 3"
+            (click)="onSubmit()"
+            [disabled]="!bookingForm.valid">
+      Prenota
+    </button>
+  </div>
+</mat-dialog-actions>

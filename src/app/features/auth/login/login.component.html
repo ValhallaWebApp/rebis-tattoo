@@ -1,0 +1,57 @@
+<div class="login-wrapper">
+  <mat-card class="login-card mat-elevation-z8">
+    <div class="card-header">
+      <h2>{{ isLoginMode ? 'Accedi' : 'Crea un account' }}</h2>
+      <mat-icon class="header-icon">
+        {{ isLoginMode ? 'login' : 'person_add' }}
+      </mat-icon>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <!-- Email -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <mat-icon matPrefix>mail</mat-icon>
+        <input matInput formControlName="email" type="email" autocomplete="email">
+        <mat-error *ngIf="loginForm.get('email')?.hasError('required')">L'email è obbligatoria</mat-error>
+        <mat-error *ngIf="loginForm.get('email')?.hasError('email')">Inserisci un indirizzo email valido</mat-error>
+      </mat-form-field>
+
+      <!-- Password -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <mat-icon matPrefix>lock</mat-icon>
+        <input matInput formControlName="password" type="password" autocomplete="current-password">
+        <mat-error *ngIf="loginForm.get('password')?.hasError('required')">La password è obbligatoria</mat-error>
+        <mat-error *ngIf="loginForm.get('password')?.hasError('minlength')">Minimo 6 caratteri</mat-error>
+      </mat-form-field>
+
+      <!-- Ricordami + Forgot -->
+      <div class="row between center">
+        <mat-checkbox formControlName="rememberMe">Ricordami</mat-checkbox>
+        <button mat-button type="button" class="linklike">Password dimenticata?</button>
+      </div>
+
+      <!-- Errori globali -->
+      <div *ngIf="errorMessage" class="global-error">
+        <mat-icon color="warn">error</mat-icon>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <!-- Submit -->
+      <button mat-raised-button color="primary" class="full-width" type="submit"
+              [disabled]="loginForm.invalid || isLoading">
+        <ng-container *ngIf="!isLoading; else loadingTpl">
+          {{ isLoginMode ? 'Accedi' : 'Registrati' }}
+        </ng-container>
+      </button>
+      <ng-template #loadingTpl>
+        <mat-progress-spinner mode="indeterminate" diameter="22"></mat-progress-spinner>
+      </ng-template>
+    </form>
+
+    <button mat-button color="accent" (click)="toggleMode()" class="toggle-btn">
+      {{ isLoginMode ? 'Non hai un account? Registrati' : 'Hai già un account? Accedi' }}
+    </button>
+  </mat-card>
+</div>

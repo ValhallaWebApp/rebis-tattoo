@@ -1,0 +1,183 @@
+.week-grid {
+  display: grid;
+  grid-template-columns: 100px repeat(7, 1fr);
+  gap: 4px;
+
+  .week-header {
+    display: contents;
+
+    .hour-cell.empty {
+      background: transparent;
+    }
+
+    .day-cell {
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 6px 0;
+      color: #444;
+    }
+  }
+
+  .hour-row {
+    display: contents;
+
+    .hour-cell {
+      text-align: center;
+      font-weight: 500;
+      font-size: 0.85rem;
+      padding: 6px;
+      color: #555;
+      background-color: #fafafa;
+    }
+
+    .day-slot {
+      padding: 2px;
+      position: relative;
+    }
+
+    .hour-content {
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 4px;
+      height: 60px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+
+      &.free-slot {
+        background-color: rgba(76, 175, 80, 0.08);
+      }
+
+      &.partial-slot {
+        background-color: rgba(255, 193, 7, 0.1);
+        overflow-y: scroll;
+
+      }
+
+      &.full-slot {
+        background-color: rgba(244, 67, 54, 0.1);
+        overflow-y: scroll;
+      }
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.03);
+      }
+    }
+  }
+}
+
+/* Evento slot libero */
+.event.free-flag {
+  font-size: 12px;
+  color: #2e7d32 !important;
+  font-weight: 500;
+  background: rgba(0, 200, 0, 0.08);
+  padding: 6px 6px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  width: 100%;
+  mat-icon {
+    font-size: 16px;
+    color: #2e7d32 !important;
+  }
+}
+
+/* Avatar evento */
+.artist-avatar{
+  position: relative;
+}
+.artist-avatar.mini {
+    padding: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  .avatar-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 2px solid rgb(161, 0, 0);
+    border-radius: 6px;
+    padding: 4px;
+    img {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid #ccc;
+      object-fit: cover;
+    }
+
+    .avatar-badge {
+      position: absolute;
+      transform: translate(-50,-50%);
+      background: #1976d2;
+      color: white;
+      font-size: 9px;
+      padding: 0 4px;
+      line-height: 1;
+      border-radius: 10px;
+      border: 1px solid white;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+      z-index: 10;
+      min-width: 14px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .artist-name {
+      font-size: 0.7rem;
+      color: #555;
+    }
+  }
+
+  &.my-booking {
+    background-color: rgba(76, 175, 80, 0.12);
+    color: #e46666;
+    font-weight: bold;
+    border-radius: 6px;
+  }
+}
+
+/* Badge tua prenotazione */
+.user-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  border-radius: 50%;
+  font-size: 12px;
+  z-index: 20;
+text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+  mat-icon {
+    font-size: 16px;
+    color: #2e7d32;
+  }
+}
+.resize-icon {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  z-index: 10;
+  background: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  padding: 0;
+
+  mat-icon {
+    font-size: 18px;
+  }
+}

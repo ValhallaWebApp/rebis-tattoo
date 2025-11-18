@@ -1,0 +1,403 @@
+/* ===========================
+   Variabili base (light/dark)
+   =========================== */
+:root {
+  --bg:            #0b0c10;
+  --surface:       #111217;
+  --elev:          #151823;
+  --border:        rgba(255,255,255,0.08);
+  --muted:         rgba(255,255,255,0.6);
+  --text:          #e9ecf1;
+  --primary:       #7c5cff;
+  --primary-weak:  rgba(124,92,255,.12);
+  --danger:        #ff5c7c;
+  --success:       #3ddc97;
+  --warning:       #ffb020;
+}
+
+[data-theme="light"] {
+  --bg:            #f6f7fb;
+  --surface:       #ffffff;
+  --elev:          #ffffff;
+  --border:        rgba(0,0,0,0.08);
+  --muted:         rgba(0,0,0,0.6);
+  --text:          #1b1f2a;
+  --primary:       #6a5dff;
+  --primary-weak:  rgba(106,93,255,.1);
+  --danger:        #e84c6a;
+  --success:       #13b87c;
+  --warning:       #f29f05;
+}
+
+/* Reset minimi */
+:host {
+  display: block;
+  background: var(--bg);
+  color: var(--text);
+  height: 100%;
+}
+
+/* ===========================
+   Layout principale
+   =========================== */
+.messaging-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  height: calc(100vh - 64px); /* se hai una app-toolbar alta ~64px */
+  border-top: 1px solid var(--border);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr; /* sidebar off-canvas */
+    height: calc(100vh - 56px);
+  }
+}
+
+/* ===========================
+   Sidebar conversazioni
+   =========================== */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+
+    h3 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 16px;
+      letter-spacing: .2px;
+    }
+  }
+
+  .search-field {
+    padding: 12px 12px 0;
+    ::ng-deep .mdc-text-field--outlined {
+      background: var(--elev);
+    }
+  }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+
+    button {
+      border-color: var(--border);
+      background: transparent;
+      &.mat-primary, &[color='primary'] {
+        background: var(--primary-weak);
+      }
+    }
+  }
+
+  .conversation-list {
+    list-style: none;
+    margin: 0;
+    padding: 6px 6px 10px;
+    overflow: auto;
+    flex: 1;
+
+    li {
+      display: grid;
+      grid-template-columns: 10px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 1px solid transparent;
+
+      &:hover {
+        background: var(--primary-weak);
+        border-color: transparent;
+      }
+      &.active {
+        border-color: var(--primary);
+        background: linear-gradient(0deg, var(--primary-weak), var(--primary-weak));
+      }
+
+      .state {
+        width: 8px; height: 8px; border-radius: 999px;
+        &.aperto  { background: var(--success); }
+        &.chiuso  { background: var(--danger);  }
+      }
+
+      .info {
+        display: grid;
+        grid-template-columns: 1fr;
+        line-height: 1.2;
+
+        strong {
+          font-size: 14px;
+          font-weight: 600;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        small {
+          color: var(--muted);
+          font-size: 12px;
+        }
+      }
+    }
+  }
+
+  /* Off-canvas mobile */
+  @media (max-width: 768px) {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(82vw, 360px);
+    max-width: 100%;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    z-index: 6; /* sopra la chat ma sotto dialog */
+    box-shadow: 12px 0 24px rgba(0,0,0,.22);
+
+    &.is-open { transform: translateX(0); }
+  }
+}
+
+/* ===========================
+   Chat area
+   =========================== */
+.chat {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: radial-gradient(1200px 800px at 100% -20%, rgba(124,92,255,.08), transparent 50%),
+              radial-gradient(900px 650px at -20% 120%, rgba(61,220,151,.06), transparent 45%);
+
+  .chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 3;
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .pill {
+        display: inline-block;
+        margin-top: 4px;
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+
+        &.aperto {
+          border-color: rgba(61,220,151,.25);
+          color: var(--success);
+          background: rgba(61,220,151,.08);
+        }
+        &.chiuso {
+          border-color: rgba(255,92,124,.25);
+          color: var(--danger);
+          background: rgba(255,92,124,.08);
+        }
+      }
+    }
+
+    .actions {
+      display: flex; gap: 6px;
+      button { min-width: 36px; }
+    }
+  }
+
+  /* Scroll container dei messaggi */
+  .messages {
+    padding: 14px 16px 18px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Bubble messaggi */
+  .bubble {
+    max-width: min(72%, 640px);
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    line-height: 1.35;
+    font-size: 14px;
+    word-break: break-word;
+    box-shadow: 0 1px 0 rgba(0,0,0,.06);
+
+    &.bot {
+      background: var(--elev);
+      align-self: flex-start;
+      border-top-left-radius: 6px;
+    }
+
+    &.user {
+      background: linear-gradient(0deg, var(--primary-weak), var(--primary-weak));
+      border-color: rgba(124,92,255,.28);
+      align-self: flex-end;
+      border-top-right-radius: 6px;
+    }
+
+    .meta {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex; gap: 6px; align-items: center;
+    }
+  }
+
+  /* Chip suggerimenti (opzionale) */
+  .chips {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 0 16px 8px;
+    button {
+      border-radius: 999px;
+      border: 1px dashed var(--border);
+      background: transparent;
+      font-size: 12px;
+      padding: 4px 10px;
+      color: var(--muted);
+      &:hover { background: var(--primary-weak); color: var(--text); }
+    }
+  }
+
+  /* Composer */
+  .composer {
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: end;
+    gap: 8px;
+
+    .left, .right { display: flex; gap: 6px; align-items: center; }
+
+    .input-wrap {
+      position: relative;
+      background: var(--elev);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 6px 8px;
+
+      textarea, input[type="text"] {
+        background: transparent;
+        border: 0;
+        outline: none;
+        color: var(--text);
+        width: 100%;
+        resize: vertical;
+        max-height: 160px;
+        min-height: 38px;
+        line-height: 1.35;
+        font-size: 14px;
+      }
+    }
+
+    .emoji-panel {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      z-index: 10;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,.35);
+
+      ::ng-deep .emoji-mart,
+      ::ng-deep .emoji-mart * { background: var(--surface) !important; color: var(--text) !important; }
+    }
+  }
+}
+
+/* ===========================
+   Galleria media (overlay)
+   =========================== */
+.gallery-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(92vw, 980px);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -14px 0 30px rgba(0,0,0,.22);
+  transform: translateX(100%);
+  transition: transform .25s ease;
+  z-index: 7;
+
+  &.open { transform: translateX(0); }
+
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+  }
+
+  .grid {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+
+    .img {
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+
+      img {
+        width: 100%; height: 100%; object-fit: cover; display: block;
+        transition: transform .25s ease;
+      }
+      &:hover img { transform: scale(1.03); }
+
+      &.expanded {
+        grid-column: span 2;
+        grid-row: span 2;
+      }
+    }
+  }
+}
+
+/* ===========================
+   Helper classi generiche
+   =========================== */
+.empty-state {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--muted);
+
+  .cta { margin-top: 12px; }
+}
+
+.separator {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+/* ===========================
+   Scrollbar sottili (nice)
+   =========================== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar { height: 8px; width: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--border); border-radius: 20px; }
+*::-webkit-scrollbar-track { background: transparent; }

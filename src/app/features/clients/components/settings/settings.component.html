@@ -1,0 +1,112 @@
+<section class="user-settings">
+  <h2 class="section-title">{{'Impostazioni Utente'.toUpperCase()}}</h2>
+
+  <!-- 1. Profilo personale -->
+  <mat-card class="settings-card">
+    <mat-card-title>Profilo personale</mat-card-title>
+    <form [formGroup]="profileForm">
+      <mat-form-field appearance="fill">
+        <mat-label>Nome completo</mat-label>
+        <input matInput formControlName="fullName">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" type="email">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Telefono</mat-label>
+        <input matInput formControlName="phone">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Data di nascita</mat-label>
+        <input matInput [matDatepicker]="dobPicker" formControlName="dob">
+        <mat-datepicker-toggle matSuffix [for]="dobPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dobPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Genere</mat-label>
+        <mat-select formControlName="gender">
+          <mat-option value="">Non specificato</mat-option>
+          <mat-option value="male">Maschio</mat-option>
+          <mat-option value="female">Femmina</mat-option>
+          <mat-option value="other">Altro</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-flat-button color="primary">Salva modifiche</button>
+    </form>
+  </mat-card>
+
+  <!-- 2. Sicurezza -->
+  <mat-card class="settings-card">
+    <mat-card-title>Sicurezza</mat-card-title>
+    <form [formGroup]="securityForm">
+      <mat-form-field appearance="fill">
+        <mat-label>Password attuale</mat-label>
+        <input matInput type="password" formControlName="currentPassword">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Nuova password</mat-label>
+        <input matInput type="password" formControlName="newPassword">
+      </mat-form-field>
+
+      <button mat-flat-button color="warn">Aggiorna password</button>
+    </form>
+  </mat-card>
+
+  <!-- 3. Notifiche -->
+  <mat-card class="settings-card">
+    <mat-card-title>Notifiche</mat-card-title>
+    <form [formGroup]="notificationForm" >
+      <mat-slide-toggle formControlName="notifyPromotions"><span class="notification-text">Email promozionali</span></mat-slide-toggle>
+      <mat-slide-toggle formControlName="notifyReminders"><span class="notification-text">Promemoria appuntamenti</span></mat-slide-toggle>
+      <mat-slide-toggle formControlName="notifyNews"><span class="notification-text">Newsletter Rebis</span></mat-slide-toggle>
+    </form>
+  </mat-card>
+
+  <!-- 4. Preferenze tattoo -->
+  <mat-card class="settings-card">
+    <mat-card-title>Preferenze Tattoo</mat-card-title>
+    <form [formGroup]="tattooPrefsForm">
+      <mat-form-field appearance="fill">
+        <mat-label>Stile preferito</mat-label>
+        <mat-select formControlName="style">
+          <mat-option value="realistico">Realistico</mat-option>
+          <mat-option value="minimal">Minimal</mat-option>
+          <mat-option value="geometrico">Geometrico</mat-option>
+          <mat-option value="oldschool">Old School</mat-option>
+          <mat-option value="tribale">Tribale</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Zona preferita</mat-label>
+        <input matInput formControlName="zone">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Artista preferito</mat-label>
+        <input matInput formControlName="artist">
+      </mat-form-field>
+
+      <mat-checkbox formControlName="isFirstTattoo"><span style="color: white;">Primo tatuaggio</span></mat-checkbox>
+
+      <button mat-flat-button color="primary">Salva preferenze</button>
+    </form>
+  </mat-card>
+
+  <!-- 5. Consensi e privacy -->
+  <mat-card class="settings-card">
+    <mat-card-title>Privacy e consensi</mat-card-title>
+    <form [formGroup]="privacyForm">
+      <mat-slide-toggle formControlName="acceptMarketing">Consenso marketing</mat-slide-toggle>
+    </form>
+    <p><a href="/assets/documents/privacy-policy.pdf" target="_blank">Scarica informativa privacy</a></p>
+    <button mat-stroked-button color="warn">Elimina account</button>
+  </mat-card>
+</section>

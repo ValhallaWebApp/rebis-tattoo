@@ -1,0 +1,96 @@
+<mat-drawer-container class="drawer-container">
+  <!-- Drawer per creazione/modifica sessione -->
+  <mat-drawer #drawer mode="side" position="end" class="drawer">
+    <h2 class="form-title">{{ editingSession ? 'Modifica' : 'Nuova' }} Seduta</h2>
+    <form [formGroup]="form" class="session-form" (ngSubmit)="save()">
+      <mat-form-field appearance="outline">
+        <mat-label>Data</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="date" />
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Ora</mat-label>
+        <input matInput type="time" formControlName="time" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Durata (minuti)</mat-label>
+        <input matInput type="number" formControlName="duration" min="15" step="15" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Artista</mat-label>
+        <mat-select formControlName="idArtist">
+          <mat-option *ngFor="let member of staff" [value]="member.id">
+            {{ member.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Note</mat-label>
+        <textarea matInput formControlName="notesByAdmin" rows="3"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Prezzo</mat-label>
+        <input matInput type="number" formControlName="price" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Stato</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="planned">Pianificata</mat-option>
+          <mat-option value="completed">Completata</mat-option>
+          <mat-option value="cancelled">Annullata</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="form-actions">
+        <button mat-stroked-button color="warn" type="button" (click)="closeDrawer()">Annulla</button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
+          Salva
+        </button>
+      </div>
+    </form>
+  </mat-drawer>
+
+  <!-- Contenuto principale -->
+  <mat-drawer-content>
+    <div class="header">
+      <h2>Sessioni collegate al progetto</h2>
+      <button mat-icon-button color="primary" (click)="initForm(); drawer.open()">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+
+    <ng-container *ngIf="sessions.length > 0; else noSessions">
+      <mat-card *ngFor="let s of sessions" class="session-card">
+        <mat-card-title>
+          {{ s.start | date:'fullDate' }} - {{ s.start | date:'shortTime' }} ({{  '60' }} min)
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ getArtistName(s.idArtist) }}
+        </mat-card-subtitle>
+        <mat-card-content>
+          <p>{{ s.notesByAdmin }}</p>
+          <p>Prezzo: €{{ s.price }}</p>
+          <p>Status: {{ s.status }}</p>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-button color="primary" (click)="edit(s); drawer.open()">Modifica</button>
+          <button mat-button color="warn" (click)="delete(s)">Elimina</button>
+        </mat-card-actions>
+      </mat-card>
+    </ng-container>
+
+    <ng-template #noSessions>
+      <div class="empty-message">
+        <p>Nessuna seduta registrata per questo progetto.</p>
+        <button mat-raised-button color="primary" (click)="initForm(); drawer.open()">Aggiungi Seduta</button>
+      </div>
+    </ng-template>
+  </mat-drawer-content>
+</mat-drawer-container>

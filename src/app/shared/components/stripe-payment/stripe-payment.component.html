@@ -1,0 +1,12 @@
+<div id="payment-element" class="payment-element"></div>
+
+<button mat-raised-button color="primary"
+        (click)="pay()"
+        [disabled]="paying">
+  <mat-progress-spinner
+    *ngIf="paying"
+    diameter="18"
+    mode="indeterminate">
+  </mat-progress-spinner>
+  <span *ngIf="!paying">Paga ora</span>
+</button>

@@ -1,0 +1,103 @@
+<!-- DASHBOARD WRAPPER -->
+<section class="dashboard" [formGroup]="profileForm">
+  <!-- COLONNA SINISTRA – PROFILO + PROSSIMA PRENOTAZIONE -->
+  <aside class="left-pane">
+    <mat-card class="profile-card">
+      <div class="avatar-wrapper">
+        <img [src]="profileForm.get('avatar')?.value" alt="Avatar" />
+        <input
+          type="file"
+          accept="image/*"
+          *ngIf="isEditing"
+          (change)="onAvatarSelected($event)"
+        />
+      </div>
+
+      <h2>{{ profileForm.value.name }}</h2>
+      <p class="muted">{{ profileForm.value.email }}</p>
+
+      <form class="profile-form-fields">
+        <mat-form-field appearance="fill">
+          <mat-label>Nome</mat-label>
+          <input matInput formControlName="name" [readonly]="!isEditing" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Telefono</mat-label>
+          <input matInput formControlName="phone" [readonly]="!isEditing" />
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Data di nascita</mat-label>
+          <input
+            matInput
+            [matDatepicker]="picker"
+            formControlName="dateOfBirth"
+            [readonly]="!isEditing"
+          />
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+      </form>
+
+      <div class="actions">
+        <button mat-stroked-button color="primary" *ngIf="!isEditing" (click)="toggleEdit()">MODIFICA</button>
+        <button mat-stroked-button color="primary" *ngIf="isEditing" (click)="saveProfile()">SALVA</button>
+        <button mat-stroked-button *ngIf="isEditing" (click)="toggleEdit()">ANNULLA</button>
+      </div>
+    </mat-card>
+
+    <!-- PROSSIMA PRENOTAZIONE -->
+    <mat-card class="next-booking" *ngIf="nextBooking">
+      <h3>Prossima seduta</h3>
+      <p class="date">{{ nextBooking.start | date:'fullDate' }} – {{ nextBooking.start | date:'HH:mm' }}</p>
+      <p class="artist">con <strong>{{ nextBooking.artist }}</strong></p>
+      <button mat-stroked-button color="primary" routerLink="/clients/booking-history">DETTAGLI</button>
+    </mat-card>
+  </aside>
+
+  <!-- COLONNA DESTRA – TILE + NOTIFICHE -->
+  <main class="right-pane">
+    <!-- QUICK GRID -->
+    <div class="tile-grid">
+      <mat-card *ngFor="let s of sections" class="tile">
+        <mat-icon class="tile-icon">{{ s.icon }}</mat-icon>
+        <h4>{{ s.title }}</h4>
+        <p>{{ s.description }}</p>
+        <button mat-raised-button color="primary" [routerLink]="'/dashboard/' + s.route">VAI</button>
+      </mat-card>
+    </div>
+
+    <!-- NOTIFICHE & CHECKLIST -->
+<!-- <mat-card class="notifications-card">
+  <mat-card-title class="title">
+    <mat-icon color="primary">notifications</mat-icon>
+    Notifiche recenti
+  </mat-card-title>
+  <mat-divider></mat-divider>
+  <div *ngIf="notifications.length > 0; else noNotif">
+    <div *ngFor="let notif of notifications" class="notification">
+      <mat-icon class="notif-icon">{{ notif.icon }}</mat-icon>
+      <div class="notif-content">
+        <p class="notif-message">{{ notif.message }}</p>
+        <span class="notif-date">{{ notif.date | date:'short' }}</span>
+      </div>
+    </div>
+  </div>
+  <ng-template #noNotif>
+    <div class="no-notif">
+      <mat-icon>info</mat-icon>
+      Nessuna notifica disponibile.
+    </div>
+  </ng-template>
+</mat-card>
+ -->
+
+    <mat-card class="checklist" *ngIf="checklist.length">
+      <h3>Checklist pre-seduta</h3>
+      <mat-selection-list>
+        <mat-list-option *ngFor="let c of checklist"><p>{{ c.text }}</p></mat-list-option>
+      </mat-selection-list>
+    </mat-card>
+  </main>
+</section>

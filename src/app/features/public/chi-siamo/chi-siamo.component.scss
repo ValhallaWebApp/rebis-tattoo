@@ -1,0 +1,229 @@
+.about-page {
+  color: #fff;
+  padding: 8vh 1.5rem;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+
+  .intro-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    color: #fff;
+    padding: 3rem 1.5rem;
+    align-items: center;
+    text-align: center;
+
+    @media (min-width: 768px) {
+      flex-direction: row;
+      text-align: left;
+      justify-content: space-between;
+    }
+
+    .intro-text {
+      flex: 1;
+
+      h1 {
+        font-size: 3rem;
+        color: black;
+        margin-bottom: 1rem;
+      }
+
+      p {
+        font-size: 1.1rem;
+        color: #787878;
+        max-width: 600px;
+        margin-bottom: 1.5rem;
+      }
+
+      a {
+        border: 1px solid black;
+        background-color: rgb(255, 255, 255);
+        color: #000;
+        font-weight: bold;
+      }
+    }
+
+    .intro-image {
+      flex: 1;
+      max-width: 500px;
+
+      img {
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 6px 30px rgba(0, 0, 0, 0.5);
+      }
+    }
+  }
+
+
+  .team-section {
+    margin-top: 4rem;
+    text-align: center;
+
+    h3 {
+      font-size: 2rem;
+      color: black;
+      margin-bottom: 2rem;
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2rem;
+
+      .team-member {
+        background: #1e1e1e;
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s;
+        color: white;
+        &:hover {
+          transform: translateY(-4px);
+        }
+
+        img {
+          width: 100%;
+          height: auto;
+          border-radius: 8px;
+          margin-bottom: 1rem;
+        }
+
+        .name {
+          font-weight: bold;
+          color: black;
+          margin-bottom: 0.5rem;
+        }
+
+        .role {
+          color: #787878;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+}
+.carousel-wrapper {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  margin-top: 2rem;
+}
+h1{
+  font-size: 2.2rem;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  color: black;
+  text-align: center;
+}
+.carousel-track {
+  display: flex;
+  transition: transform 0.6s ease-in-out;
+  width: 100%;
+}
+
+.artist-slide {
+  min-width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+  background-color: rgba(0, 0, 0, 0);
+  font-family: 'Barlow Semi Condensed', sans-serif;
+
+  .artist-details {
+    color: white;
+    text-align: left;
+    max-width: 450px;
+
+    h3 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: black;
+      margin-bottom: 0.3rem;
+    }
+
+    .badge {
+      background-color: black;
+      color: white;
+      font-weight: 500;
+      display: inline-block;
+      padding: 0.3rem 0.7rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      margin: 0.4rem 0;
+      font-size: 1rem;
+      font-weight: 500;
+      color: black;
+      &.quote {
+        font-style: italic;
+        color: #787878;
+        margin-top: 1rem;
+      }
+    }
+
+    .portfolio-button {
+      background-color: black;
+      color: white;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      display: inline-block;
+      text-decoration: none;
+      margin-top: 1rem;
+
+      &:hover {
+        background-color: white;
+        border-radius: 6px;
+        color: black;
+        border: 2px solid black;
+      }
+    }
+  }
+
+  .artist-image {
+    max-width: 300px;
+
+    img {
+      width: 100%;
+      border-radius: 12px;
+      border: 2px solid black;
+    }
+  }
+}
+button{
+        border-radius: 12px!important;
+
+}
+.carousel-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5rem;
+  gap: 1.5rem;
+
+  button {
+    background: transparent;
+    border: 2px solid black;
+    color: black;
+    padding: 0.3rem 0.8rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+
+    &:hover {
+      background-color: black;
+      color: black;
+    }
+  }
+
+  span {
+    color: #bbb;
+    font-weight: 500;
+  }
+}

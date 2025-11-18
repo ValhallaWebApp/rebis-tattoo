@@ -1,0 +1,162 @@
+<div class="messaging-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" [class.is-open]="sidebarOpen">
+    <header>
+      <h3>Conversazioni</h3>
+      <button mat-icon-button class="close-btn" *ngIf="!isDesktop" (click)="sidebarOpen = false">
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <!-- Search -->
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput placeholder="Cerca nelle chat" [formControl]="searchCtrl" />
+    </mat-form-field>
+
+    <!-- Filtri stato -->
+    <div class="filters">
+      <button mat-stroked-button [color]="statusFilter() === 'aperte' ? 'primary' : ''"
+              (click)="statusFilter.set('aperte')">Aperte</button>
+      <button mat-stroked-button [color]="statusFilter() === 'chiuse' ? 'primary' : ''"
+              (click)="statusFilter.set('chiuse')">Chiuse</button>
+      <button mat-stroked-button [color]="statusFilter() === 'tutte' ? 'primary' : ''"
+              (click)="statusFilter.set('tutte')">Tutte</button>
+    </div>
+
+    <!-- Lista conversazioni -->
+    <ul class="conversation-list">
+      <li *ngFor="let thread of filteredThreads()"
+          (click)="selectThread(thread); sidebarOpen = false"
+          [class.active]="thread.id === (selectedThread()?.id || null)">
+        <span class="state" [ngClass]="thread.status || 'aperto'"></span>
+        <div class="info">
+          <strong>{{ thread.summary || ('Conversazione #' + (thread.id | slice:-6)) }}</strong>
+          <small>{{ thread.createAt | date:'short' }}</small>
+        </div>
+      </li>
+
+      <li *ngIf="!filteredThreads()?.length" class="empty-state">
+        Nessuna chat trovata.
+        <div class="cta">
+          <button mat-stroked-button color="primary" (click)="sidebarOpen = false">Nuova chat</button>
+        </div>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- CHAT -->
+  <section class="chat">
+    <!-- Header chat -->
+    <div class="chat-header">
+      <div class="title">
+        <button mat-icon-button class="only-mobile" (click)="sidebarOpen = true" *ngIf="!isDesktop">
+          <mat-icon>menu</mat-icon>
+        </button>
+        <div>
+          <div>
+            {{ selectedThread()?.summary || 'Seleziona una conversazione' }}
+          </div>
+          <div class="pill"
+               [ngClass]="(selectedThread()?.status || 'aperto')"
+               *ngIf="selectedThread()">
+            {{ (selectedThread()?.status || 'aperto') | titlecase }}
+          </div>
+        </div>
+      </div>
+
+      <div class="actions" *ngIf="selectedThread()">
+        <button mat-icon-button matTooltip="Galleria media" (click)="openGallery()" [disabled]="!hasGallery()">
+          <mat-icon>collections</mat-icon>
+        </button>
+
+        <button mat-stroked-button color="primary"
+                *ngIf="(selectedThread()?.status || 'aperto') === 'aperto'"
+                (click)="setStatus('chiuso')">
+          <mat-icon>check_circle</mat-icon>&nbsp;Chiudi
+        </button>
+
+        <button mat-stroked-button color="primary"
+                *ngIf="(selectedThread()?.status || 'aperto') === 'chiuso'"
+                (click)="setStatus('aperto')">
+          <mat-icon>undo</mat-icon>&nbsp;Riapri
+        </button>
+
+        <button mat-icon-button matTooltip="Elimina conversazione" (click)="deleteThread()">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messaggi -->
+    <div class="messages" #msgBox>
+      <ng-container *ngIf="selectedThread(); else noThread">
+        <div *ngFor="let m of messages()" class="bubble" [class.user]="m.from === 'user'" [class.bot]="m.from !== 'user'">
+          <div class="text" [innerHTML]="m.text"></div>
+          <div class="meta">
+            <span>{{ m.timestamp ? (m.timestamp | date:'shortTime') : 'adesso' }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #noThread>
+        <div class="empty-state">
+          Seleziona una conversazione dalla lista a sinistra.
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Chips suggerimenti (opzionale) -->
+    <!-- <div class="chips" *ngIf=\"selectedThread() && suggestionChips?.length\">
+      <button *ngFor=\"let c of suggestionChips\" (click)=\"newMessage = c\">{{ c }}</button>
+    </div> -->
+
+    <!-- Composer -->
+    <div class="composer" *ngIf="selectedThread()">
+      <div class="left">
+        <button mat-icon-button (click)="emojiPickerVisible = !emojiPickerVisible" matTooltip="Emoji">
+          <mat-icon>insert_emoticon</mat-icon>
+        </button>
+        <label mat-icon-button for="mediaInput" matTooltip="Allega immagine">
+          <mat-icon>attach_file</mat-icon>
+        </label>
+        <input id="mediaInput" type="file" accept="image/*" (change)="uploadMedia($event)" hidden />
+      </div>
+
+      <div class="input-wrap">
+        <textarea
+          rows="1"
+          placeholder="Scrivi un messaggio…"
+          [(ngModel)]="newMessage"
+          (keydown.enter)="sendMessage()"
+        ></textarea>
+
+        <div class="emoji-panel" *ngIf="emojiPickerVisible">
+          <emoji-mart [include]="emojiCategories" (emojiSelect)="addEmoji($event)"></emoji-mart>
+        </div>
+      </div>
+
+      <div class="right">
+        <button mat-raised-button color="primary" (click)="sendMessage()" [disabled]="!newMessage?.trim()">
+          Invia
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- GALLERIA MEDIA -->
+<div class="gallery-drawer" [class.open]="galleryOpen">
+  <header>
+    <h3>Media della conversazione</h3>
+    <button mat-icon-button (click)="galleryOpen = false">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="grid">
+    <div class="img" *ngFor="let img of projectImages" [class.expanded]="expandedImage === img" (click)="toggleExpand(img)">
+      <img [src]="img" alt="" />
+    </div>
+  </div>
+</div>

@@ -1,0 +1,117 @@
+:host {
+  display: block;
+  background-color: #0a0a0a;
+  color: whitesmoke;
+  padding: 1rem;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+}
+section{
+  padding: 8vh 1rem;
+  min-height: 90vh;
+}
+.calendar-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  input[type="text"] {
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+    color: whitesmoke;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 300px;
+
+    &::placeholder {
+      color: #999;
+    }
+
+    &:focus {
+      border-color: #BE9045;
+      outline: none;
+    }
+  }
+
+  .view-buttons {
+    display: flex;
+    gap: 0.5rem;
+
+    button {
+      background: transparent;
+      color: whitesmoke;
+      border: 1px solid #BE9045;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+
+      &:hover {
+        background-color: #BE9045;
+        color: #000;
+      }
+    }
+  }
+}
+
+.filter-status {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    font-weight: 500;
+
+    &.confermata {
+      color: #4CAF50;
+    }
+
+    &.inAttesa {
+      color: #FFC107;
+    }
+
+    &.cancellata {
+      color: #F44336;
+    }
+
+    input[type="checkbox"] {
+      accent-color: currentColor;
+    }
+  }
+}
+
+/* FullCalendar override */
+::ng-deep .fc {
+  background-color: transparent;
+
+  .fc-toolbar-title,
+  .fc-col-header-cell-cushion,
+  .fc-daygrid-day-number,
+  .fc-timegrid-slot-label,
+  .fc-timegrid-axis {
+    color: whitesmoke;
+  }
+
+  td,
+  th {
+    border-color: #333;
+  }
+
+  .fc-event {
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 2px 4px;
+  }
+
+  .fc-day-today {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+}

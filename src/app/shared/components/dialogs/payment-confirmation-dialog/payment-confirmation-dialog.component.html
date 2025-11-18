@@ -1,0 +1,22 @@
+<h1 mat-dialog-title *ngIf="step === 1">Perché è richiesto un acconto?</h1>
+<div mat-dialog-content *ngIf="step === 1">
+  <p>Per garantire la tua prenotazione, chiediamo un acconto simbolico di 50 €.</p>
+  <p>Questo ci consente di riservare l’orario scelto esclusivamente per te.</p>
+</div>
+<div mat-dialog-actions *ngIf="step === 1">
+  <button mat-button (click)="cancel()">Annulla</button>
+  <button mat-flat-button color="primary" (click)="next()">Continua</button>
+</div>
+
+<!-- STEP 2 -->
+<h1 mat-dialog-title *ngIf="step === 2">Conferma Acconto – 50 €</h1>
+<div mat-dialog-content *ngIf="step === 2">
+  <p><strong>Data:</strong> {{ data.date }} – {{ data.time }}</p>
+  <p><strong>Artista:</strong> {{ data.artist }}</p>
+  <p><strong>Email:</strong> {{ data.email }}</p>
+  <p>Premendo conferma, simulerai il versamento dell’acconto.</p>
+</div>
+<div mat-dialog-actions *ngIf="step === 2">
+  <button mat-button (click)="back()">Indietro</button>
+  <button mat-flat-button color="primary" (click)="confirm()">Conferma e Paga</button>
+</div>

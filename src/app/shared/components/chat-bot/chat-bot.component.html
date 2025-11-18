@@ -1,0 +1,87 @@
+<div class="chat-wrapper mat-elevation-z4">
+  <!-- Header -->
+  <div class="chat-header">
+    <mat-icon color="primary" aria-hidden="true">smart_toy</mat-icon>
+    <span class="chat-title">Assistente Rebis</span>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <!-- Messaggi -->
+  <div
+    class="chat-messages"
+    #scrollContainer
+    (scroll)="onScroll()"
+    role="log"
+    aria-live="polite"
+    aria-label="Conversazione con l’assistente"
+  >
+    <ng-container *ngFor="let msg of messages; let i = index; trackBy: trackByIndex">
+      <div [ngClass]="msg.from">
+        <mat-card class="message-card" [ngClass]="msg.from">
+          {{ msg.text }}
+        </mat-card>
+
+        <!-- Chips solo sull’ultimo messaggio del bot -->
+        <div class="chips"
+             *ngIf="msg.from === 'bot' && i === messages.length - 1 && msg.chips?.length">
+          <mat-chip-set aria-label="Azioni rapide" role="listbox">
+            <mat-chip
+              *ngFor="let chip of msg.chips"
+              (click)="onChipClick(chip)"
+              (keydown.enter)="onChipClick(chip)"
+              clickable
+              role="option"
+              tabindex="0"
+              matTooltip="Seleziona">
+              {{ chip }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Indicatore di typing -->
+    <mat-card *ngIf="typing" class="typing" role="status" aria-live="polite">
+      🤖 sta scrivendo...
+    </mat-card>
+
+    <!-- Anchor per scroll -->
+    <div #bottomAnchor></div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <!-- Input messaggio -->
+  <form class="chat-input" (submit)="sendMessage(); $event.preventDefault()">
+    <mat-form-field appearance="outline" class="input-field">
+      <input
+        matInput
+        [(ngModel)]="inputText"
+        name="message"
+        placeholder="Scrivi un messaggio…"
+        aria-label="Scrivi un messaggio"
+        autocomplete="off"
+      />
+    </mat-form-field>
+
+    <button
+      mat-icon-button
+      color="primary"
+      type="submit"
+      [disabled]="!inputText.trim()"
+      aria-label="Invia messaggio">
+      <mat-icon>send</mat-icon>
+    </button>
+  </form>
+
+  <!-- Scroll to bottom -->
+  <button
+    mat-fab
+    class="scroll-fab"
+    *ngIf="!isUserAtBottom"
+    (click)="scrollToBottom()"
+    aria-label="Vai all’ultimo messaggio">
+    <mat-icon>arrow_downward</mat-icon>
+  </button>
+</div>

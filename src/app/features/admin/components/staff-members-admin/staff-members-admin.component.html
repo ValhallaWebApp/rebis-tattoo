@@ -1,0 +1,78 @@
+<section class="admin-staff">
+  <h2 class="section-title">
+    Gestione Staff
+    <button mat-icon-button (click)="toggleDrawer()" matTooltip="Aggiungi membro">
+      <mat-icon>{{ drawer?.opened ? 'close' : 'person_add' }}</mat-icon>
+    </button>
+  </h2>
+
+<mat-drawer-container class="drawer-container">
+  <mat-drawer #drawer mode="side" position="end" class="staff-drawer">
+
+    <h3 class="form-title">
+      {{ editingId ? 'Modifica membro' : 'Nuovo membro' }}
+    </h3>
+
+    <form [formGroup]="staffForm" (ngSubmit)="submit()" class="staff-form">
+      <!-- Campi come prima -->
+      <mat-form-field appearance="outline">
+        <mat-label>Nome</mat-label>
+        <input matInput formControlName="name">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Ruolo</mat-label>
+        <mat-select formControlName="role">
+          <mat-option value="tatuatore">Tatuatore</mat-option>
+          <mat-option value="piercer">Piercer</mat-option>
+          <mat-option value="guest">Guest</mat-option>
+          <mat-option value="altro">Altro</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Biografia</mat-label>
+        <textarea matInput formControlName="bio"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>URL Immagine</mat-label>
+        <input matInput formControlName="photoUrl">
+      </mat-form-field>
+
+      <mat-slide-toggle formControlName="isActive">Attivo</mat-slide-toggle>
+
+      <div class="form-actions">
+        <button mat-flat-button color="primary" type="submit">
+          {{ editingId ? 'Aggiorna' : 'Aggiungi' }}
+        </button>
+        <button mat-button type="button" (click)="resetForm()">Reset</button>
+      </div>
+    </form>
+  </mat-drawer>
+
+  <mat-drawer-content>
+    <!-- Qui la lista membri come già presente -->
+    <div class="staff-list">
+      <mat-card class="staff-card" *ngFor="let member of staff">
+        <mat-card-header>
+          <div mat-card-avatar class="staff-avatar" [ngStyle]="{ 'background-image': 'url(' + member.photoUrl + ')' }"></div>
+          <mat-card-title>{{ member.name }}</mat-card-title>
+          <mat-card-subtitle>{{ member.role }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p>{{ member.bio }}</p>
+          <p><strong>Stato:</strong> {{ member.isActive ? 'Attivo' : 'Non attivo' }}</p>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-icon-button color="accent" (click)="edit(member)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="delete(member.id!)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </mat-drawer-content>
+</mat-drawer-container>

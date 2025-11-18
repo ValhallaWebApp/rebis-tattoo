@@ -1,0 +1,20 @@
+<h2 mat-dialog-title>Dettagli Appuntamento</h2>
+
+<mat-dialog-content>
+  <p><strong>ID Cliente:</strong> {{ data.idClient }}</p>
+  <p><strong>ID Artista:</strong> {{ data.idArtist || '-' }}</p>
+  <p><strong>Data di nascita:</strong> {{ data.eta || '-' }}</p>
+  <p><strong>Inizio:</strong> {{ data.start | date: 'fullDate' }} • {{ data.start | date: 'shortTime' }}</p>
+  <p><strong>Fine:</strong> {{ data.end | date: 'fullDate' }} • {{ data.end | date: 'shortTime' }}</p>
+  <p><strong>Prezzo:</strong> {{ data.price / 100 | currency: 'EUR':'symbol':'1.2-2' }}</p>
+  <p><strong>Stato:</strong> {{ data.status | titlecase }}</p>
+  <p><strong>Creato il:</strong> {{ data.createAt | date: 'fullDate' }} • {{ data.createAt | date: 'shortTime' }}</p>
+  <p><strong>Aggiornato il:</strong> {{ data.updateAt | date: 'fullDate' }} • {{ data.updateAt | date: 'shortTime' }}</p>
+
+  <p><strong>Descrizione:</strong></p>
+  <p>{{ data.description || '—' }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Chiudi</button>
+</mat-dialog-actions>

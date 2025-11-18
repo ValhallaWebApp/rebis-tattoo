@@ -1,0 +1,101 @@
+.review-admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .review-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+
+  .review-card {
+    position: relative;
+
+    .avatar img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .stars {
+      display: flex;
+      gap: 2px;
+      margin-top: 8px;
+    }
+
+    .comment {
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    .date {
+      font-size: 0.8rem;
+      color: gray;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+  }
+}
+/* file review-list-admin.component.scss */
+
+.active-button {
+  background-color: #212121; // grigio molto scuro
+  color: white;
+  border-radius: 4px;
+
+  &:hover {
+    background-color: #424242;
+  }
+}
+.filter-panel {
+  margin-bottom: 16px;
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    mat-form-field {
+      flex: 1 1 200px;
+    }
+
+    button {
+      align-self: flex-end;
+    }
+  }
+}
+.section-title {
+
+  margin-bottom: 1rem;
+
+  button {
+    margin-left: auto;
+  }
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  mat-form-field {
+    flex: 1 1 250px;
+  }
+
+  button {
+    align-self: flex-end;
+  }
+}

@@ -1,0 +1,20 @@
+.dynamic-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+
+  .form-field {
+    width: 100%;
+  }
+
+  .full-width {
+    width: 100%;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2rem;
+  }
+}

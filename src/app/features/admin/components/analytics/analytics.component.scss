@@ -1,0 +1,142 @@
+:host {
+  display: block;
+  padding:8vh 2rem;
+  background-color: #111;
+  color: whitesmoke;
+}
+
+.analytics-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.analytics-header {
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  mat-card-title {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #d4af37;
+  }
+
+  mat-form-field {
+    width: 200px;
+    background-color: #222;
+    border-radius: 6px;
+
+    .mat-input-element,
+    .mat-select-value {
+      color: whitesmoke;
+    }
+  }
+
+  button {
+    background-color: #d4af37;
+    color: #111;
+    font-weight: 600;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+
+    &:hover {
+      background-color: #c39e28;
+    }
+  }
+}
+
+.analytics-grid {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+ngx-charts-advanced-pie-chart,
+ngx-charts-bar-horizontal {
+  display: block;
+  width: 100%;
+  min-height: 280px;
+}
+
+.chart-card {
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+  max-width: 650px;
+  width: 80vw;
+  min-width: 250px;
+  max-height: min-content;
+      overflow-x: scroll;
+
+  mat-card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #d4af37;
+    margin-bottom: 1rem;
+  }
+
+  ngx-charts-bar-vertical,
+  ngx-charts-line-chart,
+  ngx-charts-pie-chart {
+    display: block;
+    width: 100%;
+    min-height: 280px;
+  }
+}
+
+// Theme patch
+::ng-deep .ngx-charts {
+  background-color: #1a1a1a !important;
+  color: whitesmoke;
+  border-radius: 12px;
+}
+
+::ng-deep text {
+  fill: whitesmoke !important;
+  font-weight: 500;
+}
+
+::ng-deep .axis-label {
+  fill: #bbb !important;
+  font-size: 13px;
+}
+
+::ng-deep .gridline,
+::ng-deep .axis line {
+  stroke: #444 !important;
+}
+
+::ng-deep .tooltip-content {
+  background: #222 !important;
+  color: whitesmoke;
+  border: 1px solid #d4af37;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .analytics-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+::ng-deep .legend-items {
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  ::ng-deep .legend-items {
+    flex-direction: column;
+  }
+}

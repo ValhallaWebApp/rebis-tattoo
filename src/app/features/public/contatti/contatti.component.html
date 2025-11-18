@@ -1,0 +1,37 @@
+<section class="contacts-section">
+  <div class="contacts-header">
+    <h1>{{ lang.t('contact.title') | uppercase }}</h1>
+    <p>{{ lang.t('contact.subtitle') }}</p>
+  </div>
+
+  <div class="chatbot-suggestion">
+    <p>{{ lang.t('contact.chatbot.question') }}</p>
+    <a mat-stroked-button color="accent" routerLink="/chatbot">
+      {{ lang.t('contact.chatbot.cta') }}
+    </a>
+  </div>
+
+  <div class="contacts-grid">
+    <!-- INFO -->
+    <mat-card class="info-card">
+      <mat-card-content>
+        <h3>{{ lang.t('contact.locationTitle') }}</h3>
+        <p><mat-icon>location_on</mat-icon> {{ lang.t('contact.address') }}</p>
+        <p><mat-icon>phone</mat-icon> {{ lang.t('contact.phone') }}</p>
+        <p><mat-icon>email</mat-icon> {{ lang.t('contact.email') }}</p>
+
+        <h3>{{ lang.t('contact.hoursTitle') }}</h3>
+        <p>{{ lang.t('contact.hours.mondayFriday') }}</p>
+        <p>{{ lang.t('contact.hours.saturday') }}</p>
+        <p>{{ lang.t('contact.hours.sunday') }}</p>
+      </mat-card-content>
+
+      <div class="cta-consulenza">
+        <h2>{{ lang.t('contact.ctaTitle') }}</h2>
+        <a mat-raised-button color="accent" routerLink="/bookings">
+          {{ lang.t('contact.ctaButton') }}
+        </a>
+      </div>
+    </mat-card>
+  </div>
+</section>

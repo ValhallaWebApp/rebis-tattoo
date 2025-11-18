@@ -1,0 +1,136 @@
+<main>
+  <mat-toolbar class="main-toolbar elevation-z4">
+  <div class="toolbar-container">
+    <!-- Burger Menu per Mobile -->
+    <button mat-icon-button (click)="toggleMenu()" class="burger-button">
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <!-- Logo -->
+    <a routerLink="/home" class="logo-link">
+      <img src="/loghi/logo-white.jpg" alt="REBIS TATTOO" class="logo-img" />
+    </a>
+
+    <!-- Menu Desktop -->
+<ng-container *ngIf="navItem$ | async as items">
+  <nav class="desktop-nav">
+    <ng-container *ngFor="let item of items">
+      <ng-container *ngIf="item.children?.length; else noChildren">
+        <div class="dropdown">
+          <button mat-button class="dropdown-toggle">
+            {{ item.label }}
+            <mat-icon>expand_more</mat-icon>
+          </button>
+          <div class="dropdown-menu">
+            <a mat-menu-item *ngFor="let child of item.children" [routerLink]="child.route">
+              {{ child.label }}
+            </a>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #noChildren>
+        <a mat-button [routerLink]="item.route">{{ item.label }}</a>
+      </ng-template>
+    </ng-container>
+  </nav>
+</ng-container>
+    <!-- Azioni -->
+    <div class="toolbar-actions">
+
+     <!-- 🔔 Notifiche -->
+  <div class="notifications-wrapper" [matMenuTriggerFor]="notifMenu" matTooltip="Notifiche recenti">
+    <button mat-icon-button>
+      <mat-icon>notifications</mat-icon>
+    </button>
+    <span *ngIf="notifications.length > 0" class="badge">{{ notifications.length }}</span>
+  </div>
+
+  <mat-menu #notifMenu="matMenu" class="notif-menu">
+    <ng-container *ngIf="notifications.length > 0; else noNotif">
+      <button mat-menu-item *ngFor="let n of notifications">
+        <mat-icon>{{ n.icon }}</mat-icon>
+        <div class="notif-text">
+          <p class="primary">{{ n.message }}</p>
+          <small class="secondary">{{ n.date | date:'short' }}</small>
+        </div>
+      </button>
+    </ng-container>
+    <ng-template #noNotif>
+      <button mat-menu-item disabled>
+        <mat-icon>notifications_off</mat-icon>
+        <span>Nessuna notifica</span>
+      </button>
+    </ng-template>
+  </mat-menu>
+
+  <!-- 🔓 Logout -->
+  <button mat-icon-button color="warn" (click)="logout()" matTooltip="Logout">
+    <mat-icon>logout</mat-icon>
+  </button>
+
+    </div>
+  </div>
+</mat-toolbar>
+
+<mat-sidenav-container class="sidenav-container">
+<mat-sidenav #sidenav [mode]="modeSidenav" [(opened)]="isMenuOpen" (closed)="closeMenu()" class="mobile-sidenav">
+  <mat-nav-list>
+    <ng-container *ngIf="navItem$ | async as items">
+      <ng-container *ngFor="let item of items">
+        <ng-container *ngIf="item.children?.length; else singleLink">
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{ item.label }}</mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-container *ngFor="let child of item.children">
+              <a mat-list-item
+                 [routerLink]="child.route"
+                 (click)="closeMenu()" style="color: whitesmoke!important;">
+                {{ child.label }}
+              </a>
+            </ng-container>
+          </mat-expansion-panel>
+        </ng-container>
+        <ng-template #singleLink>
+          <a mat-list-item
+             [routerLink]="item.route"
+             (click)="closeMenu()" style="color: whitesmoke!important;">
+            {{ item.label }}
+          </a>
+        </ng-template>
+      </ng-container>
+    </ng-container>
+
+    <div class="auth-section">
+      <ng-container *ngIf="isLoggedIn; else loginBtnMobile">
+        <button mat-stroked-button
+                color="warn"
+                class="logout-btn"
+                (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          Logout
+        </button>
+      </ng-container>
+      <ng-template #loginBtnMobile>
+        <button mat-stroked-button
+                color="primary"
+                class="login-btn"
+                routerLink="/login">
+          <mat-icon>login</mat-icon>
+          Login
+        </button>
+      </ng-template>
+    </div>
+  </mat-nav-list>
+</mat-sidenav>
+
+
+  <!-- Contenuto principale -->
+  <mat-sidenav-content>
+<app-chat-bot-popup></app-chat-bot-popup>
+
+    <router-outlet></router-outlet>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+
+</main>

@@ -1,0 +1,45 @@
+<section class="about-page">
+  <div class="intro-hero">
+    <div class="intro-text">
+      <h1>{{ lang.t('aboutPage.title') }}</h1>
+      <p>{{ lang.t('aboutPage.intro') }}</p>
+      <a mat-raised-button color="accent" routerLink="/contatti">
+        {{ lang.t('aboutPage.cta') }}
+      </a>
+    </div>
+    <div class="intro-image">
+      <img src="/ink/woman-1.webp" alt="Tatuaggio in corso" />
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="carousel-wrapper">
+    <h1 mat-title>{{ lang.t('aboutPage.artistsTitle') }}</h1>
+    <div class="carousel-track" [style.transform]="'translateX(-' + currentIndex * 100 + '%)'">
+      <div class="artist-slide" *ngFor="let artist of artists">
+        <div class="artist-details">
+          <h3>{{ artist.name }}</h3>
+          <div class="badge">{{ artist.title }}</div>
+          <p><strong>{{ lang.t('aboutPage.expLabel') }}:</strong> {{ artist.experience }}</p>
+          <p><strong>{{ lang.t('aboutPage.styleLabel') }}:</strong> {{ artist.style }}</p>
+          <p><strong>{{ lang.t('aboutPage.levelLabel') }}:</strong> {{ artist.ranking }}</p>
+          <p class="quote">“{{ artist.quote }}”</p>
+          <a class="portfolio-button" [routerLink]="artist.portfolioUrl">
+            {{ lang.t('aboutPage.portfolio') }}
+          </a>
+        </div>
+        <div class="artist-image">
+          <img [src]="'/ink' + artist.imageUrl" [alt]="artist.name" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controlli -->
+  <div class="carousel-controls">
+    <button (click)="prevSlide()">‹</button>
+    <span>{{ currentIndex + 1 }} / {{ artists.length }}</span>
+    <button (click)="nextSlide()">›</button>
+  </div>
+</section>

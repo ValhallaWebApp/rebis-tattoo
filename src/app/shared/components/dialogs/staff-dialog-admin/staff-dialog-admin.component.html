@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Modifica Membro Staff' : 'Nuovo Membro Staff' }}</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+  <div class="form-grid">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Ruolo</mat-label>
+      <mat-select formControlName="role">
+        <mat-option value="tatuatore">Tatuatore</mat-option>
+        <mat-option value="piercer">Piercer</mat-option>
+        <mat-option value="guest">Guest</mat-option>
+        <mat-option value="altro">Altro</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Biografia</mat-label>
+      <textarea matInput formControlName="bio" rows="3"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>URL Immagine</mat-label>
+      <input matInput formControlName="photoUrl" />
+    </mat-form-field>
+
+    <div class="image-preview" *ngIf="imagePreview">
+      <img [src]="imagePreview" alt="Anteprima immagine" />
+    </div>
+
+    <mat-slide-toggle formControlName="isActive">Attivo</mat-slide-toggle>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Annulla</button>
+  <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid">
+    {{ isEditMode ? 'Salva Modifiche' : 'Aggiungi' }}
+  </button>
+</mat-dialog-actions>

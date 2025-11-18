@@ -1,0 +1,59 @@
+<section class="analytics-container">
+  <mat-card class="analytics-header">
+    <mat-card-title>Dashboard Statistiche</mat-card-title>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Periodo</mat-label>
+      <mat-select (selectionChange)="onPeriodChange($event)">
+        <mat-option value="monthly" selected>Mensile</mat-option>
+        <mat-option value="annually">Annuale</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-flat-button color="primary" (click)="exportToExcel()">Esporta Excel</button>
+  </mat-card>
+
+  <div class="analytics-grid">
+    <mat-card class="chart-card">
+      <mat-card-title>Fatturato per Mese</mat-card-title>
+      <ngx-charts-bar-vertical [scheme]="colorScheme" [results]="revenueData" [gradient]="false" [xAxis]="true"
+        [yAxis]="true" [legend]="false" [showXAxisLabel]="true" [showYAxisLabel]="true" xAxisLabel="Mese"
+        yAxisLabel="€ Totale">
+      </ngx-charts-bar-vertical>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-title>Appuntamenti</mat-card-title>
+      <ngx-charts-line-chart [scheme]="colorScheme" [results]="appointmentData" [xAxis]="true" [yAxis]="true"
+        [legend]="false" [showXAxisLabel]="true" [showYAxisLabel]="true" xAxisLabel="Mese" yAxisLabel="N. Appuntamenti">
+      </ngx-charts-line-chart>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-title>Recensioni per Stelle</mat-card-title>
+      <ngx-charts-pie-chart [results]="reviewStars" [scheme]="colorScheme" [legend]="true" [labels]="true">
+      </ngx-charts-pie-chart>
+    </mat-card>
+    <mat-card class="chart-card">
+      <mat-card-title>Distribuzione Tipi di Tatuaggi</mat-card-title>
+      <ngx-charts-advanced-pie-chart [view]="view" [scheme]="colorScheme" [results]="tattooTypesData" [gradient]="false"
+        legend="true" labels="true">
+      </ngx-charts-advanced-pie-chart>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-title>Appuntamenti per Artista</mat-card-title>
+      <ngx-charts-bar-horizontal [view]="view" [scheme]="colorScheme" [results]="appointmentsByArtist" [xAxis]="true"
+        [yAxis]="true" [legend]="false" [showXAxisLabel]="true" [showYAxisLabel]="true" xAxisLabel="Appuntamenti"
+        yAxisLabel="Artista">
+      </ngx-charts-bar-horizontal>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-title>Crescita Clienti</mat-card-title>
+      <ngx-charts-line-chart [scheme]="colorScheme" [results]="clientGrowth" [xAxis]="true" [yAxis]="true"
+        [legend]="false" [showXAxisLabel]="true" [showYAxisLabel]="true" xAxisLabel="Mese" yAxisLabel="Clienti">
+      </ngx-charts-line-chart>
+    </mat-card>
+  </div>
+</section>

@@ -1,0 +1,116 @@
+<mat-drawer-container class="drawer-container" autosize>
+
+  <!-- CONTENUTO PRINCIPALE -->
+  <mat-drawer-content>
+
+    <section class="reviews-section">
+      <div class="section-header">
+        <h2 class="title">
+          <mat-icon>reviews</mat-icon> Le tue recensioni
+        </h2>
+        <button mat-icon-button color="primary" (click)="toggleDrawer()">
+          <mat-icon>{{ reviewDrawer?.opened ? 'close' : 'add' }}</mat-icon>
+        </button>
+
+      </div>
+
+      <!-- Filtri -->
+      <mat-button-toggle-group [formControl]="filterStatusCtrl" class="status-toggle">
+        <mat-button-toggle value="all">Tutte</mat-button-toggle>
+        <mat-button-toggle value="approved">Approvate</mat-button-toggle>
+        <mat-button-toggle value="pending">In attesa</mat-button-toggle>
+        <mat-button-toggle value="rejected">Rifiutate</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <!-- Nessuna recensione -->
+      <div *ngIf="filteredReviews().length === 0" class="no-reviews">
+        <mat-icon>rate_review</mat-icon>
+        <p>Nessuna recensione trovata.</p>
+      </div>
+
+      <!-- Lista recensioni -->
+      <div class="review-grid">
+        <mat-card *ngFor="let r of filteredReviews()" class="review-card">
+          <mat-card-header>
+            <div mat-card-avatar class="avatar">
+              <img *ngIf="getArtistPhotoById(r.artistId)" [src]="getArtistPhotoById(r.artistId)" alt="Artista" />
+            </div>
+            <mat-card-title>{{ getArtistNameById(r.artistId) }}</mat-card-title>
+            <mat-card-subtitle>{{ r.date | date: 'longDate' }}</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <p class="comment">"{{ r.comment }}"</p>
+            <div class="stars">
+              <mat-icon *ngFor="let star of [1,2,3,4,5]">
+                {{ star <= r.rating ? 'star' : 'star_border' }} </mat-icon>
+            </div>
+            <mat-chip *ngIf="r.status === 'pending'" color="warn">PENDING</mat-chip>
+            <mat-chip *ngIf="r.status === 'rejected'" color="warn">RIFIUTATA</mat-chip>
+          </mat-card-content>
+
+          <mat-card-actions>
+            <button mat-icon-button color="primary" *ngIf="canEditReview(r)" (click)="editReview(r)"
+              matTooltip="Modifica recensione">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" *ngIf="r.status !== 'approved'" (click)="deleteReview(r.id)"
+              matTooltip="Elimina recensione">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </mat-card-actions>
+
+        </mat-card>
+      </div>
+    </section>
+
+  </mat-drawer-content>
+
+  <!-- DRAWER FORM -->
+  <mat-drawer #reviewDrawer position="end" mode="side" class="review-drawer">
+    <button mat-icon-button color="primary" (click)="toggleDrawer()">
+      <mat-icon>{{ reviewDrawer?.opened ? 'close' : 'add' }}</mat-icon>
+    </button>
+    <h3 class="form-title">
+      {{ selectedReview ? 'Dettaglio recensione' : 'Nuova recensione' }}
+    </h3>
+
+    <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="review-form">
+
+      <mat-form-field appearance="fill">
+        <mat-label>Autore</mat-label>
+        <input matInput formControlName="author" [disabled]="true" />
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Artista</mat-label>
+        <input matInput [formControl]="artistCtrl" [matAutocomplete]="auto" />
+        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selectArtist($event.option.value)">
+          <mat-option *ngFor="let artist of filteredArtists | async" [value]="artist.name">
+            <div class="option-content">
+              <img *ngIf="artist.photoUrl" [src]="artist.photoUrl" class="option-avatar" />
+              {{ artist.name }}
+            </div>
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Commento</mat-label>
+        <textarea matInput rows="4" formControlName="comment"></textarea>
+      </mat-form-field>
+
+      <div class="rating-group">
+        <mat-label>Valutazione</mat-label>
+        <mat-button-toggle-group formControlName="rating" class="rating-toggle">
+          <mat-button-toggle *ngFor="let s of [1,2,3,4,5]" [value]="s">{{ s }} ⭐</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="reviewForm.invalid">
+        {{ selectedReview ? 'Chiudi' : 'Invia recensione' }}
+      </button>
+    </form>
+  </mat-drawer>
+
+</mat-drawer-container>

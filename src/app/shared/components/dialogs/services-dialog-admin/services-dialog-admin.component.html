@@ -1,0 +1,39 @@
+<div class="container-dialog">
+  <h2 mat-dialog-title>{{ isEditMode ? 'Modifica Servizio' : 'Nuovo Servizio' }}</h2>
+  <mat-dialog-content class="form" [formGroup]="form">
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descrizione</mat-label>
+      <textarea matInput formControlName="description"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Categoria</mat-label>
+      <input matInput formControlName="categoria" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Prezzo (€)</mat-label>
+      <input matInput type="number" formControlName="prezzo" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Durata (minuti)</mat-label>
+      <input matInput type="number" formControlName="durata" />
+    </mat-form-field>
+
+    <mat-slide-toggle formControlName="visibile">Visibile</mat-slide-toggle>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="cancel()">Annulla</button>
+    <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid">
+      {{ isEditMode ? 'Salva Modifiche' : 'Crea Servizio' }}
+    </button>
+  </mat-dialog-actions>
+</div>

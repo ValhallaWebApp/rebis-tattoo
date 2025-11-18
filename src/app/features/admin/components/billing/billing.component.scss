@@ -1,0 +1,91 @@
+:host {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+  background-color: #0a0a0a;
+  color: whitesmoke;
+  min-height: 80vh;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+
+}
+.section{
+
+  padding: 8vh 1rem;
+  min-height: 90vh;
+}
+mat-card {
+  width: 100%;
+  background-color: #1a1a1a;
+  border-radius: 0px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  padding: 1rem;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  .title{
+    mat-card-title{
+      color: #BE9045!important;
+      font-size: 1.7rem;
+      padding-bottom: 1rem;
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 600;
+    }
+  }
+  mat-card-header {
+    border-bottom: 1px solid #BE9045;
+    margin-bottom: 1rem;
+    font-family: 'Barlow Semi Condensed', sans-serif;
+
+  }
+
+  mat-card-title, mat-card-subtitle {
+    color: whitesmoke;
+    font-family: 'Barlow Semi Condensed', sans-serif;
+
+  }
+
+  mat-card-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  mat-card-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.7;
+  }
+
+  mat-card-content p {
+    margin: 0.25rem 0;
+    font-size: 0.95rem;
+  }
+}
+
+.filter-options {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+
+  mat-button-toggle-group {
+    background-color: #141414;
+    border-radius: 0.5rem;
+    border: 1px solid #BE9045;
+  }
+
+  mat-button-toggle {
+    color: whitesmoke !important;
+    &.mat-button-toggle-checked {
+      background-color: #BE9045 !important;
+      color: #0a0a0a !important;
+    }
+  }
+}
+
+.payments-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 1rem;
+  mat-card{
+    width: min-content;
+    min-width: 250px;
+  }
+}

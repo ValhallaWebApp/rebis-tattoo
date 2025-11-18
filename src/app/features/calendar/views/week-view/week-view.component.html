@@ -1,0 +1,65 @@
+<div class="week-grid">
+  <!-- Intestazione giorni -->
+  <div class="week-header">
+    <div class="hour-cell empty"></div>
+    <div class="day-cell" *ngFor="let d of weekDays">
+      {{ d ? (d | date: 'EEE dd') : '' }}
+    </div>
+  </div>
+
+  <!-- Righe orarie -->
+  <div class="hour-row" *ngFor="let hour of hours">
+    <div class="hour-cell">{{ hour }}</div>
+
+    <div class="day-slot" *ngFor="let d of weekDays">
+<div class="hour-content"
+     cdkDropList
+     [id]="getDropListId(d, hour)"
+     [cdkDropListData]="[]"
+     [cdkDropListConnectedTo]="dropListIds"
+     (cdkDropListDropped)="onDrop($event, d, hour)"
+     [ngClass]="slotClass(d, hour)"
+     (click)="onSlotClick(d, hour)">
+
+
+        <!-- Slot libero -->
+        <ng-container *ngIf="eventsFor(d, hour).length === 0">
+          <div class="event free-flag" matTooltip="Slot libero">
+            <mat-icon color="primary">add</mat-icon>
+          </div>
+        </ng-container>
+
+        <!-- Eventi -->
+        <ng-container *ngFor="let ev of eventsFor(d, hour)">
+          <span *ngIf="ev.isMine" class="user-badge" matTooltip="Tua prenotazione">
+            <mat-icon color="primary">person</mat-icon>
+          </span>
+
+      <div class="event artist-avatar mini"
+       cdkDrag
+     [cdkDragData]="ev"
+     (cdkDragStarted)="setContext.emit(ev)"
+     (click)="$event.stopPropagation(); setContext.emit(ev)"
+     [matMenuTriggerFor]="contextMenu">
+
+  <div class="avatar-wrapper">
+    <img [src]="avatarFor(ev.artistId)" [alt]="artistMap[ev.artistId || ''] || 'Artista'" />
+    <span *ngIf="ev.count && ev.count > 1" class="avatar-badge">+{{ ev.count }}</span>
+  </div>
+
+  <!-- 🔘 Icona per aprire il menù -->
+  <button mat-icon-button
+          class="event-menu-button"
+          [matMenuTriggerFor]="contextMenu"
+          (click)="$event.stopPropagation(); setContext.emit(ev);">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+
+</div>
+
+        </ng-container>
+
+      </div>
+    </div>
+  </div>
+</div>

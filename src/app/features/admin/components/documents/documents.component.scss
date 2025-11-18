@@ -1,0 +1,57 @@
+.documents-section {
+  padding:8vh 2rem;
+  background: #111;
+  color: whitesmoke;
+  min-height: 90vh;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+
+  .section-title {
+    font-size: 1.8rem;
+    color: #d4af37;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+
+  .doc-card {
+    background-color: #1a1a1a;
+    color: whitesmoke;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+
+    mat-icon {
+      font-size: 32px;
+      color: #d4af37;
+      margin-right: 0.5rem;
+    }
+
+    mat-card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    mat-card-subtitle {
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+
+    mat-card-actions {
+      padding: 1rem;
+
+      button {
+        background-color: #d4af37;
+        color: #111;
+        font-weight: 600;
+
+        &:hover {
+          background-color: #c39e28;
+        }
+      }
+    }
+  }
+}

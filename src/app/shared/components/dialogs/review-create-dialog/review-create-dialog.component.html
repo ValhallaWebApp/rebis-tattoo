@@ -1,0 +1,26 @@
+<h2 mat-dialog-title>Lascia una Recensione</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-body">
+  <p>Tatuaggio: <strong>{{ data.tattooTitle }}</strong></p>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Commento</mat-label>
+    <textarea matInput rows="4" formControlName="comment"></textarea>
+    <mat-error *ngIf="form.controls['comment'].invalid">
+Commento obbligatorio (min 10 caratteri)</mat-error>
+  </mat-form-field>
+
+  <mat-label>Valutazione</mat-label>
+  <mat-button-toggle-group formControlName="rating" aria-label="Rating">
+    <mat-button-toggle *ngFor="let star of [1, 2, 3, 4, 5]" [value]="star">
+      {{ star }} ⭐
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Annulla</button>
+  <button mat-flat-button color="primary" (click)="submit()" [disabled]="form.invalid">
+    Invia
+  </button>
+</mat-dialog-actions>

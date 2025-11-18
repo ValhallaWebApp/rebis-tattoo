@@ -1,0 +1,78 @@
+.promo-referral-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  padding: 24px;
+}
+
+mat-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.promo-icon, .referral-icon {
+  font-size: 28px;
+  color: #fdd835;
+  margin-right: 8px;
+}
+
+.promo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.promo-input {
+  width: 100%;
+}
+
+.promo-status {
+  font-weight: 600;
+  margin-top: 8px;
+
+  &.primary {
+    color: #2e7d32;
+  }
+
+  &.warn {
+    color: #c62828;
+  }
+}
+
+.referral-code-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #eee;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.copy-message {
+  font-size: 13px;
+  color: #43a047;
+  margin-bottom: 12px;
+}
+
+.referral-progress {
+  margin: 12px 0;
+
+  p {
+    margin-bottom: 4px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.referral-bonus-list {
+  margin-top: 8px;
+
+  mat-chip {
+    font-weight: 600;
+    font-size: 14px;
+    padding: 6px;
+  }
+}

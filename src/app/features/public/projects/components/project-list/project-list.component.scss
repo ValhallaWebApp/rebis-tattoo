@@ -1,0 +1,131 @@
+.portfolio-page {
+  padding: 8vh 2rem;
+  background-color: transparent;
+  color: white;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  .page-title {
+    text-align: center!important;
+    font-size: 2.4rem;
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    padding-bottom: 2rem;
+    color: black;
+    span {
+      color: #787878;
+      text-align: center;
+    }
+  }
+mat-expansion-panel{
+  margin-bottom: 2rem;
+}
+  .portfolio-filters {
+    display: flex;
+    justify-content: center;
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    margin-bottom: 2rem;
+    button {
+      padding: 0.6rem 1.2rem;
+      background: transparent;
+      border: 1px solid #BE9045;
+      color: #BE9045;
+      font-weight: 500;
+      border-radius: 4px;
+      cursor: pointer;
+
+      &.active,
+      &:hover {
+        background: #BE9045;
+        color: black;
+      }
+    }
+  }
+
+  .portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+
+  .portfolio-card {
+    position: relative;
+    height: 300px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    max-width: 350px;
+    &:hover {
+      transform: scale(1.03);
+    }
+
+    .portfolio-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      opacity: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+      transition: opacity 0.4s ease;
+
+      h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #BE9045;
+        font-family: 'Barlow Semi Condensed', sans-serif;
+
+      }
+
+      p {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        color: #ccc;
+        font-family: 'Barlow Semi Condensed', sans-serif;
+
+      }
+
+      a {
+        color: #BE9045;
+        font-weight: bold;
+        text-decoration: none;
+        font-family: 'Barlow Semi Condensed', sans-serif;
+
+
+        &:hover {
+          text-decoration: underline;
+          font-family: 'Barlow Semi Condensed', sans-serif;
+
+        }
+      }
+    }
+
+    &:hover .portfolio-overlay {
+      opacity: 1;
+    }
+  }
+}
+
+.portfolio-filter-panel {
+  margin: 2rem auto;
+  max-width: 700px;
+
+  .filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 0;
+
+    mat-form-field {
+      flex: 1 1 200px;
+    }
+
+    button {
+      font-weight: 600;
+    }
+  }
+}

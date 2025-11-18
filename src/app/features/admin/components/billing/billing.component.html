@@ -1,0 +1,53 @@
+<mat-card class="section">
+  <mat-card-header class="title">
+    <mat-card-title>Gestione Fatture</mat-card-title>
+  </mat-card-header>
+
+  <!-- Filtri per lo stato dei pagamenti -->
+  <mat-card-content>
+    <div class="filter-options">
+      <mat-button-toggle-group [(ngModel)]="selectedStatus" (ngModelChange)="onStatusChange()" aria-label="Scegli stato">
+        <mat-button-toggle value="all">Tutti</mat-button-toggle>
+        <mat-button-toggle value="pending">In Sospeso</mat-button-toggle>
+        <mat-button-toggle value="paid">Completati</mat-button-toggle>
+        <mat-button-toggle value="cancelled">Annullati</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+
+    <!-- Visualizzazione dei pagamenti filtrati -->
+    <div class="payments-container">
+     <mat-card *ngFor="let payment of filteredPayments">
+  <mat-card-header>
+    <mat-card-title>{{ payment.clientName }}</mat-card-title>
+    <mat-card-subtitle>{{ payment.date | date:'mediumDate' }}</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <p>Importo: <strong>€{{ payment.amount }}</strong></p>
+    <p>Stato:
+      <mat-chip [color]="getStatusColor(payment.status)" selected>
+        {{ payment.status | titlecase }}
+      </mat-chip>
+    </p>
+    <p>Note: {{ payment.notes || '-' }}</p>
+  </mat-card-content>
+
+  <mat-card-actions>
+    <button mat-icon-button color="primary" (click)="goToBooking(payment.bookingId)" matTooltip="Vai alla prenotazione">
+      <mat-icon>event</mat-icon>
+    </button>
+
+    <button mat-icon-button color="accent" (click)="markAsPaid(payment)" *ngIf="payment.status !== 'paid'" matTooltip="Segna come pagata">
+      <mat-icon>check_circle</mat-icon>
+    </button>
+
+    <button mat-icon-button color="warn" (click)="deleteInvoice(payment.id!)" matTooltip="Elimina fattura">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </mat-card-actions>
+</mat-card>
+
+    </div>
+  </mat-card-content>
+</mat-card>

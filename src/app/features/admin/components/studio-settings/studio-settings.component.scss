@@ -1,0 +1,122 @@
+:host {
+  display: block;
+  padding: 3rem 2rem;
+  background: linear-gradient(to bottom right, #f3f3f3, #eaeaea);
+  min-height: 100vh;
+}
+
+mat-card {
+  padding: 2.5rem;
+  border-radius: 16px;
+  background-color: #fff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  max-width: 1024px;
+  margin: 0 auto;
+
+  h2.settings-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #222;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  h3 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #444;
+    border-left: 4px solid #d4af37;
+    padding-left: 0.5rem;
+  }
+}
+
+.settings-form {
+  display: grid;
+  gap: 2rem;
+
+  // Layout a 2 colonne responsive
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .full-width {
+    grid-column: span 2;
+  }
+
+  mat-slide-toggle {
+    font-weight: 500;
+    margin-top: 0.5rem;
+
+    ::ng-deep .mat-slide-toggle-bar {
+      background-color: #ccc;
+    }
+
+    ::ng-deep .mat-slide-toggle-thumb {
+      background-color: #d4af37;
+    }
+
+    &.warn {
+      ::ng-deep .mat-slide-toggle-thumb {
+        background-color: #e53935;
+      }
+    }
+  }
+
+  .weekly-hours {
+    grid-column: span 2;
+
+    .day-row {
+      display: grid;
+      grid-template-columns: 100px 100px 1fr 1fr;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      padding: 0.8rem;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+
+      @media (max-width: 600px) {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+
+      label {
+        font-weight: 600;
+      }
+
+      mat-form-field {
+        margin: 0;
+      }
+    }
+  }
+
+  .actions {
+    grid-column: span 2;
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 2rem;
+
+    button {
+      background-color: #d4af37;
+      color: #000;
+      font-weight: 600;
+      padding: 0.75rem 2rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: #c29b2c;
+      }
+    }
+  }
+}

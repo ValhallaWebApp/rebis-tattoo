@@ -1,0 +1,28 @@
+<div class="month-grid">
+  <div class="day-cell" *ngFor="let day of days" (click)="goToDayView(day.date)">
+    <div class="day-header">
+      <div class="weekday-label">{{ day.date | date: 'EEE' }}</div>
+      <div class="day-number">{{ day.date.getDate() }}</div>
+    </div>
+
+    <div class="month-events">
+      <ng-container *ngIf="day.events.length === 0">
+        <div class="event free-flag">
+          <mat-icon color="primary">add</mat-icon> Libero
+        </div>
+      </ng-container>
+
+      <ng-container *ngFor="let artist of getGroupedEvents(day)">
+        <div class="event artist-avatar mini" [matTooltip]="artistMap[artist.artistId]">
+          <div class="avatar-wrapper">
+            <img [src]="artistPhotoMap[artist.artistId] || '/assets/avatar-default.png'" [alt]="artist.artistId" />
+            <span *ngIf="artist.count > 1" class="avatar-badge">+{{ artist.count }}</span>
+          </div>
+          <span *ngIf="hasMine(day, artist.artistId)" class="user-badge" matTooltip="Tua prenotazione">
+            <mat-icon color="primary">person</mat-icon>
+          </span>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>

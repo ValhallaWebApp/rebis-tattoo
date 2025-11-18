@@ -1,0 +1,11 @@
+<div class="chat-popup">
+  <!-- Floating Icon -->
+  <button mat-fab color="primary" class="chat-toggle" (click)="toggleChat()">
+    <mat-icon>{{ isOpen ? 'close' : 'chat' }}</mat-icon>
+  </button>
+
+  <!-- Chat Box -->
+  <div class="chat-box" *ngIf="isOpen">
+    <app-chat-bot></app-chat-bot>
+  </div>
+</div>

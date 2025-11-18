@@ -1,0 +1,97 @@
+.home-projects {
+  background-color: transparent;
+  color: white;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+  padding: 0px 2rem;
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+
+    h2 {
+      font-size: 2.4rem;
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      text-transform: uppercase;
+      color: black;
+      span {
+        color: #787878;
+      }
+    }
+
+    p {
+      font-size: 1rem;
+      color: #bbb;
+      margin-top: 0.5rem;
+    }
+  }
+
+  .project-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .project-card {
+    position: relative;
+    height: 300px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: scale(1.03);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      opacity: 0;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+      transition: opacity 0.4s ease;
+
+      h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: whitesmoke;
+      }
+
+      p {
+        font-size: 0.95rem;
+        text-align: center;
+        color: #ddd;
+      }
+    }
+
+    &:hover .overlay {
+      opacity: 1;
+    }
+  }
+}
+.projects-cta {
+  text-align: center;
+  margin-top: 3rem;
+
+  .cta-button {
+    background-color: #000000;
+    color: rgb(255, 255, 255);
+    padding: 0.8rem 2rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 6px;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: #e3c03f;
+    }
+  }
+}

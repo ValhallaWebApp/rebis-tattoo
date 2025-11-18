@@ -1,0 +1,58 @@
+<section class="promo-referral-container">
+
+  <!-- 🔓 Codici Promo -->
+  <mat-card class="promo-card">
+    <mat-card-header>
+      <mat-icon class="promo-icon">redeem</mat-icon>
+      <mat-card-title>Codici Promo</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <p>Inserisci un codice per ottenere sconti esclusivi.</p>
+      <form [formGroup]="promoForm" (ngSubmit)="applyPromo()" class="promo-form">
+        <mat-form-field appearance="outline" class="promo-input" [color]="promoStatusColor">
+          <mat-label>Codice promo</mat-label>
+          <input matInput formControlName="code" placeholder="Es. SUMMER25">
+          <mat-icon matSuffix *ngIf="promoStatusIcon">{{ promoStatusIcon }}</mat-icon>
+        </mat-form-field>
+        <button mat-flat-button color="primary" type="submit" [disabled]="promoForm.invalid">Applica</button>
+      </form>
+      <p class="promo-status" [ngClass]="promoStatusColor" *ngIf="promoStatus">{{ promoStatus }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- 🤝 Referral Program -->
+  <mat-card class="referral-card">
+    <mat-card-header>
+      <mat-icon class="referral-icon">group_add</mat-icon>
+      <mat-card-title>Programma Referral</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <p>Condividi il tuo codice con un amico e ricevi un premio!</p>
+
+      <div class="referral-code-box">
+        <span class="referral-code">{{ userReferralCode }}</span>
+        <button mat-icon-button (click)="copyReferralCode()" matTooltip="Copia codice">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </div>
+
+      <p *ngIf="copyMessage" class="copy-message">{{ copyMessage }}</p>
+
+      <div class="referral-progress">
+        <p><strong>Inviti completati:</strong> {{ completedReferrals.length }}</p>
+        <mat-progress-bar mode="determinate" [value]="completedReferrals.length * 10"></mat-progress-bar>
+      </div>
+
+      <div class="referral-bonus-list">
+        <div>
+          <mat-chip *ngFor="let bonus of completedReferrals" color="accent" selected>
+            🎉 {{ bonus }}
+          </mat-chip>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+</section>
