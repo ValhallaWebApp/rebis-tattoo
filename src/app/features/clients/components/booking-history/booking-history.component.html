@@ -1,155 +1,122 @@
 <section class="booking-history">
-
-  <h2 class="title">
-    <mat-icon>book_online</mat-icon> Le tue prenotazioni in Corso
+  <h2 class="section-title">
+    <mat-icon>event</mat-icon> Le tue Prenotazioni
   </h2>
 
-<!-- 📌 Prenotazioni future con avatar artista -->
-<div class="horizontal-scroll">
-  <mat-card *ngIf="nextBooking" class="vertical-card highlight">
-    <img
-      *ngIf="artistPhotoMap[nextBooking.idArtist]"
-      [src]="artistPhotoMap[nextBooking.idArtist]"
-      alt="Avatar artista"
-      class="avatar"
-    />
-    <h3>{{ nextBooking.title }}</h3>
-    <p class="date">
-      <mat-icon>calendar_today</mat-icon>
-      {{ nextBooking.start | date:'fullDate' }}<br />
-      {{ nextBooking.start | date:'shortTime' }}
-    </p>
-    <p class="artist">
-      <mat-icon>person</mat-icon>
-      {{ artistMap[nextBooking.idArtist] || 'Sconosciuto' }}
-    </p>
+  <!-- 📅 Prossima prenotazione -->
+  <div *ngIf="nextBooking" class="highlight-card">
+    <img [src]="artistPhotoMap[nextBooking.idArtist]" alt="Avatar" class="artist-photo" />
+    <div class="details">
+      <h3>{{ nextBooking.title }}</h3>
+      <p><mat-icon inline>calendar_today</mat-icon> {{ nextBooking.start | date:'fullDate' }} – {{ nextBooking.start | date:'shortTime' }}</p>
+      <p><mat-icon inline>person</mat-icon> {{ artistMap[nextBooking.idArtist] || 'Artista sconosciuto' }}</p>
+    </div>
     <div class="actions">
-      <button mat-icon-button matTooltip="Modifica"><mat-icon>edit</mat-icon></button>
+      <button mat-icon-button matTooltip="Modifica">
+        <mat-icon>edit</mat-icon>
+      </button>
+        <button mat-icon-button matTooltip="Elimina">
+        <mat-icon>delete</mat-icon>
+      </button>
       <button mat-icon-button matTooltip="Fattura" (click)="downloadInvoice(nextBooking)">
-        <mat-icon>receipt_long</mat-icon>
+        <mat-icon>receipt</mat-icon>
       </button>
-      <button mat-icon-button matTooltip="Chat" (click)="openWhatsApp(nextBooking)">
+      <button mat-icon-button matTooltip="Chat WhatsApp" (click)="openWhatsApp(nextBooking)">
         <mat-icon>chat</mat-icon>
       </button>
     </div>
-  </mat-card>
+  </div>
 
-  <mat-card *ngFor="let b of otherUpcomingBookings" class="vertical-card">
-    <img
-      *ngIf="artistPhotoMap[b.idArtist]"
-      [src]="artistPhotoMap[b.idArtist]"
-      alt="Avatar artista"
-      class="avatar"
-    />
-    <h3>{{ b.title }}</h3>
-    <p class="date">
-      <mat-icon>calendar_today</mat-icon>
-      {{ b.start | date:'fullDate' }}<br />
-      {{ b.start | date:'shortTime' }}
-    </p>
-    <p class="artist">
-      <mat-icon>person</mat-icon>
-      {{ artistMap[b.idArtist] || 'Sconosciuto' }}
-    </p>
-    <div class="actions">
-      <button mat-icon-button matTooltip="Modifica"><mat-icon>edit</mat-icon></button>
-      <button mat-icon-button matTooltip="Fattura" (click)="downloadInvoice(b)">
-        <mat-icon>receipt_long</mat-icon>
-      </button>
-      <button mat-icon-button matTooltip="Chat" (click)="openWhatsApp(b)">
-        <mat-icon>chat</mat-icon>
-      </button>
-    </div>
-  </mat-card>
-</div>
-  <h3 class="title">
-    <mat-icon>book_online</mat-icon> Storico Prenotazioni
-  </h3>
-
-  <!-- 🔘 Toggle tabs -->
+  <!-- 📋 Tab -->
   <div class="tab-toggle">
-      <button mat-button [class.active]="selectedView === 'late'" (click)="selectedView = 'late'">Ritardi</button>
+    <button mat-button [class.active]="selectedView === 'late'" (click)="selectedView = 'late'">Ritardi</button>
     <button mat-button [class.active]="selectedView === 'completed'" (click)="selectedView = 'completed'">Completate</button>
     <button mat-button [class.active]="selectedView === 'cancelled'" (click)="selectedView = 'cancelled'">Annullate</button>
   </div>
+<!-- 🔍 Filtri -->
+<div class="filters">
+  <!-- <mat-form-field appearance="fill">
+    <mat-label>Artista</mat-label>
+    <mat-select [(ngModel)]="filters.artist">
+      <mat-option value="">Tutti</mat-option>
+      <mat-option *ngFor="let a of artistOptions" [value]="a.id">{{ a.name }}</mat-option>
+    </mat-select>
+  </mat-form-field> -->
 
-  <!-- 📋 Liste dinamiche -->
-  <div class="booking-content" [@slideFade]>
-<ng-container [ngSwitch]="selectedView">
-<div class="empty" *ngIf="selectedView === 'late' && pastUncompleted.length === 0">
-  <p>Nessuna prenotazione in ritardo</p>
-</div>
-<div class="empty" *ngIf="selectedView === 'completed' && completedBookings.length === 0">
-  <p>Nessuna prenotazione completata</p>
-</div>
-<div class="empty" *ngIf="selectedView === 'cancelled' && cancelledBookings.length === 0">
-  <p>Nessuna prenotazione annullata</p>
+  <mat-form-field appearance="fill">
+    <mat-label>Fascia oraria</mat-label>
+    <mat-select [(ngModel)]="filters.timeSlot">
+      <mat-option value="">Tutte</mat-option>
+      <mat-option value="morning">Mattina</mat-option>
+      <mat-option value="afternoon">Pomeriggio</mat-option>
+      <mat-option value="evening">Sera</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Periodo</mat-label>
+    <mat-select [(ngModel)]="filters.period">
+      <mat-option value="">Tutti</mat-option>
+      <mat-option value="30">Ultimi 30 giorni</mat-option>
+      <mat-option value="90">Ultimi 3 mesi</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="search-field" >
+    <mat-label>🔍 Cerca</mat-label>
+    <input matInput [(ngModel)]="filters.keyword" placeholder="Titolo o descrizione" />
+  </mat-form-field>
 </div>
 
-  <!-- ⚠️ Ritardi -->
-  <div class="container-card" *ngSwitchCase="'late'" @slideFade>
-    <mat-card *ngFor="let b of pastUncompleted" class="booking-card late">
-      <div class="info">
-        <strong>{{ b.title }}</strong><br />
-        <small>{{ b.start | date:'short' }} – {{ artistMap[b.idArtist] }}</small>
-      </div>
-      <mat-chip color="warn" selected>In ritardo</mat-chip>
-    </mat-card>
+  <!-- 📜 Lista prenotazioni -->
+  <div class="booking-list" [@slideFade]>
+    <ng-container [ngSwitch]="selectedView">
+
+      <!-- Ritardi -->
+      <ng-container *ngSwitchCase="'late'">
+        <p class="empty" *ngIf="pastUncompleted.length === 0">Nessun ritardo</p>
+        <mat-card *ngFor="let b of filteredLateBookings" class="booking-card late">
+          <div class="info">
+            <strong>{{ b.title }}</strong>
+            <p>{{ b.start | date:'short' }} – {{ artistMap[b.idArtist] }}</p>
+          </div>
+          <mat-chip color="warn" selected>In ritardo</mat-chip>
+        </mat-card>
+      </ng-container>
+
+      <!-- Completate -->
+      <ng-container *ngSwitchCase="'completed'">
+        <p class="empty" *ngIf="completedBookings.length === 0">Nessuna completata</p>
+        <mat-card *ngFor="let b of filteredCompletedBookings" class="booking-card completed">
+          <div class="info">
+            <strong>{{ b.title }}</strong>
+            <p>{{ b.start | date:'short' }} – {{ artistMap[b.idArtist] }}</p>
+          </div>
+          <div class="actions">
+            <button mat-icon-button matTooltip="Fattura" (click)="downloadInvoice(b)">
+              <mat-icon>receipt_long</mat-icon>
+            </button>
+            <button *ngIf="!reviewMap[b.id]" mat-icon-button color="accent" matTooltip="Lascia recensione" (click)="openReviewDialog(b)">
+              <mat-icon>rate_review</mat-icon>
+            </button>
+            <button *ngIf="reviewMap[b.id]" mat-icon-button color="primary" matTooltip="Vedi recensione" (click)="viewReview(reviewMap[b.id])">
+              <mat-icon>visibility</mat-icon>
+            </button>
+          </div>
+        </mat-card>
+      </ng-container>
+
+      <!-- Annullate -->
+      <ng-container *ngSwitchCase="'cancelled'">
+        <p class="empty" *ngIf="cancelledBookings.length === 0">Nessuna annullata</p>
+        <mat-card *ngFor="let b of filteredCancelledBookings" class="booking-card cancelled">
+          <div class="info">
+            <strong>{{ b.title }}</strong>
+            <p>{{ b.start | date:'short' }} – {{ artistMap[b.idArtist] }}</p>
+          </div>
+        </mat-card>
+      </ng-container>
+
+    </ng-container>
   </div>
-
- <!-- ✅ Completate -->
-<div class="container-card" *ngSwitchCase="'completed'" @slideFade>
-  <mat-card *ngFor="let b of completedBookings" class="booking-card completed">
-    <div class="info">
-      <strong>{{ b.title }}</strong><br />
-      <small>{{ b.start | date:'short' }} – {{ artistMap[b.idArtist] }}</small>
-    </div>
-    <div class="actions">
-      <button mat-icon-button matTooltip="Scarica fattura" (click)="downloadInvoice(b)">
-        <mat-icon>receipt_long</mat-icon>
-      </button>
-<ng-container *ngIf="b.status === 'completed'">
-  <!-- Se NON recensito -->
-  <button
-    mat-icon-button
-    color="accent"
-    matTooltip="Lascia una recensione"
-    *ngIf="!reviewMap[b.id]"
-    (click)="openReviewDialog(b)"
-  >
-    <mat-icon>rate_review</mat-icon>
-  </button>
-
-  <!-- Se GIÀ recensito -->
-  <button
-    mat-icon-button
-    color="primary"
-    matTooltip="Visualizza recensione"
-    *ngIf="reviewMap[b.id]"
-    (click)="viewReview(reviewMap[b.id])"
-  >
-    <mat-icon>visibility</mat-icon>
-  </button>
-</ng-container>
-
-
-
-    </div>
-  </mat-card>
-</div>
-
-
-  <!-- ❌ Annullate -->
-  <div class="container-card" *ngSwitchCase="'cancelled'" @slideFade>
-    <mat-card *ngFor="let b of cancelledBookings" class="booking-card cancelled">
-      <div class="info">
-        <strong>{{ b.title }}</strong><br />
-        <small>{{ b.start | date:'short' }} – {{ artistMap[b.idArtist] }}</small>
-      </div>
-    </mat-card>
-  </div>
-
-</ng-container>
-  </div>
-
 </section>

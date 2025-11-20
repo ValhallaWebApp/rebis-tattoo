@@ -1,84 +1,234 @@
-<div class="project-management">
-  <mat-toolbar color="primary">
-    <span>Gestione Progetti</span>
-    <span class="spacer"></span>
-    <button mat-icon-button (click)="openDrawer()">
+<section class="projects-management">
+  <!-- HEADER -->
+  <div class="section-title">
+    <div class="title-left">
+      <mat-icon>brush</mat-icon>
+      <span>Gestione Tatuaggi</span>
+    </div>
+
+    <button
+      mat-mini-fab
+      color="primary"
+      (click)="openDrawer()"
+      matTooltip="Nuovo progetto"
+    >
       <mat-icon>add</mat-icon>
     </button>
-  </mat-toolbar>
+  </div>
 
-  <div class="content">
-    <mat-drawer-container class="drawer-container">
-      <mat-drawer #drawer mode="over" position="end" class="drawer" [disableClose]="false">
-        <h2 class="form-title">{{ selectedProject ? 'Modifica' : 'Nuovo' }} Progetto</h2>
+  <mat-drawer-container class="drawer-container">
+    <!-- DRAWER LATERALE: CREA / MODIFICA PROGETTO -->
+    <mat-drawer #drawer mode="side" position="end" class="project-drawer">
+      <div class="drawer-header">
+        <div>
+          <h3>{{ selectedProject ? 'Modifica progetto' : 'Nuovo progetto' }}</h3>
+          <p class="subtitle">
+            Definisci il progetto tatuaggio, il genere, le sedute previste e la visibilità.
+          </p>
+        </div>
 
-        <form [formGroup]="form" class="project-form" (ngSubmit)="saveProject()">
+        <button mat-icon-button (click)="closeDrawer()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="drawer-scroll">
+        <!-- PREVIEW -->
+        <mat-card class="preview-card">
+          <div class="preview-main">
+            <div class="icon-pill">
+              <mat-icon>brush</mat-icon>
+            </div>
+
+            <div>
+              <h4>{{ form.value.name || 'Nuovo progetto' }}</h4>
+              <p class="meta">
+                {{ form.value.numeroSedute || 1 }} sedute •
+                {{ form.value.genere || 'Genere non impostato' }}
+              </p>
+            </div>
+          </div>
+
+          <span
+            class="status-pill"
+            [ngClass]="form.value.show ? 'active' : 'inactive'"
+          >
+            {{ form.value.show ? 'Visibile' : 'Nascosto' }}
+          </span>
+        </mat-card>
+
+        <!-- FORM -->
+        <form [formGroup]="form" (ngSubmit)="saveProject()" class="project-form">
           <mat-form-field appearance="outline">
             <mat-label>Nome progetto</mat-label>
             <input matInput formControlName="name" />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Genere</mat-label>
-            <input matInput formControlName="genere" />
+            <mat-label>Genere / Stile</mat-label>
+            <input
+              matInput
+              formControlName="genere"
+              placeholder="Realistico, giapponese, blackwork..."
+            />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Note</mat-label>
-            <textarea matInput formControlName="note" rows="3"></textarea>
+            <textarea matInput rows="3" formControlName="note"></textarea>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Numero di sedute</mat-label>
-            <input type="number" matInput formControlName="numeroSedute" min="1" />
-          </mat-form-field>
+          <div class="field-group">
+            <mat-form-field appearance="outline">
+              <mat-label>Numero sedute</mat-label>
+              <input type="number" matInput formControlName="numeroSedute" />
+            </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Data Progetto</mat-label>
-            <input matInput [matDatepicker]="picker" formControlName="dataProgetto" />
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-          </mat-form-field>
-
-          <mat-slide-toggle formControlName="show">Visibile ai clienti</mat-slide-toggle>
-
-          <!-- FUTURO: upload immagini per copertina -->
-          <!--
-          <div class="upload">
-            <label>Copertina:</label>
-            <input type="file" multiple />
+            <mat-slide-toggle formControlName="show">
+              Visibile per lo staff
+            </mat-slide-toggle>
           </div>
-          -->
+
+          <mat-form-field appearance="outline">
+            <mat-label>Artista (ID)</mat-label>
+            <input matInput formControlName="artistId" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Copertine (lista URL o ID immagini)</mat-label>
+            <input matInput formControlName="copertine" />
+          </mat-form-field>
 
           <div class="form-actions">
-            <button mat-stroked-button color="warn" type="button" (click)="closeDrawer()">Annulla</button>
-            <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
-              Salva
+            <button mat-stroked-button type="button" (click)="closeDrawer()">
+              Annulla
+            </button>
+            <button mat-flat-button color="primary" type="submit">
+              {{ selectedProject ? 'Salva modifiche' : 'Crea progetto' }}
             </button>
           </div>
         </form>
-      </mat-drawer>
+      </div>
+    </mat-drawer>
 
-      <mat-drawer-content>
-        <div class="grid">
-          <mat-card class="project-card" *ngFor="let project of projects">
-            <img
-              mat-card-image class="thumb-project"
-              [src]="project?.copertine?.[0] || 'https://via.placeholder.com/400x200?text=Copertina'"
-              alt="Copertina progetto" />
-            <mat-card-title>{{ project.name }}</mat-card-title>
-            <mat-card-subtitle>{{ project.genere }} · {{ project.numeroSedute }} sedute</mat-card-subtitle>
-            <mat-card-content>
-              <p>{{ project.note }}</p>
-            </mat-card-content>
-            <mat-card-actions>
-              <button mat-button (click)="openDrawer(project)">Modifica</button>
-              <button mat-button (click)="goToSessions(project.id)" color="accent">Gestisci Sedute</button>
+    <!-- CONTENUTO PRINCIPALE: FILTRI + LISTA PROGETTI + SESSIONI -->
+    <mat-drawer-content class="drawer-content">
+      <!-- 🔍 FILTRI MINIMAL -->
+      <form [formGroup]="filterForm" class="filters">
+        <mat-form-field>
+          <mat-label>Nome</mat-label>
+          <input matInput formControlName="name" placeholder="Cerca progetto" />
+        </mat-form-field>
 
-            </mat-card-actions>
-          </mat-card>
-        </div>
-      </mat-drawer-content>
-    </mat-drawer-container>
-  </div>
-</div>
+        <mat-form-field>
+          <mat-label>Genere</mat-label>
+          <input matInput formControlName="genere" placeholder="Es. realismo" />
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Visibilità</mat-label>
+          <mat-select formControlName="show">
+            <mat-option value="">Tutti</mat-option>
+            <mat-option value="visible">Solo visibili</mat-option>
+            <mat-option value="hidden">Solo nascosti</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </form>
+
+      <mat-accordion class="project-accordion" multi>
+        <mat-expansion-panel
+          *ngFor="let project of filteredProjects"
+          class="project-panel"
+          [class.inactive]="!project.show"
+        >
+          <mat-expansion-panel-header>
+            <div class="panel-header-left">
+              <div class="icon-pill small">
+                <mat-icon>brush</mat-icon>
+              </div>
+
+              <div class="panel-text">
+                <h3>{{ project.name }}</h3>
+                <p class="meta">
+                  {{ project.numeroSedute }} sedute
+                  <span *ngIf="project.genere">• {{ project.genere }}</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="panel-header-right">
+              <span
+                class="status-chip"
+                [class.active]="project.show"
+                [class.inactive]="!project.show"
+              >
+                {{ project.show ? 'Visibile' : 'Nascosto' }}
+              </span>
+
+              <button
+                mat-icon-button
+                matTooltip="Modifica progetto"
+                (click)="$event.stopPropagation(); openDrawer(project)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+
+              <button
+                mat-icon-button
+                color="accent"
+                matTooltip="Vai alle sessioni"
+                (click)="$event.stopPropagation(); goToSessions(project.id)"
+              >
+                <mat-icon>event</mat-icon>
+              </button>
+            </div>
+          </mat-expansion-panel-header>
+
+          <div class="panel-body">
+            <p class="note">
+              {{ project.note || 'Nessuna nota aggiuntiva per questo progetto.' }}
+            </p>
+
+            <div class="sessions-block">
+              <div class="sessions-header">
+                <span>Sessioni collegate</span>
+                <button
+                  mat-stroked-button
+                  color="primary"
+                  (click)="goToSessions(project.id)"
+                >
+                  Gestisci sessioni
+                </button>
+              </div>
+
+              <div
+                class="session-row"
+                *ngFor="let session of getProjectSessions(project)"
+              >
+                <div class="session-main">
+                  <span class="session-name">
+                    {{ session.name || 'Sessione' }}
+                  </span>
+                  <span class="session-date" *ngIf="session.date">
+                    {{ session.date | date: 'shortDate' }}
+                  </span>
+                </div>
+
+                <span class="session-status" *ngIf="session.status">
+                  {{ session.status }}
+                </span>
+              </div>
+
+              <p
+                class="sessions-empty"
+                *ngIf="getProjectSessions(project).length === 0"
+              >
+                Nessuna sessione collegata al progetto.
+              </p>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </mat-drawer-content>
+  </mat-drawer-container>
+</section>

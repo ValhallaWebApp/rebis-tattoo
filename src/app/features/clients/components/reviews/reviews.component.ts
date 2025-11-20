@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, effect, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,7 +9,6 @@ import { AuthService } from '../../../../core/services/auth/authservice';
 import { Review, ReviewsService } from '../../../../core/services/reviews/rewies.service';
 import { StaffService } from '../../../../core/services/staff/staff.service';
 import { MatDrawer } from '@angular/material/sidenav';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-reviews',
@@ -24,7 +23,7 @@ export class ReviewsComponent implements OnInit {
   private readonly snackbar = inject(MatSnackBar);
   private readonly reviewsService = inject(ReviewsService);
   private readonly staffService = inject(StaffService);
-  MatTooltipModule = inject(MatTooltipModule);
+
   @ViewChild('reviewDrawer') reviewDrawer!: MatDrawer;
 
   user: any;
@@ -37,52 +36,23 @@ export class ReviewsComponent implements OnInit {
   artistCtrl = this.fb.control('');
   selectedArtistId = '';
   selectedReview: Review | null = null;
-
-
-ngOnInit() {
-
-  effect(() => {
+  submitting = false;
+  readonly _loadUserEffect = effect(() => {
     const user = this.auth.userSig();
     if (user) {
- this.user = user;
-      this.loadData();    }
+      this.user = user;
+      this.loadData();
+    }
   });
-
-
+  ngOnInit() {
 
 
     this.reviewForm = this.fb.group({
       author: [{ value: '', disabled: true }, Validators.required],
       comment: ['', [Validators.required, Validators.minLength(10)]],
       rating: [5, Validators.required],
-      artistId: ['']
+      artistId: ['', Validators.required]
     });
-  }
-  editReview(review: Review): void {
-    this.selectedReview = review;
-    this.reviewForm.patchValue({
-      author: this.user.name,
-      comment: review.comment,
-      rating: review.rating
-    });
-    this.artistCtrl.setValue(this.getArtistNameById(review.artistId));
-    this.selectedArtistId = review.artistId || '';
-    this.reviewDrawer.open();
-  }
-
-  canEditReview(review: Review): boolean {
-    const now = Date.now();
-    const fiveMinutes = 5 * 60 * 1000; // 5 minuti in millisecondi
-    return now - review.date <= fiveMinutes;
-  }
-
-  toggleDrawer(): void {
-    if (this.reviewDrawer?.opened) {
-      this.reviewDrawer.close();
-      this.selectedReview = null;
-    } else {
-      this.openEmptyDrawer();
-    }
   }
 
   loadData(): void {
@@ -108,30 +78,37 @@ ngOnInit() {
     return this.artists.filter(a => a.name.toLowerCase().includes(filterValue));
   }
 
-  getArtistNameById(id: string | undefined): string {
-    if (!id) return 'Artista';
-    const artist = this.artists.find(a => a.id === id);
-    return artist?.name || 'Artista';
-  }
-
-  getArtistPhotoById(id: string | undefined): string | null {
-    if (!id) return null;
-    const artist = this.artists.find(a => a.id === id);
-    return artist?.photoUrl || null;
-  }
-
   openEmptyDrawer(): void {
     this.selectedReview = null;
     this.reviewForm.enable();
     this.reviewForm.reset({
       author: this.user.name,
       comment: '',
-      rating: 5
+      rating: 5,
+      artistId: ''
     });
-    this.artistCtrl.enable();
     this.artistCtrl.setValue('');
     this.selectedArtistId = '';
     this.reviewDrawer.open();
+  }
+
+  editReview(review: Review): void {
+    this.selectedReview = review;
+    this.reviewForm.patchValue({
+      author: this.user.name,
+      comment: review.comment,
+      rating: review.rating,
+      artistId: review.artistId
+    });
+    this.artistCtrl.setValue(this.getArtistNameById(review.artistId));
+    this.selectedArtistId = review.artistId || '';
+    this.reviewDrawer.open();
+  }
+
+  canEditReview(review: Review): boolean {
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+    return now - review.date <= fiveMinutes;
   }
 
   viewReview(review: Review): void {
@@ -139,7 +116,8 @@ ngOnInit() {
     this.reviewForm.reset({
       author: this.user.name,
       comment: review.comment,
-      rating: review.rating
+      rating: review.rating,
+      artistId: review.artistId
     });
 
     const artist = this.artists.find(a => a.id === review.artistId);
@@ -156,61 +134,49 @@ ngOnInit() {
   selectArtist(artist: any): void {
     this.artistCtrl.setValue(artist.name);
     this.selectedArtistId = artist.id;
+    this.reviewForm.get('artistId')?.setValue(artist.id);
   }
 
-submitReview(): void {
-  if (this.reviewForm.invalid) return;
+  submitReview(): void {
+    if (this.reviewForm.invalid) return;
+    this.submitting = true;
 
-  // Se è una modifica
-  if (this.selectedReview) {
-    if (!this.canEditReview(this.selectedReview)) {
-      this.snackbar.open('Modifica non consentita: tempo scaduto.', 'Chiudi', { duration: 3000 });
-      return;
-    }
+    if (this.selectedReview) {
+      if (!this.canEditReview(this.selectedReview)) {
+        this.snackbar.open('Modifica non consentita: tempo scaduto.', 'Chiudi', { duration: 3000 });
+        this.submitting = false;
+        return;
+      }
 
+      const updatedData: Partial<Review> = {
+        comment: this.reviewForm.value.comment,
+        rating: this.reviewForm.value.rating,
+        artistId: this.selectedArtistId
+      };
 
-  const updatedData: Partial<Review> = {
-    comment: this.reviewForm.value.comment,
-    rating: this.reviewForm.value.rating,
-    artistId: this.selectedArtistId
-  };
       this.reviewsService.updateReview(this.selectedReview.id, updatedData).then(() => {
-    this.snackbar.open('Recensione aggiornata.', 'Chiudi', { duration: 3000 });
-    this.closeDrawerAndReset();
-  });
+        this.snackbar.open('Recensione aggiornata.', 'Chiudi', { duration: 3000 });
+        this.closeDrawerAndReset();
+      }).finally(() => this.submitting = false);
 
-  } else {
-    // Nuova recensione
-    const newReview: Review = {
-      id: '',
-      userId: this.user.uid,
-      tattooTitle: 'Altro',
-      comment: this.reviewForm.value.comment,
-      rating: this.reviewForm.value.rating,
-      status: 'pending',
-      date: Date.now(),
-      artistId: this.selectedArtistId
-    };
+    } else {
+      const newReview: Review = {
+        id: '',
+        userId: this.user.uid,
+        tattooTitle: 'Altro',
+        comment: this.reviewForm.value.comment,
+        rating: this.reviewForm.value.rating,
+        status: 'pending',
+        date: Date.now(),
+        artistId: this.selectedArtistId
+      };
 
-    this.reviewsService.addReview(newReview).then(() => {
-      this.snackbar.open('Recensione inviata! In attesa di approvazione.', 'Chiudi', { duration: 3000 });
-      this.closeDrawerAndReset();
-    });
+      this.reviewsService.addReview(newReview).then(() => {
+        this.snackbar.open('Recensione inviata! In attesa di approvazione.', 'Chiudi', { duration: 3000 });
+        this.closeDrawerAndReset();
+      }).finally(() => this.submitting = false);
+    }
   }
-}
-private closeDrawerAndReset(): void {
-  this.reviewForm.reset({
-    author: this.user.name,
-    comment: '',
-    rating: 5
-  });
-  this.artistCtrl.setValue('');
-  this.selectedArtistId = '';
-  this.selectedReview = null;
-  this.reviewDrawer.close();
-  this.loadData();
-}
-
 
   deleteReview(id: string): void {
     if (confirm('Confermi di voler eliminare la recensione?')) {
@@ -226,5 +192,40 @@ private closeDrawerAndReset(): void {
     return status === 'all'
       ? this.reviews
       : this.reviews.filter(r => r.status === status);
+  }
+
+  getArtistNameById(id: string | undefined): string {
+    if (!id) return 'Artista';
+    const artist = this.artists.find(a => a.id === id);
+    return artist?.name || 'Artista';
+  }
+
+  getArtistPhotoById(id: string | undefined): string | null {
+    if (!id) return null;
+    const artist = this.artists.find(a => a.id === id);
+    return artist?.photoUrl || null;
+  }
+
+  toggleDrawer(): void {
+    if (this.reviewDrawer?.opened) {
+      this.reviewDrawer.close();
+      this.selectedReview = null;
+    } else {
+      this.openEmptyDrawer();
+    }
+  }
+
+  private closeDrawerAndReset(): void {
+    this.reviewForm.reset({
+      author: this.user.name,
+      comment: '',
+      rating: 5,
+      artistId: ''
+    });
+    this.artistCtrl.setValue('');
+    this.selectedArtistId = '';
+    this.selectedReview = null;
+    this.reviewDrawer.close();
+    this.loadData();
   }
 }

@@ -1,30 +1,35 @@
-<h2 class="section-title">
-  Gestisci le Recensioni Utente
-  <button mat-icon-button (click)="showFilters = !showFilters" [matTooltip]="showFilters ? 'Nascondi filtri' : 'Mostra filtri'">
-    <mat-icon>{{ showFilters ? 'expand_less' : 'tune' }}</mat-icon>
-  </button>
-</h2>
 
-<section class="review-admin-section" [formGroup]="filterForm">
+<section class="review-admin-container" [formGroup]="filterForm">
+  <h2 class="section-title">
+    Gestisci le Recensioni Utente
 
-  <!-- 🔍 Barra filtri visibile solo se showFilters === true -->
+    <button mat-icon-button (click)="showFilters = !showFilters"
+            [matTooltip]="showFilters ? 'Nascondi filtri' : 'Mostra filtri'">
+      <mat-icon>{{ showFilters ? 'expand_less' : 'tune' }}</mat-icon>
+    </button>
+  </h2>
+
+  <!-- FILTRI -->
   <div class="filters" *ngIf="showFilters">
     <mat-form-field appearance="outline">
       <mat-label>Ricerca</mat-label>
-      <input matInput [formControl]="searchControl" placeholder="Nome o email" />
+      <input matInput [formControl]="searchControl" placeholder="Nome, commento o titolo tattoo" />
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Artista</mat-label>
       <mat-select [formControl]="artistControl">
         <mat-option value="">Tutti</mat-option>
-        <mat-option *ngFor="let artist of artists" [value]="artist.id">{{ artist.name }}</mat-option>
+        <mat-option *ngFor="let artist of artists" [value]="artist.id">
+          {{ artist.name }}
+        </mat-option>
       </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Rating minimo</mat-label>
       <mat-select [formControl]="ratingControl">
+        <mat-option value="">Tutti</mat-option>
         <mat-option *ngFor="let r of [1,2,3,4,5]" [value]="r">{{ r }}+</mat-option>
       </mat-select>
     </mat-form-field>
@@ -43,47 +48,62 @@
       <mat-label>Ordina per</mat-label>
       <mat-select [formControl]="orderByControl">
         <mat-option value="date_desc">Data (recenti)</mat-option>
-        <mat-option value="date_asc">Data (meno recenti)</mat-option>
+        <mat-option value="date_asc">Data (vecchie)</mat-option>
         <mat-option value="rating_desc">Valutazione (alta)</mat-option>
         <mat-option value="rating_asc">Valutazione (bassa)</mat-option>
       </mat-select>
     </mat-form-field>
 
-    <button mat-stroked-button color="warn" (click)="resetFilters()">
-      <mat-icon>restart_alt</mat-icon> Reset filtri
+    <button mat-stroked-button color="warn" class="reset-btn" (click)="resetFilters()">
+      <mat-icon>restart_alt</mat-icon>
+      Reset
     </button>
   </div>
 
-  <!-- 📄 Lista recensioni -->
+  <!-- LISTA RECENSIONI -->
   <div class="review-grid">
     <mat-card *ngFor="let r of filteredReviews$ | async" class="review-card">
-      <mat-card-header>
-        <div mat-card-avatar class="avatar">
-          <img *ngIf="getArtistPhotoById(r.artistId || '')" [src]="getArtistPhotoById(r.artistId || '')" />
-        </div>
-      </mat-card-header>
 
-      <mat-card-content>
-        <p class="comment">"{{ r.comment }}"</p>
-        <div class="stars">
-          <mat-icon *ngFor="let s of [1,2,3,4,5]">
-            {{ s <= r.rating ? 'star' : 'star_border' }}
-          </mat-icon>
+      <div class="header">
+        <img class="avatar"
+             *ngIf="getArtistPhotoById(r.artistId || '')"
+             [src]="getArtistPhotoById(r.artistId || '')" />
+        <div class="info">
+          <h3>{{ r.tattooTitle || 'Recensione' }}</h3>
+          <p class="date">{{ r.date | date:'mediumDate' }}</p>
         </div>
-        <p class="date">{{ r.date | date:'mediumDate' }}</p>
-        <mat-chip [color]="r.status === 'approved' ? 'primary' : r.status === 'pending' ? 'accent' : 'warn'" selected>
+
+        <mat-chip class="status-chip"
+                  [ngClass]="{
+                    'approved': r.status === 'approved',
+                    'pending': r.status === 'pending',
+                    'rejected': r.status === 'rejected'
+                  }">
           {{ r.status.toUpperCase() }}
         </mat-chip>
-      </mat-card-content>
+      </div>
 
-      <mat-card-actions class="action-buttons" align="end">
-        <button mat-icon-button (click)="updateStatus(r, 'approved')" [ngClass]="{'active-button': r.status === 'approved'}">
+      <p class="comment">“{{ r.comment }}”</p>
+
+      <div class="stars">
+        <mat-icon *ngFor="let s of [1,2,3,4,5]">
+          {{ s <= r.rating ? 'star' : 'star_border' }}
+        </mat-icon>
+      </div>
+
+      <div class="actions">
+        <button mat-icon-button class="approve-btn"
+                (click)="updateStatus(r, 'approved')"
+                [class.active]="r.status === 'approved'">
           <mat-icon>check</mat-icon>
         </button>
-        <button mat-icon-button (click)="updateStatus(r, 'rejected')" [ngClass]="{'active-button': r.status === 'rejected'}">
+
+        <button mat-icon-button class="reject-btn"
+                (click)="updateStatus(r, 'rejected')"
+                [class.active]="r.status === 'rejected'">
           <mat-icon>close</mat-icon>
         </button>
-      </mat-card-actions>
+      </div>
     </mat-card>
   </div>
 </section>

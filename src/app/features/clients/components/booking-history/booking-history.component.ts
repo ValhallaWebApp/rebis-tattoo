@@ -11,11 +11,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { ReviewsService } from '../../../../core/services/reviews/rewies.service';
 import { Router } from '@angular/router';
 import { combineLatest, Subscription } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-booking-history',
   standalone: true,
-  imports: [CommonModule, MaterialModule],
+  imports: [CommonModule, MaterialModule,FormsModule],
   styleUrls: ['./booking-history.component.scss'],
   templateUrl: './booking-history.component.html',
   animations: [
@@ -38,12 +39,47 @@ export class BookingHistoryComponent implements OnInit {
   private readonly snackbar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
   private readonly reviewsService = inject(ReviewsService);
+
   private readonly router = inject(Router);
   private readonly injector = inject(Injector); // ✅ injection context per effect()
 
   // view switcher
   selectedView: 'active' | 'late' | 'completed' | 'cancelled' = 'completed';
   readonly WHATSAPP_NUMBER = '393333333333';
+filters = {
+  artist: '',
+  timeSlot: '',
+  period: '',
+  keyword: ''
+};
+
+get filteredCompletedBookings() {
+  return this.completedBookings.filter(b => this.applyFilters(b));
+}
+
+applyFilters(b: Booking): boolean {
+  const { artist, timeSlot, period, keyword } = this.filters;
+
+  const matchArtist = !artist || b.idArtist === artist;
+
+  const hour = new Date(b.start).getHours();
+  const matchTime =
+    !timeSlot ||
+    (timeSlot === 'morning' && hour < 12) ||
+    (timeSlot === 'afternoon' && hour >= 12 && hour < 17) ||
+    (timeSlot === 'evening' && hour >= 17);
+
+  const matchPeriod =
+    !period ||
+    new Date(b.start) >= new Date(Date.now() - +period * 86400000);
+
+  const matchKeyword =
+    !keyword ||
+    b.title?.toLowerCase().includes(keyword.toLowerCase()) ||
+    b.description?.toLowerCase().includes(keyword.toLowerCase());
+
+  return matchArtist && matchTime && matchPeriod && matchKeyword;
+}
 
   // state
   user: any;
@@ -58,6 +94,14 @@ export class BookingHistoryComponent implements OnInit {
 
   artistMap: Record<string, string> = {};
   artistPhotoMap: Record<string, string> = {};
+get filteredLateBookings() {
+  return this.pastUncompleted.filter(b => this.applyFilters(b));
+}
+
+
+get filteredCancelledBookings() {
+  return this.cancelledBookings.filter(b => this.applyFilters(b));
+}
 
   // ✅ effect in field initializer (niente NG0203) + cleanup delle subscribe
   private readonly loadEffect = effect((onCleanup) => {

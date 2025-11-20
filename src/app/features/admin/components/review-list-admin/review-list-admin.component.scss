@@ -1,101 +1,177 @@
-.review-admin-section {
+/* =============================
+   REBIS DARK PREMIUM LAYOUT
+   ============================= */
+
+.review-admin-container {
+  padding: 2rem;
+  background-color: #121212;
+  min-height: 100vh;
+  color: #f2f2f2;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 24px;
-
-  .filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-
-  .review-grid {
-    display: grid;
-    gap: 16px;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  }
-
-  .review-card {
-    position: relative;
-
-    .avatar img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .stars {
-      display: flex;
-      gap: 2px;
-      margin-top: 8px;
-    }
-
-    .comment {
-      font-style: italic;
-      margin-top: 4px;
-    }
-
-    .date {
-      font-size: 0.8rem;
-      color: gray;
-    }
-
-    .action-buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-  }
+  gap: 1.5rem;
 }
-/* file review-list-admin.component.scss */
 
-.active-button {
-  background-color: #212121; // grigio molto scuro
-  color: white;
-  border-radius: 4px;
-
-  &:hover {
-    background-color: #424242;
-  }
-}
-.filter-panel {
-  margin-bottom: 16px;
-
-  .filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-
-    mat-form-field {
-      flex: 1 1 200px;
-    }
-
-    button {
-      align-self: flex-end;
-    }
-  }
-}
+/* TITLE */
 .section-title {
-
-  margin-bottom: 1rem;
-
-  button {
-    margin-left: auto;
-  }
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin: 0;
+  padding: 0;
+  color: #fff;
 }
+
+/* =============================
+   FILTRI
+   ============================= */
 
 .filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: .75rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 
   mat-form-field {
-    flex: 1 1 250px;
+    width: 100%;
+
+    .mat-mdc-input-element {
+      color: #f2f2f2 !important;
+    }
+    .mat-mdc-floating-label {
+      color: rgba(255,255,255,0.65) !important;
+    }
+    .mat-mdc-form-field-outline {
+      border-color: rgba(255,255,255,0.25) !important;
+    }
   }
 
+  .reset-btn {
+    height: 56px;
+    border-radius: 12px;
+  }
+}
+
+/* =============================
+   LISTA RECENSIONI
+   ============================= */
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1rem;
+}
+
+/* CARD */
+.review-card {
+  background: #151515 !important;
+  border-radius: 18px !important;
+  padding: 1.25rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  color: #fff;
+}
+
+/* HEADER CARD */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid rgba(190, 144, 69, 0.45);
+  object-fit: cover;
+}
+
+.info {
+  flex: 1;
+  margin-left: .75rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #fff;
+  }
+  .date {
+    font-size: .8rem;
+    color: rgba(255,255,255,0.6);
+  }
+}
+
+/* STATUS CHIP */
+.status-chip {
+  padding: .35rem .8rem;
+  font-size: .75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  color: white;
+
+  &.approved {
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid #4CAF50;
+  }
+
+  &.pending {
+    background: rgba(255, 193, 7, 0.2);
+    border: 1px solid #FFC107;
+  }
+
+  &.rejected {
+    background: rgba(244, 67, 54, 0.2);
+    border: 1px solid #F44336;
+  }
+}
+
+/* COMMENT */
+.comment {
+  font-style: italic;
+  font-size: .95rem;
+  color: rgba(255,255,255,0.85);
+  margin: .35rem 0;
+}
+
+/* STARS */
+.stars mat-icon {
+  font-size: 22px;
+  color: #be9045; /* oro rebis */
+}
+
+/* BOTTONI APPROVA/RIFIUTA */
+.actions {
+  display: flex;
+  gap: .5rem;
+  justify-content: flex-end;
+
   button {
-    align-self: flex-end;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+
+    &.approve-btn.active {
+      background: rgba(76, 175, 80, 0.25);
+      border: 1px solid #4CAF50;
+    }
+
+    &.reject-btn.active {
+      background: rgba(244, 67, 54, 0.25);
+      border: 1px solid #F44336;
+    }
+
+    mat-icon {
+      color: #fff;
+    }
   }
 }

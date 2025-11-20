@@ -1,97 +1,51 @@
-<section>
-  <h2 class="mat-headline-5 accent-text">{{'Gestione Clienti'.toUpperCase()}}</h2>
+<section class="user-management">
+  <h2 class="section-title">
+    <mat-icon>groups</mat-icon> Gestione Utenti
+  </h2>
 
-  <!-- FILTRI -->
+  <!-- 🔍 Filtri -->
   <form [formGroup]="filterForm" class="filters">
-    <mat-expansion-panel>
-      <mat-expansion-panel-header>
-        <mat-panel-title style="color: #BE9045;">Filtri Avanzati</mat-panel-title>
-      </mat-expansion-panel-header>
+    <mat-form-field>
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" placeholder="Mario Rossi" />
+    </mat-form-field>
 
-      <div class="filter-fields">
-        <mat-form-field appearance="outline">
-          <mat-label>Nome</mat-label>
-          <input matInput formControlName="name" placeholder="Mario Rossi" />
-        </mat-form-field>
+    <mat-form-field>
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" placeholder="mario@email.com" />
+    </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput formControlName="email" placeholder="email@esempio.com" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Telefono</mat-label>
-          <input matInput formControlName="phone" placeholder="1234567890" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Spesa minima (€)</mat-label>
-          <input matInput type="number" formControlName="minPrice" />
-        </mat-form-field>
-
-        <mat-checkbox formControlName="ongoing" style="margin-left: 1rem; color: #BE9045;">
-          Solo con tatuaggio in corso
-        </mat-checkbox>
-      </div>
-    </mat-expansion-panel>
+    <mat-form-field>
+      <mat-label>Ruolo</mat-label>
+      <mat-select formControlName="role">
+        <mat-option value="">Tutti</mat-option>
+        <mat-option *ngFor="let r of roles" [value]="r">{{ r }}</mat-option>
+      </mat-select>
+    </mat-form-field>
   </form>
 
-  <!-- TABELLA RESPONSIVE -->
-  <div class="table-wrapper">
-    <table mat-table [dataSource]="filteredClients" class="mat-elevation-z2 full-table">
-
-      <!-- NOME -->
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Nome</th>
-        <td mat-cell *matCellDef="let client">{{ client.name }}</td>
-      </ng-container>
-
-      <!-- EMAIL -->
-      <ng-container matColumnDef="email">
-        <th mat-header-cell *matHeaderCellDef>Email</th>
-        <td mat-cell *matCellDef="let client">{{ client.email }}</td>
-      </ng-container>
-
-      <!-- TELEFONO -->
-      <ng-container matColumnDef="phone">
-        <th mat-header-cell *matHeaderCellDef>Telefono</th>
-        <td mat-cell *matCellDef="let client">{{ client.phone }}</td>
-      </ng-container>
-
-      <!-- SPESA -->
-      <ng-container matColumnDef="tattooPrice">
-        <th mat-header-cell *matHeaderCellDef>Spesa (€)</th>
-        <td mat-cell *matCellDef="let client">€{{ client.tattooPrice }}</td>
-      </ng-container>
-
-      <!-- STATO -->
-      <ng-container matColumnDef="ongoing">
-        <th mat-header-cell *matHeaderCellDef>Stato</th>
-        <td mat-cell *matCellDef="let client">
-          <span class="badge" [ngClass]="client.ongoing ? 'badge-pending' : 'badge-done'">
-            {{ client.ongoing ? 'In corso' : 'Completato' }}
-          </span>
-        </td>
-      </ng-container>
-
-      <!-- AZIONI -->
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Azioni</th>
-        <td mat-cell *matCellDef="let client">
-          <button mat-icon-button color="primary" (click)="editClient(client)">
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button mat-icon-button color="accent" (click)="viewAppointments(client)">
-            <mat-icon>event</mat-icon>
-          </button>
-          <button mat-icon-button color="warn" (click)="contactClient(client)">
-            <mat-icon>chat</mat-icon>
-          </button>
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="['name', 'email', 'phone', 'tattooPrice', 'ongoing', 'actions']"></tr>
-      <tr mat-row *matRowDef="let row; columns: ['name', 'email', 'phone', 'tattooPrice', 'ongoing', 'actions'];"></tr>
-    </table>
+  <!-- 👥 Lista utenti -->
+  <div class="user-cards">
+    <mat-card *ngFor="let u of filteredUsers" class="user-card">
+      <div class="user-info">
+        <img [src]="u.urlAvatar || '/assets/avatar-placeholder.png'" alt="avatar" />
+        <div>
+          <h3>{{ u.name }}</h3>
+          <p>{{ u.email }}</p>
+          <span class="role">{{ u.role }}</span>
+        </div>
+      </div>
+      <div class="user-actions">
+        <button mat-icon-button color="primary" matTooltip="Visualizza appuntamenti" (click)="viewAppointments(u)">
+          <mat-icon>event</mat-icon>
+        </button>
+        <button mat-icon-button matTooltip="Contatta utente" (click)="contactUser(u)">
+          <mat-icon>chat</mat-icon>
+        </button>
+        <button mat-icon-button matTooltip="Modifica profilo" (click)="editUser(u)">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </div>
+    </mat-card>
   </div>
 </section>

@@ -1,104 +1,123 @@
-.drawer-container {
-  height: 100%;
-}
-
-.reviews-section {
-  padding: 16px;
-
-  .section-header {
+.reviews {
+  padding: 2rem;
+  color: #eee;
+  background: #121212;
+  min-height: 100vh;
+  .section-title {
+    font-size: 1.8rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-
-    .title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-  }
-
-  .status-toggle {
-    margin-bottom: 16px;
-  }
-
-  .no-reviews {
-    text-align: center;
-    color: gray;
-    padding: 32px 0;
+    margin-bottom: 1.5rem;
 
     mat-icon {
-      font-size: 48px;
-      margin-bottom: 8px;
+      margin-right: 0.5rem;
     }
   }
 
-  .review-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+  mat-form-field {
+    width: 250px;
+    margin-bottom: 2rem;
+  }
+
+  .reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   .review-card {
-    .avatar img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
+    background: #1a1a1a;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 300px;
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      img.avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1rem;
+      }
+
+      .badge {
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        text-transform: capitalize;
+        font-size: 0.75rem;
+        font-weight: 500;
+
+        &.pending {
+          background: #ff98002e;
+          color: #ffa726;
+        }
+
+        &.approved {
+          background: #4caf5033;
+          color: #81c784;
+        }
+
+        &.rejected {
+          background: #f4433633;
+          color: #ef9a9a;
+        }
+      }
+    }
+
+    .rating mat-icon {
+      font-size: 20px;
+      color: #fbc02d;
     }
 
     .comment {
-      font-style: italic;
-      margin: 12px 0;
+      font-size: 0.95rem;
+      color: #ccc;
     }
 
-    .stars {
-      color: #ffb400;
-    }
-
-    mat-card-actions {
+    .actions {
       display: flex;
       justify-content: flex-end;
+      gap: 0.5rem;
     }
+  }
+
+  .empty {
+    font-style: italic;
+    color: #777;
+    text-align: center;
+    margin-top: 2rem;
   }
 }
 
-.review-drawer {
-  width: 350px;
-  padding: 24px;
+mat-drawer-container {
+  background: #1c1c1c;
 
-  .form-title {
-    margin-bottom: 16px;
-    font-size: 1.25rem;
-  }
+  mat-drawer {
+    width: 320px;
+    padding: 1.5rem;
+    background: #1a1a1a;
+    color: #eee;
 
-  .review-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-
-    .rating-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-
-      .rating-toggle {
-        display: flex;
-        justify-content: space-between;
-      }
+    h3 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-weight: 600;
     }
 
-    .option-content {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    mat-form-field {
+      width: 100%;
+      margin-bottom: 1rem;
+    }
 
-      .option-avatar {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        object-fit: cover;
-      }
+    button {
+      margin-right: 0.5rem;
     }
   }
 }

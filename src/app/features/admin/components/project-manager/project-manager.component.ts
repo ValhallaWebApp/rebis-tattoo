@@ -8,35 +8,41 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-project-management',
-  standalone:true,
-  imports:[CommonModule,MaterialModule,ReactiveFormsModule],
+  standalone: true,
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule],
   templateUrl: './project-manager.component.html',
-  styleUrls: ['./project-manager.component.scss']
+  styleUrls: ['./project-manager.component.scss'],
 })
 export class ProjectManagementComponent implements OnInit {
- @ViewChild('drawer') drawer!: MatDrawer;
+  @ViewChild('drawer') drawer!: MatDrawer;
 
   projects: Project[] = [];
+  filteredProjects: Project[] = [];
+
   selectedProject: Project | null = null;
   form!: FormGroup;
+  filterForm!: FormGroup;
 
   constructor(
     private fb: FormBuilder,
     private projectsService: ProjectsService,
     private router: Router
-
   ) {}
 
   ngOnInit(): void {
-    this.loadProjects();
     this.initForm();
+    this.initFilterForm();
+    this.loadProjects();
   }
-goToSessions(projectId: string) {
-  this.router.navigate(['/admin/session', projectId]);
-}
+
+  goToSessions(projectId: string) {
+    this.router.navigate(['/admin/session', projectId]);
+  }
+
   loadProjects(): void {
     this.projectsService.getProjects().subscribe((list) => {
       this.projects = list;
+      this.applyFilters();
     });
   }
 
@@ -48,17 +54,67 @@ goToSessions(projectId: string) {
       numeroSedute: [1],
       show: [true],
       copertine: [[]],
-      artistId: [''], // puoi precompilare da user loggato se serve
-      utenteCreatore: [''], // idem
+      artistId: [''],
+      utenteCreatore: [''],
       dataProgetto: [new Date().toISOString()],
     });
   }
 
+  /** Filtri minimal */
+  initFilterForm(): void {
+    this.filterForm = this.fb.group({
+      name: [''],
+      genere: [''],
+      show: [''], // '', 'visible', 'hidden'
+    });
+
+    this.filterForm.valueChanges.subscribe(() => this.applyFilters());
+  }
+
+  applyFilters(): void {
+    const { name, genere, show } = this.filterForm.value;
+
+    this.filteredProjects = this.projects.filter((project) => {
+      const matchesName =
+        !name ||
+        project.name.toLowerCase().includes(name.toLowerCase());
+
+      const matchesGenere =
+        !genere ||
+        (project.genere || '')
+          .toLowerCase()
+          .includes(genere.toLowerCase());
+
+      const matchesShow =
+        !show ||
+        (show === 'visible' && project.show) ||
+        (show === 'hidden' && !project.show);
+
+      return matchesName && matchesGenere && matchesShow;
+    });
+  }
+
+  getProjectSessions(project: any): any[] {
+    return (project && (project as any).sessions) || [];
+  }
+
   openDrawer(project?: Project): void {
     this.selectedProject = project ?? null;
-    this.form.reset();
+    this.form.reset({
+      name: '',
+      genere: '',
+      note: '',
+      numeroSedute: 1,
+      show: true,
+      copertine: [],
+      artistId: '',
+      utenteCreatore: '',
+      dataProgetto: new Date().toISOString(),
+    });
 
-    if (project) this.form.patchValue(project);
+    if (project) {
+      this.form.patchValue(project);
+    }
 
     this.drawer.open();
   }

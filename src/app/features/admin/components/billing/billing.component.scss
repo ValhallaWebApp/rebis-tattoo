@@ -1,91 +1,212 @@
-:host {
+.billing-management {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 1.5rem;
   padding: 2rem;
-  background-color: #0a0a0a;
-  color: whitesmoke;
-  min-height: 80vh;
-  font-family: 'Barlow Semi Condensed', sans-serif;
-
+  color: #f2f2f2;
+  background-color: #121212;
+  min-height: 100vh;
 }
-.section{
 
-  padding: 8vh 1rem;
-  min-height: 90vh;
-}
-mat-card {
-  width: 100%;
-  background-color: #1a1a1a;
-  border-radius: 0px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-  padding: 1rem;
-  font-family: 'Barlow Semi Condensed', sans-serif;
-  .title{
-    mat-card-title{
-      color: #BE9045!important;
-      font-size: 1.7rem;
-      padding-bottom: 1rem;
-      font-family: 'Barlow Semi Condensed', sans-serif;
-      font-weight: 600;
+/* HEADER */
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+
+  .title-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    mat-icon {
+      font-size: 1.6rem;
     }
   }
-  mat-card-header {
-    border-bottom: 1px solid #BE9045;
-    margin-bottom: 1rem;
-    font-family: 'Barlow Semi Condensed', sans-serif;
-
-  }
-
-  mat-card-title, mat-card-subtitle {
-    color: whitesmoke;
-    font-family: 'Barlow Semi Condensed', sans-serif;
-
-  }
-
-  mat-card-title {
-    font-size: 1.2rem;
-    font-weight: bold;
-  }
-
-  mat-card-subtitle {
-    font-size: 0.9rem;
-    opacity: 0.7;
-  }
-
-  mat-card-content p {
-    margin: 0.25rem 0;
-    font-size: 0.95rem;
-  }
 }
 
-.filter-options {
+/* FILTRI STATO */
+.filters-row {
   display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
+  justify-content: flex-start;
+  margin-bottom: 0.5rem;
 
   mat-button-toggle-group {
-    background-color: #141414;
-    border-radius: 0.5rem;
-    border: 1px solid #BE9045;
+    background: #1c1c1c;
+    border-radius: 999px;
+    padding: 0.15rem;
   }
 
   mat-button-toggle {
-    color: whitesmoke !important;
+    border-radius: 999px !important;
+    color: rgba(255, 255, 255, 0.7);
+
     &.mat-button-toggle-checked {
-      background-color: #BE9045 !important;
-      color: #0a0a0a !important;
+      background: #be9045;
+      color: #121212;
+      font-weight: 600;
     }
   }
 }
 
-.payments-container {
+/* LISTA FATTURE */
+.payments-grid {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  width: 100%;
-  gap: 1rem;
-  mat-card{
-    width: min-content;
-    min-width: 250px;
+  flex-direction: column;
+  gap: 0.8rem;
+
+  .empty {
+    opacity: 0.7;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+}
+
+/* CARD FATTURA */
+.payment-card {
+  background: #151515;
+  border-radius: 18px;
+  padding: 0.9rem 1.1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border: 1px solid transparent;
+
+  &.paid {
+    border-color: rgba(46, 204, 113, 0.35);
+  }
+
+  &.pending {
+    border-color: rgba(190, 144, 69, 0.35);
+  }
+
+  &.cancelled {
+    border-color: rgba(255, 82, 82, 0.35);
+    opacity: 0.7;
+  }
+}
+
+/* HEADER CARD */
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+
+  .client-block {
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .date {
+      margin: 0.15rem 0 0;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+  }
+
+  .amount-block {
+    text-align: right;
+
+    .amount-label {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .amount {
+      display: block;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #be9045;
+    }
+  }
+}
+
+/* BODY */
+.payment-body {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .status-chip {
+    font-size: 0.7rem;
+  }
+
+  .booking-ref {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    opacity: 0.8;
+
+    mat-icon {
+      font-size: 16px;
+    }
+  }
+
+  .notes {
+    margin: 0;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+
+    span {
+      color: rgba(255, 255, 255, 0.55);
+    }
+  }
+}
+
+/* AZIONI */
+.payment-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  padding-top: 0.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  margin-top: 0.3rem;
+
+  mat-icon {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  button[color='warn'] mat-icon {
+    color: #ff5252;
+  }
+
+  button[color='accent'] mat-icon {
+    color: #2ecc71;
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .billing-management {
+    padding: 1rem;
+  }
+
+  .payment-header {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .amount-block {
+      text-align: left;
+    }
   }
 }

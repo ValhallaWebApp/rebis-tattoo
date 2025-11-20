@@ -1,80 +1,65 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../../core/modules/material.module';
-import { Client, ClientService } from '../../../../core/services/clients/client.service';
+import { UserService, User, UserRole } from '../../../../core/services/users/user.service';
+import { addQuarters } from 'date-fns';
 
 @Component({
-  selector: 'app-clients-list',
-    standalone: true,
-  imports: [CommonModule,FormsModule, ReactiveFormsModule, MaterialModule],
+  selector: 'app-admin-users',
+  standalone: true,
   templateUrl: './clients-list.component.html',
-  styleUrls: ['./clients-list.component.scss']
+  styleUrls: ['./clients-list.component.scss'],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule]
 })
 export class ClientsListComponent implements OnInit {
   filterForm!: FormGroup;
-  allClients: Client[] = [];
-  filteredClients: Client[] = [];
+  allUsers: User[] = [];
+  filteredUsers: User[] = [];
+  roles: UserRole[] = ['admin', 'staff', 'client', 'guest'];
 
-  constructor(
-    private fb: FormBuilder,
-    private clientService: ClientService
-  ) {}
+  constructor(private fb: FormBuilder, private userService: UserService) {}
 
-ngOnInit(): void {
-  this.filterForm = this.fb.group({
-    name: [''],
-    email: [''],
-    phone: [''],
-    minPrice: [''],
-    ongoing: [false]
-  });
+  ngOnInit(): void {
+    this.filterForm = this.fb.group({
+      name: [''],
+      email: [''],
+      role: ['']
+    });
 
-  this.clientService.getClients().subscribe((clients: any) => {
-  this.allClients = clients.map((c: any) => ({
-    id: c.id,
-    name: c.name || 'Utente senza nome',
-    email: c.email || '-',
-    phone: c.phone || '-',
-    tattooPrice: c.tattooPrice || 0, // ← questo campo è corretto
-    ongoing: c.ongoing || false
-  }));
-  console.log(this.allClients
+    this.userService.getClients().subscribe(users => {
+      this.allUsers = users;
+      console.log(users)
+      this.applyFilters();
+    });
 
-  )
-  this.applyFilters();
-  });
-
-  this.filterForm.valueChanges.subscribe(() => this.applyFilters());
-}
+    this.filterForm.valueChanges.subscribe(() => this.applyFilters());
+  }
 
   applyFilters(): void {
-    const { name, email, phone, minPrice, ongoing } = this.filterForm.value;
+    const { name, email, role } = this.filterForm.value;
 
-    this.filteredClients = this.allClients.filter(client => {
+    this.filteredUsers = this.allUsers.filter(user => {
       return (
-        (!name || client.name.toLowerCase().includes(name.toLowerCase())) &&
-        (!email || client.email.toLowerCase().includes(email.toLowerCase())) &&
-        (!phone || client.phone?.includes(phone))
-        // (!minPrice || (client.tattooPrice || 0) >= +minPrice) &&
-        // (!ongoing || client.ongoing === true)
+        (!name || user.name.toLowerCase().includes(name.toLowerCase())) &&
+        (!email || user.email.toLowerCase().includes(email.toLowerCase())) &&
+        (!role || user.role === role)
       );
     });
   }
 
-  editClient(client: Client): void {
-    console.log('Modifica cliente:', client.name);
-    // TODO: open dialog
+  editUser(user: User): void {
+    console.log('Modifica utente:', user);
+    // TODO: Apri dialog
   }
 
-  viewAppointments(client: Client): void {
-    console.log('Visualizza appuntamenti di', client.name);
-    // TODO: redirect o query by client.id
+  viewAppointments(user: User): void {  addQuarters
+    console.log('Visualizza appuntamenti per:', user.id);
+    // TODO: Navigazione
   }
 
-  contactClient(client: Client): void {
-    console.log('Contatta', client.name);
-    // TODO: redirect to /admin/messaging?client=xxx
+  contactUser(user: User): void {
+    console.log('Contatta utente:', user.email);
+    // TODO: Messaging
   }
 }
-

@@ -166,7 +166,7 @@ $text-light: #f0f0f0;
 }
 
 .sidenav-container {
-  height: calc(100vh - 10vh);
+  height: calc(100vh - 8vh);
   overflow-y: hidden;
 }
 
@@ -231,3 +231,12 @@ $text-light: #f0f0f0;
     }
   }
 }
+
+//   @media (max-width: 756px) {
+
+// .sidenav-container {
+//   height: 100vh ;
+//   overflow-y: hidden;
+// }
+
+// }
