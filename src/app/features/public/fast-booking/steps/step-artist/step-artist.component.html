@@ -11,6 +11,7 @@
       <button class="row"
               (click)="select(a)"
               [class.active]="selectedId() === a.id">
+              <img width="48px" [src]="a?.photoUrl" alt="">
         <span>{{ a.name }}</span>
         <span class="dot"></span>
       </button>
