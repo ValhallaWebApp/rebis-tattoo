@@ -1,0 +1,33 @@
+<section class="step">
+  <div class="hero">
+    <div class="badge">
+      <mat-icon>check_circle</mat-icon>
+    </div>
+
+    <h2>Prenotazione confermata</h2>
+    <p>
+      Perfetto! La tua consulenza è stata confermata.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="k">Artista</div>
+      <div class="v">{{ draft().artistName }}</div>
+    </div>
+    <div class="row">
+      <div class="k">Data</div>
+      <div class="v">{{ draft().date }} • {{ draft().time }}</div>
+    </div>
+
+    @if (bookingId()) {
+      <div class="code">
+        Codice prenotazione: <b>{{ bookingId() }}</b>
+      </div>
+    }
+  </div>
+
+  <button mat-stroked-button class="btn" (click)="again()">
+    Prenota un’altra consulenza
+  </button>
+</section>

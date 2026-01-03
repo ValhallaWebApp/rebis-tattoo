@@ -1,0 +1,1 @@
+var s=Math.pow(10,8)*24*60*60*1e3,x=-s,m=6048e5,u=864e5;var c=3600;var e=c*24,I=e*7,p=e*365.2425,i=p/12,f=i*3,t=Symbol.for("constructDateFrom");function r(o,n){return typeof o=="function"?o(n):o&&typeof o=="object"&&t in o?o[t](n):o instanceof Date?new o.constructor(n):new Date(n)}function D(o,n){return r(n||o,o)}export{m as a,u as b,r as c,D as d};

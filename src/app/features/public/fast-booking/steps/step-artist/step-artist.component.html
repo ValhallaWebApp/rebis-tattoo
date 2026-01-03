@@ -1,0 +1,19 @@
+<h1 class="h1">ARTISTA</h1>
+<p class="p">Scegli chi seguirà la tua consulenza</p>
+
+@if (loading()) {
+  <div class="center">
+    <mat-spinner diameter="32"></mat-spinner>
+  </div>
+} @else {
+  <div class="list">
+    @for (a of artists(); track a.id) {
+      <button class="row"
+              (click)="select(a)"
+              [class.active]="selectedId() === a.id">
+        <span>{{ a.name }}</span>
+        <span class="dot"></span>
+      </button>
+    }
+  </div>
+}

@@ -1,0 +1,21 @@
+.shell{
+  min-height: 100vh;
+  background: #fff;
+  color: #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.top{
+  height: 56px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-bottom: 1px solid #ededed;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.main{
+  flex: 1;
+}

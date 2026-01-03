@@ -1,0 +1,124 @@
+.week-view {
+  background: var(--cal-card-bg);
+  color: var(--cal-text);
+  border-radius: 16px;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* HEADER GIORNI */
+.week-header {
+  display: grid;
+  grid-template-columns: 80px repeat(7, minmax(0, 1fr));
+  align-items: center;
+  margin-bottom: 0.25rem;
+  column-gap: 0.5rem;
+}
+
+.hour-col-header {
+  font-size: 0.75rem;
+  color: var(--cal-text-muted);
+  text-align: right;
+  padding-right: 0.5rem;
+}
+
+.day-header {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.25rem 0.35rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.day-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.day-number {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* CORPO: ORE X GIORNI */
+.week-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: calc(80vh - 140px);
+  overflow-y: auto;
+}
+
+.hour-row {
+  display: grid;
+  grid-template-columns: 80px repeat(7, minmax(0, 1fr));
+  column-gap: 0.5rem;
+  height: var(--cal-row-height);
+  max-height: var(--cal-row-height);
+}
+
+/* colonna orari */
+.hour-label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--cal-text-muted);
+}
+
+/* celle slot */
+.slot-cell {
+  border-radius: 10px;
+  border: 1px dashed var(--cal-slot-border);
+  background: var(--cal-slot-bg);
+  cursor: pointer;
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+
+  &:hover {
+    background: var(--cal-slot-hover);
+    border-style: solid;
+  }
+}
+
+/* pill evento */
+.event-pill {
+  border-radius: 999px;
+  padding: 2px 6px;
+  border: 1px solid var(--cal-event-border);
+  background: var(--cal-event-bg);
+  color: var(--cal-event-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+
+  .time {
+    font-weight: 600;
+  }
+
+  .title {
+    opacity: 0.9;
+  }
+
+  &.my-booking {
+    border-color: var(--cal-my-event-border);
+    background: var(--cal-my-event-bg);
+  }
+}
+
+@media (max-width: 900px) {
+  .week-header,
+  .hour-row {
+    grid-template-columns: 60px repeat(7, minmax(0, 1fr));
+  }
+}

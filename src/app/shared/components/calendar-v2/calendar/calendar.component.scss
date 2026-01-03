@@ -1,0 +1,187 @@
+.calendar-shell {
+  width: 100%;
+  height: 100%;
+  background-color: #121212;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.25s ease, color 0.25s ease;
+ /* 👇 variabili per le dimensioni statiche */
+  --cal-toolbar-height: 64px;
+  --cal-row-height: 40px;        /* height base delle righe ore (day) */
+  --cal-day-cell-min-height: 80px; /* altezza min cella giorno (month) */
+
+  /* ============= LIGHT THEME ============= */
+  &.light {
+    /* CSS VARS per tutte le view */
+    --cal-bg: #f7f7f7;
+    --cal-card-bg: #ffffff;
+    --cal-border: #e0e0e0;
+    --cal-text: #222222;
+    --cal-text-muted: #666666;
+
+    --cal-slot-bg: #ffffff;
+    --cal-slot-border: #e0e0e0;
+    --cal-slot-hover: #f2f2f2;
+
+    --cal-event-bg: #e9f4ff;
+    --cal-event-text: #0d47a1;
+    --cal-event-border: #bbdefb;
+
+    --cal-my-event-border: #43a047;
+    --cal-my-event-bg: #e8f5e9;
+
+    background: var(--cal-bg);
+    color: var(--cal-text);
+
+    .calendar-toolbar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--cal-border);
+    }
+
+    h2 {
+      color: var(--cal-text);
+    }
+
+    .calendar-content {
+      background: var(--cal-bg);
+    }
+
+    .drawer-panel {
+      background: #ffffff;
+      color: var(--cal-text);
+      border-left: 1px solid var(--cal-border);
+    }
+  }
+
+  /* ============= DARK THEME ============= */
+  &.dark {
+    --cal-bg: #121212;
+    --cal-card-bg: #181818;
+    --cal-border: #2b2b2b;
+    --cal-text: #f5f5f5;
+    --cal-text-muted: #aaaaaa;
+
+    --cal-slot-bg: #202020;
+    --cal-slot-border: #2b2b2b;
+    --cal-slot-hover: #262626;
+
+    --cal-event-bg: #2c2c2c;
+    --cal-event-text: #ffffff;
+    --cal-event-border: #3a3a3a;
+
+    --cal-my-event-border: #be9045;
+    --cal-my-event-bg: rgba(190, 144, 69, 0.16);
+
+    background: var(--cal-bg);
+    color: var(--cal-text);
+
+    .calendar-toolbar {
+      background: #181818;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    h2 {
+      color: var(--cal-text);
+    }
+
+   .calendar-content {
+  flex: 1 1 auto;
+  padding: 1rem;
+
+  /* 👇 molto importante per lo scroll interno */
+  min-height: 0;
+  overflow-y: auto;
+}
+
+
+    .drawer-panel {
+      background: #181818;
+      color: var(--cal-text);
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
+    }
+  }
+}
+
+/* toolbar, content, drawer come già messi prima */
+.calendar-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+
+  .left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .theme-toggle button.active {
+    background: #1976d2 !important;
+    color: white !important;
+  }
+}
+
+.calendar-content {
+  flex: 1;
+  padding: 1rem;
+}
+
+.drawer-container {
+  height: 0;
+}
+
+.drawer-panel {
+  width: 360px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+
+  h3 {
+    margin-top: 0;
+    font-weight: 600;
+  }
+
+  .drawer-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .drawer-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+  }
+}
+@media (max-width: 768px) {
+  .calendar-shell {
+    max-height: 75vh;
+    --cal-row-height: 36px;
+    --cal-day-cell-min-height: 64px;
+  }
+
+  .calendar-toolbar {
+    padding: 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+
+    .toolbar-right {
+      width: 100%;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+  }
+}

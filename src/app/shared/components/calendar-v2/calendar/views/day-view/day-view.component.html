@@ -1,0 +1,54 @@
+<div class="day-view" *ngIf="date as d">
+  <!-- HEADER ARTISTI -->
+  <div class="day-header">
+    <div class="time-col"></div>
+    <div class="artist-col" *ngFor="let artistId of artistIds">
+      <div class="artist-header">
+        <img
+          [src]="artistPhotoMap[artistId] || '/assets/avatar-default.png'"
+          [alt]="artistMap[artistId] || artistId"
+        />
+        <span>{{ artistMap[artistId] || 'Artista' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHE PER ORA -->
+  <div class="day-body">
+    <div class="hour-row" *ngFor="let hour of hours">
+      <!-- Colonna orario -->
+      <div class="time-col">
+        <span>{{ hour }}</span>
+      </div>
+
+      <!-- Celle per ogni artista -->
+      <div class="artist-col" *ngFor="let artistId of artistIds">
+        <ng-container [ngTemplateOutlet]="slotTpl"
+                      [ngTemplateOutletContext]="{ artistId: artistId, hour: hour }">
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE SLOT -->
+<ng-template #slotTpl let-artistId="artistId" let-hour="hour">
+  <ng-container *ngIf="getEventForSlot(artistId, hour) as ev; else emptySlot">
+    <button class="event-pill" mat-stroked-button (click)="handleEventClick(ev)">
+      <span class="event-time">{{ hour }}</span>
+      <span class="event-title">{{ ev.title }}</span>
+    </button>
+  </ng-container>
+
+  <ng-template #emptySlot>
+    <button
+      class="empty-slot"
+      mat-icon-button
+      (click)="handleEmptySlotClick(hour, artistId)"
+      [disabled]="role !== 'client' && role !== 'admin'"
+      matTooltip="Nuova prenotazione"
+    >
+      <mat-icon>add</mat-icon>
+    </button>
+  </ng-template>
+</ng-template>

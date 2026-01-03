@@ -1,0 +1,30 @@
+<app-fast-booking-layout>
+
+  <mat-progress-bar
+    mode="determinate"
+    [value]="progress()">
+  </mat-progress-bar>
+
+ <section class="content">
+    @switch (step()) {
+      @case ('intro') { <app-step-intro /> }
+      @case ('artist') { <app-step-artist /> }
+      @case ('when') { <app-step-when /> }
+      @case ('details') { <app-step-details /> }
+      @case ('summary') { <app-step-summary /> }
+      @case ('payment') { <app-step-payment/> }
+      @case ('success') { <app-step-success/> }
+    }
+  </section>
+
+
+  <footer class="footer">
+    <button mat-button (click)="back()" [disabled]="!canBack()">Indietro</button>
+    <button mat-flat-button color="primary"
+            (click)="next()"
+            [disabled]="!canNext()">
+      Continua
+    </button>
+  </footer>
+
+</app-fast-booking-layout>

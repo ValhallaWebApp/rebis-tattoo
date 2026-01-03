@@ -1,0 +1,47 @@
+.h1{
+  font-size: 22px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.p{
+  font-size: 13px;
+  color:#444;
+  margin-bottom: 16px;
+}
+
+.list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.row{
+  padding: 14px;
+  border:1px solid #ededed;
+  border-radius:12px;
+  background:#fff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.row.active{
+  border-color:#000;
+}
+
+.dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#e0e0e0;
+}
+
+.row.active .dot{
+  background:#000;
+}
+
+.center{
+  display:flex;
+  justify-content:center;
+}

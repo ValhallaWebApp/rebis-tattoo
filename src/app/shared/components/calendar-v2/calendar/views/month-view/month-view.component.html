@@ -1,0 +1,20 @@
+<div class="month-view" *ngIf="monthDays.length">
+  <div class="month-grid">
+    <div class="day-cell" *ngFor="let day of monthDays" (click)="handleDayClick(day.iso)">
+      <div class="day-label">
+        {{ day.label }}
+      </div>
+
+      <div class="events-mini">
+        <div class="event-dot" *ngFor="let ev of day.events | slice:0:3">
+          <span class="time">{{ ev.start.slice(11, 16) }}</span>
+          <span class="title">{{ ev.title }}</span>
+        </div>
+
+        <div class="more" *ngIf="day.events.length > 3">
+          +{{ day.events.length - 3 }} altro/i
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

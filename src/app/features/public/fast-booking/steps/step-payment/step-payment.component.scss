@@ -1,0 +1,72 @@
+.step { display: grid; gap: 12px; }
+
+.head {
+  h2 { margin: 0; font-size: 18px; }
+  .sub { margin: 6px 0 0; opacity: .8; font-size: 13px; }
+}
+
+.card {
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.25);
+  backdrop-filter: blur(10px);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .k { opacity: .75; font-size: 13px; }
+  .v { font-weight: 700; font-size: 16px; }
+}
+
+.note {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, .18);
+  background: rgba(255, 215, 0, .06);
+
+  .ico { opacity: .8; }
+  b { font-weight: 800; }
+}
+
+.error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 80, 80, .10);
+  border: 1px solid rgba(255, 80, 80, .25);
+}
+
+.actions {
+  margin-top: 14px;
+  display: grid;
+
+  button {
+    border-radius: 14px;
+    padding: 12px 14px;
+  }
+}
+
+.debug {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.10);
+
+  .small {
+    font-size: 12px;
+    opacity: .8;
+    margin: 4px 0;
+  }
+
+  .ok {
+    margin-top: 10px;
+    border-radius: 12px;
+  }
+}

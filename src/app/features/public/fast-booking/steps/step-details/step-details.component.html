@@ -1,0 +1,36 @@
+<h1 class="h1">I TUOI DATI</h1>
+<p class="p">
+  Inserisci i dati per completare la richiesta di consulenza.
+</p>
+
+<div class="form">
+
+  <label>Nome e Cognome</label>
+  <input
+    type="text"
+    placeholder="Es. Mario Rossi"
+    [value]="draft().name || ''"
+    (input)="update('name', $any($event.target).value)"
+  />
+
+  <label>Email o Telefono</label>
+  <input
+    type="text"
+    placeholder="email o numero"
+    [value]="draft().contact || ''"
+    (input)="update('contact', $any($event.target).value)"
+  />
+
+  <label>Descrizione del progetto</label>
+  <textarea
+    rows="4"
+    placeholder="Descrivi brevemente l’idea del tatuaggio"
+    [value]="draft().description || ''"
+    (input)="update('description', $any($event.target).value)"
+  ></textarea>
+
+</div>
+
+<div class="hint">
+  I dati verranno usati solo per la gestione della consulenza.
+</div>

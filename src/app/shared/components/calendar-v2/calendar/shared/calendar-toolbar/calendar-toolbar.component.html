@@ -1,0 +1,36 @@
+<mat-toolbar color="primary" class="calendar-toolbar">
+
+  <!-- Navigazione data -->
+  <button mat-icon-button (click)="navigate.emit(-1)">
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+
+  <span class="toolbar-title">{{ currentDate | date:titleFormat }}</span>
+
+  <button mat-icon-button (click)="navigate.emit(1)">
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+
+  <!-- Spacer -->
+  <span class="spacer"></span>
+
+  <!-- Toggle Day / Week / Month -->
+  <mat-button-toggle-group
+      [value]="view"
+      (valueChange)="viewChange.emit($event)"
+      appearance="legacy">
+    <mat-button-toggle value="day">
+      <mat-icon>event</mat-icon>
+      <span class="toggle-label">Giorno</span>
+    </mat-button-toggle>
+    <mat-button-toggle value="week">
+      <mat-icon>calendar_view_week</mat-icon>
+      <span class="toggle-label">Settimana</span>
+    </mat-button-toggle>
+    <mat-button-toggle value="month">
+      <mat-icon>calendar_month</mat-icon>
+      <span class="toggle-label">Mese</span>
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+
+</mat-toolbar>

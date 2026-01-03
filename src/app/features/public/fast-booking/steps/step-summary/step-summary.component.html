@@ -1,0 +1,50 @@
+<h1 class="h1">RIEPILOGO</h1>
+<p class="p">Controlla i dati prima di passare al pagamento.</p>
+
+<div class="card">
+  <div class="row">
+    <span>Tipo</span>
+    <strong>Consulenza</strong>
+  </div>
+
+  <div class="row">
+    <span>Artista</span>
+    <strong>{{ d().artistName || '—' }}</strong>
+  </div>
+
+  <div class="row">
+    <span>Quando</span>
+    <strong>{{ whenText() }}</strong>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row">
+    <span>Nome</span>
+    <strong>{{ d().name || '—' }}</strong>
+  </div>
+
+  <div class="row">
+    <span>Contatto</span>
+    <strong>{{ contactText() }}</strong>
+  </div>
+
+  <div class="block">
+    <div class="label">Descrizione</div>
+    <div class="desc">{{ descriptionText() }}</div>
+  </div>
+</div>
+
+<div class="price">
+  <span>Importo consulenza</span>
+  <strong>€{{ deposit }}</strong>
+</div>
+
+<div class="disclaimer">
+  L’importo della consulenza verrà <strong>scalato dal prezzo finale</strong> del tatuaggio
+  in caso di conferma del progetto.
+</div>
+
+<div class="hint">
+  Prossimo step: pagamento per bloccare lo slot.
+</div>
