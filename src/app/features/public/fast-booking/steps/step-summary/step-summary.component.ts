@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FastBookingStore } from '../../state/fast-booking-store.service';
+import { MaterialModule } from '../../../../../core/modules/material.module';
 
 @Component({
   selector: 'app-step-summary',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule,MaterialModule],
   templateUrl: './step-summary.component.html',
   styleUrl: './step-summary.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

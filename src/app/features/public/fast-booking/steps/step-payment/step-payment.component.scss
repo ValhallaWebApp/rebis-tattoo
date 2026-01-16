@@ -1,72 +1,47 @@
-.step { display: grid; gap: 12px; }
-
-.head {
-  h2 { margin: 0; font-size: 18px; }
-  .sub { margin: 6px 0 0; opacity: .8; font-size: 13px; }
+.step {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 20px 16px 32px;
 }
 
-.card {
-  border-radius: 16px;
-  padding: 14px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.25);
-  backdrop-filter: blur(10px);
-}
+.h1 { margin: 0 0 6px; font-size: 28px; font-weight: 900; }
+.p { margin: 0 0 12px; opacity: .75; }
+
+.card { border-radius: 16px; padding: 14px; }
 
 .row {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-
-  .k { opacity: .75; font-size: 13px; }
-  .v { font-weight: 700; font-size: 16px; }
+  padding: 8px 0;
 }
+
+.k { opacity: .7; font-weight: 700; }
+.v { font-size: 18px; font-weight: 900; }
 
 .note {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: 20px 1fr;
+  margin-top: 10px;
+  display: flex;
   gap: 10px;
-  padding: 10px 12px;
+  align-items: flex-start;
+  padding: 10px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 215, 0, .18);
-  background: rgba(255, 215, 0, .06);
-
-  .ico { opacity: .8; }
-  b { font-weight: 800; }
+  background: rgba(25,118,210,.06);
 }
+
+.ico { opacity: .7; }
 
 .error {
-  margin-top: 12px;
-  padding: 10px 12px;
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
   border-radius: 12px;
-  background: rgba(255, 80, 80, .10);
-  border: 1px solid rgba(255, 80, 80, .25);
+  background: rgba(244,67,54,.08);
 }
 
-.actions {
-  margin-top: 14px;
-  display: grid;
+.actions { margin-top: 14px; display: flex; justify-content: flex-end; }
 
-  button {
-    border-radius: 14px;
-    padding: 12px 14px;
-  }
-}
-
-.debug {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,.10);
-
-  .small {
-    font-size: 12px;
-    opacity: .8;
-    margin: 4px 0;
-  }
-
-  .ok {
-    margin-top: 10px;
-    border-radius: 12px;
-  }
-}
+.debug { margin-top: 14px; opacity: .85; }
+.small { font-size: 12px; margin-bottom: 6px; }
+.ok { margin-top: 8px; }

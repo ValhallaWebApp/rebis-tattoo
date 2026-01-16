@@ -13,7 +13,7 @@ import { MaterialModule } from '../../../../../core/modules/material.module';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StepDetailsComponent {
-  private readonly store = inject(FastBookingStore);
+   readonly store = inject(FastBookingStore);
 
   draft = this.store.draft;
 

@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FastBookingStore } from '../../state/fast-booking-store.service';
+import { MaterialModule } from '../../../../../core/modules/material.module';
 
 @Component({
   selector: 'app-step-artist',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MaterialModule],
   templateUrl: './step-artist.component.html',
   styleUrl: './step-artist.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

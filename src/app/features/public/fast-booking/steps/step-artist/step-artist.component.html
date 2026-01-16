@@ -1,20 +1,71 @@
-<h1 class="h1">ARTISTA</h1>
-<p class="p">Scegli chi seguirà la tua consulenza</p>
+<section class="step">
+  <header class="head">
+    <h1 class="h1">ARTISTA</h1>
+    <p class="p">Scegli un artista per vedere giorni e orari disponibili</p>
 
-@if (loading()) {
-  <div class="center">
-    <mat-spinner diameter="32"></mat-spinner>
-  </div>
-} @else {
-  <div class="list">
-    @for (a of artists(); track a.id) {
-      <button class="row"
-              (click)="select(a)"
-              [class.active]="selectedId() === a.id">
-              <img width="48px" [src]="a?.photoUrl" alt="">
-        <span>{{ a.name }}</span>
-        <span class="dot"></span>
-      </button>
-    }
-  </div>
-}
+    <mat-chip-set class="chips" aria-label="info consulenza">
+      <mat-chip>
+        <mat-icon matChipAvatar>schedule</mat-icon>
+        Consulenza 60 min
+      </mat-chip>
+      <mat-chip>
+        <mat-icon matChipAvatar>payments</mat-icon>
+        Caparra €50
+      </mat-chip>
+    </mat-chip-set>
+  </header>
+
+  @if (loading()) {
+    <div class="center">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  } @else {
+    <div class="list">
+      @for (a of artists(); track a.id) {
+        <mat-card
+          class="artist"
+          [class.active]="selectedId() === a.id"
+          (click)="select(a)"
+          role="button"
+          tabindex="0"
+        >
+          <div class="left">
+            <div class="avatar">
+              @if (a?.photoUrl) {
+                <img [src]="a.photoUrl" alt="" />
+              } @else {
+                <mat-icon>person</mat-icon>
+              }
+            </div>
+
+            <div class="info">
+              <div class="name">{{ a.name }}</div>
+
+              <div class="meta">
+                <span class="styles">Realismo / Fine line / Blackwork</span>
+              </div>
+
+              <div class="submeta">
+                <span class="dot"></span>
+                <span class="avail">Disponibile oggi</span>
+                <span class="sep">•</span>
+                <span class="rate">★ 4.8</span>
+                <span class="muted">(120 recensioni)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="right">
+            @if (selectedId() === a.id) {
+              <span class="badge">
+                <mat-icon>check</mat-icon>
+              </span>
+            } @else {
+              <span class="radio"></span>
+            }
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
+</section>

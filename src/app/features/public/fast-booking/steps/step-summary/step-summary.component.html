@@ -1,50 +1,49 @@
-<h1 class="h1">RIEPILOGO</h1>
-<p class="p">Controlla i dati prima di passare al pagamento.</p>
+<section class="step">
+  <header class="head">
+    <h1 class="h1">RIEPILOGO</h1>
+    <p class="p">Controlla i dati prima di passare al pagamento.</p>
+  </header>
 
-<div class="card">
-  <div class="row">
-    <span>Tipo</span>
-    <strong>Consulenza</strong>
-  </div>
+  <mat-card class="card">
+    <div class="row">
+      <span class="k">Tipo</span>
+      <span class="v">Consulenza</span>
+    </div>
+    <div class="row">
+      <span class="k">Artista</span>
+      <span class="v">{{ d().artistName || '—' }}</span>
+    </div>
+    <div class="row">
+      <span class="k">Quando</span>
+      <span class="v">{{ whenText() }}</span>
+    </div>
+  </mat-card>
 
-  <div class="row">
-    <span>Artista</span>
-    <strong>{{ d().artistName || '—' }}</strong>
-  </div>
+  <mat-card class="card">
+    <div class="row">
+      <span class="k">Nome</span>
+      <span class="v">{{ d().name || '—' }}</span>
+    </div>
+    <div class="row">
+      <span class="k">Contatto</span>
+      <span class="v">{{ contactText() }}</span>
+    </div>
 
-  <div class="row">
-    <span>Quando</span>
-    <strong>{{ whenText() }}</strong>
-  </div>
-</div>
+    <mat-divider></mat-divider>
 
-<div class="card">
-  <div class="row">
-    <span>Nome</span>
-    <strong>{{ d().name || '—' }}</strong>
-  </div>
+    <div class="block">
+      <div class="k">Descrizione</div>
+      <div class="desc">{{ descriptionText() }}</div>
+    </div>
+  </mat-card>
 
-  <div class="row">
-    <span>Contatto</span>
-    <strong>{{ contactText() }}</strong>
-  </div>
-
-  <div class="block">
-    <div class="label">Descrizione</div>
-    <div class="desc">{{ descriptionText() }}</div>
-  </div>
-</div>
-
-<div class="price">
-  <span>Importo consulenza</span>
-  <strong>€{{ deposit }}</strong>
-</div>
-
-<div class="disclaimer">
-  L’importo della consulenza verrà <strong>scalato dal prezzo finale</strong> del tatuaggio
-  in caso di conferma del progetto.
-</div>
-
-<div class="hint">
-  Prossimo step: pagamento per bloccare lo slot.
-</div>
+  <mat-card class="price">
+    <div class="row">
+      <span class="k">Importo consulenza</span>
+      <span class="v">€{{ deposit }}</span>
+    </div>
+    <div class="disc">
+      L’importo verrà <b>scalato dal prezzo finale</b> in caso di conferma del progetto.
+    </div>
+  </mat-card>
+</section>

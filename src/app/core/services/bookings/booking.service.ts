@@ -8,7 +8,7 @@ import {
 } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 
-/** Stati consentiti */
+/** Stati consentiti (coerenti con RTDB) */
 export type BookingStatus =
   | 'draft'
   | 'paid'
@@ -16,23 +16,23 @@ export type BookingStatus =
   | 'completed'
   | 'cancelled';
 
-/** Draft leggero che può arrivare dal chatbot */
+/** Draft leggero che può arrivare dal chatbot / fast-booking */
 export interface BookingChatDraft {
   artistId?: string;   // id artista (opzionale)
   date?: string;       // "YYYY-MM-DD"
   time?: string;       // "HH:mm"
   duration?: number;   // minuti (default 30)
   note?: string;       // descrizione
-  start?:string;
-  end?:string;
+  start?: string;
+  end?: string;
 }
 
 /** Modello Booking salvato su RTDB */
 export interface Booking {
   id: string;
   title: string;
-  start: string;       // "YYYY-MM-DDTHH:mm:ss" (locale, senza Z)
-  end: string;         // "YYYY-MM-DDTHH:mm:ss" (locale, senza Z)
+  start: string;       // "YYYY-MM-DDTHH:mm:ss" (locale, senza Z) - ma nel DB possono esserci varianti
+  end: string;         // "YYYY-MM-DDTHH:mm:ss" (locale, senza Z) - ma nel DB possono esserci varianti
   idClient: string;
   description: string;
   idArtist: string;
@@ -50,16 +50,17 @@ export interface Booking {
 
 /* ============================================================================
  * BookingDraftService
- *  - Ponte in-memory fra il chatbot e la pagina /bookings
- *  - Non usa DB: tiene un draft volatile finché non viene consumato
- *  - Include log per tracciare il ciclo di vita del draft
+ *  - Ponte in-memory fra chatbot e pagina /bookings (nessuna persistenza)
+ *  - Utile per passare un draft “volatile” tra componenti/pagine
  * ==========================================================================*/
 @Injectable({ providedIn: 'root' })
 export class BookingDraftService {
   /** stato in-memory del draft (niente persistenza su RTDB/Storage) */
   private _draft = signal<BookingChatDraft | null>(null);
+
   /** sola lettura reattiva (comoda per componenti) */
   readonly draftSig = this._draft.asReadonly();
+
   /** flag comodo: esiste un draft? */
   readonly hasDraftSig = computed(() => this._draft() !== null);
 
@@ -105,45 +106,131 @@ export class BookingDraftService {
 /* ============================================================================
  * BookingService
  *  - Operazioni su RTDB per gestione prenotazioni
- *  - Aggiunte utilità per creare una bozza a partire da BookingChatDraft
- *  - Tanti console.log per vedere il flusso end-to-end
+ *  - Include utilità per creare una bozza da BookingChatDraft
+ *  - Include disponibilità slot (robusta su start/end)
  * ==========================================================================*/
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly path = 'bookings';
 
   constructor(private db: Database) {}
- // 📅 Recupera slot disponibili per un artista in un giorno
+
+  // ─────────────────────────────────────────────────────────────
+  // DISPONIBILITÀ: SLOT LIBERI (ROBUSTO SU start/end)
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * 📅 Recupera slot disponibili per un artista in un giorno.
+   *
+   * ✅ Funziona con ogni input data:
+   *  - "YYYY-MM-DD"
+   *  - "YYYY-MM-DDTHH:mm"
+   *  - "YYYY-MM-DDTHH:mm:ss"
+   *  - "...Z" / ".000Z"
+   *
+   * ✅ Funziona con i record reali RTDB che hanno start/end (anche con formati misti).
+   *
+   * @param artistId  id artista (matcha RTDB: idArtist)
+   * @param date      giorno (qualunque stringa che contenga almeno YYYY-MM-DD)
+   * @param duration  durata in minuti (es 60)
+   * @param stepMin   granularità slot (60=ogni ora; 30=ogni mezz'ora)
+   */
   async getFreeSlotsInDay(
     artistId: string,
-    date: string,         // "YYYY-MM-DD"
-    duration: number = 60 // in minuti
-  ): Promise<any[]> {
+    date: string,
+    duration: number = 60,
+    stepMin: number = 60
+  ): Promise<{ time: string }[]> {
+    // Orari "studio" (se vuoi: spostali in config o in Staff schedule)
     const openingHour = 9;
     const closingHour = 18;
-    const slots: any[] = [];
 
-    const existing = await this.getBookingsByArtistAndDate(artistId, date);
-    const takenTimes = new Set(existing.map(b => b.time));
+    const day = this.normalizeDateOnly(date); // "YYYY-MM-DD"
+    if (!day) return [];
 
-    for (let hour = openingHour; hour <= closingHour - duration / 60; hour++) {
-      const time = `${hour.toString().padStart(2, '0')}:00`;
-      if (!takenTimes.has(time)) {
-        slots.push({ time });
-      }
+    // Range giorno (in locale) usato per query su 'start' (stringa)
+    const dayStartLocal = `${day}T00:00:00`;
+    const dayEndLocal = `${day}T23:59:59`;
+
+    // 1) carico tutte le booking dell'artista in quel giorno (status "occupanti")
+    const existing = await this.getBookingsByArtistAndDayRange(artistId, dayStartLocal, dayEndLocal);
+
+    // 2) genero slot candidati e scarto quelli che overlap con booking esistenti
+    const slots: { time: string }[] = [];
+    const minutesStart = openingHour * 60;
+    const minutesEnd = closingHour * 60;
+
+    for (let m = minutesStart; m <= minutesEnd - duration; m += stepMin) {
+      const hh = Math.floor(m / 60);
+      const mm = m % 60;
+
+      const time = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+      const slotStart = `${day}T${time}:00`;
+      const slotEnd = this.addMinutesLocal(slotStart, duration);
+
+      // overlap standard: slotStart < bookingEnd && bookingStart < slotEnd
+      const overlaps = existing.some(b => this.overlapsLocal(slotStart, slotEnd, b.start, b.end));
+      if (!overlaps) slots.push({ time });
     }
 
     return slots;
   }
 
-  // 🔍 Helper: recupera tutte le prenotazioni per artista + data
-  private async getBookingsByArtistAndDate(artistId: string, date: string): Promise<{ time: string }[]> {
-    const q = query(ref(this.db, 'bookings'), orderByChild('idArtist'), equalTo(artistId));
-    const snap = await get(q);
-    const bookings: any[] = snap.exists() ? Object.values(snap.val()) : [];
+  /**
+   * 🔍 Recupera booking esistenti per artista nel range giorno.
+   *
+   * Nota RTDB:
+   * - Possiamo query-are per startAt/endAt su 'start'
+   * - Ma non possiamo fare anche filtro composto su idArtist nello stesso query
+   *   quindi: query per range -> poi filtro in memoria su idArtist.
+   *
+   * Stati che NON bloccano slot:
+   * - cancelled
+   * (puoi aggiungere 'annulled' se esiste nel tuo DB)
+   *
+   * Stati che bloccano slot:
+   * - draft / paid / on-going / completed
+   *
+   * Includere draft è il fail-safe contro doppie prenotazioni in fase pagamento.
+   */
+  private async getBookingsByArtistAndDayRange(
+    artistId: string,
+    dayStartLocal: string, // "YYYY-MM-DDT00:00:00"
+    dayEndLocal: string    // "YYYY-MM-DDT23:59:59"
+  ): Promise<Booking[]> {
+    const q = query(
+      ref(this.db, this.path),
+      orderByChild('start'),
+      startAt(dayStartLocal),
+      endAt(`${dayEndLocal}\uf8ff`)
+    );
 
-    return bookings.filter(b => b.date === date && b.idArtist === artistId);
+    const snap = await get(q);
+
+    const all: Booking[] = snap.exists()
+      ? Object.values<any>(snap.val()).map(v => v as Booking)
+      : [];
+
+    // Stati che NON devono occupare slot
+    const nonBlocking = new Set<string>(['cancelled', 'annulled']);
+
+    return all
+      .filter(b => b?.idArtist === artistId)           // filtro artista
+      .filter(b => !!b?.start && !!b?.end)             // devono avere intervallo
+      .filter(b => !nonBlocking.has(String(b.status))) // filtro status
+      .map(b => ({
+        ...b,
+        // normalizzo formati per evitare mismatch tra record vecchi/nuovi
+        start: this.normalizeLocalDateTime(b.start),
+        end: this.normalizeLocalDateTime(b.end),
+      }))
+      .sort((a, b) => a.start.localeCompare(b.start));
   }
+
+  // ─────────────────────────────────────────────────────────────
+  // CRUD / LISTE
+  // ─────────────────────────────────────────────────────────────
+
   /** Lista TUTTE le prenotazioni in real-time */
   getAllBookings(): Observable<Booking[]> {
     console.log('[BookingService] getAllBookings → subscribe');
@@ -186,6 +273,7 @@ export class BookingService {
       typeof day === 'string'
         ? day.slice(0, 10)
         : day.toISOString().slice(0, 10);
+
     const startKey = `${dateStr}T00:00:00`;
     const endKey = `${dateStr}T23:59:59\uf8ff`;
 
@@ -375,8 +463,8 @@ export class BookingService {
 
   // ─────────────────────────────────────────────────────────────
   // Helpers: sanificazione e formattazioni coerenti con le query
-  // (teniamo stringhe locali "YYYY-MM-DDTHH:mm:ss" senza 'Z')
   // ─────────────────────────────────────────────────────────────
+
   private stripUndef<T extends Record<string, any>>(o: T): T {
     const out: any = {};
     Object.keys(o).forEach(k => o[k] !== undefined && (out[k] = o[k]));
@@ -398,9 +486,53 @@ export class BookingService {
 
   /** Somma minuti a una stringa locale "YYYY-MM-DDTHH:mm:ss" */
   private addMinutesLocal(startLocal: string, minutes: number): string {
-    const d = new Date(startLocal);
+    const d = new Date(this.normalizeLocalDateTime(startLocal));
     d.setMinutes(d.getMinutes() + minutes);
     return this.formatLocal(d);
+  }
+
+  /** Estrae "YYYY-MM-DD" anche se input contiene ora/secondi/Z */
+  private normalizeDateOnly(input: string): string {
+    if (!input) return '';
+    return input.slice(0, 10);
+  }
+
+  /**
+   * Normalizza qualunque formato a "YYYY-MM-DDTHH:mm:ss" (senza Z),
+   * gestendo anche:
+   * - "YYYY-MM-DDTHH:mm"
+   * - "YYYY-MM-DDTHH:mm:ss"
+   * - "YYYY-MM-DDTHH:mm:ss.000Z"
+   */
+  private normalizeLocalDateTime(input: string): string {
+    if (!input) return input;
+
+    // rimuove 'Z' e frazioni di secondo
+    let s = String(input).replace('Z', '');
+    s = s.split('.')[0];
+
+    const hasSeconds = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s);
+    const hasMinutesOnly = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s);
+
+    if (hasMinutesOnly) return `${s}:00`;
+    if (hasSeconds) return s;
+
+    // fallback: se arriva qualcosa di strano, prova Date()
+    const d = new Date(input);
+    if (!isNaN(d.getTime())) return this.formatLocal(d);
+
+    return s;
+  }
+
+  /** Overlap tra intervalli locali [aStart,aEnd) e [bStart,bEnd) */
+  private overlapsLocal(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+    const A0 = new Date(this.normalizeLocalDateTime(aStart)).getTime();
+    const A1 = new Date(this.normalizeLocalDateTime(aEnd)).getTime();
+    const B0 = new Date(this.normalizeLocalDateTime(bStart)).getTime();
+    const B1 = new Date(this.normalizeLocalDateTime(bEnd)).getTime();
+
+    // overlap standard
+    return A0 < B1 && B0 < A1;
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -432,17 +564,19 @@ export class BookingService {
     // payload conforme al modello Booking + sanificazione (mai undefined)
     const payload: Omit<Booking, 'id' | 'status'> = this.stripUndef({
       title: `${clientName || 'Cliente'} - Tattoo`,
-      start,
-      end,
+      start: this.normalizeLocalDateTime(start),
+      end: this.normalizeLocalDateTime(end),
       idClient,
       description: draft.note || '',
       idArtist: draft.artistId || '',
       createAt: this.formatLocal(new Date()),
       updateAt: this.formatLocal(new Date()),
+      status: 'draft',
       price: 0,
       paidAmount: 0
     } as any);
 
+    // Nota: status viene impostato da addDraft(...) comunque.
     console.log('[BookingService] buildDraftPayloadFromChat → out', payload);
     return payload;
   }

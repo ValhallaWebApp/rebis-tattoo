@@ -1,16 +1,13 @@
 <section class="step">
-  <div class="hero">
+  <mat-card class="hero">
     <div class="badge">
       <mat-icon>check_circle</mat-icon>
     </div>
-
     <h2>Prenotazione confermata</h2>
-    <p>
-      Perfetto! La tua consulenza è stata confermata.
-    </p>
-  </div>
+    <p>Perfetto! La tua consulenza è stata confermata.</p>
+  </mat-card>
 
-  <div class="card">
+  <mat-card class="card">
     <div class="row">
       <div class="k">Artista</div>
       <div class="v">{{ draft().artistName }}</div>
@@ -25,9 +22,11 @@
         Codice prenotazione: <b>{{ bookingId() }}</b>
       </div>
     }
-  </div>
+  </mat-card>
 
-  <button mat-stroked-button class="btn" (click)="again()">
-    Prenota un’altra consulenza
-  </button>
+  <div class="actions">
+    <button mat-stroked-button (click)="again()">
+      Prenota un’altra consulenza
+    </button>
+  </div>
 </section>

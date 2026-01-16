@@ -1,101 +1,77 @@
 .step {
-  display: grid;
-  gap: 12px;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 20px 16px 32px;
 }
 
-.head {
-  h2 {
-    margin: 0;
-    font-size: 18px;
-    letter-spacing: .2px;
-  }
+.h1 { margin: 0 0 6px; font-size: 28px; font-weight: 900; }
+.p { margin: 0 0 12px; opacity: .75; }
 
-  .sub {
-    margin: 6px 0 0;
-    opacity: .8;
-    font-size: 13px;
-    line-height: 1.35;
-  }
-}
-
-.card {
-  border-radius: 16px;
-  padding: 14px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.25);
-  backdrop-filter: blur(10px);
-}
+.card { border-radius: 16px; padding: 14px; }
 
 .label {
   font-size: 12px;
-  opacity: .75;
-  margin-bottom: 8px;
+  font-weight: 800;
+  opacity: .7;
+  margin: 8px 0 10px;
+  letter-spacing: .04em;
 }
 
 .days {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  overflow: auto;
-  padding-bottom: 6px;
-
-  .day {
-    border-radius: 999px;
-    white-space: nowrap;
-    border: 1px solid rgba(255,255,255,.12);
-
-    &.active {
-      border-color: rgba(255, 215, 0, .55);
-      box-shadow: 0 0 0 3px rgba(255, 215, 0, .10);
-    }
-  }
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.divider {
-  height: 1px;
-  margin: 12px 0;
-  background: rgba(255,255,255,.10);
+.day {
+  border-radius: 999px !important;
+  height: 38px;
+}
+
+.day.active {
+  border-color: rgba(25,118,210,.55) !important;
+  box-shadow: 0 10px 30px rgba(25, 118, 210, .10);
 }
 
 .loading {
   display: flex;
-  align-items: center;
   gap: 10px;
-  opacity: .9;
-}
-
-.error {
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(255, 80, 80, .10);
-  border: 1px solid rgba(255, 80, 80, .25);
-  margin-bottom: 10px;
-}
-
-.empty {
+  align-items: center;
+  padding: 12px 0;
   opacity: .75;
-  font-size: 13px;
-  padding: 8px 0 2px;
 }
 
 .times {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  padding-top: 10px;
+}
 
-  .time {
-    border-radius: 14px;
-    justify-content: flex-start;
-    padding: 10px 12px;
+.time {
+  border-radius: 12px !important;
+  height: 42px;
+}
 
-    .ico {
-      margin-right: 8px;
-      opacity: .8;
-    }
+.time.active {
+  border-color: rgba(25,118,210,.7) !important;
+  background: rgba(25,118,210,.06);
+}
 
-    &.active {
-      border-color: rgba(255, 215, 0, .55);
-      box-shadow: 0 0 0 3px rgba(255, 215, 0, .10);
-    }
-  }
+.ico { margin-right: 6px; opacity: .7; }
+
+.error {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(244,67,54,.08);
+  margin-top: 10px;
+}
+
+.empty {
+  padding: 12px 0;
+  opacity: .7;
 }

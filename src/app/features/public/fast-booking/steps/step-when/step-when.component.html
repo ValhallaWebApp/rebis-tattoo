@@ -1,18 +1,16 @@
 <section class="step">
   <header class="head">
-    <h2>Quando vuoi venire?</h2>
-    <p class="sub">
-      Seleziona un giorno e poi un orario disponibile per la consulenza.
-    </p>
+    <h1 class="h1">QUANDO</h1>
+    <p class="p">Seleziona un giorno e poi un orario disponibile per la consulenza.</p>
   </header>
 
-  <div class="card">
+  <mat-card class="card">
     <div class="label">Giorno</div>
 
     <div class="days">
       @for (d of days(); track d.value) {
         <button
-          mat-button
+          mat-stroked-button
           class="day"
           [class.active]="selectedDate() === d.value"
           (click)="pickDate(d.value)">
@@ -21,22 +19,27 @@
       }
     </div>
 
-    <div class="divider"></div>
+    <mat-divider></mat-divider>
 
     <div class="label">Orari disponibili</div>
 
     @if (loading()) {
       <div class="loading">
-        <mat-progress-spinner diameter="24" mode="indeterminate"></mat-progress-spinner>
+        <mat-progress-spinner diameter="22" mode="indeterminate"></mat-progress-spinner>
         <span>Carico disponibilità…</span>
       </div>
     } @else {
       @if (error() && selectedDate()) {
-        <div class="error">{{ error() }}</div>
+        <div class="error">
+          <mat-icon>error</mat-icon>
+          <span>{{ error() }}</span>
+        </div>
       }
 
       @if (slots().length === 0 && selectedDate()) {
-        <div class="empty">Nessuno slot disponibile per questo giorno.</div>
+        <div class="empty">
+          Nessuno slot disponibile per questo giorno.
+        </div>
       }
 
       <div class="times">
@@ -52,5 +55,5 @@
         }
       </div>
     }
-  </div>
+  </mat-card>
 </section>

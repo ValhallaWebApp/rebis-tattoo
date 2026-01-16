@@ -1,12 +1,10 @@
 <section class="step">
   <header class="head">
-    <h2>Pagamento caparra</h2>
-    <p class="sub">
-      Per confermare la consulenza è richiesta una caparra.
-    </p>
+    <h1 class="h1">PAGAMENTO</h1>
+    <p class="p">Per confermare la consulenza è richiesta una caparra.</p>
   </header>
 
-  <div class="card">
+  <mat-card class="card">
     <div class="row">
       <div class="k">Caparra</div>
       <div class="v">€ {{ depositEuro() }}</div>
@@ -15,12 +13,15 @@
     <div class="note">
       <mat-icon class="ico">info</mat-icon>
       <div>
-        <b>Nota:</b> la caparra verrà <b>scalata dal prezzo finale del tatuaggio</b>.
+        La caparra verrà <b>scalata dal prezzo finale</b> del tatuaggio.
       </div>
     </div>
 
     @if (error()) {
-      <div class="error">{{ error() }}</div>
+      <div class="error">
+        <mat-icon>error</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
     }
 
     <div class="actions">
@@ -35,12 +36,10 @@
         <div class="small">Booking creato: <b>{{ bookingId() }}</b></div>
         <div class="small">clientSecret pronto (Stripe).</div>
 
-        <!-- Qui aggancerai Stripe Elements.
-             Per ora ti lascio il bottone hook “successo” -->
         <button mat-stroked-button class="ok" (click)="confirmSuccess()">
           Simula pagamento riuscito
         </button>
       </div>
     }
-  </div>
+  </mat-card>
 </section>

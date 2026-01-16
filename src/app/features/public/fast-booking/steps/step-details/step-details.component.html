@@ -1,36 +1,47 @@
-<h1 class="h1">I TUOI DATI</h1>
-<p class="p">
-  Inserisci i dati per completare la richiesta di consulenza.
-</p>
+<section class="step">
+  <header class="head">
+    <h1 class="h1">I TUOI DATI</h1>
+    <p class="p">Inserisci i dati per completare la richiesta di consulenza.</p>
+  </header>
 
-<div class="form">
+  <mat-card class="card">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Nome e Cognome</mat-label>
+      <input
+        matInput
+        placeholder="Es. Mario Rossi"
+        [value]="draft().name || ''"
+        [disabled]="store.isNameLocked()"
+        (input)="update('name', $any($event.target).value)"
+      />
+      <mat-hint *ngIf="store.isNameLocked()">Nome precompilato dal tuo profilo</mat-hint>
+    </mat-form-field>
 
-  <label>Nome e Cognome</label>
-  <input
-    type="text"
-    placeholder="Es. Mario Rossi"
-    [value]="draft().name || ''"
-    (input)="update('name', $any($event.target).value)"
-  />
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Email o Telefono</mat-label>
+      <input
+        matInput
+        placeholder="email o numero"
+        [value]="draft().contact || ''"
+        [disabled]="store.isContactLocked()"
+        (input)="update('contact', $any($event.target).value)"
+      />
+      <mat-hint *ngIf="store.isContactLocked()">Contatto associato al tuo account</mat-hint>
+    </mat-form-field>
 
-  <label>Email o Telefono</label>
-  <input
-    type="text"
-    placeholder="email o numero"
-    [value]="draft().contact || ''"
-    (input)="update('contact', $any($event.target).value)"
-  />
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Descrizione del progetto</mat-label>
+      <textarea
+        matInput
+        rows="4"
+        placeholder="Descrivi brevemente l’idea del tatuaggio"
+        [value]="draft().description || ''"
+        (input)="update('description', $any($event.target).value)"
+      ></textarea>
+    </mat-form-field>
 
-  <label>Descrizione del progetto</label>
-  <textarea
-    rows="4"
-    placeholder="Descrivi brevemente l’idea del tatuaggio"
-    [value]="draft().description || ''"
-    (input)="update('description', $any($event.target).value)"
-  ></textarea>
-
-</div>
-
-<div class="hint">
-  I dati verranno usati solo per la gestione della consulenza.
-</div>
+    <div class="privacy">
+      I dati verranno usati solo per la gestione della consulenza.
+    </div>
+  </mat-card>
+</section>

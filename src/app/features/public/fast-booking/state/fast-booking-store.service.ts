@@ -4,7 +4,7 @@ import { StaffMember, StaffService } from '../../../../core/services/staff/staff
 import { BookingChatDraft, BookingService } from '../../../../core/services/bookings/booking.service';
 import { UserService } from '../../../../core/services/users/user.service';
 import { PaymentApiService } from '../../../../core/services/payments/payment-api.service';
-
+import { AuthService } from '../../../../core/services/auth/authservice';
 
 type Step =
   | 'intro'
@@ -23,6 +23,7 @@ export class FastBookingStore {
   private readonly bookingService = inject(BookingService);
   private readonly userService = inject(UserService);
   private readonly paymentApi = inject(PaymentApiService);
+  private readonly auth = inject(AuthService);
 
   // FLOW
   private readonly steps: Step[] = [
@@ -73,6 +74,37 @@ export class FastBookingStore {
   });
 
   constructor() {
+    // ✅ PREFILL: quando l'utente è disponibile, precompila SOLO i campi vuoti
+    effect(
+      () => {
+        const u = this.auth.userSig();
+        if (!u) return;
+
+        const nameFromUser = (u as any).name ?? (u as any).displayName ?? null;
+
+        const emailFromUser = (u as any).email ?? null;
+        const phoneFromUser = (u as any).phone ?? (u as any).phoneNumber ?? null;
+
+        // preferisci email, altrimenti phone
+        const contactFromUser = emailFromUser ?? phoneFromUser ?? null;
+
+        this.draft.update((d: any) => {
+          const next = { ...d };
+
+          if (!next.name || String(next.name).trim() === '') {
+            next.name = nameFromUser;
+          }
+
+          if (!next.contact || String(next.contact).trim() === '') {
+            next.contact = contactFromUser;
+          }
+
+          return next;
+        });
+      },
+      { allowSignalWrites: true }
+    );
+
     // auto-load artist list quando entri nello step artist
     effect(() => {
       if (this.step() === 'artist' && this.artists().length === 0) {
@@ -96,9 +128,7 @@ export class FastBookingStore {
 
   // COMPUTED
   readonly stepIndex = computed(() => this.steps.indexOf(this.step()));
-
   readonly progress = computed(() => ((this.stepIndex() + 1) / this.steps.length) * 100);
-
   readonly canBack = computed(() => this.stepIndex() > 0 && this.step() !== 'success');
 
   readonly canNext = computed(() => {
@@ -113,6 +143,30 @@ export class FastBookingStore {
     if (s === 'payment') return false;
 
     return true;
+  });
+
+  // ─────────────────────────────────────────────
+  // AUTH / LOCK FIELDS (per disabilitare i campi se precompilati)
+  // ─────────────────────────────────────────────
+  readonly isUserLogged = computed(() => !!this.auth.userSig());
+
+  /**
+   * Se l’utente è loggato e il nome è valorizzato, lo blocchiamo.
+   * (coerente con richiesta: "disabled se popolati")
+   */
+  readonly isNameLocked = computed(() => {
+    const u = this.auth.userSig();
+    const name = this.draft().name;
+    return !!u && !!name && String(name).trim().length > 0;
+  });
+
+  /**
+   * Se l’utente è loggato e il contatto è valorizzato, lo blocchiamo.
+   */
+  readonly isContactLocked = computed(() => {
+    const u = this.auth.userSig();
+    const contact = this.draft().contact;
+    return !!u && !!contact && String(contact).trim().length > 0;
   });
 
   // NAV
@@ -191,27 +245,25 @@ export class FastBookingStore {
   }
 
   // DATA FETCH: slots (REAL)
-async fetchSlots(artistId: string, date: string) {
-  try {
-    this.loadingSlots.set(true);
-    this.error.set(null);
+  async fetchSlots(artistId: string, date: string) {
+    try {
+      this.loadingSlots.set(true);
+      this.error.set(null);
 
-    const duration = this.durationMin();
+      const duration = this.durationMin();
 
-    // ✅ bookingService ritorna Promise, quindi await diretto
-    const slots = await this.bookingService.getFreeSlotsInDay(artistId, date, duration);
+      // ✅ bookingService ritorna Promise, quindi await diretto
+      const slots = await this.bookingService.getFreeSlotsInDay(artistId, date, duration);
 
-    this.slots.set(slots ?? []);
-  } catch (e) {
-    console.error('[FAST_BOOKING][SLOTS] ERROR', e);
-    this.slots.set([]);
-    this.error.set('Impossibile caricare gli orari disponibili per questo giorno.');
-  } finally {
-    this.loadingSlots.set(false);
+      this.slots.set(slots ?? []);
+    } catch (e) {
+      console.error('[FAST_BOOKING][SLOTS] ERROR', e);
+      this.slots.set([]);
+      this.error.set('Impossibile caricare gli orari disponibili per questo giorno.');
+    } finally {
+      this.loadingSlots.set(false);
+    }
   }
-}
-
-
 
   // PAYMENT FLOW (REAL DATA + hook)
   async startPayment() {
@@ -266,8 +318,7 @@ async fetchSlots(artistId: string, date: string) {
       this.paymentClientSecret.set(payRes.clientSecret);
       this.paymentIntentId.set(payRes.paymentIntentId);
 
-      // 3) qui normalmente apri Stripe Elements e confermi il pagamento.
-      // In questa versione: lo fai nello StepPayment (bottone conferma / hook).
+      // 3) Stripe Elements gestito nello step payment
     } catch (e: any) {
       console.error(e);
       this.error.set('Errore durante la creazione del pagamento. Riprova.');
@@ -300,24 +351,35 @@ async fetchSlots(artistId: string, date: string) {
     }
   }
 
-  resetAll() {
-    this.error.set(null);
-    this.bookingId.set(null);
-    this.paymentClientSecret.set(null);
-    this.paymentIntentId.set(null);
-    this.selectedDate.set(null);
-    this.slots.set([]);
+resetAll() {
+  this.error.set(null);
+  this.bookingId.set(null);
+  this.paymentClientSecret.set(null);
+  this.paymentIntentId.set(null);
+  this.selectedDate.set(null);
+  this.slots.set([]);
 
-    this.draft.set({
-      artistId: null,
-      artistName: null,
-      date: null,
-      time: null,
-      name: null,
-      contact: null,
-      description: null,
-    });
+  const u = this.auth.userSig();
+  const nameFromUser = u ? ((u as any).name ?? (u as any).displayName ?? null) : null;
+  const emailFromUser = u ? ((u as any).email ?? null) : null;
+  const phoneFromUser = u ? ((u as any).phone ?? (u as any).phoneNumber ?? null) : null;
+  const contactFromUser = u ? (emailFromUser ?? phoneFromUser ?? null) : null;
 
-    this.step.set('intro');
-  }
+  this.draft.set({
+    artistId: null,
+    artistName: null,
+    date: null,
+    time: null,
+
+    // ✅ se loggato: riparti già precompilato
+    name: nameFromUser,
+    contact: contactFromUser,
+
+    // ✅ descrizione la resetti sempre
+    description: null,
+  });
+
+  this.step.set('intro');
+}
+
 }

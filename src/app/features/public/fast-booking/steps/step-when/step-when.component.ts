@@ -1,3 +1,4 @@
+import { MaterialModule } from './../../../../../core/modules/material.module';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,7 +11,7 @@ import { FastBookingStore } from '../../state/fast-booking-store.service';
 @Component({
   selector: 'app-step-when',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatProgressSpinnerModule, MatChipsModule, MatIconModule],
+  imports: [CommonModule, MaterialModule,  MatButtonModule, MatProgressSpinnerModule, MatChipsModule, MatIconModule],
   templateUrl: './step-when.component.html',
   styleUrl: './step-when.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

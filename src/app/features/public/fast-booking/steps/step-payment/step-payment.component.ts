@@ -4,11 +4,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 import { FastBookingStore } from '../../state/fast-booking-store.service';
+import { MaterialModule } from '../../../../../core/modules/material.module';
 
 @Component({
   selector: 'app-step-payment',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule,MaterialModule, MatButtonModule, MatIconModule],
   templateUrl: './step-payment.component.html',
   styleUrl: './step-payment.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
