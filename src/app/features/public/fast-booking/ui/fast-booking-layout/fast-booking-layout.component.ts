@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FastBookingStore } from '../../state/fast-booking-store.service';
 
 @Component({
   selector: 'app-fast-booking-layout',
@@ -12,4 +13,8 @@ import { CommonModule } from '@angular/common';
 export class FastBookingLayoutComponent {
   /** opzionale: titolo piccolo in alto */
   @Input() title = 'REBIS TATTOO';
+  constructor(public store: FastBookingStore) {
+  this.store.hydrateFromHomeSeed();
+}
+
 }

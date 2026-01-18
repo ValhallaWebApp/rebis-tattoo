@@ -1,68 +1,99 @@
 <section class="booking-form-section">
-  <h2 class="section-title"><span>{{'Prenota'.toUpperCase()}}</span> {{'un Appuntamento'.toUpperCase()}}</h2>
+  <h2 class="section-title"><span>{{ 'Prenota'.toUpperCase() }}</span> {{ 'un Appuntamento'.toUpperCase() }}</h2>
 
-<div *ngIf="loading" class="spinner-wrapper">
-  <mat-spinner diameter="40"></mat-spinner>
-</div>
+  <div *ngIf="loading()" class="spinner-wrapper">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
 
-<!-- Form reso SOLO quando loading = false -->
-<form *ngIf="!loading" [formGroup]="bookingForm" (ngSubmit)="onSubmit()" class="form-grid">
+  <!-- ✅ Banner login / registrazione (solo se NON loggato) -->
+  reminding: <ng-container *ngIf="!loading()">
+    <mat-card class="auth-banner" *ngIf="!isLogged">
+      <div class="auth-banner__left">
+        <mat-icon class="auth-ico">account_circle</mat-icon>
+        <div class="auth-text">
+          <div class="auth-title">Vuoi fare prima?</div>
+          <div class="auth-sub">
+            Accedi o registrati per compilare automaticamente <b>Nome</b> ed <b>Email</b>.
+          </div>
+        </div>
+      </div>
 
-    <!-- Dati personali -->
-    <mat-form-field appearance="fill" class="form-group">
-      <mat-label>Nome completo</mat-label>
-      <input matInput formControlName="fullName" />
-    </mat-form-field>
+      <div class="auth-banner__actions">
+        <button mat-stroked-button (click)="goLogin()">
+          Accedi
+        </button>
+        <button mat-flat-button color="primary" (click)="goRegister()">
+          Registrati
+        </button>
+      </div>
+    </mat-card>
 
-    <mat-form-field appearance="fill" class="form-group">
-      <mat-label>Email</mat-label>
-      <input matInput type="email" formControlName="email" />
-    </mat-form-field>
+    <!-- ✅ Info se loggato -->
+    <mat-card class="auth-banner ok" *ngIf="isLogged">
+      <div class="auth-banner__left">
+        <mat-icon class="auth-ico">verified</mat-icon>
+        <div class="auth-text">
+          <div class="auth-title">Sei loggato</div>
+          <div class="auth-sub">
+            Nome ed Email sono stati precompilati dal tuo account
+            <span *ngIf="userEmail">({{ userEmail }})</span>.
+          </div>
+        </div>
+      </div>
+    </mat-card>
 
-    <mat-form-field appearance="fill" class="form-group">
-      <mat-label>Telefono</mat-label>
-      <input matInput type="tel" formControlName="phone" />
-    </mat-form-field>
+    <!-- Form -->
+    <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()" class="form-grid">
 
-    <!-- Selezioni -->
-    <mat-form-field appearance="fill" class="form-group">
-      <mat-label>Procedura</mat-label>
-      <mat-select formControlName="procedure">
-        <mat-option *ngFor="let proc of procedures" [value]="proc">{{ proc }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+      <mat-form-field appearance="fill" class="form-group">
+        <mat-label>Nome completo</mat-label>
+        <input matInput formControlName="fullName" />
+        <mat-hint *ngIf="isLogged">Campo precompilato</mat-hint>
+      </mat-form-field>
 
-   <mat-form-field appearance="fill" class="form-group">
-  <mat-label>Artista</mat-label>
-  <mat-select formControlName="artist">
-    <mat-option *ngFor="let artist of staff" [value]="artist.name">
-      {{ artist.name }}
-    </mat-option>
-  </mat-select>
-</mat-form-field>
+      <mat-form-field appearance="fill" class="form-group">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" />
+        <mat-hint *ngIf="isLogged">Campo precompilato</mat-hint>
+      </mat-form-field>
 
+      <mat-form-field appearance="fill" class="form-group">
+        <mat-label>Telefono</mat-label>
+        <input matInput type="tel" formControlName="phone" />
+      </mat-form-field>
 
-    <!-- <mat-form-field appearance="fill" class="form-group">
-      <mat-label>Data e Orario</mat-label>
-      <input matInput type="datetime-local" formControlName="date" />
-    </mat-form-field> -->
+      <mat-form-field appearance="fill" class="form-group">
+        <mat-label>Procedura</mat-label>
+        <mat-select formControlName="procedure">
+          <mat-option *ngFor="let proc of procedures" [value]="proc">{{ proc }}</mat-option>
+        </mat-select>
+      </mat-form-field>
 
-    <!-- Commenti -->
-    <mat-form-field appearance="fill" class="form-group full-width">
-      <mat-label>Commenti</mat-label>
-      <textarea matInput rows="4" formControlName="comments"></textarea>
-    </mat-form-field>
+      <mat-form-field appearance="fill" class="form-group">
+        <mat-label>Artista</mat-label>
+        <mat-select formControlName="artist">
+          <mat-option *ngFor="let artist of staff()" [value]="artist.id">
+  {{ artist.name }}
+</mat-option>
 
-    <!-- Checkbox e bottone -->
-    <div class="form-footer full-width">
-      <mat-checkbox formControlName="privacyConsent">
-        Acconsento al trattamento dei dati personali
-      </mat-checkbox>
+        </mat-select>
+      </mat-form-field>
 
-      <button mat-raised-button color="primary" type="submit" [disabled]="bookingForm.invalid">
-        Scegli la Data
-      </button>
-    </div>
+      <mat-form-field appearance="fill" class="form-group full-width">
+        <mat-label>Commenti</mat-label>
+        <textarea matInput rows="4" formControlName="comments"></textarea>
+      </mat-form-field>
 
-  </form>
+      <div class="form-footer full-width">
+        <mat-checkbox formControlName="privacyConsent">
+          Acconsento al trattamento dei dati personali
+        </mat-checkbox>
+
+        <button mat-raised-button color="primary" type="submit" [disabled]="bookingForm.invalid">
+          Scegli la Data
+        </button>
+      </div>
+
+    </form>
+  </ng-container>
 </section>

@@ -16,6 +16,14 @@ type Step =
   | 'success';
 
 type Slot = { time: string };
+type HomeSeed = {
+  fullName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  procedure?: string | null;
+  artist?: string | null; // qui arriva ARTIST ID
+  comments?: string | null;
+};
 
 @Injectable({ providedIn: 'root' })
 export class FastBookingStore {
@@ -24,6 +32,8 @@ export class FastBookingStore {
   private readonly userService = inject(UserService);
   private readonly paymentApi = inject(PaymentApiService);
   private readonly auth = inject(AuthService);
+
+ HOME_SEED_KEY = 'FAST_BOOKING_HOME_SEED';
 
   // FLOW
   private readonly steps: Step[] = [
@@ -104,6 +114,28 @@ export class FastBookingStore {
       },
       { allowSignalWrites: true }
     );
+effect(() => {
+  const list = this.artists();
+  const d = this.draft();
+
+  const id = d.artistId;
+  if (!id) return;
+  if (!list?.length) return;
+
+  const found = list.find(a => a.id === id);
+  if (!found) return;
+
+  const nextName = found.name ?? null;
+  const currentName = d.artistName ?? null;
+
+  // ✅ guardia anti-loop
+  if (currentName === nextName) return;
+
+  this.draft.update((prev: any) => ({
+    ...prev,
+    artistName: nextName,
+  }));
+}, { allowSignalWrites: true });
 
     // auto-load artist list quando entri nello step artist
     effect(() => {
@@ -124,6 +156,9 @@ export class FastBookingStore {
 
       queueMicrotask(() => this.fetchSlots(d.artistId, date));
     });
+
+    queueMicrotask(() => this.hydrateFromHomeSeed());
+
   }
 
   // COMPUTED
@@ -378,8 +413,121 @@ resetAll() {
     // ✅ descrizione la resetti sempre
     description: null,
   });
+try { sessionStorage.removeItem(this.HOME_SEED_KEY); } catch {}
+try { localStorage.removeItem(this.HOME_SEED_KEY); } catch {}
 
   this.step.set('intro');
+}
+/**
+ * Chiamato da HomeContact (o da chiunque) per inizializzare il wizard.
+ * Imposta artista, precompila details e porta direttamente a WHEN.
+ */
+seedFromHome(seed: HomeSeed) {
+  const artistId = seed.artist ?? null;
+
+  // contact: preferisci email, fallback phone
+  const contact = (seed.email && seed.email.trim()) ? seed.email.trim()
+                : (seed.phone && seed.phone.trim()) ? seed.phone.trim()
+                : null;
+
+  const name = (seed.fullName && seed.fullName.trim()) ? seed.fullName.trim() : null;
+
+  const procedure = seed.procedure?.trim();
+  const comments = seed.comments?.trim();
+
+  const description =
+    [procedure ? `Procedura: ${procedure}` : null, comments ? comments : null]
+      .filter(Boolean)
+      .join('\n\n') || null;
+
+  // set artistId (artistName verrà risolto dopo)
+  this.draft.update((d: any) => ({
+    ...d,
+    artistId,
+    artistName: d.artistName, // la risolviamo sotto
+    date: null,
+    time: null,
+    name: d.name && String(d.name).trim() ? d.name : name, // non sovrascrivere se già compilato
+    contact: d.contact && String(d.contact).trim() ? d.contact : contact,
+    description: d.description && String(d.description).trim() ? d.description : description,
+  }));
+
+  // reset data slots
+  this.selectedDate.set(null);
+  this.slots.set([]);
+
+  // vai diretto a WHEN se ho artistId, altrimenti ARTIST
+  this.step.set(artistId ? 'when' : 'artist');
+
+  // salva per refresh o navigazioni
+  try {
+    sessionStorage.setItem(this.HOME_SEED_KEY, JSON.stringify(seed));
+  } catch {}
+}
+
+/**
+ * Da chiamare quando entri nel wizard (o nel constructor),
+ * per recuperare eventuale seed dalla Home.
+ */
+hydrateFromHomeSeed() {
+  try {
+    const raw = sessionStorage.getItem(this.HOME_SEED_KEY) || localStorage.getItem(this.HOME_SEED_KEY);
+    if (!raw) return;
+
+    const seed = JSON.parse(raw) as HomeSeed;
+    this.seedFromHome(seed);
+
+    // cleanup: tienilo solo in session (così non rimane “sporco” per giorni)
+    localStorage.removeItem(this.HOME_SEED_KEY);
+  } catch {}
+}
+/**
+ * STEP 2: compila SOLO i campi del draft a partire dal form Home.
+ * - NON cambia step
+ * - NON carica slots
+ * - NON tocca selectedDate/slots
+ * - NON sovrascrive campi già compilati nello store (se non vuoi)
+ */
+applyHomeSeed(seed: HomeSeed, opts?: { overwrite?: boolean }) {
+  const overwrite = opts?.overwrite === true;
+
+  const artistId = seed.artist ?? null;
+
+  const name =
+    seed.fullName && seed.fullName.trim()
+      ? seed.fullName.trim()
+      : null;
+
+  const contact =
+    seed.email && seed.email.trim()
+      ? seed.email.trim()
+      : seed.phone && seed.phone.trim()
+        ? seed.phone.trim()
+        : null;
+
+  const procedure = seed.procedure?.trim() || null;
+  const comments = seed.comments?.trim() || null;
+
+  const description =
+    [procedure ? `Procedura: ${procedure}` : null, comments]
+      .filter(Boolean)
+      .join('\n\n') || null;
+
+  this.draft.update((d: any) => ({
+    ...d,
+
+    // artista: se overwrite o era vuoto
+    artistId: overwrite ? artistId : (d.artistId ?? artistId),
+    // artistName lo risolverai dopo quando carichi artists()
+    artistName: d.artistName ?? null,
+
+    // details: se overwrite o erano vuoti
+    name: overwrite ? name : (d.name && String(d.name).trim() ? d.name : name),
+    contact: overwrite ? contact : (d.contact && String(d.contact).trim() ? d.contact : contact),
+    description: overwrite
+      ? description
+      : (d.description && String(d.description).trim() ? d.description : description),
+  }));
 }
 
 }
