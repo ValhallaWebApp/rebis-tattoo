@@ -1,86 +1,111 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import {
   Database,
-  ref, push, set, update, remove, get, onValue,
-  query, orderByChild, equalTo,
+  ref,
+  push,
+  set,
+  update,
+  remove,
+  get,
+  onValue,
+  query,
+  orderByChild,
+  equalTo,
   startAt,
-  endAt
+  endAt,
+  DataSnapshot
 } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 
-/** Stati consentiti (coerenti con RTDB) */
+/** Stati booking (nuovi + realistici) */
 export type BookingStatus =
   | 'draft'
+  | 'pending'
+  | 'confirmed'
   | 'paid'
-  | 'on-going'
+  | 'in_progress'
   | 'completed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'no_show';
 
 /** Draft leggero che può arrivare dal chatbot / fast-booking */
 export interface BookingChatDraft {
-  artistId?: string;   // id artista (opzionale)
-  date?: string;       // "YYYY-MM-DD"
-  time?: string;       // "HH:mm"
-  duration?: number;   // minuti (default 30)
-  note?: string;       // descrizione
+  artistId?: string; // id artista
+  date?: string;     // "YYYY-MM-DD"
+  time?: string;     // "HH:mm"
+  duration?: number; // minuti
+  note?: string;
+
+  // opzionali (se vuoi far arrivare già slot completi)
   start?: string;
   end?: string;
 }
 
-/** Modello Booking salvato su RTDB */
+/**
+ * Modello Booking salvato su RTDB
+ * ✅ Nuovo schema + campi legacy opzionali per compat immediata
+ */
 export interface Booking {
   id: string;
+
+  // ✅ nuovo
+  clientId: string;
+  artistId: string;
+  projectId?: string; // booking può esistere senza project (booking future/consulenze)
+  type?: 'consultation' | 'session';
+
   title: string;
-  start: string;       // "YYYY-MM-DDTHH:mm:ss" (locale, senza Z) - ma nel DB possono esserci varianti
-  end: string;         // "YYYY-MM-DDTHH:mm:ss" (locale, senza Z) - ma nel DB possono esserci varianti
-  idClient: string;
-  description: string;
-  idArtist: string;
-  eta?: string;
-  createAt: string;    // "YYYY-MM-DDTHH:mm:ss"
-  updateAt: string;    // "YYYY-MM-DDTHH:mm:ss"
+  start: string; // "YYYY-MM-DDTHH:mm:ss" (locale)
+  end: string;   // "YYYY-MM-DDTHH:mm:ss" (locale)
+  notes?: string;
+
   status: BookingStatus;
-  price: number;
-  paidAmount?: any;
-  cancelledBy?: string;
+
+  price?: number;          // totale previsto
+  depositRequired?: number;
+  paidAmount?: number;
+
+  createdAt: string;
+  updatedAt: string;
+
+  cancelledBy?: 'admin' | 'client';
   cancelReason?: string;
   rescheduleCount?: number;
   lastRescheduledAt?: string;
+
+  // ✅ legacy (per non rompere UI/feature esistenti)
+  idClient?: string;
+  idArtist?: string;
+  description?: string;
+  createAt?: string;
+  updateAt?: string;
+  eta?: string;
 }
 
-/* ============================================================================
- * BookingDraftService
- *  - Ponte in-memory fra chatbot e pagina /bookings (nessuna persistenza)
- *  - Utile per passare un draft “volatile” tra componenti/pagine
- * ==========================================================================*/
+/* =============================================================================
+ * BookingDraftService (in-memory)
+ * ============================================================================= */
 @Injectable({ providedIn: 'root' })
 export class BookingDraftService {
-  /** stato in-memory del draft (niente persistenza su RTDB/Storage) */
   private _draft = signal<BookingChatDraft | null>(null);
 
-  /** sola lettura reattiva (comoda per componenti) */
   readonly draftSig = this._draft.asReadonly();
-
-  /** flag comodo: esiste un draft? */
   readonly hasDraftSig = computed(() => this._draft() !== null);
 
-  /** rimuove chiavi undefined (utile su patch) */
   private stripUndef<T extends Record<string, any>>(o: T): T {
     const out: any = {};
     for (const k of Object.keys(o)) if (o[k] !== undefined) out[k] = o[k];
     return out;
   }
 
-  /** imposta/merge del draft (logga stato prima/dopo) */
   setDraft(draft: BookingChatDraft, opts: { merge?: boolean } = {}): void {
-    const draftClean = this.stripUndef(draft);
+    const clean = this.stripUndef(draft);
     const prev = this._draft();
-    const next = opts.merge && prev ? { ...prev, ...draftClean } : draftClean;
-    console.log('[BookingDraftService] setDraft →', { prev, incoming: draftClean, merge: !!opts.merge, next });
+    const next = opts.merge && prev ? { ...prev, ...clean } : clean;
+    console.log('[BookingDraftService] setDraft →', { prev, incoming: clean, merge: !!opts.merge, next });
     this._draft.set(next);
   }
 
-  /** patch parziale del draft corrente */
   patchDraft(patch: Partial<BookingChatDraft>): void {
     const prev = this._draft();
     const next = { ...(prev || {}), ...this.stripUndef(patch) };
@@ -88,7 +113,6 @@ export class BookingDraftService {
     this._draft.set(next);
   }
 
-  /** consuma e azzera il draft (one-shot) */
   consume(): BookingChatDraft | null {
     const d = this._draft();
     this._draft.set(null);
@@ -96,66 +120,112 @@ export class BookingDraftService {
     return d;
   }
 
-  /** reset completo (senza restituire) */
   reset(): void {
     console.log('[BookingDraftService] reset');
     this._draft.set(null);
   }
 }
 
-/* ============================================================================
+/* =============================================================================
  * BookingService
- *  - Operazioni su RTDB per gestione prenotazioni
- *  - Include utilità per creare una bozza da BookingChatDraft
- *  - Include disponibilità slot (robusta su start/end)
- * ==========================================================================*/
+ * ============================================================================= */
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly path = 'bookings';
 
   constructor(private db: Database) {}
 
-  // ─────────────────────────────────────────────────────────────
-  // DISPONIBILITÀ: SLOT LIBERI (ROBUSTO SU start/end)
-  // ─────────────────────────────────────────────────────────────
+  // ---------------------------------------------------------------------------
+  // COMPAT: mappa dati DB (vecchi/nuovi) -> Booking canonico
+  // ---------------------------------------------------------------------------
+  private toCanonical(raw: any): Booking {
+    const createdAt = raw.createdAt ?? raw.createAt ?? new Date().toISOString();
+    const updatedAt = raw.updatedAt ?? raw.updateAt ?? createdAt;
 
-  /**
-   * 📅 Recupera slot disponibili per un artista in un giorno.
-   *
-   * ✅ Funziona con ogni input data:
-   *  - "YYYY-MM-DD"
-   *  - "YYYY-MM-DDTHH:mm"
-   *  - "YYYY-MM-DDTHH:mm:ss"
-   *  - "...Z" / ".000Z"
-   *
-   * ✅ Funziona con i record reali RTDB che hanno start/end (anche con formati misti).
-   *
-   * @param artistId  id artista (matcha RTDB: idArtist)
-   * @param date      giorno (qualunque stringa che contenga almeno YYYY-MM-DD)
-   * @param duration  durata in minuti (es 60)
-   * @param stepMin   granularità slot (60=ogni ora; 30=ogni mezz'ora)
-   */
+    const clientId = raw.clientId ?? raw.idClient ?? '';
+    const artistId = raw.artistId ?? raw.idArtist ?? '';
+
+    const notes = raw.notes ?? raw.description ?? '';
+
+    const b: Booking = {
+      ...raw,
+      clientId,
+      artistId,
+      notes,
+      createdAt,
+      updatedAt,
+
+      // legacy mirror per UI vecchie
+      idClient: raw.idClient ?? clientId,
+      idArtist: raw.idArtist ?? artistId,
+      description: raw.description ?? notes,
+      createAt: raw.createAt ?? createdAt,
+      updateAt: raw.updateAt ?? updatedAt,
+    };
+
+    b.start = this.normalizeLocalDateTime(b.start);
+    b.end = this.normalizeLocalDateTime(b.end);
+
+    // defaults hardening
+    b.status = (b.status ?? 'draft') as BookingStatus;
+    b.price = b.price ?? 0;
+    b.paidAmount = b.paidAmount ?? 0;
+
+    return b;
+  }
+
+  /** patch generico -> patch per DB coerente (scrive anche legacy per retrocompat) */
+  private toDbPatch(patch: Partial<Booking>): any {
+    const out: any = { ...patch };
+
+    // legacy -> new
+    if (out.idClient && !out.clientId) out.clientId = out.idClient;
+    if (out.idArtist && !out.artistId) out.artistId = out.idArtist;
+    if (out.description && !out.notes) out.notes = out.description;
+    if (out.createAt && !out.createdAt) out.createdAt = out.createAt;
+    if (out.updateAt && !out.updatedAt) out.updatedAt = out.updateAt;
+
+    // new -> legacy
+    if (out.clientId && !out.idClient) out.idClient = out.clientId;
+    if (out.artistId && !out.idArtist) out.idArtist = out.artistId;
+    if (out.notes && !out.description) out.description = out.notes;
+    if (out.createdAt && !out.createAt) out.createAt = out.createdAt;
+    if (out.updatedAt && !out.updateAt) out.updateAt = out.updatedAt;
+
+    // normalize times
+    if (out.start) out.start = this.normalizeLocalDateTime(out.start);
+    if (out.end) out.end = this.normalizeLocalDateTime(out.end);
+
+    return out;
+  }
+
+  private snapshotToList(snapshot: DataSnapshot): Booking[] {
+    const data = snapshot.val();
+    if (!data) return [];
+    // data può essere {id: {...}} o array: gestiamo oggetto
+    return Object.entries<any>(data).map(([key, value]) => this.toCanonical({ id: key, ...value }));
+  }
+
+  // ---------------------------------------------------------------------------
+  // AVAILABILITY: SLOT LIBERI (robusto)
+  // ---------------------------------------------------------------------------
   async getFreeSlotsInDay(
     artistId: string,
     date: string,
     duration: number = 60,
     stepMin: number = 60
   ): Promise<{ time: string }[]> {
-    // Orari "studio" (se vuoi: spostali in config o in Staff schedule)
     const openingHour = 9;
     const closingHour = 18;
 
-    const day = this.normalizeDateOnly(date); // "YYYY-MM-DD"
+    const day = this.normalizeDateOnly(date);
     if (!day) return [];
 
-    // Range giorno (in locale) usato per query su 'start' (stringa)
     const dayStartLocal = `${day}T00:00:00`;
     const dayEndLocal = `${day}T23:59:59`;
 
-    // 1) carico tutte le booking dell'artista in quel giorno (status "occupanti")
     const existing = await this.getBookingsByArtistAndDayRange(artistId, dayStartLocal, dayEndLocal);
 
-    // 2) genero slot candidati e scarto quelli che overlap con booking esistenti
     const slots: { time: string }[] = [];
     const minutesStart = openingHour * 60;
     const minutesEnd = closingHour * 60;
@@ -168,7 +238,6 @@ export class BookingService {
       const slotStart = `${day}T${time}:00`;
       const slotEnd = this.addMinutesLocal(slotStart, duration);
 
-      // overlap standard: slotStart < bookingEnd && bookingStart < slotEnd
       const overlaps = existing.some(b => this.overlapsLocal(slotStart, slotEnd, b.start, b.end));
       if (!overlaps) slots.push({ time });
     }
@@ -176,98 +245,87 @@ export class BookingService {
     return slots;
   }
 
-  /**
-   * 🔍 Recupera booking esistenti per artista nel range giorno.
-   *
-   * Nota RTDB:
-   * - Possiamo query-are per startAt/endAt su 'start'
-   * - Ma non possiamo fare anche filtro composto su idArtist nello stesso query
-   *   quindi: query per range -> poi filtro in memoria su idArtist.
-   *
-   * Stati che NON bloccano slot:
-   * - cancelled
-   * (puoi aggiungere 'annulled' se esiste nel tuo DB)
-   *
-   * Stati che bloccano slot:
-   * - draft / paid / on-going / completed
-   *
-   * Includere draft è il fail-safe contro doppie prenotazioni in fase pagamento.
-   */
   private async getBookingsByArtistAndDayRange(
     artistId: string,
-    dayStartLocal: string, // "YYYY-MM-DDT00:00:00"
-    dayEndLocal: string    // "YYYY-MM-DDT23:59:59"
+    dayStartLocal: string,
+    dayEndLocal: string
   ): Promise<Booking[]> {
-    const q = query(
+    const qy = query(
       ref(this.db, this.path),
       orderByChild('start'),
       startAt(dayStartLocal),
       endAt(`${dayEndLocal}\uf8ff`)
     );
 
-    const snap = await get(q);
+    const snap = await get(qy);
 
     const all: Booking[] = snap.exists()
-      ? Object.values<any>(snap.val()).map(v => v as Booking)
+      ? Object.values<any>(snap.val()).map(v => this.toCanonical(v))
       : [];
 
-    // Stati che NON devono occupare slot
-    const nonBlocking = new Set<string>(['cancelled', 'annulled']);
+    // booking che NON bloccano slot
+    const nonBlocking = new Set<string>(['cancelled', 'annulled', 'no_show']);
 
     return all
-      .filter(b => b?.idArtist === artistId)           // filtro artista
-      .filter(b => !!b?.start && !!b?.end)             // devono avere intervallo
-      .filter(b => !nonBlocking.has(String(b.status))) // filtro status
-      .map(b => ({
-        ...b,
-        // normalizzo formati per evitare mismatch tra record vecchi/nuovi
-        start: this.normalizeLocalDateTime(b.start),
-        end: this.normalizeLocalDateTime(b.end),
-      }))
+      .filter(b => (b.artistId || b.idArtist) === artistId)
+      .filter(b => !!b.start && !!b.end)
+      .filter(b => !nonBlocking.has(String(b.status)))
       .sort((a, b) => a.start.localeCompare(b.start));
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // CRUD / LISTE
-  // ─────────────────────────────────────────────────────────────
-
-  /** Lista TUTTE le prenotazioni in real-time */
+  // ---------------------------------------------------------------------------
+  // CRUD / WATCH
+  // ---------------------------------------------------------------------------
   getAllBookings(): Observable<Booking[]> {
     console.log('[BookingService] getAllBookings → subscribe');
     return new Observable(obs => {
-      return onValue(ref(this.db, this.path), snap => {
-        const list = snap.val()
-          ? Object.values<Booking>(snap.val())
-          : [];
-        console.log('[BookingService] getAllBookings ← next', { count: list.length });
-        obs.next(list);
-      });
-    });
-  }
-
-  /** Lista prenotazioni per cliente (real-time) */
-  getBookingsByClient(uid: string): Observable<Booking[]> {
-    console.log('[BookingService] getBookingsByClient → subscribe', { uid });
-    return new Observable(obs => {
-      const q = query(
+      const unsub = onValue(
         ref(this.db, this.path),
-        orderByChild('idClient'),
-        equalTo(uid)
+        snap => {
+          const list = snap.exists() ? this.snapshotToList(snap) : [];
+          console.log('[BookingService] getAllBookings ← next', { count: list.length });
+          obs.next(list);
+        },
+        err => obs.error(err)
       );
-      return onValue(q, snap => {
-        const list = snap.val()
-          ? Object.values<Booking>(snap.val())
-          : [];
-        console.log('[BookingService] getBookingsByClient ← next', { uid, count: list.length });
-        obs.next(list);
-      });
+      return () => unsub();
     });
   }
 
-  /**
-   * Lista prenotazioni di un giorno (stringa o Date).
-   * Usa range "YYYY-MM-DDT00:00:00" → "YYYY-MM-DDT23:59:59\uF8FF"
-   */
+  /** Client bookings (nuovo campo: clientId) */
+  getBookingsByClient(clientId: string): Observable<Booking[]> {
+    console.log('[BookingService] getBookingsByClient → subscribe', { clientId });
+    return new Observable(obs => {
+      const qy = query(ref(this.db, this.path), orderByChild('clientId'), equalTo(clientId));
+      const unsub = onValue(
+        qy,
+        snap => {
+          const list = snap.exists() ? this.snapshotToList(snap) : [];
+          obs.next(list);
+        },
+        err => obs.error(err)
+      );
+      return () => unsub();
+    });
+  }
+
+  /** Artist bookings (nuovo campo: artistId) */
+  getBookingsByArtist(artistId: string): Observable<Booking[]> {
+    return new Observable(obs => {
+      const qy = query(ref(this.db, this.path), orderByChild('artistId'), equalTo(artistId));
+      const unsub = onValue(
+        qy,
+        snap => {
+          const list = snap.exists() ? this.snapshotToList(snap) : [];
+          obs.next(list);
+        },
+        err => obs.error(err)
+      );
+      return () => unsub();
+    });
+  }
+
+  /** Booking by day (range su start) */
   getBookingsByDate(day: Date | string): Observable<Booking[]> {
     const dateStr =
       typeof day === 'string'
@@ -277,203 +335,240 @@ export class BookingService {
     const startKey = `${dateStr}T00:00:00`;
     const endKey = `${dateStr}T23:59:59\uf8ff`;
 
-    console.log('[BookingService] getBookingsByDate → subscribe', { dateStr, startKey, endKey });
+    const qy = query(ref(this.db, this.path), orderByChild('start'), startAt(startKey), endAt(endKey));
 
-    const q = query(
-      ref(this.db, this.path),
-      orderByChild('start'),
-      startAt(startKey),
-      endAt(endKey)
-    );
-
-    return new Observable(obs =>
-      onValue(q, snap => {
-        const list = snap.val()
-          ? Object.values<Booking>(snap.val()).sort((a, b) => a.start.localeCompare(b.start))
-          : [];
-        console.log('[BookingService] getBookingsByDate ← next', { dateStr, count: list.length });
-        obs.next(list);
-      })
-    );
+    return new Observable(obs => {
+      const unsub = onValue(
+        qy,
+        snap => {
+          const list = snap.exists()
+            ? this.snapshotToList(snap).sort((a, b) => a.start.localeCompare(b.start))
+            : [];
+          obs.next(list);
+        },
+        err => obs.error(err)
+      );
+      return () => unsub();
+    });
   }
 
-  /** Crea una PRENOTAZIONE DRAFT su RTDB (status='draft') */
-  async addDraft(draft: Omit<Booking, 'id' | 'status'>): Promise<string> {
-    const node = push(ref(this.db, this.path));
-    const payload = { ...draft, id: node.key, status: 'draft' };
-    console.log('[BookingService] addDraft →', payload);
-    await set(node, payload);
-    console.log('[BookingService] addDraft ← id', node.key);
-    return node.key!;
-  }
-
-  /** Update parziale di una prenotazione (qualsiasi stato) */
-  updateBooking(id: string, changes: Partial<Booking>): Promise<void> {
-    console.log('[BookingService] updateBooking →', { id, changes });
-    return update(ref(this.db, `${this.path}/${id}`), changes);
-  }
-
-  /** Cambia lo stato (senza validazione) */
-  setStatus(
-    id: string,
-    status: BookingStatus,
-    extra: Partial<Booking> = {}
-  ): Promise<void> {
-    console.log('[BookingService] setStatus →', { id, status, extra });
-    return this.updateBooking(id, { status, ...extra });
-  }
-
-  /** Cancella una prenotazione */
-  deleteBooking(id: string): Promise<void> {
-    console.log('[BookingService] deleteBooking →', { id });
-    return remove(ref(this.db, `${this.path}/${id}`));
-  }
-
-  /** Leggi 1 prenotazione by id (una tantum) */
   async getBookingById(id: string): Promise<Booking | null> {
-    console.log('[BookingService] getBookingById →', { id });
     const snap = await get(ref(this.db, `${this.path}/${id}`));
-    const val = snap.exists() ? (snap.val() as Booking) : null;
-    console.log('[BookingService] getBookingById ←', val);
-    return val;
+    if (!snap.exists()) return null;
+    const val = snap.val();
+    return this.toCanonical({ id, ...val });
   }
 
-  /** Osserva 1 prenotazione (real-time) */
   watchBooking(id: string): Observable<Booking | null> {
-    console.log('[BookingService] watchBooking → subscribe', { id });
     return new Observable(obs => {
       const r = ref(this.db, `${this.path}/${id}`);
-      return onValue(r, s => {
-        const v = s.exists() ? (s.val() as Booking) : null;
-        console.log('[BookingService] watchBooking ← next', v);
-        obs.next(v);
-      });
-    });
-  }
-
-  /** Lista prenotazioni con start === dateIso (match esatto) */
-  getBookingsByDay(dateIso: string): Observable<Booking[]> {
-    console.log('[BookingService] getBookingsByDay → subscribe', { dateIso });
-    return new Observable(obs => {
-      const q = query(
-        ref(this.db, this.path),
-        orderByChild('start'),
-        equalTo(dateIso)
+      const unsub = onValue(
+        r,
+        s => obs.next(s.exists() ? this.toCanonical({ id, ...s.val() }) : null),
+        err => obs.error(err)
       );
-      return onValue(q, s => {
-        const list = s.val()
-          ? Object.values<Booking>(s.val())
-          : [];
-        console.log('[BookingService] getBookingsByDay ← next', { dateIso, count: list.length });
-        obs.next(list);
-      });
+      return () => unsub();
     });
   }
 
-  /** Somma incassi del mese corrente su prenotazioni 'paid' */
-  getTotalRevenueThisMonth(): Observable<number> {
-    const [year, month] = new Date().toISOString().split('-');
-    console.log('[BookingService] getTotalRevenueThisMonth → subscribe', { year, month });
-    return new Observable(obs => {
-      onValue(ref(this.db, this.path), snap => {
-        const total = snap.val()
-          ? Object.values<Booking>(snap.val())
-              .filter(b =>
-                b.status === 'paid' &&
-                b.start.startsWith(`${year}-${month}`)
-              )
-              .reduce((sum, b) => sum + (b.price || 0), 0)
-          : 0;
-        console.log('[BookingService] getTotalRevenueThisMonth ← next', { year, month, total });
-        obs.next(total);
-      });
+  // ---------------------------------------------------------------------------
+  // COMPAT: addDraft (vecchio codice lo usa ovunque)
+  // ---------------------------------------------------------------------------
+  async addDraft(draft: any): Promise<string> {
+    const node = push(ref(this.db, this.path));
+    const id = node.key!;
+    const now = new Date().toISOString();
+
+    const payload = this.toDbPatch({
+      ...draft,
+      id,
+      status: 'draft',
+      createdAt: draft.createdAt ?? draft.createAt ?? now,
+      updatedAt: now
+    } as any);
+
+    console.log('[BookingService] addDraft →', payload);
+    await set(node, payload);
+    return id;
+  }
+
+  /** Create booking “nuovo” (se vuoi usarlo nei nuovi component) */
+  async createBooking(
+    data: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> & { status?: BookingStatus }
+  ): Promise<Booking> {
+    const node = push(ref(this.db, this.path));
+    const id = node.key!;
+    const now = new Date().toISOString();
+
+    const payload: Booking = this.toCanonical({
+      ...data,
+      id,
+      status: data.status ?? data.status ?? 'draft',
+      createdAt: now,
+      updatedAt: now
     });
+
+    await set(node, this.toDbPatch(payload));
+    return payload;
   }
 
-  /** Placeholder notifica (puoi integrarlo con email/push/webhook) */
-  private notify(type: 'rescheduled' | 'cancelled' | 'completed' | 'created', booking: Booking) {
-    console.log(`[NOTIFY] Evento: ${type} - Booking ID: ${booking.id}`);
+  async updateBooking(id: string, changes: Partial<Booking>): Promise<void> {
+    const patch = this.toDbPatch({
+      ...changes,
+      updatedAt: new Date().toISOString()
+    });
+
+    // non cambiare createdAt
+    delete patch.createdAt;
+    delete patch.createAt;
+
+    console.log('[BookingService] updateBooking →', { id, patch });
+    await update(ref(this.db, `${this.path}/${id}`), patch);
   }
 
-  /** Sposta una prenotazione, con controlli e logging completi */
+  async deleteBooking(id: string): Promise<void> {
+    console.log('[BookingService] deleteBooking →', { id });
+    await remove(ref(this.db, `${this.path}/${id}`));
+  }
+
+  // ---------------------------------------------------------------------------
+  // STATUS / RESCHEDULE
+  // ---------------------------------------------------------------------------
+  private isValidTransition(current: BookingStatus, next: BookingStatus): boolean {
+    const valid: Record<BookingStatus, BookingStatus[]> = {
+      draft: ['pending', 'confirmed', 'cancelled'],
+      pending: ['confirmed', 'cancelled'],
+      confirmed: ['paid', 'cancelled', 'no_show', 'in_progress'],
+      paid: ['in_progress', 'cancelled', 'no_show'],
+      in_progress: ['completed', 'cancelled'],
+      completed: [],
+      cancelled: [],
+      no_show: []
+    };
+    return valid[current]?.includes(next) ?? false;
+  }
+
+  async safeSetStatus(id: string, newStatus: BookingStatus, extra: Partial<Booking> = {}): Promise<void> {
+    const booking = await this.getBookingById(id);
+    if (!booking) throw new Error('Prenotazione non trovata');
+
+    const current = booking.status ?? 'draft';
+    if (!this.isValidTransition(current, newStatus)) {
+      throw new Error(`Transizione non valida da ${current} a ${newStatus}`);
+    }
+
+    await this.updateBooking(id, { status: newStatus, ...extra });
+  }
+
   async rescheduleBooking(
     id: string,
     newStart: string,
     newEnd: string,
     updater: 'admin' | 'client'
   ): Promise<void> {
-    try {
-      console.log('[BookingService] rescheduleBooking →', { id, newStart, newEnd, updater });
-      const booking = await this.getBookingById(id);
-      if (!booking) throw new Error('Prenotazione non trovata');
-      if (['completed', 'cancelled'].includes(booking.status)) {
-        throw new Error('Non puoi modificare una prenotazione completata o annullata.');
-      }
+    const booking = await this.getBookingById(id);
+    if (!booking) throw new Error('Prenotazione non trovata');
 
-      await this.updateBooking(id, {
-        start: newStart,
-        end: newEnd,
-        updateAt: new Date().toISOString(),
-        lastRescheduledAt: new Date().toISOString(),
-        rescheduleCount: (booking.rescheduleCount || 0) + 1
+    if (['completed', 'cancelled', 'no_show'].includes(booking.status)) {
+      throw new Error('Non puoi modificare una prenotazione chiusa.');
+    }
+
+    await this.updateBooking(id, {
+      start: newStart,
+      end: newEnd,
+      lastRescheduledAt: new Date().toISOString(),
+      rescheduleCount: (booking.rescheduleCount || 0) + 1,
+    });
+
+    console.log('[BookingService] rescheduleBooking OK', { id, updater });
+  }
+
+  // ---------------------------------------------------------------------------
+  // ANALYTICS: mese corrente (usato in admin-dashboard)
+  // ---------------------------------------------------------------------------
+  getTotalRevenueThisMonth(): Observable<number> {
+    const [year, month] = new Date().toISOString().split('-');
+
+    return new Observable(obs => {
+      const unsub = onValue(ref(this.db, this.path), snap => {
+        const total = snap.val()
+          ? Object.values<any>(snap.val())
+              .map(v => this.toCanonical(v))
+              .filter(b => b.status === 'paid' && b.start.startsWith(`${year}-${month}`))
+              .reduce((sum, b) => sum + (b.price ?? 0), 0)
+          : 0;
+
+        obs.next(total);
       });
-
-      this.notify('rescheduled', { ...booking, start: newStart, end: newEnd });
-      console.log('[BookingService] rescheduleBooking ← OK');
-    } catch (error) {
-      console.error('[BookingService] rescheduleBooking ERROR →', error);
-      throw error;
-    }
+      return () => unsub();
+    });
   }
 
-  /** Regole di transizione stato (white-list) */
-  private isValidTransition(current: BookingStatus, next: BookingStatus): boolean {
-    const validTransitions: Record<BookingStatus, BookingStatus[]> = {
-      draft: ['paid', 'cancelled'],
-      paid: ['on-going', 'cancelled'],
-      'on-going': ['completed', 'cancelled'],
-      completed: [],
-      cancelled: []
-    };
-    return validTransitions[current]?.includes(next) ?? false;
-  }
+  // ---------------------------------------------------------------------------
+  // CHATBOT / FAST BOOKING COMPAT: addDraftFromChat (vecchio codice lo usa)
+  // ---------------------------------------------------------------------------
+  buildDraftPayloadFromChat(
+    draft: BookingChatDraft,
+    params: { clientId: string; clientName?: string; type?: 'consultation' | 'session' }
+  ): Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> {
+    const { clientId, clientName, type } = params;
 
-  /** Cambio stato sicuro (con validazione + log + notify) */
-  async safeSetStatus(
-    id: string,
-    newStatus: BookingStatus,
-    extra: Partial<Booking> = {}
-  ): Promise<void> {
-    try {
-      console.log('[BookingService] safeSetStatus →', { id, newStatus, extra });
-      const booking = await this.getBookingById(id);
-      if (!booking) throw new Error('Prenotazione non trovata');
-      if (!this.isValidTransition(booking.status, newStatus)) {
-        throw new Error(`Transizione non valida da ${booking.status} a ${newStatus}`);
+    let start = draft.start ? this.normalizeLocalDateTime(draft.start) : '';
+    let end = draft.end ? this.normalizeLocalDateTime(draft.end) : '';
+
+    if (!start || !end) {
+      if (!draft.date || !draft.time) {
+        throw new Error('Draft incompleto: servono "date" e "time".');
       }
-
-      await this.setStatus(id, newStatus, extra);
-      this.notify(newStatus as any, { ...booking, ...extra });
-      console.log('[BookingService] safeSetStatus ← OK');
-    } catch (error) {
-      console.error('[BookingService] safeSetStatus ERROR →', error);
-      throw error;
+      start = this.normalizeLocalDateTime(`${draft.date}T${draft.time}:00`);
+      const duration = draft.duration && draft.duration > 0 ? draft.duration : 30;
+      end = this.addMinutesLocal(start, duration);
     }
+
+    return {
+      clientId,
+      artistId: draft.artistId || '',
+      type: type ?? 'consultation',
+
+      title: `${clientName || 'Cliente'} - Prenotazione`,
+      start,
+      end,
+      notes: draft.note || '',
+      status: 'draft',
+
+      price: 0,
+      depositRequired: 0,
+      paidAmount: 0,
+
+      // legacy mirror utile se qualcuno usa description/idClient/idArtist
+      idClient: clientId,
+      idArtist: draft.artistId || '',
+      description: draft.note || '',
+    } as any;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Helpers: sanificazione e formattazioni coerenti con le query
-  // ─────────────────────────────────────────────────────────────
+  async addDraftFromChat(
+    draft: BookingChatDraft,
+    params: { idClient?: string; clientId?: string; clientName?: string }
+  ): Promise<string> {
+    const clientId = params.clientId ?? params.idClient ?? '';
+    if (!clientId) throw new Error('clientId mancante');
 
-  private stripUndef<T extends Record<string, any>>(o: T): T {
-    const out: any = {};
-    Object.keys(o).forEach(k => o[k] !== undefined && (out[k] = o[k]));
-    return out;
+    const payload = this.buildDraftPayloadFromChat(draft, {
+      clientId,
+      clientName: params.clientName,
+      type: 'consultation'
+    });
+
+    return this.addDraft(payload);
   }
 
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
   private pad(n: number): string { return String(n).padStart(2, '0'); }
 
-  /** Formatta Date → stringa locale "YYYY-MM-DDTHH:mm:ss" (senza Z) */
+  /** Date -> locale "YYYY-MM-DDTHH:mm:ss" */
   private formatLocal(d: Date): string {
     const y = d.getFullYear();
     const m = this.pad(d.getMonth() + 1);
@@ -484,30 +579,24 @@ export class BookingService {
     return `${y}-${m}-${day}T${hh}:${mm}:${ss}`;
   }
 
-  /** Somma minuti a una stringa locale "YYYY-MM-DDTHH:mm:ss" */
   private addMinutesLocal(startLocal: string, minutes: number): string {
     const d = new Date(this.normalizeLocalDateTime(startLocal));
     d.setMinutes(d.getMinutes() + minutes);
     return this.formatLocal(d);
   }
 
-  /** Estrae "YYYY-MM-DD" anche se input contiene ora/secondi/Z */
   private normalizeDateOnly(input: string): string {
     if (!input) return '';
     return input.slice(0, 10);
   }
 
   /**
-   * Normalizza qualunque formato a "YYYY-MM-DDTHH:mm:ss" (senza Z),
-   * gestendo anche:
-   * - "YYYY-MM-DDTHH:mm"
-   * - "YYYY-MM-DDTHH:mm:ss"
-   * - "YYYY-MM-DDTHH:mm:ss.000Z"
+   * Normalizza a "YYYY-MM-DDTHH:mm:ss" (senza Z)
+   * gestendo anche ".000Z" ecc.
    */
   private normalizeLocalDateTime(input: string): string {
     if (!input) return input;
 
-    // rimuove 'Z' e frazioni di secondo
     let s = String(input).replace('Z', '');
     s = s.split('.')[0];
 
@@ -517,82 +606,17 @@ export class BookingService {
     if (hasMinutesOnly) return `${s}:00`;
     if (hasSeconds) return s;
 
-    // fallback: se arriva qualcosa di strano, prova Date()
     const d = new Date(input);
     if (!isNaN(d.getTime())) return this.formatLocal(d);
 
     return s;
   }
 
-  /** Overlap tra intervalli locali [aStart,aEnd) e [bStart,bEnd) */
   private overlapsLocal(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
     const A0 = new Date(this.normalizeLocalDateTime(aStart)).getTime();
     const A1 = new Date(this.normalizeLocalDateTime(aEnd)).getTime();
     const B0 = new Date(this.normalizeLocalDateTime(bStart)).getTime();
     const B1 = new Date(this.normalizeLocalDateTime(bEnd)).getTime();
-
-    // overlap standard
     return A0 < B1 && B0 < A1;
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // CREAZIONE DRAFT A PARTIRE DAL CHATBOT
-  // ─────────────────────────────────────────────────────────────
-
-  /**
-   * Costruisce il payload per addDraft(...) a partire da un draft "bot".
-   * NB: se mancano date/ora → lancia un errore (gestiscilo lato UI con prefill).
-   */
-  buildDraftPayloadFromChat(
-    draft: BookingChatDraft,
-    params: { idClient: string; clientName?: string }
-  ): Omit<Booking, 'id' | 'status'> {
-    console.log('[BookingService] buildDraftPayloadFromChat → in', { draft, params });
-
-    const { idClient, clientName } = params;
-
-    if (!draft.date || !draft.time) {
-      console.warn('[BookingService] buildDraftPayloadFromChat → missing date/time');
-      throw new Error('Draft incompleto: servono "date" e "time" per creare la bozza.');
-    }
-
-    // start/end in formato locale (coerente con query per giorno)
-    const start = `${draft.date}T${draft.time}:00`;
-    const duration = draft.duration && draft.duration > 0 ? draft.duration : 30;
-    const end = this.addMinutesLocal(start, duration);
-
-    // payload conforme al modello Booking + sanificazione (mai undefined)
-    const payload: Omit<Booking, 'id' | 'status'> = this.stripUndef({
-      title: `${clientName || 'Cliente'} - Tattoo`,
-      start: this.normalizeLocalDateTime(start),
-      end: this.normalizeLocalDateTime(end),
-      idClient,
-      description: draft.note || '',
-      idArtist: draft.artistId || '',
-      createAt: this.formatLocal(new Date()),
-      updateAt: this.formatLocal(new Date()),
-      status: 'draft',
-      price: 0,
-      paidAmount: 0
-    } as any);
-
-    // Nota: status viene impostato da addDraft(...) comunque.
-    console.log('[BookingService] buildDraftPayloadFromChat → out', payload);
-    return payload;
-  }
-
-  /**
-   * Scrive SUBITO una prenotazione in stato 'draft' riusando addDraft(...)
-   * (ritorna l'id creato su RTDB).
-   */
-  async addDraftFromChat(
-    draft: BookingChatDraft,
-    params: { idClient: string; clientName?: string }
-  ): Promise<string> {
-    const payload = this.buildDraftPayloadFromChat(draft, params);
-    console.log('[BookingService] addDraftFromChat → calling addDraft', payload);
-    const id = await this.addDraft(payload);
-    console.log('[BookingService] addDraftFromChat ← new draft id', id);
-    return id;
   }
 }

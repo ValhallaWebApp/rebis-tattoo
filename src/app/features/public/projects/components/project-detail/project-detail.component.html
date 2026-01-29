@@ -1,11 +1,142 @@
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>{{ project?.title }}</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
-    <p>{{ project?.description }}</p>
-  </mat-card-content>
-  <mat-card-actions>
-    <button mat-button routerLink="/progetti">Indietro</button>
-  </mat-card-actions>
-</mat-card>
+<section class="page">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <a mat-stroked-button [routerLink]="goToArtistProjects()">
+      <mat-icon>arrow_back</mat-icon>
+      Torna ai progetti
+    </a>
+
+    <span class="spacer"></span>
+
+    <a mat-button [routerLink]="goToArtistProjects()">
+      <mat-icon>person</mat-icon>
+      {{ artistName() }}
+    </a>
+  </div>
+
+  <!-- LOADING -->
+  <div class="state" *ngIf="loading">
+    <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+    <div class="state__text">Caricamento progetto…</div>
+  </div>
+
+  <!-- NOT FOUND -->
+  <div class="state" *ngIf="!loading && notFound">
+    <mat-icon class="state__icon">search_off</mat-icon>
+    <div class="state__text">Progetto non trovato.</div>
+    <a mat-stroked-button routerLink="/progetti">
+      Vai ai progetti
+    </a>
+  </div>
+
+  <!-- CONTENT -->
+  <ng-container *ngIf="!loading && !notFound && project as p">
+    <div class="layout">
+
+      <!-- GALLERY -->
+      <div class="gallery">
+        <div class="gallery__hero">
+          <button mat-icon-button class="nav left" (click)="prev()" aria-label="precedente">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+
+          <img class="hero-img" [src]="activeCover()" [alt]="p.title" loading="lazy"/>
+
+          <button mat-icon-button class="nav right" (click)="next()" aria-label="successivo">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+
+        <div class="thumbs" *ngIf="imageUrls().length > 1">
+          <button
+            class="thumb"
+            *ngFor="let url of imageUrls(); let i = index"
+            (click)="setActive(i)"
+            [class.active]="i === activeIndex"
+            [attr.aria-label]="'immagine ' + (i+1)"
+            type="button"
+          >
+            <img [src]="url" [alt]="p.title + ' - ' + (i+1)" loading="lazy"/>
+          </button>
+        </div>
+      </div>
+
+      <!-- DETAILS -->
+      <div class="details">
+
+        <div class="head">
+          <div>
+            <h1 class="title">{{ p.title }}</h1>
+
+            <div class="meta">
+              <mat-chip-set>
+                <mat-chip>{{ statusLabel() }}</mat-chip>
+
+                <mat-chip *ngIf="p.style">{{ p.style }}</mat-chip>
+
+                <mat-chip *ngIf="colorTypeLabel() !== '—'">
+                  {{ colorTypeLabel() }}
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+          </div>
+        </div>
+
+        <mat-card class="card">
+          <mat-card-content>
+            <div class="desc" *ngIf="p.description">{{ p.description }}</div>
+
+            <div class="grid">
+              <div class="row" *ngIf="p.bodyPart">
+                <div class="k">Parte del corpo</div>
+                <div class="v">{{ p.bodyPart }}</div>
+              </div>
+
+              <div class="row" *ngIf="p.placement">
+                <div class="k">Posizione</div>
+                <div class="v">{{ p.placement }}</div>
+              </div>
+
+              <div class="row" *ngIf="p.size">
+                <div class="k">Dimensione</div>
+                <div class="v">{{ p.size }}</div>
+              </div>
+
+              <div class="row" *ngIf="p.subject">
+                <div class="k">Soggetto</div>
+                <div class="v">{{ p.subject }}</div>
+              </div>
+
+              <div class="row" *ngIf="p.estimatedSessions">
+                <div class="k">Sedute stimate</div>
+                <div class="v">{{ p.estimatedSessions }}</div>
+              </div>
+
+              <div class="row" *ngIf="p.estimatedPrice">
+                <div class="k">Prezzo stimato</div>
+                <div class="v">{{ p.estimatedPrice | currency:'EUR':'symbol':'1.0-0' }}</div>
+              </div>
+
+              <div class="row" *ngIf="p.deposit">
+                <div class="k">Acconto</div>
+                <div class="v">{{ p.deposit | currency:'EUR':'symbol':'1.0-0' }}</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="card" *ngIf="p.clientNotes">
+          <mat-card-header>
+            <mat-card-title>Note per il cliente</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="notes">{{ p.clientNotes }}</div>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </div>
+  </ng-container>
+
+</section>

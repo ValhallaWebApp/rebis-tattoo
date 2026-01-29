@@ -1,166 +1,402 @@
 .booking-history {
   padding: 2rem;
-  color: #eee;
   background: #121212;
+  color: #eee;
   min-height: 100%;
+
+  /* ---------- top header ---------- */
+  .page-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+
+    @media (max-width: 900px) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
   .section-title {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
+    font-size: 1.9rem;
     display: flex;
     align-items: center;
+    gap: 0.6rem;
+    margin: 0;
 
     mat-icon {
-      margin-right: 0.5rem;
+      opacity: 0.9;
     }
   }
 
-  .highlight-card {
+  .page-actions {
     display: flex;
-    align-items: center;
-    background: #1e1e1e;
-    padding: 1rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 6px rgba(255, 255, 255, 0.05);
-    max-width: 400px;
-
-    .artist-photo {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      margin-right: 1rem;
-      object-fit: cover;
-    }
-
-    .details {
-      flex: 1;
-
-      h3 {
-        margin: 0 0 0.3rem 0;
-        font-weight: 600;
-      }
-
-      p {
-        margin: 0.2rem 0;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-
-        mat-icon {
-          font-size: 16px;
-          margin-right: 4px;
-        }
-      }
-    }
-
-    .actions {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-  }
-
-  .tab-toggle {
-    margin: 1rem 0;
-    display: flex;
-    gap: 1rem;
-
-    button {
-      color: #bbb;
-
-      &.active {
-        color: #fff;
-        font-weight: bold;
-        border-bottom: 2px solid #fff;
-      }
-    }
-  }
-
-  .filters {
-    display: flex;
+    gap: 0.6rem;
     flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
 
-    mat-form-field {
-      flex: 1;
-      min-width: 180px;
-      max-width: 250px;
-
-      .mat-form-field-wrapper {
-        background-color: #1e1e1e;
-        border-radius: 8px;
-      }
-
-      input, select {
-        color: #fff;
-      }
-    }
-
-    .search-field {
-      flex: 2;
-      max-width: 100%;
+    .soft-btn {
+      border-color: rgba(255, 255, 255, 0.14);
+      color: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(6px);
     }
   }
 
-  .booking-list {
+  /* ---------- layout ---------- */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1.25rem;
+
+    @media (max-width: 1100px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .main {
+    min-width: 0;
+  }
+
+  .side {
+    position: sticky;
+    top: 88px;
+    align-self: start;
+
+    @media (max-width: 1100px) {
+      position: static;
+    }
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    margin-bottom: 1.25rem;
+
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.72);
+      margin-bottom: 0.6rem;
+
+      mat-icon {
+        font-size: 18px;
+        opacity: 0.9;
+      }
+    }
+  }
+
+  /* ---------- tabs ---------- */
+  .tabs {
     display: flex;
-    flex-direction: row;
+    gap: 0.75rem;
     flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 1rem;
+    margin: 0.4rem 0 1rem 0;
   }
 
-  .booking-card {
-    background: #1a1a1a;
-    padding: 1rem;
-    border-radius: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: background 0.3s;
-    max-width: 300px;
-    &.late {
-      border-left: 4px solid #ff9800;
+  .tab {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.72);
+    padding: 0.4rem 0.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+
+    .count {
+      margin-left: 0.35rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.8rem;
     }
 
-    &.completed {
-      border-left: 4px solid #4caf50;
+    &.active {
+      color: #fff;
+      border-bottom-color: rgba(255, 255, 255, 0.9);
     }
+  }
 
-    &.cancelled {
-      border-left: 4px solid #f44336;
-    }
+  /* ---------- list ---------- */
+  .list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    gap: 1rem;
 
-    & > * {
-      max-width: 300px;
-    }
-
-    .info {
-      strong {
-        display: block;
-        font-size: 1rem;
-      }
-
-      p {
-        font-size: 0.85rem;
-        color: #ccc;
-      }
-    }
-
-    .actions {
-      display: flex;
-      gap: 0.5rem;
+    @media (max-width: 800px) {
+      grid-template-columns: 1fr;
     }
   }
 
   .empty {
-    font-style: italic;
-    color: #777;
+    grid-column: 1 / -1;
     text-align: center;
-    margin: 2rem 0;
-    min-height: 60vh;
-     background: #121212;
+    color: rgba(255, 255, 255, 0.55);
+    font-style: italic;
+    padding: 2rem 0;
+  }
 
+  /* ---------- booking card (premium) ---------- */
+  .booking-card {
+    background: #fff;
+    color: #111;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    overflow: hidden;
+
+    display: grid;
+    grid-template-columns: 68px 1fr;
+    gap: 0.9rem;
+    padding: 1rem;
+
+    transition: transform 150ms ease, box-shadow 150ms ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+    }
+
+    &.featured {
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.42);
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+
+    &.active {
+      border-left: 6px solid #03a9f4;
+    }
+    &.completed {
+      border-left: 6px solid #4caf50;
+    }
+    &.cancelled {
+      border-left: 6px solid #f44336;
+    }
+
+    .card-left {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 2px;
+    }
+
+    .artist-photo {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      object-fit: cover;
+      border: 2px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .card-body {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .title-wrap {
+      min-width: 0;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.02rem;
+      font-weight: 800;
+      line-height: 1.25;
+
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .sub {
+      margin-top: 0.35rem;
+      display: grid;
+      gap: 0.25rem;
+    }
+
+    .row {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: rgba(0, 0, 0, 0.72);
+      font-size: 0.88rem;
+
+      mat-icon {
+        font-size: 16px;
+        color: rgba(0, 0, 0, 0.55);
+      }
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.75rem;
+      color: rgba(0, 0, 0, 0.62);
+      font-size: 0.84rem;
+    }
+
+    .meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+
+      mat-icon {
+        font-size: 16px;
+        color: rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.1rem;
+    }
+
+    .primary {
+      background: #111 !important;
+      color: #fff !important;
+      border-radius: 12px;
+      padding: 0.35rem 0.8rem;
+      box-shadow: none !important;
+    }
+
+    .assist {
+      border-radius: 12px;
+      border-color: rgba(0, 0, 0, 0.14);
+      color: rgba(0, 0, 0, 0.8);
+    }
+
+    .ghost {
+      border-radius: 12px;
+      border-color: rgba(0, 0, 0, 0.14);
+      color: rgba(0, 0, 0, 0.78);
+    }
+
+    .more mat-icon {
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  /* ---------- status pill ---------- */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+
+    &.pending {
+      background: rgba(255, 152, 0, 0.12);
+      color: #a85f00;
+      border-color: rgba(255, 152, 0, 0.28);
+    }
+    &.confirmed {
+      background: rgba(76, 175, 80, 0.12);
+      color: #1f7a2d;
+      border-color: rgba(76, 175, 80, 0.28);
+    }
+    &.in_progress {
+      background: rgba(3, 169, 244, 0.14);
+      color: #056b99;
+      border-color: rgba(3, 169, 244, 0.32);
+    }
+    &.cancelled {
+      background: rgba(244, 67, 54, 0.12);
+      color: #a31b12;
+      border-color: rgba(244, 67, 54, 0.28);
+    }
+    &.done {
+      background: rgba(76, 175, 80, 0.12);
+      color: #1f7a2d;
+      border-color: rgba(76, 175, 80, 0.28);
+    }
+  }
+
+  /* ---------- menu danger item ---------- */
+  ::ng-deep .mat-mdc-menu-panel .danger {
+    color: #b71c1c !important;
+  }
+
+  /* ---------- sidebar ---------- */
+  .side-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.86);
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: none !important;
+
+    .side-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+
+      mat-icon {
+        opacity: 0.9;
+      }
+    }
+
+    .side-text {
+      margin: 0 0 0.8rem 0;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+      font-size: 0.92rem;
+    }
+
+    .side-actions {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .wide {
+      width: 100%;
+      border-radius: 12px;
+    }
+
+    .primary {
+      background: #fff !important;
+      color: #111 !important;
+      border-radius: 12px;
+      box-shadow: none !important;
+    }
+
+    .ghost {
+      border-color: rgba(255, 255, 255, 0.16);
+      color: rgba(255, 255, 255, 0.86);
+      border-radius: 12px;
+    }
+
+    .side-list {
+      margin: 0.2rem 0 0 1rem;
+      color: rgba(255, 255, 255, 0.72);
+
+      li {
+        margin: 0.35rem 0;
+      }
+    }
   }
 }

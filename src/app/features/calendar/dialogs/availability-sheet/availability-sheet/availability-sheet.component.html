@@ -1,0 +1,70 @@
+<div class="sheet-head">
+  <div class="title">
+    <mat-icon>schedule</mat-icon>
+    Disponibilità
+  </div>
+
+  <mat-button-toggle-group [value]="mode()" (change)="mode.set($event.value)">
+    <mat-button-toggle value="byDate">Per data</mat-button-toggle>
+    <mat-button-toggle value="byTime">Per orario</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <button mat-icon-button (click)="close()"><mat-icon>close</mat-icon></button>
+</div>
+
+<div class="sheet-body" *ngIf="mode()==='byDate'">
+  <div class="left">
+    <mat-calendar (selectedChange)="onCalendarSelected($event)"></mat-calendar>
+  </div>
+
+  <div class="right">
+    <div class="section-title">Orari disponibili — {{ selectedDateKey() }}</div>
+
+    <div class="chips">
+      <button
+        class="slot"
+        *ngFor="let s of slots()"
+        (click)="pickSlot(s.startISO, s.endISO)"
+      >
+        {{ s.time }}
+      </button>
+    </div>
+
+    <div class="empty" *ngIf="slots().length === 0">
+      Nessuno slot disponibile in questa data.
+    </div>
+  </div>
+</div>
+
+<div class="sheet-body" *ngIf="mode()==='byTime'">
+  <div class="section-title">Scegli un orario</div>
+
+  <div class="chips">
+    <button
+      class="slot"
+      *ngFor="let t of timeChips"
+      [class.active]="t===selectedTime()"
+      (click)="selectedTime.set(t)"
+    >
+      {{ t }}
+    </button>
+  </div>
+
+  <div class="section-title">Date disponibili per {{ selectedTime() }}</div>
+
+  <div class="dates">
+    <button
+      class="date-row"
+      *ngFor="let d of availableDates()"
+      (click)="pickSlot(d.startISO, d.endISO)"
+    >
+      <span class="date">{{ d.date }}</span>
+      <span class="time">{{ selectedTime() }}</span>
+      <mat-icon class="ok">check</mat-icon>
+    </button>
+
+    <div class="empty" *ngIf="availableDates().length === 0">
+      Nessuna data disponibile nei prossimi 30 giorni per questo orario.
+    </div>
+  </div>
+</div>

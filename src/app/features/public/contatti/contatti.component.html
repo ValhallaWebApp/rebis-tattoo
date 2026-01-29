@@ -1,37 +1,105 @@
-<section class="contacts-section">
-  <div class="contacts-header">
-    <h1>{{ lang.t('contact.title') | uppercase }}</h1>
-    <p>{{ lang.t('contact.subtitle') }}</p>
-  </div>
+<section class="rt-contacts">
+  <!-- top header dark (come mockup) -->
+  <header class="rt-hero">
+    <div class="rt-container">
+      <h1 class="rt-title">CONTATTI</h1>
+      <p class="rt-subtitle">Rebis Tattoo · Studio di tatuaggi a Sassari</p>
+    </div>
+  </header>
 
-  <div class="chatbot-suggestion">
-    <p>{{ lang.t('contact.chatbot.question') }}</p>
-    <a mat-stroked-button color="accent" routerLink="/chatbot">
-      {{ lang.t('contact.chatbot.cta') }}
-    </a>
-  </div>
+  <main class="rt-container">
+    <!-- split (desktop): left info on light paper + right image -->
+    <div class="rt-split">
+      <!-- INFO (paper) -->
+      <section class="rt-paper">
+        <h2 class="rt-brand">REBIS TATTOO</h2>
 
-  <div class="contacts-grid">
-    <!-- INFO -->
-    <mat-card class="info-card">
-      <mat-card-content>
-        <h3>{{ lang.t('contact.locationTitle') }}</h3>
-        <p><mat-icon>location_on</mat-icon> {{ lang.t('contact.address') }}</p>
-        <p><mat-icon>phone</mat-icon> {{ lang.t('contact.phone') }}</p>
-        <p><mat-icon>email</mat-icon> {{ lang.t('contact.email') }}</p>
+        <div class="rt-lines">
+          <div class="rt-line">
+            <span class="rt-ico">📍</span>
+            <span class="rt-text">{{ address }}</span>
+          </div>
 
-        <h3>{{ lang.t('contact.hoursTitle') }}</h3>
-        <p>{{ lang.t('contact.hours.mondayFriday') }}</p>
-        <p>{{ lang.t('contact.hours.saturday') }}</p>
-        <p>{{ lang.t('contact.hours.sunday') }}</p>
-      </mat-card-content>
+          <div class="rt-line">
+            <span class="rt-ico">📞</span>
+            <a class="rt-link" [href]="'tel:' + phoneDisplay.replaceAll(' ', '')">
+              {{ phoneDisplay }}
+            </a>
+            <span class="rt-dot">·</span>
+            <a class="rt-link" [href]="'https://wa.me/' + whatsappNumber" target="_blank" rel="noopener">
+              WhatsApp
+            </a>
+          </div>
 
-      <div class="cta-consulenza">
-        <h2>{{ lang.t('contact.ctaTitle') }}</h2>
-        <a mat-raised-button color="accent" routerLink="/bookings">
-          {{ lang.t('contact.ctaButton') }}
-        </a>
-      </div>
-    </mat-card>
-  </div>
+          <div class="rt-line">
+            <span class="rt-ico">✉️</span>
+            <a class="rt-link" [href]="'mailto:' + email">{{ email }}</a>
+          </div>
+
+          <div class="rt-line">
+            <span class="rt-ico">📷</span>
+            <a class="rt-link" [href]="instagramUrl" target="_blank" rel="noopener">{{ instagramHandle }}</a>
+          </div>
+        </div>
+
+        <div class="rt-cta">
+          <a class="rt-btn rt-btn--primary" routerLink="/fast-booking">
+            PRENOTA UNA CONSULENZA
+          </a>
+
+          <button class="rt-btn rt-btn--accent" type="button" (click)="openChat()">
+            APRI LA CHAT
+          </button>
+        </div>
+
+        <div class="rt-mini">
+          Disponibilità: su appuntamento (scrivici per confermare)
+        </div>
+
+        <!-- mini form (secondario, come mockup) -->
+        <div class="rt-formBlock">
+          <h3 class="rt-formTitle">Oppure scrivici</h3>
+
+          <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="rt-form">
+            <div class="rt-grid">
+              <div class="rt-field">
+                <label>Nome</label>
+                <input type="text" formControlName="name" placeholder="Il tuo nome" />
+                <div class="rt-err" *ngIf="f['name'].touched && f['name'].invalid">
+                  Inserisci un nome valido
+                </div>
+              </div>
+
+              <div class="rt-field">
+                <label>Email</label>
+                <input type="email" formControlName="email" placeholder="nome@email.com" />
+                <div class="rt-err" *ngIf="f['email'].touched && f['email'].invalid">
+                  Inserisci un’email valida
+                </div>
+              </div>
+
+              <div class="rt-field rt-field--full">
+                <label>Messaggio</label>
+                <textarea rows="4" formControlName="message" placeholder="Zona, dimensioni, idea..."></textarea>
+                <div class="rt-err" *ngIf="f['message'].touched && f['message'].invalid">
+                  Scrivi almeno 10 caratteri
+                </div>
+              </div>
+            </div>
+
+            <div class="rt-actions">
+              <button class="rt-btn rt-btn--accent" type="submit" [disabled]="contactForm.invalid">
+                INVIA
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- IMAGE -->
+      <aside class="rt-image" aria-hidden="true">
+        <img [src]="heroImageUrl" alt="Dettaglio tatuaggio Rebis Tattoo" />
+      </aside>
+    </div>
+  </main>
 </section>

@@ -1,0 +1,26 @@
+<div class="week-wrap">
+  <div class="grid">
+    <div class="corner"></div>
+
+    <div class="col-head" *ngFor="let d of days()">
+      {{ d.label }}
+    </div>
+
+    <ng-container *ngFor="let a of artists">
+      <div class="row-head">
+        <div class="name">{{ a.name }}</div>
+      </div>
+
+      <button
+        class="cell"
+        *ngFor="let d of days()"
+        (click)="openDay.emit({ artistId: a.id, dateKey: d.key })"
+        [ngClass]="intensityClass(countFor(a.id, d.key))"
+      >
+        <div class="count">{{ countFor(a.id, d.key) || '—' }}</div>
+        <div class="meta" *ngIf="countFor(a.id, d.key) > 0">eventi</div>
+        <div class="meta" *ngIf="countFor(a.id, d.key) === 0">libero</div>
+      </button>
+    </ng-container>
+  </div>
+</div>

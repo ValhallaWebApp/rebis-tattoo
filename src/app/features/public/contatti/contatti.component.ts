@@ -1,22 +1,34 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BrowserModule } from '@angular/platform-browser';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { MaterialModule } from '../../../core/modules/material.module';
-import { LanguageService } from '../../../core/services/language/language.service';
+// import { ChatBotUiService } from '../../../shared/services/chat-bot-ui.service';
 
 @Component({
   selector: 'app-contatti',
-  imports: [MaterialModule, CommonModule,FormsModule,ReactiveFormsModule, RouterLink],
-  standalone:true,
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './contatti.component.html',
-  styleUrl: './contatti.component.scss'
+  styleUrls: ['./contatti.component.scss'] // ✅ usa styleUrls
 })
-export class ContattiComponent {
+export class ContattiComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  // private readonly chatUi = inject(ChatBotUiService);
+
   contactForm!: FormGroup;
 
-  constructor(private fb: FormBuilder, public lang: LanguageService) {}
+  // ✅ metti una foto reale in assets (vedi nota sotto)
+  readonly heroImageUrl = '/personale/1.jpg';
+
+  // ✅ numero in formato wa.me (senza + e spazi)
+  readonly whatsappNumber = '393400998312';
+
+  // ✅ dati Rebis
+  readonly address = 'Via al Carmine 1A, 07100 Sassari (SS)';
+  readonly phoneDisplay = '+39 340 099 8312';
+  readonly email = 'sarapushi@rebistattoo.info';
+  readonly instagramUrl = 'https://www.instagram.com/rebis_tattoo/';
+  readonly instagramHandle = '@rebis_tattoo';
 
   ngOnInit(): void {
     this.contactForm = this.fb.group({
@@ -26,13 +38,21 @@ export class ContattiComponent {
     });
   }
 
+  openChat(): void {
+  }
+
   onSubmit(): void {
-    if (this.contactForm.valid) {
-      console.log('Messaggio inviato:', this.contactForm.value);
-      alert('Messaggio inviato con successo!');
-      this.contactForm.reset();
-    } else {
+    if (this.contactForm.invalid) {
       this.contactForm.markAllAsTouched();
+      return;
     }
+
+    console.log('[CONTATTI] submit', this.contactForm.value);
+    this.contactForm.reset();
+    alert('Messaggio inviato. Ti risponderemo il prima possibile.');
+  }
+
+  get f() {
+    return this.contactForm.controls;
   }
 }

@@ -58,7 +58,7 @@ async loadSessions() {
       date: [startDate.toISOString().substring(0, 10), Validators.required], // yyyy-MM-dd
       time: [startTime, Validators.required], // HH:mm
       duration: [session?.end ? (new Date(session.end).getTime() - new Date(session.start).getTime()) / 60000 : 60, Validators.required],
-      idArtist: [session?.idArtist || '', Validators.required],
+      idArtist: [session?.artistId || '', Validators.required],
       notesByAdmin: [session?.notesByAdmin || ''],
       price: [session?.price || 0],
       status: [session?.status || 'planned', Validators.required]

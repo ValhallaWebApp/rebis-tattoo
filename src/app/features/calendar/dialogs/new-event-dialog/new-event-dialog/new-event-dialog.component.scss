@@ -1,0 +1,16 @@
+.body {
+  display: grid;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.mode {
+  margin-top: 6px;
+  display: grid;
+  gap: 8px;
+
+  .label {
+    font-weight: 800;
+    opacity: .85;
+  }
+}

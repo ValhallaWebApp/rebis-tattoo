@@ -1,121 +1,142 @@
-.calendar-day-layout {
-  display: flex;
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
+.day-wrap {
+  padding: 12px;
 }
 
-.time-column {
-  width: 80px;
-  background-color: #f9f9f9;
-  border-right: 1px solid #e0e0e0;
+.day-head {
   display: flex;
-  flex-direction: column;
-  padding-top: 75px;
-  .time-cell {
-    height: 60px;
-    padding: 6px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 10px;
+
+  .title {
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: #555;
-    border-bottom: 1px solid #eee;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 16px;
+  }
+  .hint {
+    opacity: .7;
+    font-size: 12px;
   }
 }
 
-.staff-grid {
-  flex: 1;
-  overflow-x: auto;
+.day-grid {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 10px;
+}
 
-  .staff-header {
+.time-col {
+  .time-cell {
+    height: 44px;
     display: flex;
-    border-bottom: 1px solid #ddd;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    opacity: .75;
+    font-size: 12px;
 
-    .staff-cell {
-      flex: 1;
-      text-align: center;
-      padding: 8px;
-      font-weight: 600;
-      color: #333;
-
-      .avatar {
-        width: 36px;
-        height: 36px;
-        margin: 0 auto 4px;
-        border-radius: 50%;
-        overflow: hidden;
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-      }
-
-      .artist-name {
-        font-size: 13px;
-        color: #444;
-      }
-    }
-  }
-
-  .staff-rows {
-    display: flex;
-    border-bottom: 1px solid #eee;
-
-    .staff-cell {
-      flex: 1;
-      height: 60px;
-      padding: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s ease;
-
-      .slot-box {
-        background: #f1f1f1;
-        padding: 8px 12px;
-        border-radius: 8px;
-        text-align: center;
-        width: 90%;
-        font-size: 13px;
-        font-weight: 500;
-      }
-
-      &.free .slot-box {
-        background-color: #e6f4ea;
-        color: #2e7d32;
-      }
-
-      &.booked .slot-box {
-        background-color: #fce4ec;
-        color: #c2185b;
-      }
-
-      &:hover .slot-box {
-        filter: brightness(0.95);
-      }
+    &.head {
+      height: 52px;
     }
   }
 }
-.slot-box.session-start {
-  border-left: 4px solid #1976d2;
-  background-color: rgba(25, 118, 210, 0.1);
+
+.artists-cols {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(220px, 1fr);
+  gap: 10px;
+  overflow: auto;
+  padding-bottom: 4px;
 }
-.slot-box {
+
+.artist-col {
   position: relative;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.02);
+  overflow: hidden;
 
-  .resize-handle {
+  .artist-head {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-weight: 800;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .slot {
+    height: 44px;
+    border-bottom: 1px dashed rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 8px;
+    cursor: pointer;
+
+    .plus {
+      transform: scale(.9);
+      opacity: .65;
+    }
+
+    &:hover {
+      background: rgba(46, 125, 50, 0.12);
+      .plus { opacity: 1; }
+    }
+  }
+
+  .events {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 6px;
-    background: rgba(0, 0, 0, 0.15);
-    cursor: row-resize;
-    z-index: 10;
+    inset: 52px 0 0 0;
+    pointer-events: none;
+    padding: 8px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .event {
+    pointer-events: auto;
+    width: 100%;
+    text-align: left;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(0,0,0,0.35);
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+
+    .event-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      opacity: .9;
+
+      .type {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        &.session { color: #7dd3fc; }
+      }
+      .time {
+        opacity: .8;
+      }
+    }
+
+    .event-title {
+      margin-top: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      opacity: .9;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &:hover { background: rgba(0,0,0,0.45); }
   }
 }

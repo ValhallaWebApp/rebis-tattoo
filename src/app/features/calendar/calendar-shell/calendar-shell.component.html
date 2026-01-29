@@ -1,0 +1,107 @@
+<div class="cal-shell">
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button mat-icon-button (click)="goPrev()">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <button mat-icon-button (click)="goNext()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      <button mat-stroked-button class="today-btn" (click)="goToday()">
+        Oggi
+      </button>
+
+      <div class="range">{{ headerLabel }}</div>
+    </div>
+
+    <div class="toolbar-right">
+      <button mat-stroked-button [matMenuTriggerFor]="viewMenu">
+        <mat-icon>view_agenda</mat-icon>
+        {{ view() | uppercase }}
+        <mat-icon>expand_more</mat-icon>
+      </button>
+
+      <mat-menu #viewMenu="matMenu">
+        <button mat-menu-item (click)="setView('day')"><mat-icon>today</mat-icon> Giorno</button>
+        <button mat-menu-item (click)="setView('week')"><mat-icon>date_range</mat-icon> Settimana</button>
+        <button mat-menu-item (click)="setView('month')"><mat-icon>calendar_month</mat-icon> Mese</button>
+      </mat-menu>
+
+      <button mat-raised-button color="primary" (click)="onToolbarNew()">
+        <mat-icon>add</mat-icon>
+        Nuovo
+      </button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="filters-title">
+      <mat-icon>groups</mat-icon>
+      Artisti in vista
+    </div>
+
+    <mat-chip-listbox multiple [value]="selectedArtistIds()" (change)="onArtistsChipChange($event)">
+      <mat-chip-option *ngFor="let a of artists" [value]="a.id" [disabled]="a.isActive === false">
+        {{ a.name }}
+      </mat-chip-option>
+    </mat-chip-listbox>
+  </div>
+
+  <div class="content">
+    <mat-drawer-container class="drawer-container" autosize>
+  <mat-drawer
+    class="drawer"
+    mode="over"
+    position="end"
+    [(opened)]="drawerOpen"
+    (closedStart)="onDrawerClosed()">
+
+    <app-event-drawer
+      [mode]="drawerMode"
+      [artists]="artists"
+      [clients]="clientsLite"
+      [projects]="projectsLite"
+      [allowStandaloneSession]="false"
+      (close)="drawerOpen=false"
+      (submit)="onDrawerSubmit($event)">
+    </app-event-drawer>
+
+  </mat-drawer>
+
+  <mat-drawer-content>
+        <div class="loading" *ngIf="loading">
+          <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+        </div>
+
+        <ng-container *ngIf="!loading">
+          <app-day-view
+            *ngIf="view()==='day'"
+            [date]="anchorDate()"
+            [artists]="selectedArtists()"
+            [events]="eventsForSelectedArtists()"
+            (createFromSlot)="openCreateFromDay($event)"
+            (editEvent)="openEditEvent($event)"
+          />
+
+          <app-week-resource
+            *ngIf="view()==='week'"
+            [range]="weekRange()"
+            [artists]="selectedArtists()"
+            [events]="eventsForSelectedArtists()"
+            (openDay)="openDayFromWeekCell($event)"
+          />
+
+          <app-month-view
+            *ngIf="view()==='month'"
+            [anchor]="anchorDate()"
+            [artists]="selectedArtists()"
+            [events]="eventsForSelectedArtists()"
+            (openDay)="openDayFromMonth($event)"
+          />
+        </ng-container>
+      </mat-drawer-content>
+    </mat-drawer-container>
+  </div>
+</div>

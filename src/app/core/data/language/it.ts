@@ -64,20 +64,19 @@ export const dataIt = {
       }
     ]
   },
-  portfolio: {
-  title: 'Portfolio',
-  subtitle: 'Progetti',
-  filtersTitle: 'Filtri Avanzati',
-  statusLabel: 'Stato',
-  genreLabel: 'Genere',
+portfolio
+: {
+  title: 'I nostri lavori',
+  subtitle: 'Alcuni dei tatuaggi realizzati in studio',
+  filtersTitle: 'Filtra i lavori',
+  artistLabel: 'Artista',
+  styleLabel: 'Stile',
+  searchLabel: 'Cerca',
   all: 'Tutti',
-  inProgress: 'In Corso',
-  completed: 'Completati',
-  apply: 'Applica Filtri',
-  details: 'Dettagli →',
-  genrePrefix: 'Genere: ',
-  statusPrefix: 'Stato: ',
-  datePrefix: 'Data: '
+  details: 'Vedi il lavoro →',
+  stylePrefix: 'Stile: ',
+  artistPrefix: 'Artista: ',
+  datePrefix: 'Realizzato il '
 },
 aboutPage: {
   title: 'CHI SIAMO',
@@ -90,25 +89,26 @@ aboutPage: {
   portfolio: 'Vai al Portfolio'
 },
 contact: {
-  title: 'Contattaci',
-  subtitle: 'Hai domande, idee o vuoi prenotare una consulenza? Compila il modulo o chiamaci direttamente.',
+  title: 'Contatti',
+  subtitle: 'Hai un’idea in testa o vuoi fissare una consulenza? Prenota, oppure scrivici: ti guidiamo noi.',
   chatbot: {
     question: 'Preferisci parlare subito con noi?',
-    cta: 'Chatta con il nostro assistente'
+    cta: 'Apri la chat'
   },
   locationTitle: 'Dove siamo',
-  address: 'Via Esempio 123, Milano',
-  phone: '+39 123 456 789',
-  email: 'info@rebistattoo.com',
-  hoursTitle: 'Orari',
+  address: 'Via al Carmine 1A, 07100 Sassari (SS)',
+  phone: '+39 340 099 8312',
+  email: 'sarapushi@rebistattoo.info',
+  hoursTitle: 'Disponibilità',
   hours: {
-    mondayFriday: 'Lun - Ven: 10:00 - 19:00',
-    saturday: 'Sabato: 10:00 - 17:00',
-    sunday: 'Domenica: chiuso'
+    mondayFriday: 'Su appuntamento (scrivici per confermare)',
+    saturday: 'Su appuntamento',
+    sunday: 'Su appuntamento'
   },
   ctaTitle: 'Vuoi iniziare il tuo prossimo tatuaggio?',
   ctaButton: 'Prenota una consulenza'
 }
+
 
 
 

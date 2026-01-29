@@ -14,12 +14,15 @@ import { StudioSettingsComponent } from './components/studio-settings/studio-set
 import { ReviewListAdminComponent } from './components/review-list-admin/review-list-admin.component';
 import { ServicesAdminComponent } from './components/services-admin/services-admin.component';
 import { StaffMembersAdminComponent } from './components/staff-members-admin/staff-members-admin.component';
-import { ProjectManagementComponent } from './components/project-manager/project-manager.component';
+import { ProjectManagerComponent } from './components/project-manager/project-manager.component';
 import { SessionManagerComponent } from './components/session-manager/session-manager.component';
+import { Calendar } from '@fullcalendar/core/index.js';
+import { CalendarComponent } from '../calendar/calendar.component';
+import { ProjectDetailComponent } from '../public/projects/components/project-detail/project-detail.component';
 
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
-  { path: 'calendar', component: CalendarAdminComponent },
+  { path: 'calendar', component: CalendarComponent },
   { path: 'clients', component: ClientsListComponent },
   // { path: 'clients/:id', component: ClientDetailComponent },
   { path: 'billing', component: BillingComponent },
@@ -27,7 +30,8 @@ const routes: Routes = [
   { path: 'waitlist', component: WaitlistComponent },
   { path: 'messaging', component: MessagingDashboardComponent },
 
-  { path: 'portfolio', component: ProjectManagementComponent },
+  { path: 'portfolio', component: ProjectManagerComponent },
+  { path: 'portfolio/:projectId', component: ProjectTrackerComponent },
 
   { path: 'session', component: SessionManagerComponent },
   { path: 'session/:projectId', component: SessionManagerComponent },

@@ -1,123 +1,300 @@
+/* =========================
+   LAYOUT DRAWER OVERLAY
+   ========================= */
+.drawer-wrap {
+  height: 100vh;
+  background: #121212;
+}
+
+.page {
+  height: 100%;
+  overflow: auto;
+}
+
+/* drawer panel */
+.drawer {
+  width: 380px;
+  max-width: 92vw;
+  height: 100%;
+  background: #141414;
+  color: #eee;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: -14px 0 40px rgba(0, 0, 0, 0.55);
+}
+
+/* drawer content */
+.drawer-form {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  h3 {
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+}
+
+.drawer-actions {
+  margin-top: auto; /* spinge bottoni in basso */
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.drawer-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.85;
+  font-size: 0.9rem;
+}
+
+/* backdrop overlay */
+:host ::ng-deep .mat-drawer-backdrop.mat-drawer-shown {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+/* =========================
+   REVIEWS PAGE UI
+   ========================= */
 .reviews {
   padding: 2rem;
   color: #eee;
   background: #121212;
-  min-height: 100vh;
-  .section-title {
-    font-size: 1.8rem;
+  min-height: 100%;
+
+  .header-row {
     display: flex;
     align-items: center;
-    margin-bottom: 1.5rem;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
 
-    mat-icon {
-      margin-right: 0.5rem;
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.8rem;
+    margin: 0;
+  }
+
+  .new-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+
+    .status-filter {
+      width: 260px;
+      max-width: 100%;
+    }
+
+    .hint {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #bdbdbd;
+      font-size: 0.95rem;
+      opacity: 0.9;
+
+      mat-icon {
+        font-size: 18px;
+        height: 18px;
+        width: 18px;
+      }
     }
   }
 
-  mat-form-field {
-    width: 250px;
-    margin-bottom: 2rem;
-  }
-
   .reviews-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(260px, 1fr));
+    gap: 14px;
   }
 
   .review-card {
     background: #1a1a1a;
-    padding: 1rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(255, 255, 255, 0.05);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    max-width: 300px;
-    .header {
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: transform 140ms ease, border-color 140ms ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .who {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
 
-      img.avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-right: 1rem;
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex: 0 0 auto;
+    }
+
+    .who-text {
+      min-width: 0;
+    }
+
+    .artist {
+      display: block;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+
+    .date {
+      margin: 2px 0 0 0;
+      color: #bdbdbd;
+      font-size: 0.85rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: none;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+
+      mat-icon {
+        font-size: 18px;
+        height: 18px;
+        width: 18px;
       }
 
-      .badge {
-        padding: 0.3rem 0.6rem;
-        border-radius: 6px;
-        text-transform: capitalize;
-        font-size: 0.75rem;
-        font-weight: 500;
+      &.pending {
+        background: rgba(255, 152, 0, 0.12);
+        color: #ffb74d;
+      }
 
-        &.pending {
-          background: #ff98002e;
-          color: #ffa726;
-        }
+      &.approved {
+        background: rgba(76, 175, 80, 0.12);
+        color: #81c784;
+      }
 
-        &.approved {
-          background: #4caf5033;
-          color: #81c784;
-        }
-
-        &.rejected {
-          background: #f4433633;
-          color: #ef9a9a;
-        }
+      &.rejected {
+        background: rgba(244, 67, 54, 0.12);
+        color: #ef9a9a;
       }
     }
 
-    .rating mat-icon {
-      font-size: 20px;
-      color: #fbc02d;
+    .rating {
+      display: flex;
+      gap: 2px;
+      margin: 6px 0 10px 0;
+
+      mat-icon {
+        font-size: 20px;
+        color: #fbc02d;
+      }
     }
 
     .comment {
+      margin: 0;
+      color: #d6d6d6;
       font-size: 0.95rem;
-      color: #ccc;
+      line-height: 1.35;
     }
 
     .actions {
+      margin-top: 12px;
       display: flex;
       justify-content: flex-end;
-      gap: 0.5rem;
+      gap: 6px;
+      opacity: 0.95;
     }
   }
 
   .empty {
-    font-style: italic;
-    color: #777;
+    margin-top: 28px;
+    padding: 28px;
+    border-radius: 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.03);
     text-align: center;
-    margin-top: 2rem;
+    color: #bdbdbd;
+
+    mat-icon {
+      font-size: 40px;
+      height: 40px;
+      width: 40px;
+      margin-bottom: 10px;
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    h3 {
+      margin: 6px 0;
+      color: #eee;
+    }
+
+    p {
+      margin: 0 0 14px 0;
+    }
   }
 }
 
-mat-drawer-container {
-  background: #1c1c1c;
+/* =========================
+   RESPONSIVE
+   ========================= */
+@media (max-width: 1100px) {
+  .reviews .reviews-list {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+  }
+}
 
-  mat-drawer {
-    width: 320px;
-    padding: 1.5rem;
-    background: #1a1a1a;
-    color: #eee;
+@media (max-width: 720px) {
+  .reviews {
+    padding: 1.2rem;
+  }
 
-    h3 {
-      margin-top: 0;
-      margin-bottom: 1rem;
-      font-weight: 600;
-    }
+  .reviews .reviews-list {
+    grid-template-columns: 1fr;
+  }
 
-    mat-form-field {
-      width: 100%;
-      margin-bottom: 1rem;
-    }
-
-    button {
-      margin-right: 0.5rem;
-    }
+  .drawer {
+    width: 92vw;
   }
 }

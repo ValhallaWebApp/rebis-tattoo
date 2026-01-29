@@ -1,0 +1,80 @@
+.cal-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .today-btn {
+      margin-left: 6px;
+    }
+
+    .range {
+      margin-left: 10px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      opacity: .95;
+    }
+  }
+
+  .toolbar-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+}
+
+.filters {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+
+  .filters-title {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 700;
+    margin-bottom: 8px;
+    opacity: .9;
+  }
+}
+
+.content {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.20);
+  min-height: 520px;
+}
+
+.drawer-container {
+  min-height: 520px;
+}
+
+.drawer {
+  width: min(520px, 92vw);
+  background: rgba(14, 16, 20, 0.96);
+  border-left: 1px solid rgba(255,255,255,0.08);
+}
+
+.loading {
+  padding: 36px 0;
+  display: grid;
+  place-items: center;
+}
+.drawer-container { height: calc(100vh - 160px); } // o quello che ti serve
+.drawer { width: 420px; max-width: 92vw; }
+.mat-drawer-backdrop { background: rgba(0,0,0,.45) !important; }

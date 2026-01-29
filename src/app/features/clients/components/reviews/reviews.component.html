@@ -1,68 +1,24 @@
-<section class="reviews">
-  <h2 class="section-title">
-    <mat-icon>reviews</mat-icon> Le Tue Recensioni
-  </h2>
+<mat-drawer-container class="drawer-wrap" autosize>
 
-  <!-- 🔄 Filtra per stato -->
-  <mat-form-field appearance="fill">
-    <mat-label>Stato</mat-label>
-    <mat-select [formControl]="filterStatusCtrl">
-      <mat-option value="all">Tutti</mat-option>
-      <mat-option value="pending">In attesa</mat-option>
-      <mat-option value="approved">Approvati</mat-option>
-      <mat-option value="rejected">Rifiutati</mat-option>
-    </mat-select>
-  </mat-form-field>
+  <!-- ✅ Drawer (overlay) -->
+  <mat-drawer #reviewDrawer mode="over" position="end" class="drawer">
+    <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="drawer-form">
 
-  <!-- 📜 Lista recensioni -->
-  <div class="reviews-list" *ngIf="filteredReviews().length > 0; else noReviews">
-    <mat-card *ngFor="let r of filteredReviews()" class="review-card">
-      <div class="header">
-        <img [src]="getArtistPhotoById(r.artistId)" alt="Artista" class="avatar" />
-        <div>
-          <strong>{{ getArtistNameById(r.artistId) }}</strong>
-          <p>{{ r.date | date: 'mediumDate' }}</p>
-        </div>
-        <span class="badge" [ngClass]="r.status">{{ r.status }}</span>
-      </div>
+      <div class="drawer-head">
+        <h3>
+          {{ isReadOnly ? 'Dettaglio Recensione' : (selectedReview ? 'Modifica Recensione' : 'Nuova Recensione') }}
+        </h3>
 
-      <div class="rating">
-        <mat-icon *ngFor="let star of [1,2,3,4,5]">
-          {{ star <= r.rating ? 'star' : 'star_border' }}
-        </mat-icon>
-      </div>
-
-      <p class="comment">{{ r.comment }}</p>
-
-      <div class="actions">
-        <button mat-icon-button (click)="viewReview(r)" matTooltip="Visualizza">
-          <mat-icon>visibility</mat-icon>
-        </button>
-        <button *ngIf="canEditReview(r)" mat-icon-button (click)="editReview(r)" matTooltip="Modifica">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button color="warn" (click)="deleteReview(r.id)" matTooltip="Elimina">
-          <mat-icon>delete</mat-icon>
+        <button mat-icon-button type="button" (click)="closeDrawer()" matTooltip="Chiudi">
+          <mat-icon>close</mat-icon>
         </button>
       </div>
-    </mat-card>
-  </div>
-
-  <ng-template #noReviews>
-    <p class="empty">Non hai ancora lasciato recensioni.</p>
-  </ng-template>
-</section>
-
-<mat-drawer-container>
-  <mat-drawer #reviewDrawer mode="over" position="end">
-    <form [formGroup]="reviewForm" (ngSubmit)="submitReview()">
-      <h3>{{ selectedReview ? 'Modifica Recensione' : 'Nuova Recensione' }}</h3>
 
       <mat-form-field appearance="fill">
         <mat-label>Artista</mat-label>
         <input matInput [formControl]="artistCtrl" [matAutocomplete]="auto" />
         <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selectArtist($event.option.value)">
-          <mat-option *ngFor="let artist of filteredArtists | async" [value]="artist">
+          <mat-option *ngFor="let artist of filteredArtists$ | async" [value]="artist">
             {{ artist.name }}
           </mat-option>
         </mat-autocomplete>
@@ -70,18 +26,131 @@
 
       <mat-form-field appearance="fill">
         <mat-label>Commento</mat-label>
-        <textarea matInput formControlName="comment" rows="4"></textarea>
+        <textarea matInput formControlName="comment" rows="4" placeholder="Raccontaci com’è andata…"></textarea>
       </mat-form-field>
 
       <mat-form-field appearance="fill">
         <mat-label>Valutazione</mat-label>
         <mat-select formControlName="rating">
-          <mat-option *ngFor="let r of [1,2,3,4,5]" [value]="r">{{ r }} stelle</mat-option>
+          <mat-option *ngFor="let n of [1,2,3,4,5]" [value]="n">
+            {{ n }} stelle
+          </mat-option>
         </mat-select>
       </mat-form-field>
 
-      <button mat-flat-button color="primary" type="submit" [disabled]="reviewForm.invalid">Salva</button>
-      <button mat-button type="button" (click)="reviewDrawer.close()">Annulla</button>
+      <div class="drawer-actions">
+        <button *ngIf="!isReadOnly"
+                mat-flat-button
+                color="primary"
+                type="submit"
+                [disabled]="reviewForm.invalid || submitting">
+          <mat-icon>save</mat-icon>
+          Salva
+        </button>
+
+        <button mat-button type="button" (click)="closeDrawer()">
+          Chiudi
+        </button>
+      </div>
+
+      <div class="drawer-foot" *ngIf="isReadOnly">
+        <mat-icon>lock</mat-icon>
+        <span>Modalità sola lettura</span>
+      </div>
+
     </form>
   </mat-drawer>
+
+  <!-- ✅ Page content (wrappato nello stesso container) -->
+  <mat-drawer-content class="page">
+
+    <section class="reviews">
+      <div class="header-row">
+        <h2 class="section-title">
+          <mat-icon>reviews</mat-icon> Le Tue Recensioni
+        </h2>
+
+        <button mat-raised-button color="primary" class="new-btn" (click)="openCreate()">
+          <mat-icon>add</mat-icon>
+          Nuova recensione
+        </button>
+      </div>
+
+      <div class="toolbar">
+        <mat-form-field appearance="fill" class="status-filter">
+          <mat-label>Stato</mat-label>
+          <mat-select [formControl]="filterStatusCtrl">
+            <mat-option value="all">Tutti</mat-option>
+            <mat-option value="pending">In attesa</mat-option>
+            <mat-option value="approved">Pubblicate</mat-option>
+            <mat-option value="rejected">Rifiutate</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="hint">
+          <mat-icon>info</mat-icon>
+          <span>Le recensioni sono visibili al pubblico solo dopo l’approvazione.</span>
+        </div>
+      </div>
+
+      <div class="reviews-list" *ngIf="filteredReviews().length > 0; else noReviews">
+        <mat-card *ngFor="let r of filteredReviews()" class="review-card">
+          <div class="card-top">
+            <div class="who">
+              <img [src]="getArtistPhotoById(r.artistId)" alt="Artista" class="avatar" />
+              <div class="who-text">
+                <strong class="artist">{{ getArtistNameById(r.artistId) }}</strong>
+                <p class="date">{{ r.date | date: 'mediumDate' }}</p>
+              </div>
+            </div>
+
+            <span class="badge" [ngClass]="r.status">
+              <mat-icon>{{ getStatusIcon(r.status) }}</mat-icon>
+              {{ getStatusLabel(r.status) }}
+            </span>
+          </div>
+
+          <div class="rating" aria-label="Valutazione">
+            <mat-icon *ngFor="let star of [1,2,3,4,5]">
+              {{ star <= r.rating ? 'star' : 'star_border' }}
+            </mat-icon>
+          </div>
+
+          <p class="comment">“{{ r.comment }}”</p>
+
+          <div class="actions">
+            <button mat-icon-button (click)="viewReview(r)" matTooltip="Apri">
+              <mat-icon>visibility</mat-icon>
+            </button>
+
+            <button *ngIf="canEditReview(r)"
+                    mat-icon-button
+                    (click)="editReview(r)"
+                    matTooltip="Modifica (entro 5 min)">
+              <mat-icon>edit</mat-icon>
+            </button>
+
+            <button mat-icon-button color="warn" (click)="deleteReview(r.id)" matTooltip="Elimina">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-card>
+      </div>
+
+      <ng-template #noReviews>
+        <div class="empty">
+          <mat-icon>rate_review</mat-icon>
+          <h3>Nessuna recensione</h3>
+          <p>Quando lasci una recensione, la troverai qui con lo stato di approvazione.</p>
+          <button mat-stroked-button (click)="openCreate()">
+            <mat-icon>add</mat-icon>
+            Scrivi la prima
+          </button>
+        </div>
+      </ng-template>
+
+    </section>
+
+  </mat-drawer-content>
+
 </mat-drawer-container>

@@ -1,1 +1,209 @@
-<p>project-tracker works!</p>
+<section class="pt" *ngIf="(vm$ | async) as vm">
+
+  <!-- TOP BAR -->
+  <header class="pt__top">
+    <a mat-stroked-button [routerLink]="openProjectManagerLink()">
+      <mat-icon>arrow_back</mat-icon>
+      Project Manager
+    </a>
+
+    <span class="spacer"></span>
+
+    <button mat-raised-button color="primary" type="button" (click)="addSession()" [disabled]="vm.notFound || vm.loading">
+      <mat-icon>add</mat-icon>
+      Aggiungi Session
+    </button>
+  </header>
+
+  <!-- STATES -->
+  <div class="state" *ngIf="vm.loading">
+    <mat-progress-spinner mode="indeterminate" diameter="34"></mat-progress-spinner>
+    <div>Caricamento progetto…</div>
+  </div>
+
+  <div class="state" *ngIf="!vm.loading && vm.notFound">
+    <mat-icon>search_off</mat-icon>
+    <div>
+      <h3>Progetto non trovato</h3>
+      <p>Controlla l’ID nella route o torna al Project Manager.</p>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <ng-container *ngIf="!vm.loading && !vm.notFound && vm.project as p">
+
+    <!-- HEADER CARD -->
+    <mat-card class="hero">
+      <mat-card-content class="hero__content">
+        <div class="hero__title">
+          <h1>{{ p.title }}</h1>
+          <div class="chips">
+            <mat-chip-set>
+              <mat-chip>{{ p.status }}</mat-chip>
+              <!-- <mat-chip *ngIf="(p as any).style">{{ (p as any).style }}</mat-chip> -->
+              <mat-chip *ngIf="p.zone">{{ p.zone }}</mat-chip>
+            </mat-chip-set>
+          </div>
+        </div>
+
+        <div class="hero__meta">
+          <div class="meta">
+            <mat-icon>brush</mat-icon>
+            <div>
+              <div class="k">Artista</div>
+              <div class="v">{{ vm.artistName }}</div>
+            </div>
+          </div>
+
+          <div class="meta">
+            <mat-icon>person</mat-icon>
+            <div>
+              <div class="k">Cliente</div>
+              <div class="v">{{ vm.clientName }}</div>
+            </div>
+          </div>
+
+          <div class="meta" >
+            <mat-icon>place</mat-icon>
+            <div>
+              <div class="k">Zona</div>
+              <div class="v">
+                {{ p.zone || '—' }}
+                <!-- <span *ngIf="(p as any).placement"> · {{ (p as any).placement }}</span> -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero__kpi">
+          <div class="kpi">
+            <div class="k">Booking</div>
+            <div class="v">{{ vm.booking ? 'OK' : 'NO' }}</div>
+          </div>
+          <div class="kpi">
+            <div class="k">Sessioni</div>
+            <div class="v">{{ vm.sessions.length }}</div>
+          </div>
+          <div class="kpi">
+            <div class="k">Pagato</div>
+            <div class="v">{{ money(vm.paidTotal) }}</div>
+          </div>
+          <div class="kpi" *ngIf="vm.remaining != null">
+            <div class="k">Residuo</div>
+            <div class="v">{{ money(vm.remaining) }}</div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="grid">
+
+      <!-- BOOKING -->
+      <mat-card class="box">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>event</mat-icon>
+            Booking
+          </mat-card-title>
+          <span class="spacer"></span>
+
+          <button mat-button type="button" *ngIf="vm.booking" (click)="editBooking(vm.booking)">
+            <mat-icon>edit</mat-icon>
+            Modifica
+          </button>
+        </mat-card-header>
+
+        <mat-card-content *ngIf="vm.booking; else noBooking">
+          <div class="line">
+            <span class="k">Quando</span>
+            <span class="v">{{ bookingWhenLabel(vm.booking) }}</span>
+          </div>
+
+          <div class="line">
+            <span class="k">Status</span>
+            <span class="v">{{ vm.booking?.status || '—' }}</span>
+          </div>
+
+          <div class="line" *ngIf="vm.booking?.durationMinutes">
+            <span class="k">Durata</span>
+            <span class="v">{{ vm.booking.durationMinutes }} min</span>
+          </div>
+        </mat-card-content>
+
+        <ng-template #noBooking>
+          <mat-card-content class="empty-mini">
+            <mat-icon>event_busy</mat-icon>
+            <div>
+              <strong>Nessuna booking collegata</strong>
+              <div class="muted">Creala dal Project Manager.</div>
+            </div>
+          </mat-card-content>
+        </ng-template>
+      </mat-card>
+
+      <!-- SESSIONS -->
+      <mat-card class="box">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>calendar_month</mat-icon>
+            Sessioni
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content *ngIf="vm.sessions.length; else noSessions">
+          <div class="sessions">
+            <div class="srow" *ngFor="let s of vm.sessions; trackBy: trackBySession">
+              <div class="sleft">
+                <div class="when">
+                  <mat-icon>schedule</mat-icon>
+                  <span>{{ s._startLabel }}</span>
+                  <span class="arrow" *ngIf="s._endLabel">→</span>
+                  <span *ngIf="s._endLabel">{{ s._endLabel }}</span>
+                </div>
+
+                <div class="mini">
+                  <span class="tag">{{ s.status }}</span>
+                  <span class="dot">·</span>
+                  <span *ngIf="s._durationMin">{{ s._durationMin }} min</span>
+                  <span *ngIf="sessionZone(s)"> · {{ sessionZone(s) }}</span>
+                </div>
+
+                <div class="notes" *ngIf="sessionNotes(s)">
+                  {{ sessionNotes(s) }}
+                </div>
+              </div>
+
+              <div class="sright">
+                <div class="m" *ngIf="sessionPrice(s) != null">
+                  <span>Prezzo</span>
+                  <strong>{{ money(sessionPrice(s)) }}</strong>
+                </div>
+
+                <div class="m" *ngIf="sessionPaid(s) != null">
+                  <span>Pagato</span>
+                  <strong>{{ money(sessionPaid(s)) }}</strong>
+                </div>
+
+                <button mat-icon-button type="button" (click)="editSession(s)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+
+        <ng-template #noSessions>
+          <mat-card-content class="empty-mini">
+            <mat-icon>playlist_add</mat-icon>
+            <div>
+              <strong>Nessuna sessione</strong>
+              <div class="muted">Aggiungine una con il pulsante in alto.</div>
+            </div>
+          </mat-card-content>
+        </ng-template>
+      </mat-card>
+
+    </div>
+  </ng-container>
+
+</section>

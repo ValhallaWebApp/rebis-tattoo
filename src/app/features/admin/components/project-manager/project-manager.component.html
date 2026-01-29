@@ -1,234 +1,346 @@
-<section class="projects-management">
-  <!-- HEADER -->
-  <div class="section-title">
-    <div class="title-left">
-      <mat-icon>brush</mat-icon>
-      <span>Gestione Tatuaggi</span>
+<section class="pm">
+  <header class="pm__header">
+    <div class="pm__title">
+      <mat-icon>workspaces</mat-icon>
+      <div>
+        <h2>Project Manager</h2>
+        <p>Gestisci progetti, booking collegate, sessioni, pagamenti e fatture</p>
+      </div>
     </div>
 
-    <button
-      mat-mini-fab
-      color="primary"
-      (click)="openDrawer()"
-      matTooltip="Nuovo progetto"
-    >
-      <mat-icon>add</mat-icon>
-    </button>
-  </div>
-
-  <mat-drawer-container class="drawer-container">
-    <!-- DRAWER LATERALE: CREA / MODIFICA PROGETTO -->
-    <mat-drawer #drawer mode="side" position="end" class="project-drawer">
-      <div class="drawer-header">
-        <div>
-          <h3>{{ selectedProject ? 'Modifica progetto' : 'Nuovo progetto' }}</h3>
-          <p class="subtitle">
-            Definisci il progetto tatuaggio, il genere, le sedute previste e la visibilità.
-          </p>
-        </div>
-
-        <button mat-icon-button (click)="closeDrawer()">
+    <div class="pm__tools" [formGroup]="form">
+      <mat-form-field appearance="outline" class="search">
+        <mat-label>Cerca</mat-label>
+        <input matInput formControlName="q" placeholder="Titolo, id, cliente, email, zona..." />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          *ngIf="form.controls.q.value"
+          (click)="form.controls.q.setValue('')">
           <mat-icon>close</mat-icon>
         </button>
+      </mat-form-field>
+
+      <mat-slide-toggle formControlName="onlyNotClosed">
+        Solo non conclusi
+      </mat-slide-toggle>
+    </div>
+  </header>
+
+  <nav class="pm__tabs" *ngIf="(vm$ | async) as vm">
+    <button
+      *ngFor="let t of tabs"
+      type="button"
+      class="tab"
+      [class.active]="form.controls.tab.value === t.key"
+      (click)="setTab(t.key)">
+      <mat-icon>{{ t.icon }}</mat-icon>
+      <span>{{ t.label }}</span>
+      <span class="pill">{{ vm.counts[t.key] }}</span>
+    </button>
+  </nav>
+
+  <main class="pm__list" *ngIf="(vm$ | async) as vm">
+    <div class="empty" *ngIf="!vm.list.length">
+      <mat-icon>search_off</mat-icon>
+      <div>
+        <h3>Nessun progetto</h3>
+        <p>Prova a cambiare filtro o ricerca.</p>
+      </div>
+    </div>
+
+    <article class="card" *ngFor="let row of vm.list; trackBy: trackByProjectId">
+      <!-- HEAD -->
+      <div class="card__head">
+        <div class="h-left">
+          <div class="title">
+            <h3>{{ row.project.title }}</h3>
+            <span class="status" [attr.data-status]="row.project.status">
+              {{ statusLabel(row.project.status) }}
+            </span>
+          </div>
+
+          <div class="meta">
+            <span><mat-icon>fingerprint</mat-icon> {{ row.project.id || '—' }}</span>
+            <span><mat-icon>brush</mat-icon> {{ row.project.artistId || '—' }}</span>
+          </div>
+
+          <div class="meta">
+            <span><mat-icon>person</mat-icon> {{ row.clientLabel }}</span>
+            <span class="muted" *ngIf="row.client?.email">· {{ row.client?.email }}</span>
+            <span class="muted" *ngIf="row.client?.phone">· {{ row.client?.phone }}</span>
+          </div>
+
+          <div class="meta">
+            <span><mat-icon>place</mat-icon> {{ zoneLabel(row.project) }}</span>
+            <span><mat-icon>update</mat-icon> {{ row.project.updatedAt || '—' }}</span>
+          </div>
+        </div>
+
+        <div class="h-right">
+          <div class="kpis">
+            <div class="kpi">
+              <span>Booking</span>
+              <strong>{{ row.hasBooking ? 'OK' : 'NO' }}</strong>
+            </div>
+            <div class="kpi">
+              <span>Sessioni</span>
+              <strong>{{ row.sessionsCount }}</strong>
+            </div>
+            <div class="kpi">
+              <span>Pagato</span>
+              <strong>{{ money(row.paidTotal) }}</strong>
+            </div>
+            <div class="kpi" *ngIf="row.expectedTotal != null">
+              <span>Residuo</span>
+              <strong [class.warn]="(row.remaining ?? 0) > 0">{{ money(row.remaining) }}</strong>
+            </div>
+          </div>
+
+          <div class="actions">
+            <a mat-stroked-button [routerLink]="openProject(row.project)">
+              <mat-icon>open_in_new</mat-icon>
+              Scheda
+            </a>
+
+            <button mat-stroked-button type="button" (click)="messageClient(row)" [disabled]="!row.client?.phone && !row.client?.email">
+              <mat-icon>chat</mat-icon>
+              Messaggia
+            </button>
+
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="row.isClosed || row.hasBooking"
+              (click)="createBookingForProject(row.project)">
+              <mat-icon>event</mat-icon>
+              Crea Booking
+            </button>
+
+            <button
+              mat-raised-button
+              color="primary"
+              type="button"
+              [disabled]="!row.canAddSession"
+              (click)="addSessionToProject(row.project)">
+              <mat-icon>add</mat-icon>
+              Aggiungi Session
+            </button>
+          </div>
+
+          <div class="hint" *ngIf="row.isClosed">
+            <mat-icon>lock</mat-icon>
+            Progetto chiuso
+          </div>
+        </div>
       </div>
 
-      <div class="drawer-scroll">
-        <!-- PREVIEW -->
-        <mat-card class="preview-card">
-          <div class="preview-main">
-            <div class="icon-pill">
-              <mat-icon>brush</mat-icon>
+      <!-- BODY -->
+      <div class="card__body">
+        <!-- BOOKING -->
+        <section class="box">
+          <header class="box__head">
+            <div class="box__title">
+              <mat-icon>event</mat-icon>
+              <span>Booking</span>
             </div>
 
-            <div>
-              <h4>{{ form.value.name || 'Nuovo progetto' }}</h4>
-              <p class="meta">
-                {{ form.value.numeroSedute || 1 }} sedute •
-                {{ form.value.genere || 'Genere non impostato' }}
-              </p>
-            </div>
-          </div>
-
-          <span
-            class="status-pill"
-            [ngClass]="form.value.show ? 'active' : 'inactive'"
-          >
-            {{ form.value.show ? 'Visibile' : 'Nascosto' }}
-          </span>
-        </mat-card>
-
-        <!-- FORM -->
-        <form [formGroup]="form" (ngSubmit)="saveProject()" class="project-form">
-          <mat-form-field appearance="outline">
-            <mat-label>Nome progetto</mat-label>
-            <input matInput formControlName="name" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Genere / Stile</mat-label>
-            <input
-              matInput
-              formControlName="genere"
-              placeholder="Realistico, giapponese, blackwork..."
-            />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Note</mat-label>
-            <textarea matInput rows="3" formControlName="note"></textarea>
-          </mat-form-field>
-
-          <div class="field-group">
-            <mat-form-field appearance="outline">
-              <mat-label>Numero sedute</mat-label>
-              <input type="number" matInput formControlName="numeroSedute" />
-            </mat-form-field>
-
-            <mat-slide-toggle formControlName="show">
-              Visibile per lo staff
-            </mat-slide-toggle>
-          </div>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Artista (ID)</mat-label>
-            <input matInput formControlName="artistId" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Copertine (lista URL o ID immagini)</mat-label>
-            <input matInput formControlName="copertine" />
-          </mat-form-field>
-
-          <div class="form-actions">
-            <button mat-stroked-button type="button" (click)="closeDrawer()">
-              Annulla
+            <button
+              mat-button
+              type="button"
+              *ngIf="row.booking"
+              (click)="editBooking(row.booking!)">
+              <mat-icon>edit</mat-icon>
+              Modifica
             </button>
-            <button mat-flat-button color="primary" type="submit">
-              {{ selectedProject ? 'Salva modifiche' : 'Crea progetto' }}
-            </button>
+          </header>
+
+          <div class="box__content" *ngIf="row.booking; else noBooking">
+            <div class="line">
+              <span class="k">Quando</span>
+              <span class="v">{{ bookingWhenLabel(row.booking) }}</span>
+            </div>
+
+            <div class="line">
+              <span class="k">Status</span>
+              <span class="v">{{ row.booking?.status || '—' }}</span>
+            </div>
+
+            <div class="line" *ngIf="row.booking?.projectId">
+              <span class="k">ProjectId</span>
+              <span class="v">{{ row.booking?.projectId }}</span>
+            </div>
+
+            <div class="moneygrid">
+              <div class="m" *ngIf="row.booking?.depositRequired != null">
+                <span>Acconto richiesto</span>
+                <strong>{{ money(row.booking?.depositRequired) }}</strong>
+              </div>
+
+              <div class="m" *ngIf="row.booking?.paidAmount != null">
+                <span>Pagato (booking)</span>
+                <strong>{{ money(row.booking?.paidAmount) }}</strong>
+              </div>
+
+              <div class="m" *ngIf="row.booking?.price != null">
+                <span>Prezzo (booking)</span>
+                <strong>{{ money(row.booking?.price) }}</strong>
+              </div>
+            </div>
           </div>
-        </form>
-      </div>
-    </mat-drawer>
 
-    <!-- CONTENUTO PRINCIPALE: FILTRI + LISTA PROGETTI + SESSIONI -->
-    <mat-drawer-content class="drawer-content">
-      <!-- 🔍 FILTRI MINIMAL -->
-      <form [formGroup]="filterForm" class="filters">
-        <mat-form-field>
-          <mat-label>Nome</mat-label>
-          <input matInput formControlName="name" placeholder="Cerca progetto" />
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Genere</mat-label>
-          <input matInput formControlName="genere" placeholder="Es. realismo" />
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Visibilità</mat-label>
-          <mat-select formControlName="show">
-            <mat-option value="">Tutti</mat-option>
-            <mat-option value="visible">Solo visibili</mat-option>
-            <mat-option value="hidden">Solo nascosti</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </form>
-
-      <mat-accordion class="project-accordion" multi>
-        <mat-expansion-panel
-          *ngFor="let project of filteredProjects"
-          class="project-panel"
-          [class.inactive]="!project.show"
-        >
-          <mat-expansion-panel-header>
-            <div class="panel-header-left">
-              <div class="icon-pill small">
-                <mat-icon>brush</mat-icon>
-              </div>
-
-              <div class="panel-text">
-                <h3>{{ project.name }}</h3>
-                <p class="meta">
-                  {{ project.numeroSedute }} sedute
-                  <span *ngIf="project.genere">• {{ project.genere }}</span>
-                </p>
+          <ng-template #noBooking>
+            <div class="empty-mini">
+              <mat-icon>event_busy</mat-icon>
+              <div>
+                <strong>Nessuna booking collegata</strong>
+                <div class="muted">Puoi crearla quando vuoi.</div>
               </div>
             </div>
+          </ng-template>
+        </section>
 
-            <div class="panel-header-right">
-              <span
-                class="status-chip"
-                [class.active]="project.show"
-                [class.inactive]="!project.show"
-              >
-                {{ project.show ? 'Visibile' : 'Nascosto' }}
-              </span>
-
-              <button
-                mat-icon-button
-                matTooltip="Modifica progetto"
-                (click)="$event.stopPropagation(); openDrawer(project)"
-              >
-                <mat-icon>edit</mat-icon>
-              </button>
-
-              <button
-                mat-icon-button
-                color="accent"
-                matTooltip="Vai alle sessioni"
-                (click)="$event.stopPropagation(); goToSessions(project.id)"
-              >
-                <mat-icon>event</mat-icon>
-              </button>
+        <!-- SESSIONS -->
+        <section class="box">
+          <header class="box__head">
+            <div class="box__title">
+              <mat-icon>calendar_month</mat-icon>
+              <span>Sessioni</span>
             </div>
-          </mat-expansion-panel-header>
 
-          <div class="panel-body">
-            <p class="note">
-              {{ project.note || 'Nessuna nota aggiuntiva per questo progetto.' }}
-            </p>
+            <button mat-button type="button" (click)="downloadFullInvoice(row)" [disabled]="!row.sessions.length && !row.booking">
+              <mat-icon>download</mat-icon>
+              Fattura completa
+            </button>
+          </header>
 
-            <div class="sessions-block">
-              <div class="sessions-header">
-                <span>Sessioni collegate</span>
-                <button
-                  mat-stroked-button
-                  color="primary"
-                  (click)="goToSessions(project.id)"
-                >
-                  Gestisci sessioni
-                </button>
-              </div>
+          <div class="box__content" *ngIf="row.sessions.length; else noSessions">
+            <div class="sessions">
+              <div class="srow" *ngFor="let s of row.sessions">
+                <div class="sleft">
+                  <div class="when">
+                    <mat-icon>schedule</mat-icon>
+                    <span>{{ s._start }}</span>
+                    <span class="arrow" *ngIf="s._end">→</span>
+                    <span *ngIf="s._end">{{ s._end }}</span>
+                  </div>
 
-              <div
-                class="session-row"
-                *ngFor="let session of getProjectSessions(project)"
-              >
-                <div class="session-main">
-                  <span class="session-name">
-                    {{ session.name || 'Sessione' }}
-                  </span>
-                  <span class="session-date" *ngIf="session.date">
-                    {{ session.date | date: 'shortDate' }}
-                  </span>
+                  <div class="mini">
+                    <span class="tag">{{ s.status }}</span>
+                    <span class="dot">·</span>
+                    <span *ngIf="s._durationMin">{{ s._durationMin }} min</span>
+                    <span *ngIf="s.zone"> · {{ s.zone }}</span>
+                  </div>
                 </div>
 
-                <span class="session-status" *ngIf="session.status">
-                  {{ session.status }}
-                </span>
-              </div>
+                <div class="sright">
+                  <div class="m">
+                    <span>Prezzo</span>
+                    <strong>{{ money(s.price) }}</strong>
+                  </div>
+                  <div class="m" *ngIf="s.paidAmount != null">
+                    <span>Pagato</span>
+                    <strong>{{ money(s.paidAmount) }}</strong>
+                  </div>
 
-              <p
-                class="sessions-empty"
-                *ngIf="getProjectSessions(project).length === 0"
-              >
-                Nessuna sessione collegata al progetto.
-              </p>
+                  <button mat-icon-button type="button" (click)="downloadSessionInvoice(row, s)" aria-label="fattura sessione">
+                    <mat-icon>receipt_long</mat-icon>
+                  </button>
+
+                  <button mat-icon-button type="button" (click)="editSession(s)" aria-label="modifica sessione">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </mat-expansion-panel>
-      </mat-accordion>
-    </mat-drawer-content>
-  </mat-drawer-container>
+
+          <ng-template #noSessions>
+            <div class="empty-mini">
+              <mat-icon>playlist_add</mat-icon>
+              <div>
+                <strong>Nessuna sessione</strong>
+                <div class="muted">Aggiungine una dal pulsante in alto.</div>
+              </div>
+            </div>
+          </ng-template>
+        </section>
+
+        <!-- PAYMENTS + INVOICES -->
+        <section class="box">
+          <header class="box__head">
+            <div class="box__title">
+              <mat-icon>payments</mat-icon>
+              <span>Pagamenti & Fatture</span>
+            </div>
+          </header>
+
+          <div class="box__content">
+            <div class="moneygrid">
+              <div class="m">
+                <span>Pagato (Stripe/Payments)</span>
+                <strong>{{ money(row.paidTotal) }}</strong>
+              </div>
+              <div class="m" *ngIf="row.expectedTotal != null">
+                <span>Totale stimato</span>
+                <strong>{{ money(row.expectedTotal) }}</strong>
+              </div>
+              <div class="m" *ngIf="row.remaining != null">
+                <span>Residuo</span>
+                <strong [class.warn]="row.remaining > 0">{{ money(row.remaining) }}</strong>
+              </div>
+              <div class="m" *ngIf="row.invoices.length">
+                <span>Totale fatture (RTDB)</span>
+                <strong>{{ money(row.invoiceTotal) }}</strong>
+              </div>
+            </div>
+
+            <div class="list-mini" *ngIf="row.payments.length; else noPayments">
+              <div class="prow" *ngFor="let p of row.payments">
+                <div class="p-left">
+                  <div class="p-top">
+                    <strong>{{ money(p.amount) }}</strong>
+                    <span class="tag" [class.ok]="(p.status||'').toLowerCase()==='succeeded'">
+                      {{ p.status || '—' }}
+                    </span>
+                  </div>
+                  <div class="muted">
+                    {{ p.createdAt || '' }}
+                    <span *ngIf="p.bookingId"> · booking: {{ p.bookingId }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #noPayments>
+              <div class="empty-mini">
+                <mat-icon>receipt_long</mat-icon>
+                <div>
+                  <strong>Nessun pagamento</strong>
+                  <div class="muted">Compariranno qui dal nodo payments.</div>
+                </div>
+              </div>
+            </ng-template>
+
+            <div class="list-mini" *ngIf="row.invoices.length">
+              <div class="prow inv" *ngFor="let inv of row.invoices">
+                <div class="p-left">
+                  <div class="p-top">
+                    <strong>{{ money(inv.amount) }}</strong>
+                    <span class="tag" [class.ok]="inv.status==='paid'">{{ inv.status }}</span>
+                  </div>
+                  <div class="muted">
+                    {{ inv.date }}
+                    <span *ngIf="inv.bookingId"> · booking: {{ inv.bookingId }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </div>
+    </article>
+  </main>
 </section>

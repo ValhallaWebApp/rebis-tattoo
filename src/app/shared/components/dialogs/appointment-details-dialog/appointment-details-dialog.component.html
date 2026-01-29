@@ -6,7 +6,6 @@
   <p><strong>Data di nascita:</strong> {{ data.eta || '-' }}</p>
   <p><strong>Inizio:</strong> {{ data.start | date: 'fullDate' }} • {{ data.start | date: 'shortTime' }}</p>
   <p><strong>Fine:</strong> {{ data.end | date: 'fullDate' }} • {{ data.end | date: 'shortTime' }}</p>
-  <p><strong>Prezzo:</strong> {{ data.price / 100 | currency: 'EUR':'symbol':'1.2-2' }}</p>
   <p><strong>Stato:</strong> {{ data.status | titlecase }}</p>
   <p><strong>Creato il:</strong> {{ data.createAt | date: 'fullDate' }} • {{ data.createAt | date: 'shortTime' }}</p>
   <p><strong>Aggiornato il:</strong> {{ data.updateAt | date: 'fullDate' }} • {{ data.updateAt | date: 'shortTime' }}</p>

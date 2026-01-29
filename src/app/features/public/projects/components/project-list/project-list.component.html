@@ -1,54 +1,109 @@
 <section class="portfolio-page">
-  <h2 class="page-title">
-    {{ lang.t('portfolio.title')}}
-    <span>{{ lang.t('portfolio.subtitle')}}</span>
-  </h2>
+  <header class="portfolio-header">
+    <h1>{{ lang.t('portfolio.title') }}</h1>
+    <p>{{ lang.t('portfolio.subtitle') }}</p>
+  </header>
 
+  <!-- FILTRI -->
   <mat-accordion class="portfolio-filter-panel" multi>
     <mat-expansion-panel>
       <mat-expansion-panel-header>
         <mat-panel-title>{{ lang.t('portfolio.filtersTitle') }}</mat-panel-title>
       </mat-expansion-panel-header>
 
-      <div class="filter-section">
+      <div class="filters">
+        <!-- ARTISTA -->
         <mat-form-field appearance="fill">
-          <mat-label>{{ lang.t('portfolio.statusLabel') }}</mat-label>
-          <mat-select [(value)]="selectedStatus">
-            <mat-option value="all">{{ lang.t('portfolio.all') }}</mat-option>
-            <mat-option value="in-progress">{{ lang.t('portfolio.inProgress') }}</mat-option>
-            <mat-option value="completed">{{ lang.t('portfolio.completed') }}</mat-option>
+          <mat-label>Artista</mat-label>
+          <mat-select [(value)]="selectedArtistId" (selectionChange)="applyFilters()">
+            <mat-option value="all">Tutti</mat-option>
+            <mat-option *ngFor="let a of artists" [value]="a.id">
+              {{ a.name }}
+            </mat-option>
           </mat-select>
         </mat-form-field>
 
+        <!-- STILE -->
         <mat-form-field appearance="fill">
-          <mat-label>{{ lang.t('portfolio.genreLabel') }}</mat-label>
-          <mat-select [(value)]="selectedGenre">
-            <mat-option value="all">{{ lang.t('portfolio.all') }}</mat-option>
-            <mat-option *ngFor="let g of genres" [value]="g">{{ g }}</mat-option>
+          <mat-label>Stile</mat-label>
+          <mat-select [(value)]="selectedStyle" (selectionChange)="applyFilters()">
+            <mat-option value="all">Tutti</mat-option>
+            <mat-option *ngFor="let s of styles" [value]="s">
+              {{ s }}
+            </mat-option>
           </mat-select>
         </mat-form-field>
 
-        <button mat-raised-button color="accent" (click)="applyFilters()">
-          {{ lang.t('portfolio.apply') }}
+        <!-- SOGGETTO -->
+        <mat-form-field appearance="fill">
+          <mat-label>Soggetto</mat-label>
+          <mat-select [(value)]="selectedSubject" (selectionChange)="applyFilters()">
+            <mat-option value="all">Tutti</mat-option>
+            <mat-option *ngFor="let s of subjects" [value]="s">
+              {{ s }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- VISIBILITÀ -->
+        <mat-form-field appearance="fill">
+          <mat-label>Visibilità</mat-label>
+          <mat-select [(value)]="selectedShow" (selectionChange)="applyFilters()">
+            <mat-option value="all">Tutti</mat-option>
+            <mat-option value="visible">Visibili</mat-option>
+            <mat-option value="hidden">Nascosti</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-stroked-button class="reset-btn" type="button" (click)="resetFilters()">
+          <mat-icon>restart_alt</mat-icon>
+          Reset
         </button>
       </div>
     </mat-expansion-panel>
   </mat-accordion>
 
-  <div class="portfolio-grid">
-    <div
-      class="portfolio-card"
-      *ngFor="let project of filteredProjects"
-      [style.background]="'url(' + project.imageUrl + ') center / cover no-repeat'">
-      <div class="portfolio-overlay">
-        <h3>{{ project.title }}</h3>
-        <p>{{ lang.t('portfolio.statusPrefix') }}{{ project.status | titlecase }}</p>
-        <p>{{ lang.t('portfolio.genrePrefix') }}{{ project.genre }}</p>
-        <p>{{ lang.t('portfolio.datePrefix') }}{{ project.date }}</p>
-        <a [routerLink]="['/progetti', project.id]">
-          {{ lang.t('portfolio.details') }}
-        </a>
-      </div>
-    </div>
-  </div>
+  <!-- GRID -->
+  <section class="portfolio-grid" *ngIf="filteredProjects.length; else empty">
+    <mat-card class="project-card" *ngFor="let p of filteredProjects; trackBy: trackById">
+      <a class="card-link" [routerLink]="p.id ? ['/progetto', p.id] : null">
+        <div class="cover">
+          <img [src]="coverOf(p)" [alt]="p.title" loading="lazy" />
+          <div class="overlay"></div>
+
+          <!-- badge stile -->
+          <!-- <div class="badge" *ngIf="p.style as st">{{ st }}</div>
+
+           pill visibilità (undefined = visibile)
+          <div class="pill" [class.is-hidden]="p.isPublic === false">
+            {{ p.isPublic === false ? 'Nascosto' : 'Visibile' }}
+          </div> -->
+
+          <!-- badge foto -->
+          <div class="photo-count" *ngIf="imagesCount(p) > 1">
+            <mat-icon>collections</mat-icon>
+            {{ imagesCount(p) }}
+          </div>
+        </div>
+
+        <div class="meta">
+          <h3 class="title">{{ p.title }}</h3>
+
+          <p class="sub">
+            <span class="artist">{{ artistNameById(p.artistId) }}</span>
+            <span class="dot">·</span>
+            <span class="date">
+              {{ p.createdAt ? (p.createdAt | date:'dd/MM/yyyy') : '—' }}
+            </span>
+          </p>
+
+          <span class="details">Dettagli →</span>
+        </div>
+      </a>
+    </mat-card>
+  </section>
+
+  <ng-template #empty>
+    <p class="empty">Nessun progetto trovato.</p>
+  </ng-template>
 </section>

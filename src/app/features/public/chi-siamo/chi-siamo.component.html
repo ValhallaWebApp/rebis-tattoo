@@ -1,164 +1,130 @@
-<section class="about-page mat-typography">
-
+<section class="about-page">
   <!-- HERO -->
   <header class="about-hero">
-    <p class="eyebrow">Studio di tatuaggi · Sassari</p>
-
-    <h1>Chi siamo</h1>
+    <div class="eyebrow">Rebis Tattoo</div>
+    <h1>CHI SIAMO</h1>
 
     <p class="intro">
-      Rebis Tattoo è uno studio underground dedicato al blackwork, al fine line e ai progetti
-      su misura. Ogni tatuaggio nasce da conversazioni reali, reference condivise e
-      attenzione maniacale ai dettagli.
+      In Rebis Tattoo ogni tatuaggio è una narrazione visiva. La nostra missione è creare arte
+      che rifletta la tua identità, con attenzione, professionalità e un tocco personale.
     </p>
-
-    <p class="highlight">
-      Non facciamo tatuaggi in serie: studiamo posizionamento, forme e guarigione nel tempo
-      per creare qualcosa che abbia senso sul tuo corpo oggi e domani.
-    </p>
-
-    <div class="cta-row">
-      <button
-        mat-flat-button
-        class="btn-primary"
-        color="primary"
-      >
-        Prenota una consulenza
-      </button>
-
-      <button
-        mat-outlined-button
-        class="btn-ghost"
-      >
-        Scopri il nostro processo
-      </button>
-    </div>
   </header>
-
-  <!-- CAROSELLO -->
-  <section
-    class="about-carousel"
-    (mouseenter)="onCarouselEnter()"
-    (mouseleave)="onCarouselLeave()"
-  >
-    <mat-card>
-      <div class="carousel-inner">
-        <div
-          class="carousel-track"
-          [style.transform]="getTransform()"
-        >
-          <article
-            class="carousel-slide"
-            *ngFor="let slide of slides; let i = index"
-          >
-            <img
-              [src]="slide.src"
-              [alt]="slide.alt"
-              loading="lazy"
-            />
-
-            <div class="slide-gradient"></div>
-
-            <div class="slide-content">
-              <h3 *ngIf="slide.title">
-                {{ slide.title }}
-              </h3>
-              <p *ngIf="slide.caption">
-                {{ slide.caption }}
-              </p>
-            </div>
-          </article>
-        </div>
-      </div>
-
-      <div class="carousel-actions">
-        <div class="carousel-dots">
-          <button
-            *ngFor="let slide of slides; let i = index"
-            type="button"
-            [class.is-active]="i === activeIndex"
-            (click)="goTo(i)"
-          >
-            <span class="visually-hidden">Vai alla slide {{ i + 1 }}</span>
-          </button>
-        </div>
-
-        <div class="carousel-nav">
-          <button
-            mat-icon-button
-            (click)="prev()"
-            aria-label="Slide precedente"
-          >
-            <mat-icon>chevron_left</mat-icon>
-          </button>
-
-          <button
-            mat-icon-button
-            (click)="next()"
-            aria-label="Slide successiva"
-          >
-            <mat-icon>chevron_right</mat-icon>
-          </button>
-        </div>
-      </div>
-    </mat-card>
-  </section>
 
   <!-- TEAM -->
   <section class="about-team">
     <div class="team-header">
       <div>
         <h2>Il team</h2>
+        <p class="team-intro">
+          Rebis Tattoo nasce da una visione precisa: pochi progetti, curati davvero.
+          Lo studio è guidato direttamente dalla titolare, che segue ogni fase del tatuaggio
+          dalla consulenza alla guarigione.
+        </p>
       </div>
-      <p>
-        Siamo tatuatori con background diversi ma con la stessa ossessione:
-        linee pulite, composizioni studiate e progetti che invecchiano bene sulla pelle.
-      </p>
     </div>
 
-    <div class="team-grid">
-      <mat-card
-        class="team-card"
-        *ngFor="let member of team"
-      >
-        <div class="avatar">
-          <img
-            src="/personale/{{member.photo}}"
-            [alt]="member.name"
-            loading="lazy"
-          />
+    <!-- HERO TITOLARE: SARA (STATICA) -->
+    <mat-card class="team-card team-hero">
+      <div class="hero-media">
+        <img class="hero-avatar" src="{{heroImageUrl}}" [alt]="sara.name" loading="lazy" />
+        <div class="hero-badge">TITOLARE</div>
+      </div>
+
+      <div class="hero-meta">
+        <h3>{{ sara.name }}</h3>
+        <div class="role">{{ sara.roleLabel }}</div>
+        <p class="bio">{{ sara.bio }}</p>
+
+        <div class="hero-actions">
+          <a class="ghost-btn" routerLink="/portfolio">Vedi lavori</a>
+          <a class="primary-btn" routerLink="/bookings">Prenota</a>
         </div>
+      </div>
+    </mat-card>
 
-        <div class="meta">
-          <span class="name">{{ member.name }}</span>
-          <span class="role">{{ member.role }}</span>
+    <!-- SPOTLIGHT -->
+    <section class="team-spotlight" *ngIf="team?.length; else noTeam">
+      <div class="spotlight-head">
+        <h2>Artisti</h2>
+        <p>Seleziona un artista per vedere i dettagli.</p>
+      </div>
 
-          <div class="style-chip">
-            <mat-chip-set>
-              <mat-chip>{{ member.style }}</mat-chip>
-            </mat-chip-set>
+      <div class="spotlight-layout">
+        <!-- LEFT: CAROUSEL -->
+        <div class="spotlight-left">
+          <div
+            class="focus-carousel"
+            (pointerdown)="onPointerDown($event)"
+            (pointermove)="onPointerMove($event)"
+            (pointerup)="onPointerUp($event)"
+            (pointercancel)="onPointerUp($event)"
+            (pointerleave)="onPointerUp($event)"
+          >
+            <button class="nav-btn prev" type="button" aria-label="Artista precedente" (click)="prev()">‹</button>
+
+            <div class="stage">
+              <div
+                class="card"
+                *ngFor="let m of team; let i = index; trackBy: trackById"
+                [class.is-active]="i === activeIndex"
+                [class.is-left]="isLeft(i)"
+                [class.is-right]="isRight(i)"
+                [class.is-hidden]="isHidden(i)"
+                [style.transform]="getTransform(i)"
+                [style.opacity]="getOpacity(i)"
+                [style.zIndex]="getZIndex(i)"
+                (click)="setActive(i)"
+              >
+                <div class="thumb">
+                  <img [src]="getPhoto(m)" [alt]="m.name" loading="lazy" />
+                  <div class="thumb-overlay"></div>
+                </div>
+
+                <div class="mini">
+                  <div class="name">{{ m.name }}</div>
+                  <div class="role">{{ roleLabel(m.role) }}</div>
+                </div>
+              </div>
+            </div>
+
+            <button class="nav-btn next" type="button" aria-label="Artista successivo" (click)="next()">›</button>
+          </div>
+
+          <div class="counter">
+            <span>{{ activeIndex + 1 }}</span>/<span>{{ team.length }}</span>
           </div>
         </div>
-      </mat-card>
-    </div>
-  </section>
 
-  <!-- INSTAGRAM CTA (discreta) -->
-  <section class="instagram-callout">
-    <mat-card>
-      <div class="text">
-        <strong>Vedi i lavori guariti e le cover più recenti</strong><br />
-        Segui il nostro studio su Instagram per vedere il lato reale di ogni progetto.
+        <!-- RIGHT: DETAILS -->
+        <div class="spotlight-right" *ngIf="active as a">
+          <mat-card class="detail-card">
+            <div class="detail-top">
+              <div class="detail-title">
+                <h3>{{ a.name }}</h3>
+                <span class="detail-role">{{ roleLabel(a.role) }}</span>
+              </div>
+
+              <div class="actions">
+                <a class="ghost-btn" routerLink="/portfolio">Vedi lavori</a>
+                <a class="primary-btn" routerLink="/bookings">Prenota</a>
+              </div>
+            </div>
+
+            <p class="detail-bio">
+              {{ a.bio || 'Bio in arrivo. Intanto, dai un’occhiata ai lavori in portfolio.' }}
+            </p>
+
+            <div class="chips" *ngIf="a.role">
+              <span class="chip">{{ roleLabel(a.role) }}</span>
+              <span class="chip" *ngIf="a.role === 'guest'">Disponibilità limitata</span>
+            </div>
+          </mat-card>
+        </div>
       </div>
+    </section>
 
-      <button
-        mat-flat-button
-        class="btn-ig"
-        (click)="openInstagram()"
-      >
-        Apri Instagram
-      </button>
-    </mat-card>
+    <ng-template #noTeam>
+      <p class="empty">Nessun artista disponibile al momento.</p>
+    </ng-template>
   </section>
-
 </section>

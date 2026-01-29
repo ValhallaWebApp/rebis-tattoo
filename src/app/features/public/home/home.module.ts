@@ -14,7 +14,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ContattiComponent } from '../contatti/contatti.component';
 import { ShowcaseComponent } from './components/showcase/showcase.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { BookingListComponent } from '../bookings/booking-list/booking-list.component';
 import { BrowserModule } from '@angular/platform-browser';
 import { TattooAvatarComponent } from '../../../shared/components/tattoo-avatar/tattoo-avatar.component';
 import { MaterialModule } from '../../../core/modules/material.module';

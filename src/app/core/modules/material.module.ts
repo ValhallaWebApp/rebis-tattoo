@@ -59,7 +59,9 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
     MatChipsModule,
     MatSnackBarModule,
     MatProgressBarModule,
-    MatAutocompleteModule
+    MatAutocompleteModule,
+    MatSidenavModule
+
   ],
   exports: [
     MatToolbarModule,
@@ -89,7 +91,8 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
     MatChipsModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
-    MatAutocompleteModule
+    MatAutocompleteModule,
+    MatSidenavModule
   ],
 
 })
