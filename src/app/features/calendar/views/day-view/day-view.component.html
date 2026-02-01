@@ -1,46 +1,166 @@
-<div class="day-wrap">
-  <div class="day-head">
-    <div class="title">
-      <mat-icon>today</mat-icon>
-      {{ date | date:'fullDate':'':'it-IT' }}
-    </div>
-    <div class="hint">Operatività: crea/modifica qui (drag/resize puoi aggiungerli dopo).</div>
-  </div>
+<section class="admin-agenda">
 
-  <div class="day-grid">
-    <div class="time-col">
-      <div class="time-cell head"></div>
-      <div class="time-cell" *ngFor="let t of timeRows()">
-        {{ t.label }}
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="left">
+      <button mat-icon-button (click)="prevDay()" aria-label="giorno precedente">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <button mat-stroked-button class="today" (click)="goToday()">Oggi</button>
+
+      <button mat-icon-button (click)="nextDay()" aria-label="giorno successivo">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      <div class="date">
+        <mat-icon>event</mat-icon>
+        <span>{{ viewDate() | date:'fullDate':'':'it-IT' }}</span>
       </div>
     </div>
 
-    <div class="artists-cols">
-      <div class="artist-col" *ngFor="let a of artists">
-        <div class="artist-head">
-          <div class="name">{{ a.name }}</div>
-        </div>
+    <div class="right">
+      <mat-form-field appearance="outline" class="search">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Cerca cliente, note, titolo..." [value]="q()" (input)="setQ($any($event.target).value)">
+      </mat-form-field>
 
-        <div class="slot" *ngFor="let t of timeRows()" (click)="onClickSlot(a.id, t.minutes)">
-          <button mat-icon-button class="plus" aria-label="nuovo">
-            <mat-icon>add</mat-icon>
-          </button>
-        </div>
+      <mat-button-toggle-group [value]="viewMode()" (change)="setViewMode($event.value)">
+        <mat-button-toggle value="agenda"><mat-icon>view_agenda</mat-icon></mat-button-toggle>
+        <mat-button-toggle value="board"><mat-icon>view_kanban</mat-icon></mat-button-toggle>
+        <mat-button-toggle value="list"><mat-icon>list</mat-icon></mat-button-toggle>
+      </mat-button-toggle-group>
 
-        <div class="events">
-          <button
-            class="event"
-            *ngFor="let ev of eventsForArtist(a.id)"
-            (click)="editEvent.emit(ev)"
-          >
-            <div class="event-top">
-              <span class="type" [class.session]="ev.type==='session'">{{ ev.type }}</span>
-              <span class="time">{{ formatTime(ev.start) }}–{{ formatTime(ev.end) }}</span>
+      <button mat-raised-button color="primary" (click)="createNew()">
+        <mat-icon>add</mat-icon> Nuovo
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-label">Totali oggi</div>
+      <div class="kpi-val">{{ kpiToday().total }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Da confermare</div>
+      <div class="kpi-val warn">{{ kpiToday().pending }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Confermate</div>
+      <div class="kpi-val ok">{{ kpiToday().confirmed }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Pagate</div>
+      <div class="kpi-val ok">{{ kpiToday().paid }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">In corso</div>
+      <div class="kpi-val info">{{ kpiToday().inProgress }}</div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <div class="chip-row">
+      <mat-chip-listbox multiple [value]="artistIds()" (change)="setArtistIds($event.value)">
+        <mat-chip-option *ngFor="let a of artists" [value]="a.id">
+          <mat-icon>person</mat-icon> {{ a.name }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+
+    <div class="chip-row">
+      <mat-chip-listbox multiple [value]="statuses()" (change)="setStatuses($event.value)">
+        <mat-chip-option *ngFor="let s of statusOptions" [value]="s">
+          <mat-icon>flag</mat-icon> {{ s }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+  </div>
+
+  <!-- AGENDA -->
+  <ng-container *ngIf="viewMode()==='agenda'">
+    <div class="agenda">
+      <div class="artist-block" *ngFor="let block of agendaBlocks(); trackBy: trackByArtist">
+        <button class="artist-head" (click)="toggleArtist(block.artistId)">
+          <div class="artist-title">
+            <mat-icon>brush</mat-icon>
+            <span>{{ block.artistName }}</span>
+          </div>
+          <div class="artist-meta">
+            <span class="pill">{{ block.items.length }} appunt.</span>
+            <mat-icon>{{ isArtistOpen(block.artistId) ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </div>
+        </button>
+
+        <div class="cards" *ngIf="isArtistOpen(block.artistId)">
+          <button class="card"
+                  *ngFor="let it of block.items; trackBy: trackById"
+                  [class.session]="it.type==='session'"
+                  [class.booking]="it.type!=='session'"
+                  [class.st-draft]="it.status==='draft'"
+                  [class.st-pending]="it.status==='pending'"
+                  [class.st-confirmed]="it.status==='confirmed'"
+                  [class.st-paid]="it.status==='paid'"
+                  [class.st-inprogress]="it.status==='in_progress'"
+                  [class.st-completed]="it.status==='completed'"
+                  [class.st-cancelled]="it.status==='cancelled'"
+                  [class.st-noshow]="it.status==='no_show'"
+                  (click)="openDetails(it)">
+
+            <div class="timebox">
+              <div class="hh">{{ it.hh }}</div>
+              <div class="mm">{{ it.mm }}</div>
             </div>
-            <div class="event-title">{{ ev.notes || ev.title || 'Dettagli' }}</div>
+
+            <div class="main">
+              <div class="row1">
+                <span class="badge">{{ it.type }}</span>
+                <span class="range">{{ it.range }}</span>
+                <span class="status">{{ it.status }}</span>
+              </div>
+              <div class="title">{{ it.title }}</div>
+              <div class="sub">{{ it.subtitle }}</div>
+            </div>
+
+            <div class="actions" (click)="$event.stopPropagation()">
+              <button mat-icon-button [disabled]="!canConfirm(it)" (click)="setStatus(it,'confirmed')" matTooltip="Conferma">
+                <mat-icon>check_circle</mat-icon>
+              </button>
+              <button mat-icon-button [disabled]="!canPay(it)" (click)="setStatus(it,'paid')" matTooltip="Segna pagato">
+                <mat-icon>payments</mat-icon>
+              </button>
+              <button mat-icon-button [disabled]="!canStart(it)" (click)="setStatus(it,'in_progress')" matTooltip="Inizia">
+                <mat-icon>play_circle</mat-icon>
+              </button>
+              <button mat-icon-button [disabled]="!canComplete(it)" (click)="setStatus(it,'completed')" matTooltip="Completa">
+                <mat-icon>task_alt</mat-icon>
+              </button>
+
+              <span class="sep"></span>
+
+              <button mat-icon-button (click)="reschedule(it)" matTooltip="Ripianifica">
+                <mat-icon>event_repeat</mat-icon>
+              </button>
+              <button mat-icon-button (click)="edit(it)" matTooltip="Modifica">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button (click)="cancel(it)" matTooltip="Annulla">
+                <mat-icon>cancel</mat-icon>
+              </button>
+              <button mat-icon-button (click)="noShow(it)" matTooltip="No-show">
+                <mat-icon>person_off</mat-icon>
+              </button>
+            </div>
+
           </button>
         </div>
       </div>
     </div>
-  </div>
-</div>
+  </ng-container>
+
+  <!-- (board/list li facciamo dopo, ora ti metto solo agenda che risolve subito) -->
+
+</section>
