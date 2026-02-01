@@ -1,0 +1,10 @@
+
+# --- API ---
+apps/api/node_modules/
+apps/api/.env
+apps/api/.env.*
+!apps/api/.env.example
+
+# logs/build
+apps/api/dist/
+apps/api/*.log
