@@ -15,16 +15,6 @@ import {
 } from "./chunk-NHOKREJB.js";
 import "./chunk-YILWSCUT.js";
 import {
-  animate,
-  animateChild,
-  group,
-  query,
-  state,
-  style,
-  transition,
-  trigger
-} from "./chunk-NH5YNQKR.js";
-import {
   AnimationCurves,
   AnimationDurations,
   BreakpointObserver,
@@ -36,6 +26,16 @@ import {
   MatCommonModule,
   hasModifierKey
 } from "./chunk-H6G637Q5.js";
+import {
+  animate,
+  animateChild,
+  group,
+  query,
+  state,
+  style,
+  transition,
+  trigger
+} from "./chunk-NH5YNQKR.js";
 import {
   DOCUMENT
 } from "./chunk-AD5FPFXD.js";
@@ -67,10 +67,10 @@ import {
   ɵɵsyntheticHostProperty,
   ɵɵtemplate
 } from "./chunk-C2VIVA5F.js";
+import "./chunk-QVWCQSQ3.js";
 import {
   merge
 } from "./chunk-O4PACCC3.js";
-import "./chunk-QVWCQSQ3.js";
 import {
   Subject,
   filter,

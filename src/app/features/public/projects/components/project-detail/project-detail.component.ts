@@ -144,6 +144,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       case 'draft': return 'Bozza';
       case 'scheduled': return 'Pianificato';
       case 'active': return 'Attivo';
+      case 'healing': return 'Guarigione';
       case 'completed': return 'Concluso';
       case 'cancelled': return 'Annullato';
 

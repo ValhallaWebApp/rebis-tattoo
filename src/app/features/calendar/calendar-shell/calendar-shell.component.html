@@ -63,7 +63,13 @@
       [artists]="artists"
       [clients]="clientsLite"
       [projects]="projectsLite"
+      [createdProject]="createdProject"
+      [bookings]="bookingsLite"
+      [events]="events"
+      [initialValue]="drawerSeed ?? drawerEditingEvent"
+      [editingEventId]="drawerEditingEvent?.id ?? null"
       [allowStandaloneSession]="false"
+      (createProjectRequested)="onCreateProjectRequested($event)"
       (close)="drawerOpen=false"
       (submit)="onDrawerSubmit($event)">
     </app-event-drawer>
@@ -83,6 +89,7 @@
             [events]="eventsForSelectedArtists()"
             (createFromSlot)="openCreateFromDay($event)"
             (editEvent)="openEditEvent($event)"
+            (action)="onDayAction($event)"
           />
 
           <app-week-resource

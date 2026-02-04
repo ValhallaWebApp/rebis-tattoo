@@ -81,7 +81,7 @@ private getWeekDays(): Date[] {
 
 
 eventsFor(date: Date, hour: string): CalendarEvent[] {
-  const iso = date.toISOString().split('T')[0];
+  const iso = this.toLocalDateKey(date);
   const slotStart = new Date(`${iso}T${hour}`);
 
   return this.bookings.filter(ev => {
@@ -101,11 +101,11 @@ onDrop(event: CdkDragDrop<any>, targetDate: Date, targetHour: string): void {
 
   const duration = draggedEvent.duration ?? 30;
 
-  const newDate = targetDate.toISOString().split('T')[0];
-  const newStart = `${newDate}T${targetHour}`;
+  const newDate = this.toLocalDateKey(targetDate);
+  const newStart = `${newDate}T${targetHour}:00`;
   const newStartDate = new Date(newStart);
   const newEndDate = new Date(newStartDate.getTime() + duration * 60_000);
-  const newEnd = newEndDate.toISOString();
+  const newEnd = this.toLocalDateTime(newEndDate);
 
   // 🔒 Controlla sovrapposizione con altri eventi dello stesso artista
 // 🔒 Controlla se l'artista ha già un evento in questo intervallo
@@ -146,7 +146,8 @@ openResizeDialog(event: CalendarEvent): void {
   const parsed = parseInt(newDuration ?? '', 10);
   if (!parsed || parsed < 30) return;
 
-  const newEnd = new Date(new Date(event.start).getTime() + parsed * 60000).toISOString();
+  const newEndDate = new Date(new Date(event.start).getTime() + parsed * 60000);
+  const newEnd = this.toLocalDateTime(newEndDate);
 
   const updated: CalendarEvent = {
     ...event,
@@ -165,7 +166,7 @@ openResizeDialog(event: CalendarEvent): void {
 
 
 getDropListId(date: Date, hour: string): string {
-  const d = date.toISOString().split('T')[0];
+  const d = this.toLocalDateKey(date);
   return `drop-${d}-${hour}`;
 }
   slotClass(date: Date, hour: string): string {
@@ -180,7 +181,7 @@ getDropListId(date: Date, hour: string): string {
   }
 
   onSlotClick(date: Date, hour: string): void {
-    const iso = date.toISOString().split('T')[0];
+    const iso = this.toLocalDateKey(date);
     this.slotClick.emit({ date: iso, start: hour });
   }
   generateWeekDays(): void {
@@ -195,5 +196,17 @@ getDropListId(date: Date, hour: string): string {
       d.setDate(start.getDate() + i);
       return d;
     });
+  }
+
+  private toLocalDateKey(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  private toLocalDateTime(d: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
 }

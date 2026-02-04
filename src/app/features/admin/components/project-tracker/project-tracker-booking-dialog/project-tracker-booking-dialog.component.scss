@@ -1,0 +1,12 @@
+.dlg{
+  display: grid;
+  gap: 10px;
+}
+.row2{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 720px){
+  .row2{ grid-template-columns: 1fr; }
+}

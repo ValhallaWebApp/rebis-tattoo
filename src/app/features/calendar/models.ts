@@ -20,6 +20,7 @@ export interface UiCalendarEvent {
 
   clientId?: string;
   projectId?: string;
+  bookingId?: string;
   status?: string;
   notes?: string;
 
@@ -37,6 +38,7 @@ export interface CreateDraft {
 
   clientId?: string;
   projectId?: string;
+  bookingId?: string;
   notes?: string;
   status?: string;
 }
@@ -44,7 +46,7 @@ export interface CreateDraft {
 export interface UpdatePatch {
   id: string;
   type: UiEventType;
-  patch: Partial<Pick<UiCalendarEvent, 'start' | 'end' | 'durationMinutes' | 'notes' | 'status' | 'clientId' | 'projectId'>>;
+  patch: Partial<Pick<UiCalendarEvent, 'start' | 'end' | 'durationMinutes' | 'notes' | 'status' | 'clientId' | 'projectId' | 'bookingId' | 'artistId'>>;
 }
 
 export interface AvailabilitySlot {

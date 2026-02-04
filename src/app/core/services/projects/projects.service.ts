@@ -15,7 +15,7 @@ import {
 import { map, Observable } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-export type ProjectStatus = 'draft' | 'scheduled' | 'active' | 'completed' | 'cancelled';
+export type ProjectStatus = 'draft' | 'scheduled' | 'active' | 'healing' | 'completed' | 'cancelled';
 
 export interface TattooProject {
   id?: string;
@@ -176,7 +176,11 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
     if (prev.includes(sessionId)) return;
 
     const next = [...prev, sessionId];
-    await this.updateProject(projectId, { sessionIds: next, status: p.status === 'draft' ? 'active' : p.status });
+    const nextStatus =
+      p.status === 'draft' || p.status === 'healing'
+        ? 'active'
+        : p.status;
+    await this.updateProject(projectId, { sessionIds: next, status: nextStatus });
   }
 
   // -----------------------------

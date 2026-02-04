@@ -32,7 +32,7 @@
     <!-- ARTIST -->
     <mat-form-field appearance="outline">
       <mat-label>Artista *</mat-label>
-      <mat-select formControlName="artistId">
+      <mat-select formControlName="artistId" [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()">
         <mat-option *ngFor="let a of artists" [value]="a.id">{{ a.name }}</mat-option>
       </mat-select>
       <mat-error *ngIf="form.controls.artistId.touched && form.controls.artistId.hasError('required')">
@@ -44,7 +44,7 @@
     <div class="row2">
       <mat-form-field appearance="outline">
         <mat-label>Data *</mat-label>
-        <input matInput [matDatepicker]="picker" formControlName="day" />
+        <input matInput [matDatepicker]="picker" formControlName="day" [disabled]="isScheduleLocked() || isBookingScheduleLocked()" />
         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-datepicker #picker></mat-datepicker>
         <mat-error *ngIf="form.controls.day.touched && form.controls.day.hasError('required')">
@@ -52,21 +52,21 @@
         </mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Ora *</mat-label>
-        <mat-select formControlName="time">
-          <mat-option *ngFor="let t of timeOptions" [value]="t">{{ t }}</mat-option>
-        </mat-select>
-        <mat-error *ngIf="form.controls.time.touched && form.controls.time.hasError('required')">
-          Ora obbligatoria
-        </mat-error>
-      </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Ora *</mat-label>
+      <mat-select formControlName="time" [disabled]="!form.controls.artistId.value || isScheduleLocked() || isBookingScheduleLocked()">
+        <mat-option *ngFor="let t of availableTimeOptions" [value]="t">{{ t }}</mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.controls.time.touched && form.controls.time.hasError('required')">
+        Ora obbligatoria
+      </mat-error>
+    </mat-form-field>
     </div>
 
     <!-- DURATION -->
     <mat-form-field appearance="outline">
       <mat-label>Durata (min) *</mat-label>
-      <mat-select formControlName="durationMinutes">
+      <mat-select formControlName="durationMinutes" [disabled]="isScheduleLocked() || isBookingScheduleLocked()">
         <mat-option *ngFor="let d of durationOptions" [value]="d">{{ d }}</mat-option>
       </mat-select>
       <mat-error *ngIf="form.controls.durationMinutes.touched && form.controls.durationMinutes.hasError('min')">
@@ -89,6 +89,10 @@
       </mat-select>
     </mat-form-field>
 
+    <mat-hint *ngIf="mode==='edit' && isBookingAssignmentLocked()" class="session-lock-hint">
+      Campi bloccati: modifica consentita solo sulle note e sullo stato.
+    </mat-hint>
+
     <!-- CLIENT (autocomplete) -->
     <mat-form-field appearance="outline">
       <mat-label>Cliente {{ isBooking() ? '*' : '' }}</mat-label>
@@ -99,6 +103,7 @@
         formControlName="clientQuery"
         [matAutocomplete]="clientAuto"
         placeholder="Scrivi nome / email / telefono"
+        (blur)="onClientBlur()"
       />
 
       <button
@@ -134,9 +139,9 @@
       </mat-error>
     </mat-form-field>
 
-    <!-- PROJECT (autocomplete) - solo session -->
-    <mat-form-field appearance="outline" *ngIf="isSession()">
-      <mat-label>Progetto *</mat-label>
+    <!-- PROJECT (autocomplete) -->
+    <mat-form-field appearance="outline">
+      <mat-label>{{ isSession() ? 'Progetto *' : 'Progetto (opzionale)' }}</mat-label>
 
       <input
         matInput
@@ -144,6 +149,8 @@
         formControlName="projectQuery"
         [matAutocomplete]="projectAuto"
         placeholder="Scrivi titolo progetto"
+        (blur)="onProjectBlur()"
+        [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()"
       />
 
       <button
@@ -152,6 +159,7 @@
         type="button"
         *ngIf="form.controls.projectId.value"
         (click)="clearProject()"
+        [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()"
         aria-label="Pulisci progetto">
         <mat-icon>close</mat-icon>
       </button>
@@ -168,15 +176,68 @@
           </div>
         </mat-option>
 
+        <mat-divider></mat-divider>
+        <mat-option (click)="createProjectFromDrawer()" [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()">
+          <mat-icon>add_circle</mat-icon>
+          <span>Crea nuovo progetto</span>
+        </mat-option>
+
+      </mat-autocomplete>
+
+      <mat-hint *ngIf="isSession()">
+        Selezionando un progetto, il numero sessione viene calcolato automaticamente.
+      </mat-hint>
+      <mat-hint *ngIf="isBooking()">
+        Per creare un nuovo progetto servono prima Cliente e Artista.
+      </mat-hint>
+
+      <mat-error *ngIf="isSession() && form.controls.projectQuery.touched && form.controls.projectQuery.hasError('required')">
+        Seleziona un progetto
+      </mat-error>
+    </mat-form-field>
+
+    <!-- BOOKING (autocomplete - session only) -->
+    <mat-form-field appearance="outline" *ngIf="isSession()">
+      <mat-label>Booking di riferimento (opzionale)</mat-label>
+
+      <input
+        matInput
+        type="text"
+        formControlName="bookingQuery"
+        [matAutocomplete]="bookingAuto"
+        placeholder="Cerca booking"
+        (blur)="onBookingBlur()"
+        [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()"
+      />
+
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        *ngIf="form.controls.bookingId.value"
+        (click)="clearBooking()"
+        [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()"
+        aria-label="Pulisci booking">
+        <mat-icon>close</mat-icon>
+      </button>
+
+      <mat-autocomplete
+        #bookingAuto="matAutocomplete"
+        [displayWith]="displayBooking"
+        (optionSelected)="onBookingSelected($event.option.value)">
+
+        <mat-option *ngFor="let b of (filteredBookings$ | async)" [value]="b">
+          <div class="opt">
+            <strong>{{ displayBooking(b) }}</strong>
+            <small>{{ b.projectId ? 'Con progetto' : 'Senza progetto' }}</small>
+          </div>
+        </mat-option>
+
       </mat-autocomplete>
 
       <mat-hint>
-        Selezionando un progetto, il numero sessione viene calcolato automaticamente.
+        Se selezioni un booking, compiliamo automaticamente artista, cliente e progetto.
       </mat-hint>
-
-      <mat-error *ngIf="form.controls.projectQuery.touched && form.controls.projectQuery.hasError('required')">
-        Seleziona un progetto
-      </mat-error>
     </mat-form-field>
 
     <!-- ZONE -->
@@ -187,10 +248,13 @@
 
     <!-- SESSION EXTRA -->
     <ng-container *ngIf="isSession()">
+      <mat-hint *ngIf="mode==='edit' && isScheduleLocked()" class="session-lock-hint">
+        Data/ora bloccate perché la sessione è completata.
+      </mat-hint>
       <div class="row2">
         <mat-form-field appearance="outline">
           <mat-label>N° Sessione</mat-label>
-          <input matInput type="number" formControlName="sessionNumber" />
+          <input matInput type="number" formControlName="sessionNumber" [disabled]="isAssignmentLocked()" />
           <mat-hint>Auto: in base al progetto selezionato</mat-hint>
         </mat-form-field>
 
@@ -199,6 +263,11 @@
           <input matInput type="number" min="1" max="10" formControlName="painLevel" />
         </mat-form-field>
       </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Pagato (sessione)</mat-label>
+        <input matInput type="number" min="0" formControlName="paidAmount" />
+      </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Note Admin</mat-label>

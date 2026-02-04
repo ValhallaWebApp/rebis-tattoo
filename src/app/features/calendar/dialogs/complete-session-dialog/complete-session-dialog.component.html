@@ -1,0 +1,17 @@
+<h2 mat-dialog-title>Sessione completata</h2>
+
+<mat-dialog-content>
+  <p>
+    Vuoi chiudere il progetto, avviare la guarigione o creare subito un'altra sessione?
+  </p>
+  <p *ngIf="data?.projectTitle">
+    Progetto: <strong>{{ data.projectTitle }}</strong>
+  </p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="choose('cancel')">Annulla</button>
+  <button mat-stroked-button color="primary" (click)="choose('healing')">Guarigione</button>
+  <button mat-stroked-button color="primary" (click)="choose('new_session')">Nuova sessione</button>
+  <button mat-flat-button color="primary" (click)="choose('close_project')">Chiudi progetto</button>
+</mat-dialog-actions>

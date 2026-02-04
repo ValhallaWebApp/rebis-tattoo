@@ -9,9 +9,35 @@
 
     <span class="spacer"></span>
 
+    <button mat-stroked-button type="button" *ngIf="!vm.loading && !vm.notFound && vm.project as p" (click)="editProject(p)">
+      <mat-icon>edit</mat-icon>
+      Modifica progetto
+    </button>
+
+    <ng-container *ngIf="!vm.loading && !vm.notFound && vm.project as p">
+      <button mat-stroked-button type="button" [matMenuTriggerFor]="statusMenuTop">
+        <mat-icon>flag</mat-icon>
+        Stato
+      </button>
+
+      <mat-menu #statusMenuTop="matMenu">
+        <button mat-menu-item (click)="setProjectStatus(p,'draft')">Bozza</button>
+        <button mat-menu-item (click)="setProjectStatus(p,'scheduled')">Prenotato</button>
+        <button mat-menu-item (click)="setProjectStatus(p,'active')">Attivo</button>
+        <button mat-menu-item (click)="setProjectStatus(p,'healing')">Guarigione</button>
+        <button mat-menu-item (click)="setProjectStatus(p,'completed')">Concluso</button>
+        <button mat-menu-item (click)="setProjectStatus(p,'cancelled')">Annullato</button>
+      </mat-menu>
+    </ng-container>
+
+    <button mat-stroked-button type="button" *ngIf="!vm.loading && !vm.notFound && !vm.booking" (click)="editBooking(null)">
+      <mat-icon>event</mat-icon>
+      Crea Booking
+    </button>
+
     <button mat-raised-button color="primary" type="button" (click)="addSession()" [disabled]="vm.notFound || vm.loading">
       <mat-icon>add</mat-icon>
-      Aggiungi Session
+      Aggiungi Sessione
     </button>
   </header>
 
@@ -25,7 +51,7 @@
     <mat-icon>search_off</mat-icon>
     <div>
       <h3>Progetto non trovato</h3>
-      <p>Controlla l’ID nella route o torna al Project Manager.</p>
+      <p>Controlla l'ID nella route o torna al Project Manager.</p>
     </div>
   </div>
 
@@ -39,10 +65,11 @@
           <h1>{{ p.title }}</h1>
           <div class="chips">
             <mat-chip-set>
-              <mat-chip>{{ p.status }}</mat-chip>
+              <mat-chip class="status-chip" [attr.data-status]="p.status" >{{ p.status }}</mat-chip>
               <!-- <mat-chip *ngIf="(p as any).style">{{ (p as any).style }}</mat-chip> -->
               <mat-chip *ngIf="p.zone">{{ p.zone }}</mat-chip>
             </mat-chip-set>
+
           </div>
         </div>
 
@@ -78,7 +105,7 @@
         <div class="hero__kpi">
           <div class="kpi">
             <div class="k">Booking</div>
-            <div class="v">{{ vm.booking ? 'OK' : 'NO' }}</div>
+            <div class="v">{{ vm.booking.status || '-' }}</div>
           </div>
           <div class="kpi">
             <div class="k">Sessioni</div>
@@ -92,6 +119,13 @@
             <div class="k">Residuo</div>
             <div class="v">{{ money(vm.remaining) }}</div>
           </div>
+        </div>
+
+        <div class="hero__actions">
+          <button mat-stroked-button type="button" *ngIf="p.clientId" [routerLink]="['/admin/clients']" [queryParams]="{ q: p.clientId }">
+            <mat-icon>person</mat-icon>
+            Cliente
+          </button>
         </div>
       </mat-card-content>
     </mat-card>
@@ -121,10 +155,10 @@
 
           <div class="line">
             <span class="k">Status</span>
-            <span class="v">{{ vm.booking?.status || '—' }}</span>
+            <span class="v">{{ vm.booking.status || '-' }}</span>
           </div>
 
-          <div class="line" *ngIf="vm.booking?.durationMinutes">
+          <div class="line" *ngIf="vm.booking.durationMinutes">
             <span class="k">Durata</span>
             <span class="v">{{ vm.booking.durationMinutes }} min</span>
           </div>
@@ -162,7 +196,7 @@
                 </div>
 
                 <div class="mini">
-                  <span class="tag">{{ s.status }}</span>
+                  <span class="tag" [attr.data-status]="s.status">{{ s.status }}</span>
                   <span class="dot">·</span>
                   <span *ngIf="s._durationMin">{{ s._durationMin }} min</span>
                   <span *ngIf="sessionZone(s)"> · {{ sessionZone(s) }}</span>

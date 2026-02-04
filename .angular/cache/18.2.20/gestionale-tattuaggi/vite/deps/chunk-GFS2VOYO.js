@@ -10,13 +10,6 @@ import {
   ComponentPortal
 } from "./chunk-NHOKREJB.js";
 import {
-  animate,
-  state,
-  style,
-  transition,
-  trigger
-} from "./chunk-NH5YNQKR.js";
-import {
   A11yModule,
   AriaDescriber,
   Directionality,
@@ -29,6 +22,13 @@ import {
   hasModifierKey,
   normalizePassiveListenerOptions
 } from "./chunk-H6G637Q5.js";
+import {
+  animate,
+  state,
+  style,
+  transition,
+  trigger
+} from "./chunk-NH5YNQKR.js";
 import {
   CommonModule,
   DOCUMENT,
@@ -1076,4 +1076,4 @@ export {
   matTooltipAnimations,
   MatTooltipModule
 };
-//# sourceMappingURL=chunk-VAKLGFPZ.js.map
+//# sourceMappingURL=chunk-GFS2VOYO.js.map

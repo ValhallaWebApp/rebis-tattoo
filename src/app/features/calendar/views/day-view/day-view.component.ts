@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MaterialModule } from '../../../../core/modules/material.module';
 
 import { UiArtist, UiCalendarEvent } from '../../models';
@@ -8,13 +9,15 @@ import { toDateKey } from '../../utils';
 export type AdminActionType =
   | 'open'
   | 'edit'
+  | 'create_session'
   | 'confirm'
   | 'pay'
   | 'start'
   | 'complete'
   | 'cancel'
   | 'no_show'
-  | 'reschedule';
+  | 'reschedule'
+  | 'assign_project';
 
 export interface AdminActionPayload {
   type: AdminActionType;
@@ -38,11 +41,11 @@ export interface AgendaBlock {
 @Component({
   selector: 'app-day-view',
   standalone: true,
-  imports: [CommonModule, MaterialModule],
+  imports: [CommonModule, MaterialModule, RouterLink],
   templateUrl: './day-view.component.html',
   styleUrls: ['./day-view.component.scss'],
 })
-export class DayViewComponent {
+export class DayViewComponent implements OnChanges {
   @Input({ required: true }) date!: Date;
   @Input({ required: true }) artists: UiArtist[] = [];
   @Input({ required: true }) events: UiCalendarEvent[] = [];
@@ -67,37 +70,57 @@ export class DayViewComponent {
 
   readonly artistIds = signal<string[]>([]); // vuoto => tutti
   readonly statuses = signal<string[]>([]);  // vuoto => tutte
+  readonly types = signal<string[]>([]);     // vuoto => tutti
 
   readonly statusOptions: string[] = [
     'draft',
     'pending',
     'confirmed',
-    'paid',
     'in_progress',
     'completed',
     'cancelled',
     'no_show',
   ];
+  readonly typeOptions: string[] = ['booking', 'session'];
 
   private readonly openArtistIds = signal<Set<string>>(new Set());
 
   // ===========================================================================
+  // INPUT SIGNALS (per reattività)
+  // ===========================================================================
+  private readonly dateSig = signal<Date>(new Date());
+  private readonly artistsSig = signal<UiArtist[]>([]);
+  private readonly eventsSig = signal<UiCalendarEvent[]>([]);
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['date'] && changes['date'].currentValue) {
+      this.dateSig.set(changes['date'].currentValue);
+    }
+    if (changes['artists']) {
+      this.artistsSig.set(changes['artists'].currentValue ?? []);
+    }
+    if (changes['events']) {
+      this.eventsSig.set(changes['events'].currentValue ?? []);
+    }
+  }
+
+  // ===========================================================================
   // DATE / TOPBAR
   // ===========================================================================
-  readonly dayKey = computed(() => toDateKey(this.date));
+  readonly dayKey = computed(() => toDateKey(this.dateSig()));
 
   viewDate() {
-    return this.date;
+    return this.dateSig();
   }
 
   prevDay(): void {
-    const d = new Date(this.date);
+    const d = new Date(this.dateSig());
     d.setDate(d.getDate() - 1);
     this.dateChange.emit(d);
   }
 
   nextDay(): void {
-    const d = new Date(this.date);
+    const d = new Date(this.dateSig());
     d.setDate(d.getDate() + 1);
     this.dateChange.emit(d);
   }
@@ -124,6 +147,10 @@ export class DayViewComponent {
     this.statuses.set((Array.isArray(st) ? st : []).map(String));
   }
 
+  setTypes(tp: any): void {
+    this.types.set((Array.isArray(tp) ? tp : []).map(String));
+  }
+
   toggleArtist(artistId: string): void {
     const id = String(artistId);
     const next = new Set(this.openArtistIds());
@@ -137,7 +164,7 @@ export class DayViewComponent {
   }
 
   createNew(): void {
-    const first = this.artists?.[0];
+    const first = this.artistsSig()?.[0];
     if (!first) return;
     this.onClickSlot(String(first.id), this.startHour * 60);
   }
@@ -147,7 +174,7 @@ export class DayViewComponent {
   // ===========================================================================
   readonly artistNameById = computed(() => {
     const m = new Map<string, string>();
-    for (const a of this.artists || []) m.set(String(a.id), a.name);
+    for (const a of this.artistsSig() || []) m.set(String(a.id), a.name);
     return m;
   });
 
@@ -158,8 +185,9 @@ export class DayViewComponent {
     const q = this.q().trim().toLowerCase();
     const artistFilter = new Set((this.artistIds() || []).map(String));
     const statusFilter = new Set((this.statuses() || []).map(String));
+    const typeFilter = new Set((this.types() || []).map(String));
 
-    return (this.events || [])
+    return (this.eventsSig() || [])
       .filter(e => {
         if (this.toDayKeyLocal(e.start) !== key) return false;
 
@@ -168,6 +196,9 @@ export class DayViewComponent {
 
         const st = String((e as any).status ?? '');
         if (statusFilter.size && !statusFilter.has(st)) return false;
+
+        const tp = String((e as any).type ?? '');
+        if (typeFilter.size && !typeFilter.has(tp)) return false;
 
         if (q) {
           const hay = [
@@ -213,7 +244,7 @@ export class DayViewComponent {
     }
 
     const blocks: AgendaBlock[] = [];
-    for (const a of this.artists || []) {
+    for (const a of this.artistsSig() || []) {
       const aid = String(a.id);
       const items = groups.get(aid) ?? [];
       blocks.push({
@@ -236,6 +267,34 @@ export class DayViewComponent {
     return blocks;
   });
 
+  readonly boardColumns = computed(() => {
+    const items = this.dayItems();
+    const cols = this.statusOptions.map(status => ({
+      status,
+      items: items.filter(it => String((it as any).status ?? '') === status),
+    }));
+    const others = items.filter(it => {
+      const st = String((it as any).status ?? '');
+      return !this.statusOptions.includes(st);
+    });
+    if (others.length) cols.push({ status: 'altro', items: others });
+    return cols;
+  });
+
+  readonly hasBoardItems = computed(() => {
+    const cols = this.boardColumns();
+    return cols.some(c => (c.items?.length ?? 0) > 0);
+  });
+
+  readonly activeFiltersCount = computed(() => {
+    let count = 0;
+    if ((this.artistIds() || []).length) count += 1;
+    if ((this.types() || []).length) count += 1;
+    if ((this.statuses() || []).length) count += 1;
+    if ((this.q() || '').trim()) count += 1;
+    return count;
+  });
+
   trackByArtist = (_: number, b: AgendaBlock) => b.artistId;
   trackById = (_: number, it: AgendaItem) => it.id;
 
@@ -243,7 +302,11 @@ export class DayViewComponent {
   // SLOT / ACTIONS
   // ===========================================================================
   onClickSlot(artistId: string, minutes: number) {
-    const d = new Date(this.date);
+    if (!this.isSlotAvailable(artistId, minutes, this.defaultDuration)) {
+      return;
+    }
+
+    const d = new Date(this.dateSig());
     d.setHours(0, 0, 0, 0);
     d.setMinutes(minutes);
 
@@ -253,8 +316,8 @@ export class DayViewComponent {
 
     this.createFromSlot.emit({
       artistId,
-      startISO: start.toISOString(),
-      endISO: end.toISOString(),
+      startISO: this.toLocalDateTime(start),
+      endISO: this.toLocalDateTime(end),
       durationMinutes: this.defaultDuration,
     });
   }
@@ -266,6 +329,10 @@ export class DayViewComponent {
   edit(ev: UiCalendarEvent) {
     this.editEvent.emit(ev);
     this.action.emit({ type: 'edit', event: ev });
+  }
+
+  createSession(ev: UiCalendarEvent) {
+    this.action.emit({ type: 'create_session', event: ev });
   }
 
   setStatus(ev: UiCalendarEvent, next: any) {
@@ -290,24 +357,24 @@ export class DayViewComponent {
     this.action.emit({ type: 'reschedule', event: ev });
   }
 
+  assignProject(ev: UiCalendarEvent) {
+    this.action.emit({ type: 'assign_project', event: ev });
+  }
+
   canConfirm(ev: UiCalendarEvent): boolean {
-    const s = String((ev as any).status ?? 'draft');
-    return ['draft', 'pending'].includes(s);
+    return true;
   }
 
   canPay(ev: UiCalendarEvent): boolean {
-    const s = String((ev as any).status ?? 'draft');
-    return ['confirmed'].includes(s);
+    return false;
   }
 
   canStart(ev: UiCalendarEvent): boolean {
-    const s = String((ev as any).status ?? 'draft');
-    return ['paid', 'confirmed'].includes(s);
+    return true;
   }
 
   canComplete(ev: UiCalendarEvent): boolean {
-    const s = String((ev as any).status ?? 'draft');
-    return ['in_progress'].includes(s);
+    return true;
   }
 
   // ===========================================================================
@@ -344,5 +411,30 @@ export class DayViewComponent {
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
+  }
+
+  private isSlotAvailable(artistId: string, minutesFromMidnight: number, durationMinutes: number): boolean {
+    const dayKey = toDateKey(this.dateSig());
+    const slotStart = new Date(this.dateSig());
+    slotStart.setHours(0, 0, 0, 0);
+    slotStart.setMinutes(minutesFromMidnight);
+
+    const slotEnd = new Date(slotStart);
+    slotEnd.setMinutes(slotEnd.getMinutes() + durationMinutes);
+
+    const events = this.eventsSig() || [];
+    return !events.some(e => {
+      if (String(e.artistId) !== String(artistId)) return false;
+      if (toDateKey(new Date(e.start)) !== dayKey) return false;
+
+      const evStart = new Date(e.start);
+      const evEnd = new Date(e.end);
+      return slotStart < evEnd && slotEnd > evStart;
+    });
+  }
+
+  private toLocalDateTime(d: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
 }

@@ -11,7 +11,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
@@ -60,7 +60,8 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
     MatSnackBarModule,
     MatProgressBarModule,
     MatAutocompleteModule,
-    MatSidenavModule
+    MatSidenavModule,
+    MatMenuTrigger
 
   ],
   exports: [
@@ -92,7 +93,8 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatAutocompleteModule,
-    MatSidenavModule
+    MatSidenavModule,
+    MatMenuTrigger
   ],
 
 })

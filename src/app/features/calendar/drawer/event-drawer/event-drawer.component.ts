@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MaterialModule } from '../../../../core/modules/material.module';
-import { Observable, combineLatest, map, of, startWith } from 'rxjs';
-import { CreateDraft, UpdatePatch } from '../../models';
+import { BehaviorSubject, Observable, combineLatest, map, startWith } from 'rxjs';
+import { CreateDraft, UpdatePatch, UiCalendarEvent } from '../../models';
 
 /**
  * Tipi evento gestiti dal drawer
@@ -32,6 +32,19 @@ export interface ProjectLite {
 }
 
 /**
+ * Booking “lite” usato per autocomplete sessione.
+ */
+export interface BookingLite {
+  id: string;
+  title?: string;
+  start?: string;
+  end?: string;
+  artistId?: string;
+  clientId?: string;
+  projectId?: string;
+}
+
+/**
  * Draft “unificato” usato SOLO per:
  * - initialValue (seed/patch)
  * - eventuale compat legacy
@@ -56,6 +69,7 @@ export interface DrawerDraft {
   // link
   clientId?: string;
   projectId?: string;
+  bookingId?: string;
 
   // extra
   zone?: string;
@@ -74,6 +88,12 @@ export interface EventDrawerResult {
   update?: UpdatePatch;
 }
 
+export interface CreateProjectTriggerPayload {
+  clientId?: string;
+  artistId?: string;
+  titleHint?: string;
+}
+
 @Component({
   selector: 'app-event-drawer',
   standalone: true,
@@ -81,13 +101,14 @@ export interface EventDrawerResult {
   templateUrl: './event-drawer.component.html',
   styleUrls: ['./event-drawer.component.scss'],
 })
-export class EventDrawerComponent implements OnInit {
+export class EventDrawerComponent implements OnInit, OnChanges {
   private readonly fb = inject(FormBuilder);
 
   // ---------------------------------------------
   // INPUTS
   // ---------------------------------------------
   @Output() submit = new EventEmitter<EventDrawerResult>();
+  @Output() createProjectRequested = new EventEmitter<CreateProjectTriggerPayload>();
 
   /** create/edit */
   @Input() mode: 'create' | 'edit' = 'create';
@@ -100,6 +121,15 @@ export class EventDrawerComponent implements OnInit {
 
   /** ✅ PRELOAD: progetti */
   @Input() projects: ProjectLite[] = [];
+
+  /** ✅ PRELOAD: bookings */
+  @Input() bookings: BookingLite[] = [];
+
+  /** ✅ eventi esistenti (per bloccare orari non disponibili) */
+  @Input() events: UiCalendarEvent[] = [];
+
+  /** ✅ progetto appena creato (da shell) */
+  @Input() createdProject: ProjectLite | null = null;
 
   /** consenti session senza project? default NO */
   @Input() allowStandaloneSession = false;
@@ -118,13 +148,13 @@ export class EventDrawerComponent implements OnInit {
   // UI options
   // ---------------------------------------------
   readonly timeOptions = this.buildTimes('08:00', '19:00', 30);
+  availableTimeOptions: string[] = this.buildTimes('08:00', '19:00', 30);
   readonly durationOptions = [30, 45, 60, 90, 120, 150, 180];
 
   readonly bookingStatusOptions = [
     { value: 'draft', label: 'Bozza' },
     { value: 'pending', label: 'In attesa' },
     { value: 'confirmed', label: 'Confermata' },
-    { value: 'paid', label: 'Pagata' },
     { value: 'in_progress', label: 'In corso' },
     { value: 'completed', label: 'Completata' },
     { value: 'cancelled', label: 'Annullata' },
@@ -160,6 +190,10 @@ export class EventDrawerComponent implements OnInit {
     projectId: this.fb.nonNullable.control(''),
     projectQuery: this.fb.control<ProjectLite | string>(''),
 
+    // session: booking
+    bookingId: this.fb.nonNullable.control(''),
+    bookingQuery: this.fb.control<BookingLite | string>(''),
+
     // opzionali comuni
     zone: this.fb.nonNullable.control(''),
     notes: this.fb.nonNullable.control(''),
@@ -169,7 +203,12 @@ export class EventDrawerComponent implements OnInit {
     painLevel: this.fb.control<number | null>(null),
     notesByAdmin: this.fb.nonNullable.control(''),
     healingNotes: this.fb.nonNullable.control(''),
+    paidAmount: this.fb.control<number | null>(null),
   });
+
+  private readonly clients$ = new BehaviorSubject<ClientLite[]>([]);
+  private readonly projects$ = new BehaviorSubject<ProjectLite[]>([]);
+  private readonly bookings$ = new BehaviorSubject<BookingLite[]>([]);
 
   // ---------------------------------------------
   // AUTOCOMPLETE: filtro locale
@@ -182,11 +221,11 @@ export class EventDrawerComponent implements OnInit {
     );
 
   readonly filteredClients$: Observable<ClientLite[]> =
-    combineLatest([this.clientQueryText$, of(this.clients)]).pipe(
-      map(([q]) => {
+    combineLatest([this.clientQueryText$, this.clients$]).pipe(
+      map(([q, list]) => {
         const query = q.trim();
-        if (!query) return this.clients.slice(0, 30);
-        return this.clients
+        if (!query) return list.slice(0, 30);
+        return list
           .filter(c => this.matchClient(c, query))
           .slice(0, 30);
       })
@@ -200,12 +239,48 @@ export class EventDrawerComponent implements OnInit {
     );
 
   readonly filteredProjects$: Observable<ProjectLite[]> =
-    combineLatest([this.projectQueryText$, of(this.projects)]).pipe(
-      map(([q]) => {
-        const query = q.trim();
-        if (!query) return this.projects.slice(0, 30);
-        return this.projects
+    combineLatest([
+      this.projectQueryText$,
+      this.form.controls.clientId.valueChanges.pipe(startWith(this.form.controls.clientId.value)),
+      this.form.controls.artistId.valueChanges.pipe(startWith(this.form.controls.artistId.value)),
+      this.projects$
+    ]).pipe(
+      map(([q, clientId, artistId, list]) => {
+        const query = (q ?? '').trim();
+        const base = (list ?? [])
+          .filter(p => !clientId || p.clientId === clientId)
+          .filter(p => !artistId || !p.artistId || p.artistId === artistId);
+
+        if (!query) return base.slice(0, 30);
+        return base
           .filter(p => this.matchProject(p, query))
+          .slice(0, 30);
+      })
+    );
+
+  private readonly bookingQueryText$: Observable<string> =
+    this.form.controls.bookingQuery.valueChanges.pipe(
+      startWith(this.form.controls.bookingQuery.value),
+      map(v => (typeof v === 'string' ? v : (this.displayBooking(v) ?? ''))),
+      map(s => (s ?? '').trim().toLowerCase())
+    );
+
+  readonly filteredBookings$: Observable<BookingLite[]> =
+    combineLatest([
+      this.bookingQueryText$,
+      this.form.controls.clientId.valueChanges.pipe(startWith(this.form.controls.clientId.value)),
+      this.form.controls.artistId.valueChanges.pipe(startWith(this.form.controls.artistId.value)),
+      this.bookings$
+    ]).pipe(
+      map(([q, clientId, artistId, list]) => {
+        const query = (q ?? '').trim();
+        const base = (list ?? [])
+          .filter(b => !clientId || b.clientId === clientId)
+          .filter(b => !artistId || b.artistId === artistId);
+
+        if (!query) return base.slice(0, 30);
+        return base
+          .filter(b => this.matchBooking(b, query))
           .slice(0, 30);
       })
     );
@@ -226,11 +301,41 @@ export class EventDrawerComponent implements OnInit {
     return value.title;
   };
 
+  displayBooking = (value: BookingLite | string | null): string => {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    const time = value.start ? this.formatTime(value.start) : '';
+    const clientName =
+      this.clients.find(c => c.id === value.clientId)?.fullName ||
+      value.clientId ||
+      'Cliente';
+    return time ? `${clientName} · ${time}` : clientName;
+  };
+
   // ---------------------------------------------
   // Helpers per template
   // ---------------------------------------------
   isBooking() { return this.form.controls.type.value === 'booking'; }
   isSession() { return this.form.controls.type.value === 'session'; }
+  private isSessionEdit(): boolean {
+    return this.isSession() && this.mode === 'edit';
+  }
+
+  isScheduleLocked(): boolean {
+    return this.isSessionEdit() && this.form.controls.status.value === 'completed';
+  }
+
+  isBookingScheduleLocked(): boolean {
+    return this.mode === 'edit' && this.isBooking();
+  }
+
+  isAssignmentLocked(): boolean {
+    return this.isSessionEdit();
+  }
+
+  isBookingAssignmentLocked(): boolean {
+    return this.mode === 'edit' && this.isBooking();
+  }
 
   ngOnInit(): void {
     // Regola: cambio type -> status default + pulizia campi non pertinenti
@@ -238,6 +343,7 @@ export class EventDrawerComponent implements OnInit {
       if (t === 'booking') {
         this.form.controls.status.setValue('draft', { emitEvent: false });
         this.clearProject(false);
+        this.clearBooking(false);
         this.form.controls.sessionNumber.setValue(null, { emitEvent: false });
       } else {
         this.form.controls.status.setValue('planned', { emitEvent: false });
@@ -253,10 +359,21 @@ export class EventDrawerComponent implements OnInit {
       this.form.controls.clientId.setErrors(null);
     });
 
+    // seed liste iniziali
+    this.clients$.next(this.clients ?? []);
+    this.projects$.next(this.projects ?? []);
+    this.bookings$.next(this.bookings ?? []);
+
     // Patch initial value
     if (this.initialValue) {
       this.patchFromInitial(this.initialValue);
     }
+
+    this.recomputeAvailableTimes();
+
+    this.form.controls.artistId.valueChanges.subscribe(() => this.recomputeAvailableTimes());
+    this.form.controls.day.valueChanges.subscribe(() => this.recomputeAvailableTimes());
+    this.form.controls.durationMinutes.valueChanges.subscribe(() => this.recomputeAvailableTimes());
 
     // progetto -> sessionNumber auto + client auto (opzionale)
     this.form.controls.projectId.valueChanges.subscribe(pid => {
@@ -266,10 +383,7 @@ export class EventDrawerComponent implements OnInit {
       }
 
       const p = this.projects.find(x => x.id === pid);
-      const count = p?.sessionIds?.length ?? 0;
-      const next = count + 1;
-
-      this.form.controls.sessionNumber.setValue(next, { emitEvent: false });
+      this.syncSessionNumberFromProject(pid);
 
       if (p?.clientId) {
         const c = this.clients.find(x => x.id === p.clientId);
@@ -279,6 +393,44 @@ export class EventDrawerComponent implements OnInit {
         }
       }
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['clients']) {
+      this.clients$.next(this.clients ?? []);
+      this.hydrateClientQueryFromId();
+    }
+
+    if (changes['projects']) {
+      this.projects$.next(this.projects ?? []);
+      this.hydrateProjectQueryFromId();
+      this.syncSessionNumberFromProject(this.form.controls.projectId.value);
+    }
+
+    if (changes['bookings']) {
+      this.bookings$.next(this.bookings ?? []);
+      this.hydrateBookingQueryFromId();
+    }
+
+    if (changes['initialValue'] && changes['initialValue'].currentValue) {
+      this.patchFromInitial(changes['initialValue'].currentValue);
+    }
+
+    if (changes['createdProject'] && changes['createdProject'].currentValue) {
+      const created = changes['createdProject'].currentValue as ProjectLite;
+      if (created?.id) {
+        const exists = (this.projects ?? []).some(p => p.id === created.id);
+        if (!exists) {
+          this.projects = [created, ...(this.projects ?? [])];
+        }
+        this.projects$.next(this.projects ?? []);
+        this.onProjectSelected(created);
+      }
+    }
+
+    if (changes['events'] || changes['editingEventId']) {
+      this.recomputeAvailableTimes();
+    }
   }
 
   // ---------------------------------------------
@@ -301,9 +453,90 @@ export class EventDrawerComponent implements OnInit {
     this.form.controls.projectQuery.setErrors(null);
   }
 
+  onBookingSelected(b: BookingLite) {
+    if (this.form.controls.type.value !== 'session') {
+      this.form.controls.type.setValue('session', { emitEvent: false });
+      this.form.controls.status.setValue('planned', { emitEvent: false });
+    }
+    this.form.controls.bookingId.setValue(b.id);
+    this.form.controls.bookingQuery.setValue(b, { emitEvent: false });
+    this.form.controls.bookingQuery.setErrors(null);
+
+    if (b.artistId) this.form.controls.artistId.setValue(b.artistId);
+    if (b.clientId) {
+      this.form.controls.clientId.setValue(b.clientId, { emitEvent: false });
+      const c = this.clients.find(x => x.id === b.clientId);
+      if (c) this.form.controls.clientQuery.setValue(c, { emitEvent: false });
+    }
+    if (b.projectId) {
+      this.form.controls.projectId.setValue(b.projectId);
+      const p = this.projects.find(x => x.id === b.projectId);
+      if (p) this.form.controls.projectQuery.setValue(p, { emitEvent: false });
+    }
+  }
+
   clearProject(emit = true) {
     this.form.controls.projectId.setValue('', { emitEvent: emit });
     this.form.controls.projectQuery.setValue('', { emitEvent: false });
+  }
+
+  clearBooking(emit = true) {
+    this.form.controls.bookingId.setValue('', { emitEvent: emit });
+    this.form.controls.bookingQuery.setValue('', { emitEvent: false });
+  }
+
+  createProjectFromDrawer(): void {
+    if (!this.form.controls.artistId.value) {
+      this.form.controls.artistId.setErrors({ required: true });
+      this.form.controls.artistId.markAsTouched();
+    }
+
+    if (!this.form.controls.clientId.value) {
+      this.form.controls.clientQuery.setErrors({ required: true });
+      this.form.controls.clientQuery.markAsTouched();
+    }
+
+    if (!this.form.controls.artistId.value || !this.form.controls.clientId.value) {
+      return;
+    }
+
+    const titleHint =
+      typeof this.form.controls.projectQuery.value === 'string'
+        ? String(this.form.controls.projectQuery.value).trim()
+        : '';
+
+    this.createProjectRequested.emit({
+      clientId: this.form.controls.clientId.value || undefined,
+      artistId: this.form.controls.artistId.value || undefined,
+      titleHint: titleHint || undefined
+    });
+  }
+
+  onProjectBlur(): void {
+    const value = this.form.controls.projectQuery.value;
+    if (typeof value !== 'string') return;
+    const q = value.trim().toLowerCase();
+    if (!q) return;
+    const match = (this.projects ?? []).find(p => (p.title ?? '').toLowerCase() === q);
+    if (match) this.onProjectSelected(match);
+  }
+
+  onBookingBlur(): void {
+    const value = this.form.controls.bookingQuery.value;
+    if (typeof value !== 'string') return;
+    const q = value.trim().toLowerCase();
+    if (!q) return;
+    const match = (this.bookings ?? []).find(b => this.matchBooking(b, q));
+    if (match) this.onBookingSelected(match);
+  }
+
+  onClientBlur(): void {
+    const value = this.form.controls.clientQuery.value;
+    if (typeof value !== 'string') return;
+    const q = value.trim().toLowerCase();
+    if (!q) return;
+    const match = (this.clients ?? []).find(c => (c.fullName ?? '').toLowerCase() === q);
+    if (match) this.onClientSelected(match);
   }
 
   // ---------------------------------------------
@@ -356,6 +589,7 @@ export class EventDrawerComponent implements OnInit {
 
       clientId: raw.clientId.trim() || undefined,
       projectId: raw.projectId.trim() || undefined,
+      bookingId: raw.bookingId.trim() || undefined,
 
       zone: raw.zone.trim() || undefined,
       notes: raw.notes.trim() || undefined,
@@ -365,6 +599,7 @@ export class EventDrawerComponent implements OnInit {
       painLevel: raw.type === 'session' ? (raw.painLevel ?? undefined) : undefined,
       notesByAdmin: raw.type === 'session' ? (raw.notesByAdmin.trim() || undefined) : undefined,
       healingNotes: raw.type === 'session' ? (raw.healingNotes.trim() || undefined) : undefined,
+      paidAmount: raw.type === 'session' ? (raw.paidAmount ?? undefined) : undefined,
     } as any;
 
     // CREATE
@@ -383,6 +618,7 @@ export class EventDrawerComponent implements OnInit {
       id: this.editingEventId,
       type: raw.type,
       patch: {
+        artistId: raw.artistId,
         start,
         end,
         durationMinutes: raw.durationMinutes,
@@ -390,6 +626,7 @@ export class EventDrawerComponent implements OnInit {
 
         clientId: raw.clientId.trim() || undefined,
         projectId: raw.projectId.trim() || undefined,
+        bookingId: raw.bookingId.trim() || undefined,
         zone: raw.zone.trim() || undefined,
         notes: raw.notes.trim() || undefined,
 
@@ -398,6 +635,7 @@ export class EventDrawerComponent implements OnInit {
         painLevel: raw.type === 'session' ? (raw.painLevel ?? undefined) : undefined,
         notesByAdmin: raw.type === 'session' ? (raw.notesByAdmin.trim() || undefined) : undefined,
         healingNotes: raw.type === 'session' ? (raw.healingNotes.trim() || undefined) : undefined,
+        paidAmount: raw.type === 'session' ? (raw.paidAmount ?? undefined) : undefined,
       } as any,
     };
 
@@ -419,6 +657,54 @@ export class EventDrawerComponent implements OnInit {
       start: this.toLocalDateTime(startDate),
       end: this.toLocalDateTime(endDate),
     };
+  }
+
+  private recomputeAvailableTimes(): void {
+    const artistId = this.form.controls.artistId.value;
+    const day = this.form.controls.day.value;
+    const durationMinutes = Number(this.form.controls.durationMinutes.value ?? 0);
+
+    if (!artistId || !day || !durationMinutes) {
+      this.availableTimeOptions = [...this.timeOptions];
+      return;
+    }
+
+    const dayKey = this.toLocalDateKey(day);
+    const busy = (this.events ?? [])
+      .filter(e => e?.artistId === artistId)
+      .filter(e => this.toLocalDateKey(new Date(e.start)) === dayKey)
+      .filter(e => !this.editingEventId || e.id !== this.editingEventId);
+
+    const nonBlocking = new Set(['cancelled', 'no_show']);
+    const busyFiltered = busy.filter(e => !nonBlocking.has(String((e as any).status ?? '').toLowerCase()));
+
+    const free: string[] = [];
+    for (const t of this.timeOptions) {
+      const slotStart = new Date(`${dayKey}T${t}:00`);
+      const slotEnd = new Date(slotStart.getTime() + durationMinutes * 60000);
+
+      const overlaps = busyFiltered.some(ev => {
+        const evStart = new Date(ev.start);
+        const evEnd = new Date(ev.end);
+        return slotStart < evEnd && slotEnd > evStart;
+      });
+
+      if (!overlaps) free.push(t);
+    }
+
+    this.availableTimeOptions = free;
+
+    const currentTime = this.form.controls.time.value;
+    if (currentTime && !free.includes(currentTime) && free.length > 0) {
+      this.form.controls.time.setValue(free[0], { emitEvent: false });
+    }
+  }
+
+  private toLocalDateKey(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   private toLocalDateTime(d: Date) {
@@ -453,6 +739,13 @@ export class EventDrawerComponent implements OnInit {
     return (p.title ?? '').toLowerCase().includes(q);
   }
 
+  private matchBooking(b: BookingLite, q: string): boolean {
+    const clientName = (this.clients.find(c => c.id === b.clientId)?.fullName ?? '').toLowerCase();
+    const time = b.start ? this.formatTime(b.start).toLowerCase() : '';
+    const id = String(b.id ?? '').toLowerCase();
+    return clientName.includes(q) || time.includes(q) || id.includes(q);
+  }
+
   // ---------------------------------------------
   // Patch initial (seed/edit)
   // ---------------------------------------------
@@ -478,6 +771,7 @@ export class EventDrawerComponent implements OnInit {
 
       clientId: v.clientId ?? '',
       projectId: v.projectId ?? '',
+      bookingId: v.bookingId ?? '',
 
       zone: v.zone ?? '',
       notes: v.notes ?? '',
@@ -486,7 +780,12 @@ export class EventDrawerComponent implements OnInit {
       painLevel: v.painLevel ?? null,
       notesByAdmin: v.notesByAdmin ?? '',
       healingNotes: v.healingNotes ?? '',
+      paidAmount: (v as any).paidAmount ?? null,
     });
+
+    if (v.type === 'session' && (v.sessionNumber == null || Number.isNaN(Number(v.sessionNumber)))) {
+      this.form.controls.sessionNumber.setValue(1, { emitEvent: false });
+    }
 
     // popola la UI con oggetti (nome/titolo)
     if (v.clientId) {
@@ -497,5 +796,54 @@ export class EventDrawerComponent implements OnInit {
       const p = this.projects.find(x => x.id === v.projectId);
       if (p) this.form.controls.projectQuery.setValue(p, { emitEvent: false });
     }
+    if (v.bookingId) {
+      const b = this.bookings.find(x => x.id === v.bookingId);
+      if (b) this.form.controls.bookingQuery.setValue(b, { emitEvent: false });
+    }
+  }
+
+  private hydrateClientQueryFromId(): void {
+    const clientId = this.form.controls.clientId.value;
+    if (!clientId) return;
+    const current = this.form.controls.clientQuery.value;
+    if (current && typeof current !== 'string') return;
+    const c = (this.clients ?? []).find(x => x.id === clientId);
+    if (c) this.form.controls.clientQuery.setValue(c, { emitEvent: false });
+  }
+
+  private hydrateProjectQueryFromId(): void {
+    const projectId = this.form.controls.projectId.value;
+    if (!projectId) return;
+    const current = this.form.controls.projectQuery.value;
+    if (current && typeof current !== 'string') return;
+    const p = (this.projects ?? []).find(x => x.id === projectId);
+    if (p) this.form.controls.projectQuery.setValue(p, { emitEvent: false });
+    this.syncSessionNumberFromProject(projectId);
+  }
+
+  private hydrateBookingQueryFromId(): void {
+    const bookingId = this.form.controls.bookingId.value;
+    if (!bookingId) return;
+    const current = this.form.controls.bookingQuery.value;
+    if (current && typeof current !== 'string') return;
+    const b = (this.bookings ?? []).find(x => x.id === bookingId);
+    if (b) this.form.controls.bookingQuery.setValue(b, { emitEvent: false });
+  }
+
+  private syncSessionNumberFromProject(projectId?: string): void {
+    if (!projectId) return;
+    const p = (this.projects ?? []).find(x => x.id === projectId);
+    const countFromProject = p?.sessionIds?.length ?? 0;
+    const countFromEvents = (this.events ?? [])
+      .filter(e => e.type === 'session' && e.projectId === projectId)
+      .length;
+    const count = Math.max(countFromProject, countFromEvents);
+    const next = count + 1;
+    this.form.controls.sessionNumber.setValue(next, { emitEvent: false });
+  }
+
+  private formatTime(iso: string): string {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
   }
 }

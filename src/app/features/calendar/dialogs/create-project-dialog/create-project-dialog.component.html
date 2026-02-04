@@ -1,0 +1,28 @@
+<h2 mat-dialog-title>Crea progetto</h2>
+
+<form class="project-form" [formGroup]="form" (ngSubmit)="save()">
+  <mat-dialog-content>
+    <mat-form-field appearance="outline">
+      <mat-label>Titolo progetto</mat-label>
+      <input matInput formControlName="title" />
+      <mat-error *ngIf="form.controls.title.touched && form.controls.title.hasError('required')">
+        Titolo obbligatorio
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Zona (opzionale)</mat-label>
+      <input matInput formControlName="zone" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Note (opzionali)</mat-label>
+      <textarea matInput rows="3" formControlName="notes"></textarea>
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Annulla</button>
+    <button mat-flat-button color="primary" type="submit">Crea</button>
+  </mat-dialog-actions>
+</form>

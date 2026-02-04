@@ -1,21 +1,29 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { combineLatest, from, map, of, startWith, switchMap } from 'rxjs';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
-import { ProjectsService, TattooProject } from '../../../../core/services/projects/projects.service';
+import { ProjectsService, TattooProject, ProjectStatus } from '../../../../core/services/projects/projects.service';
 import { BookingService } from '../../../../core/services/bookings/booking.service';
 import { SessionService, Session } from '../../../../core/services/session/session.service';
 import { StaffService, StaffMember } from '../../../../core/services/staff/staff.service';
 import { ClientService, Client } from '../../../../core/services/clients/client.service';
+
+import { ProjectTrackerSessionDialogComponent } from './project-tracker-session-dialog/project-tracker-session-dialog.component';
+import { ProjectTrackerBookingDialogComponent } from './project-tracker-booking-dialog/project-tracker-booking-dialog.component';
+import { ProjectTrackerProjectDialogComponent } from './project-tracker-project-dialog/project-tracker-project-dialog.component';
 
 type BookingRow = any;
 
 type UiSession = Session & {
   _startLabel?: string;
   _endLabel?: string;
+  _startIso?: string;
+  _endIso?: string;
   _durationMin?: number;
   _zoneLabel?: string;
 };
@@ -39,10 +47,12 @@ type Vm = {
   standalone: true,
   imports: [CommonModule, RouterModule, MaterialModule],
   templateUrl: './project-tracker.component.html',
-  styleUrl: './project-tracker.component.scss'
+  styleUrls: ['./project-tracker.component.scss']
 })
 export class ProjectTrackerComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
 
   private readonly projectsService = inject(ProjectsService);
   private readonly bookingService = inject(BookingService);
@@ -50,7 +60,7 @@ export class ProjectTrackerComponent {
   private readonly staffService = inject(StaffService);
   private readonly clientService = inject(ClientService);
 
-  // ---------- lookups "parlanti" ----------
+  // ---------- lookups ----------
   readonly staffMap$ = this.staffService.getAllStaff().pipe(
     map(list => {
       const m = new Map<string, StaffMember>();
@@ -59,8 +69,7 @@ export class ProjectTrackerComponent {
     })
   );
 
-  // ⚠️ Qui assumo che clientService.getClients() ritorni Observable<Client[]>
-  // (come nel tuo esempio Firestore: collectionData('users'))
+  // NOTE: qui assumo che clientService.getClients() ritorni Observable<Client[]>
   readonly clientMap$ = this.clientService.getClients().pipe(
     map(list => {
       const m = new Map<string, Client>();
@@ -80,8 +89,8 @@ export class ProjectTrackerComponent {
     this.projectId$,
     this.staffMap$,
     this.clientMap$,
-    this.bookingService.getAllBookings(),          // deve esistere già nel tuo progetto
-    this.sessionService.getAll({ onlyOnce: false }) // dal tuo SessionService
+    this.bookingService.getAllBookings(),
+    this.sessionService.getAll({ onlyOnce: false })
   ]).pipe(
     switchMap(([projectId, staffMap, clientMap, bookings, sessions]) => {
       if (!projectId) {
@@ -92,12 +101,11 @@ export class ProjectTrackerComponent {
           paidTotal: 0,
           loading: false,
           notFound: true,
-          artistName: '—',
-          clientName: '—'
+          artistName: '-',
+          clientName: '-'
         });
       }
 
-      // ProjectsService.getProjectById è Promise nel tuo service
       return from(this.projectsService.getProjectById(projectId)).pipe(
         map(project => {
           if (!project) {
@@ -108,12 +116,11 @@ export class ProjectTrackerComponent {
               paidTotal: 0,
               loading: false,
               notFound: true,
-              artistName: '—',
-              clientName: '—'
+              artistName: '-',
+              clientName: '-'
             } as Vm;
           }
 
-          // booking: preferisco bookingId dal project, altrimenti cerco per projectId sul booking
           const bookingId = String((project as any).bookingId ?? '').trim();
           const bookingById = new Map<string, any>();
           (bookings ?? []).forEach((b: any) => {
@@ -127,24 +134,28 @@ export class ProjectTrackerComponent {
 
           const booking = (bookingId && bookingById.get(bookingId)) || bookingByProject || undefined;
 
-          // sessions per projectId
           const pid = String(project.id ?? '').trim();
           const projectSessions = (sessions ?? [])
-            .filter((s: any) => String(s?.projectId ?? '').trim() === pid)
+            .filter((s: any) => {
+              const sid = String(s?.projectId ?? '').trim();
+              if (sid) return sid === pid;
+              const bid = String(s?.bookingId ?? '').trim();
+              if (!bid) return false;
+              const b = bookingById.get(bid);
+              return String((b as any)?.projectId ?? '').trim() === pid;
+            })
             .map(s => this.normalizeSessionForUi(s as any))
-            .sort((a, b) => String(a._startLabel ?? '').localeCompare(String(b._startLabel ?? '')));
+            .sort((a, b) => this.toTimestamp(a._startIso) - this.toTimestamp(b._startIso));
 
-          // nomi parlanti
           const artistName = this.artistLabel(String((project as any).artistId ?? ''), staffMap);
           const clientName = this.clientLabel(String((project as any).clientId ?? ''), clientMap);
 
-          // soldi: per ora metto placeholder (pagamenti li agganci dopo)
           const expectedTotal =
             this.num((project as any).estimatedPrice) ??
             this.num((project as any).price) ??
             (booking ? this.num((booking as any).price) : undefined);
 
-          const paidTotal = 0; // ← se poi agganci payments node, qui lo sommi
+          const paidTotal = 0; // se poi agganci payments node, qui lo sommi
           const remaining = expectedTotal != null ? Math.max(0, expectedTotal - paidTotal) : undefined;
 
           return {
@@ -167,14 +178,14 @@ export class ProjectTrackerComponent {
           paidTotal: 0,
           loading: true,
           notFound: false,
-          artistName: '—',
-          clientName: '—'
+          artistName: '-',
+          clientName: '-'
         } as Vm)
       );
     })
   );
 
-  // ---------- TEMPLATE SAFE HELPERS (niente cast in HTML) ----------
+  // ---------- TEMPLATE HELPERS ----------
   sessionPrice(s: UiSession): number | null {
     const x = this.num((s as any)?.price);
     return x ?? null;
@@ -194,56 +205,73 @@ export class ProjectTrackerComponent {
   }
 
   bookingWhenLabel(b: any): string {
-    if (!b) return '—';
-    const start = String(b.start ?? b.date ?? '').trim();
-    const end = String(b.end ?? '').trim();
-    if (!start) return '—';
-    return end ? `${start} → ${end}` : start;
+    if (!b) return '-';
+    const start = this.normalizeLocalDateTime(String(b.start ?? b.date ?? '').trim());
+    const end = this.normalizeLocalDateTime(String(b.end ?? '').trim());
+    if (!start) return '-';
+    return end ? `${this.formatLocal(start)} -> ${this.formatLocal(end)}` : this.formatLocal(start);
   }
 
   money(n: any): string {
     const x = Number(n);
-    if (!isFinite(x)) return '—';
+    if (!isFinite(x)) return '-';
     return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(x);
   }
 
-  // ✅ trackBy corretto
   trackBySession = (index: number, s: UiSession) => String((s as any)?.id ?? index);
 
-  // ---------- NAV ACTIONS (placeholder) ----------
-  goBackToManager() {
-    // metti qui la tua rotta reale
-    // es: this.router.navigate(['/admin/project-manager']);
-  }
-
   openProjectManagerLink(): any[] {
-    // usato in template per routerLink
     return ['/admin', 'project-manager'];
   }
 
   editBooking(b: any) {
-    console.log('[TRACKER] edit booking', b?.id);
+    this.openBookingDialog(b);
   }
 
   addSession() {
-    console.log('[TRACKER] add session');
+    this.openSessionDialog();
   }
 
   editSession(s: UiSession) {
-    console.log('[TRACKER] edit session', (s as any)?.id);
+    this.openSessionDialog(s);
   }
 
-  // ---------- internal ----------
+  async editProject(project: TattooProject) {
+    const ref = this.dialog.open(ProjectTrackerProjectDialogComponent, {
+      width: '520px',
+      maxWidth: '92vw',
+      data: { project }
+    });
+    const res = await ref.afterClosed().toPromise();
+    if (!res) return;
+    try {
+      await this.projectsService.updateProject(String((project as any).id), res);
+      this.snackBar.open('Progetto aggiornato', 'OK', { duration: 2200 });
+    } catch {
+      this.snackBar.open('Errore aggiornamento progetto', 'OK', { duration: 2500 });
+    }
+  }
+
+  async setProjectStatus(project: TattooProject, status: ProjectStatus) {
+    if (!project) return;
+    try {
+      await this.projectsService.updateProject(String((project as any).id), { status });
+      this.snackBar.open('Stato progetto aggiornato', 'OK', { duration: 2200 });
+    } catch {
+      this.snackBar.open('Errore aggiornamento stato progetto', 'OK', { duration: 2500 });
+    }
+  }
+
   private artistLabel(artistId: string, staffMap: Map<string, StaffMember>): string {
     const id = String(artistId ?? '').trim();
-    if (!id) return '—';
+    if (!id) return '-';
     const a = staffMap.get(id);
     return (a?.name ?? '').trim() || id;
   }
 
   private clientLabel(clientId: string, clientMap: Map<string, Client>): string {
     const id = String(clientId ?? '').trim();
-    if (!id) return '—';
+    if (!id) return '-';
     const c = clientMap.get(id);
     const full = `${(c as any)?.name ?? ''} ${(c as any)?.surname ?? ''}`.trim();
     return full || (c as any)?.email || (c as any)?.phone || id;
@@ -255,26 +283,121 @@ export class ProjectTrackerComponent {
   }
 
   private normalizeSessionForUi(s: Session & any): UiSession {
-    const start = String(s.start ?? '').trim();
-    let end = String(s.end ?? '').trim();
+    const startIso = this.normalizeLocalDateTime(String(s.start ?? s.date ?? '').trim());
+    let endIso = this.normalizeLocalDateTime(String(s.end ?? '').trim());
 
     const duration = this.num(s.durationMinutes);
-    if (!end && start && duration != null) {
-      const d = new Date(start);
+    if (!endIso && startIso && duration != null) {
+      const d = new Date(startIso);
       if (!isNaN(d.getTime())) {
         const e = new Date(d);
         e.setMinutes(e.getMinutes() + duration);
-        end = this.toLocalDateTime(e);
+        endIso = this.toLocalDateTime(e);
       }
     }
 
     return {
       ...(s as any),
-      _startLabel: start || '—',
-      _endLabel: end || undefined,
+      status: this.normalizeSessionStatus((s as any).status),
+      _startIso: startIso || undefined,
+      _endIso: endIso || undefined,
+      _startLabel: startIso ? this.formatLocal(startIso) : '-',
+      _endLabel: endIso ? this.formatLocal(endIso) : undefined,
       _durationMin: duration ?? undefined,
       _zoneLabel: String(s.zone ?? '').trim() || undefined
     };
+  }
+
+  private normalizeSessionStatus(status: any): string {
+    const s = String(status ?? '').trim().toLowerCase();
+    if (s === 'done') return 'completed';
+    return s || 'planned';
+  }
+
+  private normalizeLocalDateTime(input: string): string {
+    if (!input) return '';
+    let s = String(input).replace('Z', '');
+    s = s.split('.')[0];
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) return `${s}:00`;
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) return s;
+    const d = new Date(input);
+    if (!isNaN(d.getTime())) return this.toLocalDateTime(d);
+    return s;
+  }
+
+  private formatLocal(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  private toTimestamp(iso?: string): number {
+    if (!iso) return 0;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+  }
+
+  private async openSessionDialog(session?: UiSession) {
+    const projectId = String((this.route.snapshot.paramMap.get('projectId') ?? this.route.snapshot.paramMap.get('id') ?? '')).trim();
+    if (!projectId) return;
+
+    const project = await this.projectsService.getProjectById(projectId);
+    if (!project) return;
+
+    const ref = this.dialog.open(ProjectTrackerSessionDialogComponent, {
+      width: '520px',
+      maxWidth: '92vw',
+      data: { project, session }
+    });
+
+    const res = await ref.afterClosed().toPromise();
+    if (!res) return;
+
+    try {
+      if (session?.id) {
+        const patch = { ...res };
+        delete (patch as any).createdAt;
+        await this.sessionService.update(session.id, patch);
+        this.snackBar.open('Sessione aggiornata', 'OK', { duration: 2200 });
+      } else {
+        await this.sessionService.create(res);
+        this.snackBar.open('Sessione creata', 'OK', { duration: 2200 });
+      }
+    } catch {
+      this.snackBar.open('Errore salvataggio sessione', 'OK', { duration: 2500 });
+    }
+  }
+
+  private async openBookingDialog(booking?: any) {
+    const projectId = String((this.route.snapshot.paramMap.get('projectId') ?? this.route.snapshot.paramMap.get('id') ?? '')).trim();
+    if (!projectId) return;
+    const project = await this.projectsService.getProjectById(projectId);
+    if (!project) return;
+
+    const ref = this.dialog.open(ProjectTrackerBookingDialogComponent, {
+      width: '520px',
+      maxWidth: '92vw',
+      data: { project, booking }
+    });
+    const res = await ref.afterClosed().toPromise();
+    if (!res) return;
+
+    try {
+      if (booking?.id) {
+        const patch = { ...res };
+        delete (patch as any).createdAt;
+        await this.bookingService.updateBooking(booking.id, patch);
+      } else {
+        const created = await this.bookingService.createBooking(res);
+        if (created?.id) {
+          await this.projectsService.updateProject(projectId, { bookingId: created.id });
+        }
+      }
+      this.snackBar.open('Booking salvata', 'OK', { duration: 2200 });
+    } catch {
+      this.snackBar.open('Errore salvataggio booking', 'OK', { duration: 2500 });
+    }
   }
 
   private toLocalDateTime(d: Date) {

@@ -10,6 +10,7 @@
 .opt{display:flex;flex-direction:column;gap:2px}
 .opt strong{color:#fff}
 .opt small{opacity:.75}
+.session-lock-hint{display:block;margin:-8px 0 8px;color:rgba(255,255,255,.7)}
 @media (max-width:768px){.row2{grid-template-columns:1fr}}
 
 

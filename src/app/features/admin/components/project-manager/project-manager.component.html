@@ -62,8 +62,8 @@
           </div>
 
           <div class="meta">
-            <span><mat-icon>fingerprint</mat-icon> {{ row.project.id || '—' }}</span>
-            <span><mat-icon>brush</mat-icon> {{ row.project.artistId || '—' }}</span>
+            <span><mat-icon>fingerprint</mat-icon> <span class="mono" [title]="row.project.id || ''">{{ row.project.id || '—' }}</span></span>
+            <span><mat-icon>brush</mat-icon> <span class="mono">{{ row.project.artistId || '—' }}</span></span>
           </div>
 
           <div class="meta">
@@ -74,7 +74,7 @@
 
           <div class="meta">
             <span><mat-icon>place</mat-icon> {{ zoneLabel(row.project) }}</span>
-            <span><mat-icon>update</mat-icon> {{ row.project.updatedAt || '—' }}</span>
+            <span><mat-icon>update</mat-icon> {{ row.project.updatedAt ? (row.project.updatedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</span>
           </div>
         </div>
 
@@ -327,11 +327,11 @@
               <div class="prow inv" *ngFor="let inv of row.invoices">
                 <div class="p-left">
                   <div class="p-top">
-                    <strong>{{ money(inv.amount) }}</strong>
-                    <span class="tag" [class.ok]="inv.status==='paid'">{{ inv.status }}</span>
+                    <strong>{{ money(invoiceAmount(inv)) }}</strong>
+                    <span class="tag" [class.ok]="invoiceStatus(inv)==='paid'">{{ invoiceStatus(inv) }}</span>
                   </div>
                   <div class="muted">
-                    {{ inv.date }}
+                    {{ invoiceDate(inv) }}
                     <span *ngIf="inv.bookingId"> · booking: {{ inv.bookingId }}</span>
                   </div>
                 </div>

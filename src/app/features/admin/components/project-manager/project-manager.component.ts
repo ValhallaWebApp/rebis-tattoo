@@ -29,7 +29,7 @@ type PaymentRow = {
   artistId?: string;
 };
 
-type UiSession = Session & { _start?: string; _end?: string; _durationMin?: number };
+type UiSession = Session & { _start?: string; _end?: string; _startIso?: string; _endIso?: string; _durationMin?: number };
 
 type VmRow = {
   project: TattooProject;
@@ -156,7 +156,14 @@ export class ProjectManagerComponent {
 
       const sessionsByProjectId = new Map<string, Session[]>();
       for (const s of safeSessions) {
-        const pid = String((s as any).projectId ?? '').trim();
+        let pid = String((s as any).projectId ?? '').trim();
+        if (!pid) {
+          const bid = String((s as any).bookingId ?? '').trim();
+          if (bid) {
+            const b = bookingById.get(bid);
+            pid = String((b as any)?.projectId ?? '').trim();
+          }
+        }
         if (!pid) continue;
         const arr = sessionsByProjectId.get(pid) ?? [];
         arr.push(s);
@@ -219,7 +226,7 @@ export class ProjectManagerComponent {
         const sess = pid ? (sessionsByProjectId.get(pid) ?? []) : [];
         const normalizedSessions = sess
           .map(s => this.normalizeSessionForUi(s as any))
-          .sort((a, b) => String(a._start ?? '').localeCompare(String(b._start ?? '')));
+          .sort((a, b) => this.toTimestamp(a._startIso) - this.toTimestamp(b._startIso));
 
         const sessionsCount = normalizedSessions.length;
 
@@ -289,7 +296,7 @@ export class ProjectManagerComponent {
       if (f.tab === 'active_only') list = list.filter(x => !x.isClosed);
       if (f.tab === 'completed') list = list.filter(x => x.isClosed);
 
-      if (f.onlyNotClosed) list = list.filter(x => !x.isClosed);
+      if (f.onlyNotClosed && f.tab !== 'completed') list = list.filter(x => !x.isClosed);
 
       const q = (f.q ?? '').trim().toLowerCase();
       if (q) {
@@ -423,6 +430,7 @@ export class ProjectManagerComponent {
       case 'draft': return 'Bozza';
       case 'scheduled': return 'Prenotato';
       case 'active': return 'Attivo';
+      case 'healing': return 'Guarigione';
       case 'completed': return 'Concluso';
       case 'cancelled': return 'Annullato';
       default: return v || '—';
@@ -431,16 +439,34 @@ export class ProjectManagerComponent {
 
   bookingWhenLabel(b?: any): string {
     if (!b) return '—';
-    const start = String(b.start ?? b.date ?? '').trim();
-    const end = String(b.end ?? '').trim();
+    const start = this.normalizeLocalDateTime(String(b.start ?? b.date ?? '').trim());
+    const end = this.normalizeLocalDateTime(String(b.end ?? '').trim());
     if (!start) return '—';
-    return end ? `${start} → ${end}` : start;
+    return end ? `${this.formatLocal(start)} → ${this.formatLocal(end)}` : this.formatLocal(start);
   }
 
   money(n: any): string {
     const x = Number(n);
     if (!isFinite(x)) return '—';
     return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(x);
+  }
+
+  invoiceAmount(inv: Invoice): number | undefined {
+    const amount = (inv as any)?.amount ?? (inv as any)?.total ?? undefined;
+    const n = Number(amount);
+    return isFinite(n) ? n : undefined;
+  }
+
+  invoiceDate(inv: Invoice): string {
+    const raw =
+      String((inv as any)?.date ?? (inv as any)?.issuedAt ?? (inv as any)?.createdAt ?? '').trim();
+    if (!raw) return '—';
+    const iso = this.normalizeLocalDateTime(raw);
+    return this.formatLocal(iso);
+  }
+
+  invoiceStatus(inv: Invoice): string {
+    return String((inv as any)?.status ?? '').trim() || '—';
   }
 
   zoneLabel(p: TattooProject): string {
@@ -478,27 +504,60 @@ export class ProjectManagerComponent {
   }
 
   private normalizeSessionForUi(s: Session & any): UiSession {
-    const start = String(s.start ?? s.date ?? '').trim();
-    let end = String(s.end ?? '').trim();
+    const startIso = this.normalizeLocalDateTime(String(s.start ?? s.date ?? '').trim());
+    let endIso = this.normalizeLocalDateTime(String(s.end ?? '').trim());
 
     // durata (se mai la aggiungi in futuro)
     const duration = this.num(s.durationMinutes ?? s._durationMin);
 
-    if (!end && start && duration != null) {
-      const d = new Date(start);
+    if (!endIso && startIso && duration != null) {
+      const d = new Date(startIso);
       if (!isNaN(d.getTime())) {
         const e = new Date(d);
         e.setMinutes(e.getMinutes() + duration);
-        end = this.toLocalDateTime(e);
+        endIso = this.toLocalDateTime(e);
       }
     }
 
     return {
       ...(s as any),
-      _start: start || '—',
-      _end: end || undefined,
+      status: this.normalizeSessionStatus((s as any).status),
+      _startIso: startIso || undefined,
+      _endIso: endIso || undefined,
+      _start: startIso ? this.formatLocal(startIso) : '—',
+      _end: endIso ? this.formatLocal(endIso) : undefined,
       _durationMin: duration ?? undefined,
     };
+  }
+
+  private normalizeSessionStatus(status: any): string {
+    const s = String(status ?? '').trim().toLowerCase();
+    if (s === 'done') return 'completed';
+    return s || 'planned';
+  }
+
+  private normalizeLocalDateTime(input: string): string {
+    if (!input) return '';
+    let s = String(input).replace('Z', '');
+    s = s.split('.')[0];
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) return `${s}:00`;
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) return s;
+    const d = new Date(input);
+    if (!isNaN(d.getTime())) return this.toLocalDateTime(d);
+    return s;
+  }
+
+  private formatLocal(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  private toTimestamp(iso?: string): number {
+    if (!iso) return 0;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? 0 : d.getTime();
   }
 
   private toLocalDateTime(d: Date) {

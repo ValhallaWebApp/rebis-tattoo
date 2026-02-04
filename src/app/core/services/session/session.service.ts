@@ -26,6 +26,7 @@ export interface Session {
   end: string;
 
   projectId?: string;
+  bookingId?: string;
 
   sessionNumber?: number;
   notesByAdmin?: string;
@@ -199,6 +200,7 @@ export class SessionService {
       start: this.normalizeLocalDateTime(dbRow.start),
       end: this.normalizeLocalDateTime(dbRow.end),
       projectId: dbRow.projectId,
+      bookingId: dbRow.bookingId,
       sessionNumber: dbRow.sessionNumber,
       notesByAdmin: dbRow.notesByAdmin,
       price: dbRow.price,
@@ -220,6 +222,7 @@ export class SessionService {
       start: this.normalizeLocalDateTime(app.start),
       end: this.normalizeLocalDateTime(app.end),
       projectId: app.projectId,
+      bookingId: app.bookingId,
       sessionNumber: app.sessionNumber,
       notesByAdmin: app.notesByAdmin,
       price: app.price,

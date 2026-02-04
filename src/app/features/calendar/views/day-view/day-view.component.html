@@ -25,13 +25,19 @@
         <input matInput placeholder="Cerca cliente, note, titolo..." [value]="q()" (input)="setQ($any($event.target).value)">
       </mat-form-field>
 
-      <mat-button-toggle-group [value]="viewMode()" (change)="setViewMode($event.value)">
-        <mat-button-toggle value="agenda"><mat-icon>view_agenda</mat-icon></mat-button-toggle>
-        <mat-button-toggle value="board"><mat-icon>view_kanban</mat-icon></mat-button-toggle>
-        <mat-button-toggle value="list"><mat-icon>list</mat-icon></mat-button-toggle>
-      </mat-button-toggle-group>
+      <span class="filter-badge" *ngIf="activeFiltersCount() > 0">
+        Filtri attivi: {{ activeFiltersCount() }}
+      </span>
 
-      <button mat-raised-button color="primary" (click)="createNew()">
+      <ng-container *ngIf="viewMode() as vm">
+        <mat-button-toggle-group [value]="vm" (change)="setViewMode($event.value)">
+          <mat-button-toggle value="agenda"><mat-icon>view_agenda</mat-icon></mat-button-toggle>
+          <mat-button-toggle value="board"><mat-icon>view_kanban</mat-icon></mat-button-toggle>
+          <mat-button-toggle value="list"><mat-icon>list</mat-icon></mat-button-toggle>
+        </mat-button-toggle-group>
+      </ng-container>
+
+      <button mat-raised-button color="primary" class="cta-new" (click)="createNew()">
         <mat-icon>add</mat-icon> Nuovo
       </button>
     </div>
@@ -72,12 +78,30 @@
     </div>
 
     <div class="chip-row">
+      <mat-chip-listbox multiple [value]="types()" (change)="setTypes($event.value)">
+        <mat-chip-option *ngFor="let t of typeOptions" [value]="t">
+          <mat-icon>{{ t === 'booking' ? 'event' : 'schedule' }}</mat-icon> {{ t }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+
+    <div class="chip-row">
       <mat-chip-listbox multiple [value]="statuses()" (change)="setStatuses($event.value)">
         <mat-chip-option *ngFor="let s of statusOptions" [value]="s">
           <mat-icon>flag</mat-icon> {{ s }}
         </mat-chip-option>
       </mat-chip-listbox>
     </div>
+  </div>
+
+  <div class="legend">
+    <span class="legend-item"><span class="dot type-booking"></span> Booking</span>
+    <span class="legend-item"><span class="dot type-session"></span> Sessione</span>
+    <span class="legend-item"><span class="dot st-confirmed"></span> Confermata</span>
+    <span class="legend-item"><span class="dot st-pending"></span> In attesa</span>
+    <span class="legend-item"><span class="dot st-inprogress"></span> In corso</span>
+    <span class="legend-item"><span class="dot st-completed"></span> Completata</span>
+    <span class="legend-item"><span class="dot st-cancelled"></span> Annullata</span>
   </div>
 
   <!-- AGENDA -->
@@ -117,42 +141,64 @@
 
             <div class="main">
               <div class="row1">
-                <span class="badge">{{ it.type }}</span>
                 <span class="range">{{ it.range }}</span>
-                <span class="status">{{ it.status }}</span>
+                <span class="status">{{ it.status || '—' }}</span>
               </div>
-              <div class="title">{{ it.title }}</div>
-              <div class="sub">{{ it.subtitle }}</div>
+              <div class="title">{{ it.titleUi }}</div>
+              <div class="sub">
+                {{ it.subtitleUi }}
+                <span *ngIf="!it.projectId" class="missing-badge">Progetto mancante</span>
+              </div>
             </div>
 
             <div class="actions" (click)="$event.stopPropagation()">
-              <button mat-icon-button [disabled]="!canConfirm(it)" (click)="setStatus(it,'confirmed')" matTooltip="Conferma">
-                <mat-icon>check_circle</mat-icon>
-              </button>
-              <button mat-icon-button [disabled]="!canPay(it)" (click)="setStatus(it,'paid')" matTooltip="Segna pagato">
-                <mat-icon>payments</mat-icon>
-              </button>
-              <button mat-icon-button [disabled]="!canStart(it)" (click)="setStatus(it,'in_progress')" matTooltip="Inizia">
-                <mat-icon>play_circle</mat-icon>
-              </button>
-              <button mat-icon-button [disabled]="!canComplete(it)" (click)="setStatus(it,'completed')" matTooltip="Completa">
-                <mat-icon>task_alt</mat-icon>
-              </button>
-
-              <span class="sep"></span>
-
-              <button mat-icon-button (click)="reschedule(it)" matTooltip="Ripianifica">
-                <mat-icon>event_repeat</mat-icon>
-              </button>
               <button mat-icon-button (click)="edit(it)" matTooltip="Modifica">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button (click)="cancel(it)" matTooltip="Annulla">
-                <mat-icon>cancel</mat-icon>
+
+              <button mat-icon-button [matMenuTriggerFor]="eventMenu" matTooltip="Azioni">
+                <mat-icon>more_vert</mat-icon>
               </button>
-              <button mat-icon-button (click)="noShow(it)" matTooltip="No-show">
-                <mat-icon>person_off</mat-icon>
-              </button>
+
+              <mat-menu #eventMenu="matMenu">
+                <button mat-menu-item *ngIf="it.clientId" [routerLink]="['/admin/clients']" [queryParams]="{ q: it.clientId }">
+                  <mat-icon>person</mat-icon>
+                  <span>Cliente</span>
+                </button>
+                <button mat-menu-item *ngIf="it.type==='booking'" (click)="createSession(it)">
+                  <mat-icon>post_add</mat-icon>
+                  <span>Crea sessione</span>
+                </button>
+                <button mat-menu-item *ngIf="!it.projectId" (click)="assignProject(it)">
+                  <mat-icon>add_circle</mat-icon>
+                  <span>Assegna progetto</span>
+                </button>
+                <button mat-menu-item *ngIf="it.projectId" [routerLink]="['/admin/portfolio', it.projectId]">
+                  <mat-icon>folder</mat-icon>
+                  <span>Progetto</span>
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item (click)="setStatus(it,'confirmed')" [disabled]="!canConfirm(it)">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Conferma</span>
+                  <mat-icon *ngIf="it.status==='confirmed'">check</mat-icon>
+                </button>
+                <button mat-menu-item (click)="setStatus(it,'in_progress')" [disabled]="!canStart(it)">
+                  <mat-icon>play_circle</mat-icon>
+                  <span>Inizia</span>
+                  <mat-icon *ngIf="it.status==='in_progress'">check</mat-icon>
+                </button>
+                <button mat-menu-item (click)="setStatus(it,'completed')" [disabled]="!canComplete(it)">
+                  <mat-icon>task_alt</mat-icon>
+                  <span>Completa</span>
+                  <mat-icon *ngIf="it.status==='completed'">check</mat-icon>
+                </button>
+                <button mat-menu-item (click)="cancel(it)">
+                  <mat-icon>cancel</mat-icon>
+                  <span>Annulla</span>
+                  <mat-icon *ngIf="it.status==='cancelled'">check</mat-icon>
+                </button>
+              </mat-menu>
             </div>
 
           </button>
@@ -161,6 +207,123 @@
     </div>
   </ng-container>
 
-  <!-- (board/list li facciamo dopo, ora ti metto solo agenda che risolve subito) -->
+  <!-- LIST -->
+  <ng-container *ngIf="viewMode()==='list'">
+    <div class="list">
+      <div class="list-row"
+           *ngFor="let it of dayItems(); trackBy: trackById"
+           [class.session]="it.type==='session'"
+           [class.booking]="it.type!=='session'">
+        <div class="timebox">
+          <div class="hh">{{ it.hh }}</div>
+          <div class="mm">{{ it.mm }}</div>
+        </div>
 
+        <div class="main">
+          <div class="row1">
+            <span class="badge">{{ it.type }}</span>
+            <span class="range">{{ it.range }}</span>
+            <span class="status">{{ it.status || '—' }}</span>
+          </div>
+          <div class="title">{{ it.titleUi }}</div>
+          <div class="sub">
+            {{ it.subtitleUi }}
+            <span *ngIf="!it.projectId" class="missing-badge">Progetto mancante</span>
+          </div>
+        </div>
+
+        <div class="actions" (click)="$event.stopPropagation()">
+          <button mat-icon-button (click)="edit(it)" matTooltip="Modifica">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button [matMenuTriggerFor]="eventMenuList" matTooltip="Azioni">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+
+          <mat-menu #eventMenuList="matMenu">
+            <button mat-menu-item *ngIf="it.clientId" [routerLink]="['/admin/clients']" [queryParams]="{ q: it.clientId }">
+              <mat-icon>person</mat-icon>
+              <span>Cliente</span>
+            </button>
+            <button mat-menu-item *ngIf="it.type==='booking'" (click)="createSession(it)">
+              <mat-icon>post_add</mat-icon>
+              <span>Crea sessione</span>
+            </button>
+            <button mat-menu-item *ngIf="!it.projectId" (click)="assignProject(it)">
+              <mat-icon>add_circle</mat-icon>
+              <span>Assegna progetto</span>
+            </button>
+            <button mat-menu-item *ngIf="it.projectId" [routerLink]="['/admin/portfolio', it.projectId]">
+              <mat-icon>folder</mat-icon>
+              <span>Progetto</span>
+            </button>
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)="setStatus(it,'confirmed')" [disabled]="!canConfirm(it)">
+              <mat-icon>check_circle</mat-icon>
+              <span>Conferma</span>
+              <mat-icon *ngIf="it.status==='confirmed'">check</mat-icon>
+            </button>
+            <button mat-menu-item (click)="setStatus(it,'in_progress')" [disabled]="!canStart(it)">
+              <mat-icon>play_circle</mat-icon>
+              <span>Inizia</span>
+              <mat-icon *ngIf="it.status==='in_progress'">check</mat-icon>
+            </button>
+            <button mat-menu-item (click)="setStatus(it,'completed')" [disabled]="!canComplete(it)">
+              <mat-icon>task_alt</mat-icon>
+              <span>Completa</span>
+              <mat-icon *ngIf="it.status==='completed'">check</mat-icon>
+            </button>
+            <button mat-menu-item (click)="cancel(it)">
+              <mat-icon>cancel</mat-icon>
+              <span>Annulla</span>
+              <mat-icon *ngIf="it.status==='cancelled'">check</mat-icon>
+            </button>
+          </mat-menu>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- BOARD -->
+  <ng-container *ngIf="viewMode()==='board'">
+    <div class="board">
+      <div class="board-col"
+           *ngFor="let col of boardColumns()"
+           [class.status-draft]="col.status==='draft'"
+           [class.status-pending]="col.status==='pending'"
+           [class.status-confirmed]="col.status==='confirmed'"
+           [class.status-inprogress]="col.status==='in_progress'"
+           [class.status-completed]="col.status==='completed'"
+           [class.status-cancelled]="col.status==='cancelled'">
+        <div class="board-head">
+          <span class="board-title">{{ col.status }}</span>
+          <span class="board-count">{{ col.items.length }}</span>
+        </div>
+
+        <div class="board-cards">
+          <button class="board-card"
+                  *ngFor="let it of col.items; trackBy: trackById"
+                  [class.session]="it.type==='session'"
+                  [class.booking]="it.type!=='session'"
+                  (click)="openDetails(it)">
+            <div class="row1">
+              <span class="badge">{{ it.type }}</span>
+              <span class="range">{{ it.range }}</span>
+            </div>
+            <div class="title">{{ it.titleUi }}</div>
+            <div class="sub">{{ it.subtitleUi }}</div>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="board-empty" *ngIf="!hasBoardItems()">
+      Nessun evento per i filtri selezionati.
+    </div>
+  </ng-container>
+
+  <div class="admin-rules">
+    <strong>Regole rapide admin:</strong>
+    <span>Per creare un progetto da booking servono Cliente + Artista.</span>
+    <span>Le azioni di stato sono sempre modificabili dall’admin.</span>
+  </div>
 </section>
