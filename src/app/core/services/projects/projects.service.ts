@@ -38,6 +38,16 @@ export interface TattooProject {
 
   createdAt: string;
   updatedAt: string;
+
+  // public fields
+  isPublic?: boolean;
+  style?: string;
+  subject?: string;
+  imageUrls?: string[];
+
+  // legacy fields (compat)
+  genere?: string;
+  copertine?: string[];
 }
 export interface ProjectLite {
   id: string;

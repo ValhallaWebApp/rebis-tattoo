@@ -152,6 +152,22 @@
     font-weight: 900;
     line-height: 1.2;
   }
+
+  .pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.04);
+    opacity: .95;
+
+    &.is-hidden {
+      border-color: rgba(244,63,94,.35);
+      background: rgba(244,63,94,.12);
+      color: #fecdd3;
+    }
+  }
 }
 
 .status {
@@ -184,6 +200,22 @@
     opacity: .82;
 
     mat-icon { width: 18px; height: 18px; font-size: 18px; opacity: .8; }
+  }
+}
+
+.thumbs {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  img {
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.2);
   }
 }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }

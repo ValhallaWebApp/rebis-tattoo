@@ -11,7 +11,7 @@
     <div class="pm__tools" [formGroup]="form">
       <mat-form-field appearance="outline" class="search">
         <mat-label>Cerca</mat-label>
-        <input matInput formControlName="q" placeholder="Titolo, id, cliente, email, zona..." />
+        <input matInput formControlName="q" placeholder="Titolo, id, cliente, email, zona, stile..." />
         <button
           mat-icon-button
           matSuffix
@@ -55,26 +55,50 @@
       <div class="card__head">
         <div class="h-left">
           <div class="title">
-            <h3>{{ row.project.title }}</h3>
+            <h3>{{ titleOf(row.project) }}</h3>
             <span class="status" [attr.data-status]="row.project.status">
               {{ statusLabel(row.project.status) }}
+            </span>
+            <span class="pill" [class.is-hidden]="row.project.isPublic === false">
+              {{ row.project.isPublic === false ? 'Nascosto' : 'Pubblico' }}
             </span>
           </div>
 
           <div class="meta">
-            <span><mat-icon>fingerprint</mat-icon> <span class="mono" [title]="row.project.id || ''">{{ row.project.id || '—' }}</span></span>
-            <span><mat-icon>brush</mat-icon> <span class="mono">{{ row.project.artistId || '—' }}</span></span>
+            <span><mat-icon>fingerprint</mat-icon> <span class="mono" [title]="row.project.id || ''">{{ row.project.id || '-' }}</span></span>
+            <span><mat-icon>brush</mat-icon> <span class="mono">{{ row.project.artistId || '-' }}</span></span>
           </div>
 
           <div class="meta">
             <span><mat-icon>person</mat-icon> {{ row.clientLabel }}</span>
-            <span class="muted" *ngIf="row.client?.email">· {{ row.client?.email }}</span>
-            <span class="muted" *ngIf="row.client?.phone">· {{ row.client?.phone }}</span>
+            <span class="muted" *ngIf="row.client?.email">- {{ row.client?.email }}</span>
+            <span class="muted" *ngIf="row.client?.phone">- {{ row.client?.phone }}</span>
           </div>
 
           <div class="meta">
             <span><mat-icon>place</mat-icon> {{ zoneLabel(row.project) }}</span>
-            <span><mat-icon>update</mat-icon> {{ row.project.updatedAt ? (row.project.updatedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</span>
+            <span><mat-icon>update</mat-icon> {{ updatedAtOf(row.project) ? (updatedAtOf(row.project) | date:'dd/MM/yyyy HH:mm') : '-' }}</span>
+          </div>
+
+          <div class="meta" *ngIf="styleLabel(row.project) || subjectLabel(row.project)">
+            <span *ngIf="styleLabel(row.project)">
+              <mat-icon>palette</mat-icon>
+              {{ styleLabel(row.project) }}
+            </span>
+            <span *ngIf="subjectLabel(row.project)">
+              <mat-icon>interests</mat-icon>
+              {{ subjectLabel(row.project) }}
+            </span>
+          </div>
+
+          <div class="thumbs" *ngIf="imageUrlsOf(row.project).length">
+            <img
+              *ngFor="let url of imageUrlsOf(row.project) | slice:0:4"
+              [src]="url"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
           </div>
         </div>
 
@@ -116,6 +140,22 @@
               (click)="createBookingForProject(row.project)">
               <mat-icon>event</mat-icon>
               Crea Booking
+            </button>
+
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="editProject(row.project)">
+              <mat-icon>edit</mat-icon>
+              Modifica
+            </button>
+
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="togglePublic(row.project)">
+              <mat-icon>{{ row.project.isPublic === false ? 'visibility' : 'visibility_off' }}</mat-icon>
+              {{ row.project.isPublic === false ? 'Pubblica' : 'Nascondi' }}
             </button>
 
             <button
@@ -164,7 +204,7 @@
 
             <div class="line">
               <span class="k">Status</span>
-              <span class="v">{{ row.booking?.status || '—' }}</span>
+              <span class="v">{{ row.booking?.status || '-' }}</span>
             </div>
 
             <div class="line" *ngIf="row.booking?.projectId">
@@ -222,15 +262,15 @@
                   <div class="when">
                     <mat-icon>schedule</mat-icon>
                     <span>{{ s._start }}</span>
-                    <span class="arrow" *ngIf="s._end">→</span>
+                    <span class="arrow" *ngIf="s._end">-></span>
                     <span *ngIf="s._end">{{ s._end }}</span>
                   </div>
 
                   <div class="mini">
                     <span class="tag">{{ s.status }}</span>
-                    <span class="dot">·</span>
+                    <span class="dot">-</span>
                     <span *ngIf="s._durationMin">{{ s._durationMin }} min</span>
-                    <span *ngIf="s.zone"> · {{ s.zone }}</span>
+                    <span *ngIf="s.zone"> - {{ s.zone }}</span>
                   </div>
                 </div>
 
@@ -302,12 +342,12 @@
                   <div class="p-top">
                     <strong>{{ money(p.amount) }}</strong>
                     <span class="tag" [class.ok]="(p.status||'').toLowerCase()==='succeeded'">
-                      {{ p.status || '—' }}
+                      {{ p.status || '-' }}
                     </span>
                   </div>
                   <div class="muted">
                     {{ p.createdAt || '' }}
-                    <span *ngIf="p.bookingId"> · booking: {{ p.bookingId }}</span>
+                    <span *ngIf="p.bookingId"> - booking: {{ p.bookingId }}</span>
                   </div>
                 </div>
               </div>
@@ -332,7 +372,7 @@
                   </div>
                   <div class="muted">
                     {{ invoiceDate(inv) }}
-                    <span *ngIf="inv.bookingId"> · booking: {{ inv.bookingId }}</span>
+                    <span *ngIf="inv.bookingId"> - booking: {{ inv.bookingId }}</span>
                   </div>
                 </div>
               </div>

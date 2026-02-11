@@ -2,7 +2,7 @@
 
   <!-- TOP BAR -->
   <div class="topbar">
-    <a mat-stroked-button [routerLink]="goToArtistProjects()">
+    <a mat-stroked-button [routerLink]="goBackToProjects()">
       <mat-icon>arrow_back</mat-icon>
       Torna ai progetti
     </a>
@@ -18,7 +18,7 @@
   <!-- LOADING -->
   <div class="state" *ngIf="loading">
     <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-    <div class="state__text">Caricamento progetto…</div>
+    <div class="state__text">Caricamento progetto...</div>
   </div>
 
   <!-- NOT FOUND -->
@@ -37,18 +37,18 @@
       <!-- GALLERY -->
       <div class="gallery">
         <div class="gallery__hero">
-          <button mat-icon-button class="nav left" (click)="prev()" aria-label="precedente">
+          <button *ngIf="hasMultipleImages()" mat-icon-button class="nav left" (click)="prev()" aria-label="precedente">
             <mat-icon>chevron_left</mat-icon>
           </button>
 
-          <img class="hero-img" [src]="activeCover()" [alt]="p.title" loading="lazy"/>
+          <img class="hero-img" [src]="activeCover()" [alt]="p.title" loading="lazy" decoding="async" (error)="onImgError($event)" />
 
-          <button mat-icon-button class="nav right" (click)="next()" aria-label="successivo">
+          <button *ngIf="hasMultipleImages()" mat-icon-button class="nav right" (click)="next()" aria-label="successivo">
             <mat-icon>chevron_right</mat-icon>
           </button>
         </div>
 
-        <div class="thumbs" *ngIf="imageUrls().length > 1">
+        <div class="thumbs" *ngIf="hasMultipleImages()">
           <button
             class="thumb"
             *ngFor="let url of imageUrls(); let i = index"
@@ -57,7 +57,7 @@
             [attr.aria-label]="'immagine ' + (i+1)"
             type="button"
           >
-            <img [src]="url" [alt]="p.title + ' - ' + (i+1)" loading="lazy"/>
+            <img [src]="url" [alt]="p.title + ' - ' + (i+1)" loading="lazy" decoding="async" (error)="onImgError($event)" />
           </button>
         </div>
       </div>
@@ -75,13 +75,34 @@
 
                 <mat-chip *ngIf="p.style">{{ p.style }}</mat-chip>
 
-                <mat-chip *ngIf="colorTypeLabel() !== '—'">
+                <mat-chip *ngIf="colorTypeLabel() !== '-'">
                   {{ colorTypeLabel() }}
                 </mat-chip>
               </mat-chip-set>
             </div>
           </div>
         </div>
+
+        <mat-card class="card">
+          <mat-card-content>
+            <div class="grid">
+              <div class="row">
+                <div class="k">Artista</div>
+                <div class="v">{{ artistName() }}</div>
+              </div>
+
+              <div class="row" *ngIf="zoneLabel()">
+                <div class="k">Zona</div>
+                <div class="v">{{ zoneLabel() }}</div>
+              </div>
+
+              <div class="row" *ngIf="createdAtOf()">
+                <div class="k">Data progetto</div>
+                <div class="v">{{ createdAtOf() | date:'dd/MM/yyyy' }}</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
 
         <mat-card class="card">
           <mat-card-content>

@@ -7,9 +7,23 @@
       <input matInput formControlName="title">
     </mat-form-field>
 
+    <mat-slide-toggle formControlName="isPublic">
+      Visibile nel portfolio pubblico
+    </mat-slide-toggle>
+
     <mat-form-field appearance="outline">
       <mat-label>Zona</mat-label>
       <input matInput formControlName="zone">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Stile</mat-label>
+      <input matInput formControlName="style" placeholder="Es. blackwork, fine line">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Soggetto</mat-label>
+      <input matInput formControlName="subject" placeholder="Es. animali, volti">
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -27,6 +41,14 @@
     <mat-form-field appearance="outline">
       <mat-label>Note</mat-label>
       <textarea matInput rows="3" formControlName="notes"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Immagini (URL separati da virgola o a capo)</mat-label>
+      <textarea matInput rows="3" formControlName="imageUrls"></textarea>
+      <mat-error *ngIf="form.get(imageUrlsControlName)?.hasError('invalidUrls')">
+        Alcuni URL non sono validi. Usa solo URL http/https.
+      </mat-error>
     </mat-form-field>
   </mat-dialog-content>
 

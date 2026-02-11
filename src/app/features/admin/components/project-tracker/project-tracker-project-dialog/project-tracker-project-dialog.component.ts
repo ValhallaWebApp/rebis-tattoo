@@ -18,6 +18,7 @@ export interface ProjectTrackerProjectDialogData {
 })
 export class ProjectTrackerProjectDialogComponent {
   readonly form;
+  readonly imageUrlsControlName = 'imageUrls';
 
   constructor(
     private fb: FormBuilder,
@@ -28,7 +29,11 @@ export class ProjectTrackerProjectDialogComponent {
       title: ['', Validators.required],
       zone: [''],
       notes: [''],
-      status: ['scheduled', Validators.required]
+      status: ['scheduled', Validators.required],
+      isPublic: [true],
+      style: [''],
+      subject: [''],
+      imageUrls: ['', [this.imageUrlsValidator]]
     });
 
     const p = data.project;
@@ -36,7 +41,11 @@ export class ProjectTrackerProjectDialogComponent {
       title: p?.title ?? '',
       zone: p?.zone ?? '',
       notes: p?.notes ?? '',
-      status: p?.status ?? 'scheduled'
+      status: p?.status ?? 'scheduled',
+      isPublic: (p as any)?.isPublic !== false,
+      style: String((p as any)?.style ?? (p as any)?.genere ?? '').trim(),
+      subject: String((p as any)?.subject ?? '').trim(),
+      imageUrls: Array.isArray((p as any)?.imageUrls) ? (p as any).imageUrls.join(', ') : ''
     });
   }
 
@@ -47,11 +56,39 @@ export class ProjectTrackerProjectDialogComponent {
   save(): void {
     if (this.form.invalid) return;
     const v = this.form.getRawValue();
+    const imageUrls = String(v.imageUrls ?? '')
+      .split(/[\n,]+/)
+      .map(s => s.trim())
+      .filter(Boolean);
     this.dialogRef.close({
       title: v.title,
       zone: v.zone || undefined,
       notes: v.notes || undefined,
-      status: v.status
+      status: v.status,
+      isPublic: v.isPublic !== false,
+      style: v.style || undefined,
+      subject: v.subject || undefined,
+      imageUrls: imageUrls.length ? imageUrls : undefined
     });
+  }
+
+  private imageUrlsValidator(control: { value: any }) {
+    const raw = String(control.value ?? '').trim();
+    if (!raw) return null;
+    const urls = raw
+      .split(/[\n,]+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    const invalid = urls.filter(u => !this.isValidUrl(u));
+    return invalid.length ? { invalidUrls: invalid } : null;
+  }
+
+  private isValidUrl(value: string): boolean {
+    try {
+      const u = new URL(value);
+      return u.protocol === 'http:' || u.protocol === 'https:';
+    } catch {
+      return false;
+    }
   }
 }

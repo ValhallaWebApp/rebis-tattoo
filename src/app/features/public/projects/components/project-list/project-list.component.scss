@@ -8,6 +8,9 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .portfolio-header {
@@ -118,6 +121,12 @@
   grid-template-rows: 180px auto;
   text-decoration: none;
   color: inherit;
+
+  &:focus-visible {
+    outline: 2px solid rgba(255,255,255,.45);
+    outline-offset: 3px;
+    border-radius: 18px;
+  }
 }
 
 /* ====== COVER ====== */

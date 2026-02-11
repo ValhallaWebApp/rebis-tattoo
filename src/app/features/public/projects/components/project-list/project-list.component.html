@@ -24,7 +24,7 @@
         </mat-form-field>
 
         <!-- STILE -->
-        <mat-form-field appearance="fill">
+        <mat-form-field appearance="fill" *ngIf="styles.length">
           <mat-label>Stile</mat-label>
           <mat-select [(value)]="selectedStyle" (selectionChange)="applyFilters()">
             <mat-option value="all">Tutti</mat-option>
@@ -35,23 +35,13 @@
         </mat-form-field>
 
         <!-- SOGGETTO -->
-        <mat-form-field appearance="fill">
+        <mat-form-field appearance="fill" *ngIf="subjects.length">
           <mat-label>Soggetto</mat-label>
           <mat-select [(value)]="selectedSubject" (selectionChange)="applyFilters()">
             <mat-option value="all">Tutti</mat-option>
             <mat-option *ngFor="let s of subjects" [value]="s">
               {{ s }}
             </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <!-- VISIBILITÀ -->
-        <mat-form-field appearance="fill">
-          <mat-label>Visibilità</mat-label>
-          <mat-select [(value)]="selectedShow" (selectionChange)="applyFilters()">
-            <mat-option value="all">Tutti</mat-option>
-            <mat-option value="visible">Visibili</mat-option>
-            <mat-option value="hidden">Nascosti</mat-option>
           </mat-select>
         </mat-form-field>
 
@@ -68,13 +58,13 @@
     <mat-card class="project-card" *ngFor="let p of filteredProjects; trackBy: trackById">
       <a class="card-link" [routerLink]="p.id ? ['/progetto', p.id] : null">
         <div class="cover">
-          <img [src]="coverOf(p)" [alt]="p.title" loading="lazy" />
+          <img [src]="coverOf(p)" [alt]="p.title" loading="lazy" decoding="async" (error)="onImgError($event)" />
           <div class="overlay"></div>
 
           <!-- badge stile -->
           <!-- <div class="badge" *ngIf="p.style as st">{{ st }}</div>
 
-           pill visibilità (undefined = visibile)
+           pill visibilita' (undefined = visibile)
           <div class="pill" [class.is-hidden]="p.isPublic === false">
             {{ p.isPublic === false ? 'Nascosto' : 'Visibile' }}
           </div> -->
@@ -87,17 +77,17 @@
         </div>
 
         <div class="meta">
-          <h3 class="title">{{ p.title }}</h3>
+          <h3 class="title">{{ titleOf(p) }}</h3>
 
           <p class="sub">
             <span class="artist">{{ artistNameById(p.artistId) }}</span>
-            <span class="dot">·</span>
+            <span class="dot">-</span>
             <span class="date">
-              {{ p.createdAt ? (p.createdAt | date:'dd/MM/yyyy') : '—' }}
+              {{ createdAtOf(p) ? (createdAtOf(p) | date:'dd/MM/yyyy') : '-' }}
             </span>
           </p>
 
-          <span class="details">Dettagli →</span>
+          <span class="details">Dettagli -></span>
         </div>
       </a>
     </mat-card>

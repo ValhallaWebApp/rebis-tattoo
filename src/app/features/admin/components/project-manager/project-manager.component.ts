@@ -5,6 +5,9 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { combineLatest, map, startWith, Observable } from 'rxjs';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
+import { MatDialog } from '@angular/material/dialog';
+import { ProjectTrackerProjectDialogComponent } from '../project-tracker/project-tracker-project-dialog/project-tracker-project-dialog.component';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { ProjectsService, TattooProject } from '../../../../core/services/projects/projects.service';
 import { BookingService, Booking } from '../../../../core/services/bookings/booking.service';
@@ -65,11 +68,13 @@ type VmRow = {
 })
 export class ProjectManagerComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
   private readonly projectsService = inject(ProjectsService);
   private readonly bookingService = inject(BookingService);
   private readonly sessionService = inject(SessionService);
   private readonly invoicesService = inject(InvoicesService);
   private readonly clientService = inject(ClientService);
+  private readonly snackBar = inject(MatSnackBar);
 
   private readonly db = inject(Database);
 
@@ -304,6 +309,7 @@ export class ProjectManagerComponent {
           const p: any = x.project as any;
           const hay = [
             p.title,
+            p.name,
             p.id,
             p.clientId,
             x.client?.name,
@@ -312,6 +318,9 @@ export class ProjectManagerComponent {
             x.client?.phone,
             p.artistId,
             p.zone,
+            p.notes,
+            p.style,
+            p.subject,
             p.placement,
             p.status,
             (x.booking as any)?.id,
@@ -348,6 +357,35 @@ export class ProjectManagerComponent {
     this.form.controls.tab.setValue(tab);
   }
 
+  async editProject(p: TattooProject): Promise<void> {
+    const ref = this.dialog.open(ProjectTrackerProjectDialogComponent, {
+      width: '560px',
+      maxWidth: '92vw',
+      data: { project: p }
+    });
+    const res = await ref.afterClosed().toPromise();
+    if (!res) return;
+    try {
+      await this.projectsService.updateProject(String((p as any).id), res);
+      this.snackBar.open('Progetto aggiornato', 'OK', { duration: 2200 });
+    } catch {
+      this.snackBar.open('Errore aggiornamento progetto', 'OK', { duration: 2500 });
+    }
+  }
+
+  async togglePublic(p: TattooProject): Promise<void> {
+    const id = String((p as any)?.id ?? '').trim();
+    if (!id) return;
+    const current = (p as any)?.isPublic;
+    const next = current === false ? true : false;
+    try {
+      await this.projectsService.updateProject(id, { isPublic: next });
+      this.snackBar.open(next ? 'Progetto pubblicato' : 'Progetto nascosto', 'OK', { duration: 2000 });
+    } catch {
+      this.snackBar.open('Errore aggiornamento visibilita', 'OK', { duration: 2400 });
+    }
+  }
+
   // -----------------------------
   // Actions (agganci reali dopo)
   // -----------------------------
@@ -358,20 +396,18 @@ export class ProjectManagerComponent {
 
   createBookingForProject(p: TattooProject) {
     // TODO: apri EventDrawer in modalità booking con projectId precompilato
-    console.log('[PM] create booking for project', (p as any).id);
   }
 
   editBooking(b: Booking) {
-    console.log('[PM] edit booking', (b as any)?.id);
+    void b;
   }
 
   addSessionToProject(p: TattooProject) {
     // TODO: apri EventDrawer in modalità session con projectId precompilato
-    console.log('[PM] add session to project', (p as any).id);
   }
 
   editSession(s: Session) {
-    console.log('[PM] edit session', (s as any)?.id);
+    void s;
   }
 
   // ✅ “Messaggia cliente” (WhatsApp se phone, altrimenti email)
@@ -393,7 +429,7 @@ export class ProjectManagerComponent {
       return;
     }
 
-    console.warn('[PM] Nessun contatto per cliente', row.project.clientId);
+    this.snackBar.open('Nessun contatto cliente disponibile', 'OK', { duration: 2200 });
   }
 
   // ✅ Fattura “completa” (booking + sessioni) — stub pronto
@@ -401,24 +437,13 @@ export class ProjectManagerComponent {
     // TODO: qui decidi se:
     // 1) generare PDF lato client (consigliato)
     // 2) usare/salvare su RTDB invoices con items
-    console.log('[PM] download full invoice', {
-      projectId: (row.project as any).id,
-      bookingId: (row.booking as any)?.id,
-      sessions: row.sessions.map(s => (s as any).id),
-      paidTotal: row.paidTotal,
-      expectedTotal: row.expectedTotal,
-      remaining: row.remaining,
-    });
+    void row;
   }
 
   // ✅ Fattura singola sessione — stub pronto
   downloadSessionInvoice(row: VmRow, s: UiSession) {
-    console.log('[PM] download session invoice', {
-      projectId: (row.project as any).id,
-      sessionId: (s as any)?.id,
-      price: (s as any)?.price,
-      paidAmount: (s as any)?.paidAmount,
-    });
+    void row;
+    void s;
   }
 
   // -----------------------------
@@ -478,6 +503,32 @@ export class ProjectManagerComponent {
 
   trackByProjectId = (_: number, row: VmRow) =>
     (row.project as any).id ?? `${(row.project as any).artistId}-${(row.project as any).clientId}-${(row.project as any).title}`;
+
+  titleOf(p: TattooProject): string {
+    return String((p as any).title ?? (p as any).name ?? '').trim() || 'Progetto';
+  }
+
+  updatedAtOf(p: TattooProject): string {
+    return String((p as any).updatedAt ?? (p as any).updateAt ?? '').trim();
+  }
+
+  styleLabel(p: TattooProject): string {
+    return String((p as any).style ?? (p as any).genere ?? '').trim();
+  }
+
+  subjectLabel(p: TattooProject): string {
+    return String((p as any).subject ?? '').trim();
+  }
+
+  imageUrlsOf(p: TattooProject): string[] {
+    const listA = Array.isArray((p as any).imageUrls) ? (p as any).imageUrls : [];
+    const listB = Array.isArray((p as any).copertine) ? (p as any).copertine : [];
+    const finalImgs = Array.isArray((p as any).finalImages)
+      ? (p as any).finalImages.map((i: any) => String(i?.url ?? '').trim()).filter(Boolean)
+      : [];
+    const all = [...finalImgs, ...listA, ...listB].map(x => String(x ?? '').trim()).filter(Boolean);
+    return all.length ? Array.from(new Set(all)) : [];
+  }
 
   // -----------------------------
   // internals
