@@ -1,78 +1,99 @@
-.promo-referral-container {
+.bonus-page {
+  padding: 20px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  padding: 24px;
+  gap: 16px;
+  color: #111;
+  font-family: 'Barlow Semi Condensed', sans-serif;
 }
 
-mat-card {
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+.bonus-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-family: 'Barlow Semi Condensed', sans-serif;
 }
 
-.promo-icon, .referral-icon {
-  font-size: 28px;
-  color: #fdd835;
-  margin-right: 8px;
+.bonus-header p {
+  margin: 6px 0 0;
+  color: #666;
+  font-size: 0.98rem;
+  font-family: 'Barlow Semi Condensed', sans-serif;
 }
 
-.promo-form {
-  display: flex;
-  flex-direction: column;
+.bonus-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.wallet-balance {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 10px 0 4px;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+}
+
+.action-form {
+  display: grid;
   gap: 12px;
 }
 
-.promo-input {
-  width: 100%;
+.ledger-list {
+  display: grid;
+  gap: 10px;
 }
 
-.promo-status {
-  font-weight: 600;
-  margin-top: 8px;
-
-  &.primary {
-    color: #2e7d32;
-  }
-
-  &.warn {
-    color: #c62828;
-  }
-}
-
-.referral-code-box {
+.ledger-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: #eee;
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin: 12px 0;
-  font-weight: 600;
-  font-size: 16px;
+  justify-content: space-between;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  padding: 10px 12px;
 }
 
-.copy-message {
-  font-size: 13px;
-  color: #43a047;
-  margin-bottom: 12px;
+.code {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-family: 'Barlow Semi Condensed', sans-serif;
 }
 
-.referral-progress {
-  margin: 12px 0;
-
-  p {
-    margin-bottom: 4px;
-    font-size: 14px;
-    font-weight: 500;
-  }
+.meta {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #616161;
+  font-family: 'Barlow Semi Condensed', sans-serif;
 }
 
-.referral-bonus-list {
-  margin-top: 8px;
+.empty {
+  margin: 4px 0;
+  color: #616161;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+}
 
-  mat-chip {
-    font-weight: 600;
-    font-size: 14px;
-    padding: 6px;
+::ng-deep .bonus-page .mat-mdc-card-title,
+::ng-deep .bonus-page .mat-mdc-card-subtitle,
+::ng-deep .bonus-page .mdc-floating-label,
+::ng-deep .bonus-page .mat-mdc-form-field-infix,
+::ng-deep .bonus-page .mat-mdc-input-element,
+::ng-deep .bonus-page .mat-mdc-button {
+  font-family: 'Barlow Semi Condensed', sans-serif !important;
+}
+
+::ng-deep .bonus-page .mdc-floating-label {
+  color: #707070 !important;
+}
+
+::ng-deep .bonus-page .mat-mdc-input-element {
+  color: #222 !important;
+}
+
+@media (max-width: 720px) {
+  .bonus-page {
+    padding: 14px;
   }
 }

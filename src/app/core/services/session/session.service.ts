@@ -13,7 +13,7 @@ import {
   onValue
 } from '@angular/fire/database';
 import { Observable } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../ui/ui-feedback.service';
 
 /** ✅ CANONICO APP (NUOVO) */
 export interface Session {
@@ -58,7 +58,7 @@ export class SessionService {
   private readonly path = 'sessions';
 
   private readonly db = inject(Database);
-  private readonly snackbar = inject(MatSnackBar);
+  private readonly ui = inject(UiFeedbackService);
   private readonly zone = inject(NgZone);
 
   // -----------------------------
@@ -258,10 +258,11 @@ export class SessionService {
   // helpers
   // -----------------------------
   private showMessage(message: string, isError: boolean = false) {
-    this.snackbar.open(message, 'Chiudi', {
-      duration: 3000,
-      panelClass: isError ? ['mat-warn'] : ['mat-primary']
-    });
+    if (isError) {
+      this.ui.error(message);
+      return;
+    }
+    this.ui.success(message);
   }
 
   private stripUndef<T extends Record<string, any>>(o: T): T {

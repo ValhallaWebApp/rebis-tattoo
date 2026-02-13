@@ -7,12 +7,12 @@ import { StaffMember, StaffService } from '../../../../core/services/staff/staff
 import { StaffDialogAdminComponent } from '../../../../shared/components/dialogs/staff-dialog-admin/staff-dialog-admin.component';
 import { MatDrawer } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 
 @Component({
   selector: 'app-staff-members-admin',
   standalone: true,
-  imports: [CommonModule, MaterialModule,MatTooltipModule, ReactiveFormsModule,MatSnackBarModule],
+  imports: [CommonModule, MaterialModule, MatTooltipModule, ReactiveFormsModule],
   templateUrl: './staff-members-admin.component.html',
   styleUrl: './staff-members-admin.component.scss'
 })
@@ -32,7 +32,7 @@ export class StaffMembersAdminComponent implements OnInit {
     private fb: FormBuilder,
     private staffService: StaffService,
     private dialog: MatDialog,
-    private snackBar:MatSnackBar
+    private snackBar: UiFeedbackService
   ) {}
 
   ngOnInit(): void {

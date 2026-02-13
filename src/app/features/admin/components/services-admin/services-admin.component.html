@@ -9,227 +9,111 @@
     <button
       mat-mini-fab
       color="primary"
-      (click)="toggleDrawer()"
-      matTooltip="{{ drawer?.opened ? 'Chiudi pannello' : 'Nuovo servizio' }}"
+      (click)="openCreate()"
+      matTooltip="Nuovo servizio"
     >
-      <mat-icon>{{ drawer?.opened ? 'close' : 'add' }}</mat-icon>
+      <mat-icon>add</mat-icon>
     </button>
   </h2>
 
-  <mat-drawer-container class="drawer-container">
-    <!-- DRAWER LATERALE -->
-    <mat-drawer
-      #drawer
-      mode="side"
-      position="end"
-      class="service-drawer"
-    >
-      <!-- HEADER DRAWER -->
-      <div class="drawer-header">
-        <div>
-          <h3>{{ editingId ? 'Modifica servizio' : 'Nuovo servizio' }}</h3>
-          <p class="subtitle">
-            Definisci nome, categoria, prezzo, durata e visibilità.
-          </p>
-        </div>
+  <!-- CONTENUTO PRINCIPALE -->
+  <div class="drawer-content">
+    <!-- FILTRI -->
+    <form [formGroup]="filterForm" class="filters">
+      <mat-form-field>
+        <mat-label>Nome</mat-label>
+        <input
+          matInput
+          formControlName="name"
+          placeholder="Filtra per nome"
+        />
+      </mat-form-field>
 
-        <button mat-icon-button (click)="toggleDrawer()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
+      <mat-form-field>
+        <mat-label>Categoria</mat-label>
+        <mat-select formControlName="categoria">
+          <mat-option value="">Tutte</mat-option>
+          <mat-option value="tatuaggio">Tatuaggio</mat-option>
+          <mat-option value="piercing">Piercing</mat-option>
+          <mat-option value="laser">Laser</mat-option>
+          <mat-option value="consulenza">Consulenza</mat-option>
+          <mat-option value="altro">Altro</mat-option>
+        </mat-select>
+      </mat-form-field>
 
-      <!-- CONTENUTO SCORREVOLE -->
-      <div class="drawer-scroll">
-        <!-- PREVIEW CARD -->
-        <mat-card class="preview-card" *ngIf="serviceForm">
-          <div class="preview-main">
-            <div class="icon-pill">
-              <mat-icon>brush</mat-icon>
-            </div>
-            <div>
-              <h4>{{ serviceForm.value.name || 'Nome servizio' }}</h4>
-              <p class="role">
-                {{ serviceForm.value.categoria || 'Categoria' }}
-              </p>
-              <p class="meta">
-                €{{ serviceForm.value.prezzo || '0' }} •
-                {{ serviceForm.value.durata || '0' }} min
-              </p>
-            </div>
+      <mat-form-field>
+        <mat-label>Visibilita'</mat-label>
+        <mat-select formControlName="visibile">
+          <mat-option value="">Tutti</mat-option>
+          <mat-option value="true">Solo visibili</mat-option>
+          <mat-option value="false">Solo nascosti</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </form>
+
+    <!-- LISTA SERVIZI -->
+    <div class="service-cards">
+      <mat-card
+        *ngFor="let service of filteredServices"
+        class="service-card"
+        [class.inactive]="!service.visibile"
+      >
+        <div class="service-info">
+          <div class="icon-pill">
+            <img *ngIf="service.icon" [src]="service.icon" alt="" />
+            <mat-icon *ngIf="!service.icon">design_services</mat-icon>
           </div>
 
-          <span
-            class="status-pill"
-            [ngClass]="serviceForm.value.visibile ? 'active' : 'inactive'"
-          >
-            {{ serviceForm.value.visibile ? 'Visibile' : 'Non visibile' }}
-          </span>
-        </mat-card>
+          <div class="service-text">
+            <h3>{{ service.name }}</h3>
+            <p class="category">{{ service.categoria }}</p>
 
-        <!-- FORM SERVIZIO -->
-        <form
-          [formGroup]="serviceForm"
-          (ngSubmit)="submit()"
-          class="service-form"
-        >
-          <div class="field-group">
-            <mat-form-field appearance="outline">
-              <mat-label>Nome*</mat-label>
-              <input matInput formControlName="name" />
-            </mat-form-field>
+            <p class="description">
+              {{ service.description || 'Nessuna descrizione' }}
+            </p>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Categoria*</mat-label>
-              <mat-select formControlName="categoria">
-                <mat-option value="tatuaggio">Tatuaggio</mat-option>
-                <mat-option value="piercing">Piercing</mat-option>
-                <mat-option value="laser">Laser</mat-option>
-                <mat-option value="consulenza">Consulenza</mat-option>
-                <mat-option value="altro">Altro</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Descrizione</mat-label>
-            <textarea
-              matInput
-              rows="4"
-              formControlName="description"
-            ></textarea>
-          </mat-form-field>
-
-          <div class="field-group">
-            <mat-form-field appearance="outline">
-              <mat-label>Prezzo (€)*</mat-label>
-              <input
-                matInput
-                type="number"
-                formControlName="prezzo"
-              />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Durata (min)*</mat-label>
-              <input
-                matInput
-                type="number"
-                formControlName="durata"
-              />
-            </mat-form-field>
-          </div>
-
-          <mat-slide-toggle formControlName="visibile">
-            Visibile nel booking
-          </mat-slide-toggle>
-
-          <!-- BOTTONI STICKY -->
-          <div class="form-actions">
-            <button mat-stroked-button type="button" (click)="cancel()">
-              Annulla
-            </button>
-            <button mat-flat-button color="primary" type="submit">
-              {{ editingId ? 'Salva modifiche' : 'Aggiungi servizio' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </mat-drawer>
-
-    <!-- CONTENUTO PRINCIPALE -->
-    <mat-drawer-content class="drawer-content">
-      <!-- FILTRI -->
-      <form [formGroup]="filterForm" class="filters">
-        <mat-form-field>
-          <mat-label>Nome</mat-label>
-          <input
-            matInput
-            formControlName="name"
-            placeholder="Filtra per nome"
-          />
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Categoria</mat-label>
-          <mat-select formControlName="categoria">
-            <mat-option value="">Tutte</mat-option>
-            <mat-option value="tatuaggio">Tatuaggio</mat-option>
-            <mat-option value="piercing">Piercing</mat-option>
-            <mat-option value="laser">Laser</mat-option>
-            <mat-option value="consulenza">Consulenza</mat-option>
-            <mat-option value="altro">Altro</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Visibilità</mat-label>
-          <mat-select formControlName="visibile">
-            <mat-option value="">Tutti</mat-option>
-            <mat-option value="true">Solo visibili</mat-option>
-            <mat-option value="false">Solo nascosti</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </form>
-
-      <!-- LISTA SERVIZI (CARD STILE STAFF) -->
-      <div class="service-cards">
-        <mat-card
-          *ngFor="let service of filteredServices"
-          class="service-card"
-          [class.inactive]="!service.visibile"
-        >
-          <div class="service-info">
-            <div class="icon-pill">
-              <mat-icon>design_services</mat-icon>
-            </div>
-
-            <div class="service-text">
-              <h3>{{ service.name }}</h3>
-              <p class="category">{{ service.categoria }}</p>
-
-              <p class="description">
-                {{ service.description || 'Nessuna descrizione' }}
-              </p>
-
-              <div class="meta">
-                <span class="price">€{{ service.prezzo }}</span>
-                <span class="duration">{{ service.durata }} min</span>
-              </div>
-
-              <span
-                class="status-chip"
-                [class.active]="service.visibile"
-                [class.inactive]="!service.visibile"
-              >
-                {{ service.visibile ? 'Visibile' : 'Non visibile' }}
+            <div class="meta">
+              <span class="price">
+                {{ service.prezzoDaConcordare ? 'Prezzo su richiesta' : ('€' + service.prezzo) }}
+              </span>
+              <span class="duration">
+                {{ service.durataDaConcordare ? 'Durata su richiesta' : (service.durata + ' min') }}
               </span>
             </div>
-          </div>
 
-          <div class="service-actions">
-            <button
-              mat-icon-button
-              matTooltip="Modifica servizio"
-              (click)="edit(service)"
+            <span
+              class="status-chip"
+              [class.active]="service.visibile"
+              [class.inactive]="!service.visibile"
             >
-              <mat-icon>edit</mat-icon>
-            </button>
-
-            <button
-              mat-icon-button
-              color="warn"
-              matTooltip="Elimina"
-              (click)="deleteService(service.id)"
-            >
-              <mat-icon>delete</mat-icon>
-            </button>
+              {{ service.visibile ? 'Visibile' : 'Non visibile' }}
+            </span>
           </div>
-        </mat-card>
+        </div>
 
-        <p class="empty" *ngIf="filteredServices.length === 0">
-          Nessun servizio trovato con i filtri correnti.
-        </p>
-      </div>
-    </mat-drawer-content>
-  </mat-drawer-container>
+        <div class="service-actions">
+          <button
+            mat-icon-button
+            matTooltip="Modifica servizio"
+            (click)="openEdit(service)"
+          >
+            <mat-icon>edit</mat-icon>
+          </button>
+
+          <button
+            mat-icon-button
+            color="warn"
+            matTooltip="Elimina"
+            (click)="deleteService(service.id)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </mat-card>
+
+      <p class="empty" *ngIf="filteredServices.length === 0">
+        Nessun servizio trovato con i filtri correnti.
+      </p>
+    </div>
+  </div>
 </section>

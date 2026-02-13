@@ -16,9 +16,11 @@ import { ServicesAdminComponent } from './components/services-admin/services-adm
 import { StaffMembersAdminComponent } from './components/staff-members-admin/staff-members-admin.component';
 import { ProjectManagerComponent } from './components/project-manager/project-manager.component';
 import { SessionManagerComponent } from './components/session-manager/session-manager.component';
+import { AuditLogsComponent } from './components/audit-logs/audit-logs.component';
 import { Calendar } from '@fullcalendar/core/index.js';
 import { CalendarComponent } from '../calendar/calendar.component';
 import { ProjectDetailComponent } from '../public/projects/components/project-detail/project-detail.component';
+import { BonusAdminComponent } from './components/bonus-admin/bonus-admin.component';
 
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
@@ -39,8 +41,10 @@ const routes: Routes = [
   { path: 'servizi', component: ServicesAdminComponent },
 
   { path: 'staff', component: StaffMembersAdminComponent },
+  { path: 'bonus', component: BonusAdminComponent },
 
   { path: 'analytics', component: AnalyticsComponent },
+  { path: 'audit-logs', component: AuditLogsComponent },
   { path: 'settings', component: StudioSettingsComponent },
   { path: 'review-list', component: ReviewListAdminComponent }
 ];

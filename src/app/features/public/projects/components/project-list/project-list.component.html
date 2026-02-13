@@ -1,6 +1,9 @@
 <section class="portfolio-page">
   <header class="portfolio-header">
-    <h1>{{ lang.t('portfolio.title') }}</h1>
+    <div class="title-row">
+      <h1>{{ lang.t('portfolio.title') }}</h1>
+      <span class="count-badge">{{ filteredProjects.length }} progetti</span>
+    </div>
     <p>{{ lang.t('portfolio.subtitle') }}</p>
   </header>
 
@@ -15,7 +18,7 @@
         <!-- ARTISTA -->
         <mat-form-field appearance="fill">
           <mat-label>Artista</mat-label>
-          <mat-select [(value)]="selectedArtistId" (selectionChange)="applyFilters()">
+          <mat-select [(value)]="selectedArtistId" (selectionChange)="onArtistChange()">
             <mat-option value="all">Tutti</mat-option>
             <mat-option *ngFor="let a of artists" [value]="a.id">
               {{ a.name }}
@@ -24,26 +27,69 @@
         </mat-form-field>
 
         <!-- STILE -->
-        <mat-form-field appearance="fill" *ngIf="styles.length">
-          <mat-label>Stile</mat-label>
-          <mat-select [(value)]="selectedStyle" (selectionChange)="applyFilters()">
-            <mat-option value="all">Tutti</mat-option>
-            <mat-option *ngFor="let s of styles" [value]="s">
+        <div class="chip-group" *ngIf="styles.length">
+          <div class="chip-label">Stile</div>
+          <div class="chip-row">
+            <button type="button" class="chip" [class.active]="isStyleActive('all')" (click)="setStyle('all')" [attr.aria-pressed]="isStyleActive('all')">
+              Tutti
+            </button>
+            <button
+              *ngFor="let s of styles"
+              type="button"
+              class="chip"
+              [class.active]="isStyleActive(s)"
+              (click)="setStyle(s)"
+              [attr.aria-pressed]="isStyleActive(s)"
+            >
               {{ s }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+            </button>
+          </div>
+        </div>
 
         <!-- SOGGETTO -->
-        <mat-form-field appearance="fill" *ngIf="subjects.length">
-          <mat-label>Soggetto</mat-label>
-          <mat-select [(value)]="selectedSubject" (selectionChange)="applyFilters()">
-            <mat-option value="all">Tutti</mat-option>
-            <mat-option *ngFor="let s of subjects" [value]="s">
+        <div class="chip-group" *ngIf="subjects.length">
+          <div class="chip-label">Soggetto</div>
+          <div class="chip-row">
+            <button type="button" class="chip" [class.active]="isSubjectActive('all')" (click)="setSubject('all')" [attr.aria-pressed]="isSubjectActive('all')">
+              Tutti
+            </button>
+            <button
+              *ngFor="let s of subjects"
+              type="button"
+              class="chip"
+              [class.active]="isSubjectActive(s)"
+              (click)="setSubject(s)"
+              [attr.aria-pressed]="isSubjectActive(s)"
+            >
               {{ s }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+            </button>
+          </div>
+        </div>
+
+        <!-- ZONA -->
+        <div class="chip-group" *ngIf="zones.length">
+          <div class="chip-label">Zona</div>
+          <div class="chip-row">
+            <button type="button" class="chip" [class.active]="isZoneActive('all')" (click)="setZone('all')" [attr.aria-pressed]="isZoneActive('all')">
+              Tutti
+            </button>
+            <button
+              *ngFor="let z of zones"
+              type="button"
+              class="chip"
+              [class.active]="isZoneActive(z)"
+              (click)="setZone(z)"
+              [attr.aria-pressed]="isZoneActive(z)"
+            >
+              {{ z }}
+            </button>
+          </div>
+        </div>
+
+        <!-- SOLO CON IMMAGINI -->
+        <button type="button" class="chip toggle" [class.active]="onlyWithImages" (click)="toggleOnlyImages()" [attr.aria-pressed]="onlyWithImages">
+          Solo con immagini
+        </button>
 
         <button mat-stroked-button class="reset-btn" type="button" (click)="resetFilters()">
           <mat-icon>restart_alt</mat-icon>

@@ -15,7 +15,18 @@ import {
   endAt,
   DataSnapshot
 } from '@angular/fire/database';
+import {
+  Firestore,
+  collection,
+  getDocs,
+  query as firestoreQuery,
+  where
+} from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
+import { NotificationService } from '../notifications/notification.service';
+import { UiFeedbackService } from '../ui/ui-feedback.service';
+import { AuditLogService } from '../audit/audit-log.service';
+import { AuthService } from '../auth/authservice';
 
 /** Stati booking (nuovi + realistici) */
 export type BookingStatus =
@@ -133,7 +144,14 @@ export class BookingDraftService {
 export class BookingService {
   private readonly path = 'bookings';
 
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private firestore: Firestore,
+    private notificationService: NotificationService,
+    private ui: UiFeedbackService,
+    private auth: AuthService,
+    private audit: AuditLogService
+  ) {}
 
   // ---------------------------------------------------------------------------
   // COMPAT: mappa dati DB (vecchi/nuovi) -> Booking canonico
@@ -396,42 +414,128 @@ export class BookingService {
   async createBooking(
     data: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> & { status?: BookingStatus }
   ): Promise<Booking> {
-    const node = push(ref(this.db, this.path));
-    const id = node.key!;
-    const now = new Date().toISOString();
+    const actor = this.auth.userSig();
+    try {
+      const node = push(ref(this.db, this.path));
+      const id = node.key!;
+      const now = new Date().toISOString();
 
-    const payload: Booking = this.toCanonical({
-      ...data,
-      id,
-      status: data.status ?? data.status ?? 'draft',
-      createdAt: now,
-      updatedAt: now
-    });
+      const payload: Booking = this.toCanonical({
+        ...data,
+        id,
+        status: data.status ?? data.status ?? 'draft',
+        createdAt: now,
+        updatedAt: now
+      });
 
-    await set(node, this.toDbPatch(payload));
-    return payload;
+      await set(node, this.toDbPatch(payload));
+      void this.audit.log({
+        action: 'booking.create',
+        resource: 'booking',
+        resourceId: id,
+        status: 'success',
+        actorId: actor?.uid,
+        actorRole: actor?.role,
+        targetUserId: payload.clientId,
+        meta: { status: payload.status, artistId: payload.artistId }
+      });
+      void this.notifyBookingCreated(payload);
+      this.ui.success('Prenotazione creata');
+      return payload;
+    } catch (error) {
+      void this.audit.log({
+        action: 'booking.create',
+        resource: 'booking',
+        status: 'error',
+        actorId: actor?.uid,
+        actorRole: actor?.role
+      });
+      this.ui.error('Errore creazione prenotazione');
+      throw error;
+    }
   }
 
   async updateBooking(id: string, changes: Partial<Booking>): Promise<void> {
-    const patch = this.toDbPatch({
-      ...changes,
-      updatedAt: new Date().toISOString()
-    });
+    const actor = this.auth.userSig();
+    try {
+      const current = await this.getBookingById(id);
+      const patch = this.toDbPatch({
+        ...changes,
+        updatedAt: new Date().toISOString()
+      });
 
-    // non cambiare createdAt
-    delete patch.createdAt;
-    delete patch.createAt;
+      // non cambiare createdAt
+      delete patch.createdAt;
+      delete patch.createAt;
 
-    console.log('[BookingService] updateBooking →', { id, patch });
-    await update(ref(this.db, `${this.path}/${id}`), patch);
+      console.log('[BookingService] updateBooking ->', { id, patch });
+      await update(ref(this.db, `${this.path}/${id}`), patch);
+      void this.audit.log({
+        action: 'booking.update',
+        resource: 'booking',
+        resourceId: id,
+        status: 'success',
+        actorId: actor?.uid,
+        actorRole: actor?.role,
+        targetUserId: current?.clientId,
+        meta: { changedKeys: Object.keys(changes ?? {}) }
+      });
+
+      if (current) {
+        const next = this.toCanonical({ ...current, ...changes, id });
+        void this.notifyBookingUpdated(current, next);
+      }
+
+      this.ui.info('Prenotazione aggiornata');
+    } catch (error) {
+      void this.audit.log({
+        action: 'booking.update',
+        resource: 'booking',
+        resourceId: id,
+        status: 'error',
+        actorId: actor?.uid,
+        actorRole: actor?.role,
+        meta: { changedKeys: Object.keys(changes ?? {}) }
+      });
+      this.ui.error('Errore aggiornamento prenotazione');
+      throw error;
+    }
   }
 
   async deleteBooking(id: string): Promise<void> {
-    console.log('[BookingService] deleteBooking →', { id });
-    await remove(ref(this.db, `${this.path}/${id}`));
-  }
+    const actor = this.auth.userSig();
+    try {
+      const existing = await this.getBookingById(id);
+      console.log('[BookingService] deleteBooking ->', { id });
+      await remove(ref(this.db, `${this.path}/${id}`));
+      void this.audit.log({
+        action: 'booking.delete',
+        resource: 'booking',
+        resourceId: id,
+        status: 'success',
+        actorId: actor?.uid,
+        actorRole: actor?.role,
+        targetUserId: existing?.clientId
+      });
 
-  // ---------------------------------------------------------------------------
+      if (existing) {
+        void this.notifyBookingDeleted(existing);
+      }
+
+      this.ui.warn('Prenotazione eliminata');
+    } catch (error) {
+      void this.audit.log({
+        action: 'booking.delete',
+        resource: 'booking',
+        resourceId: id,
+        status: 'error',
+        actorId: actor?.uid,
+        actorRole: actor?.role
+      });
+      this.ui.error('Errore eliminazione prenotazione');
+      throw error;
+    }
+  }
   // STATUS / RESCHEDULE
   // ---------------------------------------------------------------------------
   private isValidTransition(current: BookingStatus, next: BookingStatus): boolean {
@@ -618,5 +722,135 @@ export class BookingService {
     const B0 = new Date(this.normalizeLocalDateTime(bStart)).getTime();
     const B1 = new Date(this.normalizeLocalDateTime(bEnd)).getTime();
     return A0 < B1 && B0 < A1;
+  }
+
+  private async notifyBookingCreated(booking: Booking): Promise<void> {
+    const startText = this.formatNotificationDate(booking.start);
+    const adminIds = await this.getAdminUserIds();
+
+    await this.notifyUsers([booking.clientId], {
+      title: 'Prenotazione creata',
+      message: `La tua prenotazione e stata creata per ${startText}.`,
+      link: '/dashboard/booking-history'
+    });
+
+    await this.notifyUsers([booking.artistId], {
+      title: 'Nuova prenotazione',
+      message: `Nuovo booking assegnato per ${startText}.`,
+      link: '/admin/calendar'
+    });
+
+    await this.notifyUsers(adminIds, {
+      title: 'Nuova prenotazione',
+      message: `Creato nuovo booking per ${startText}.`,
+      link: '/admin/calendar'
+    });
+  }
+
+  private async notifyBookingUpdated(previous: Booking, next: Booking): Promise<void> {
+    const statusChanged = previous.status !== next.status;
+    const scheduleChanged = previous.start !== next.start || previous.end !== next.end;
+    if (!statusChanged && !scheduleChanged) return;
+    const adminIds = await this.getAdminUserIds();
+
+    const startText = this.formatNotificationDate(next.start);
+    const message = statusChanged
+      ? `Stato prenotazione aggiornato a "${next.status}".`
+      : `Prenotazione ripianificata per ${startText}.`;
+
+    await this.notifyUsers([next.clientId], {
+      title: 'Prenotazione aggiornata',
+      message,
+      link: '/dashboard/booking-history'
+    });
+
+    await this.notifyUsers([next.artistId, ...adminIds], {
+      title: 'Prenotazione aggiornata',
+      message,
+      link: '/admin/calendar'
+    });
+  }
+
+  private async notifyBookingDeleted(booking: Booking): Promise<void> {
+    const startText = this.formatNotificationDate(booking.start);
+    const adminIds = await this.getAdminUserIds();
+    void this.notifyUsers([booking.clientId], {
+      title: 'Prenotazione cancellata',
+      message: `La prenotazione del ${startText} e stata cancellata.`,
+      link: '/dashboard/booking-history',
+      priority: 'high'
+    });
+
+    void this.notifyUsers([booking.artistId, ...adminIds], {
+      title: 'Prenotazione cancellata',
+      message: `La prenotazione del ${startText} e stata cancellata.`,
+      link: '/admin/calendar',
+      priority: 'high'
+    });
+  }
+
+  private async notifyUsers(
+    userIds: string[],
+    payload: {
+      title: string;
+      message: string;
+      link?: string;
+      priority?: 'low' | 'normal' | 'high';
+    }
+  ): Promise<void> {
+    const recipients = [...new Set(userIds.filter(Boolean))];
+    if (recipients.length === 0) return;
+
+    const results = await Promise.allSettled(
+      recipients.map(userId =>
+        this.notificationService.createForUser(userId, {
+          type: 'booking',
+          title: payload.title,
+          message: payload.message,
+          link: payload.link,
+          priority: payload.priority ?? 'normal'
+        })
+      )
+    );
+
+    const failures = results
+      .map((result, index) => ({ result, userId: recipients[index] }))
+      .filter((x): x is { result: PromiseRejectedResult; userId: string } => x.result.status === 'rejected')
+      .map(({ result, userId }) => {
+        const err = result.reason as any;
+        return {
+          userId,
+          code: err?.code ?? 'unknown',
+          message: err?.message ?? String(err)
+        };
+      });
+
+    if (failures.length > 0) {
+      console.error('[BookingService] notifyUsers failed', failures);
+      const permissionDenied = failures.some(f => String(f.code).includes('PERMISSION_DENIED'));
+      if (permissionDenied) {
+        console.warn(
+          '[BookingService] RTDB rules stanno bloccando la scrittura notifiche su utenti terzi. Verifica rules su notifications/{userId}.'
+        );
+      }
+    }
+  }
+
+  private formatNotificationDate(value: string): string {
+    const date = new Date(this.normalizeLocalDateTime(value));
+    if (isNaN(date.getTime())) return value;
+    return date.toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' });
+  }
+
+  private async getAdminUserIds(): Promise<string[]> {
+    try {
+      const usersRef = collection(this.firestore, 'users');
+      const q = firestoreQuery(usersRef, where('role', '==', 'admin'));
+      const snap = await getDocs(q);
+      return snap.docs.map(doc => doc.id);
+    } catch (err) {
+      console.error('[BookingService] getAdminUserIds error', err);
+      return [];
+    }
   }
 }

@@ -7,7 +7,7 @@ import { combineLatest, map, startWith, Observable } from 'rxjs';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { MatDialog } from '@angular/material/dialog';
 import { ProjectTrackerProjectDialogComponent } from '../project-tracker/project-tracker-project-dialog/project-tracker-project-dialog.component';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 
 import { ProjectsService, TattooProject } from '../../../../core/services/projects/projects.service';
 import { BookingService, Booking } from '../../../../core/services/bookings/booking.service';
@@ -74,7 +74,7 @@ export class ProjectManagerComponent {
   private readonly sessionService = inject(SessionService);
   private readonly invoicesService = inject(InvoicesService);
   private readonly clientService = inject(ClientService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly snackBar = inject(UiFeedbackService);
 
   private readonly db = inject(Database);
 

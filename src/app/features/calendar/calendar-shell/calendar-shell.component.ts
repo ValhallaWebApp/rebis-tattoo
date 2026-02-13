@@ -28,7 +28,7 @@ import { BookingLite, EventDrawerComponent, EventDrawerResult } from '../drawer/
 import { MaterialModule } from '../../../core/modules/material.module';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmDialogComponent } from '../../../shared/components/dialogs/confirm-dialog/confirm-dialog.component';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../../../core/services/ui/ui-feedback.service';
 import { CreateProjectDialogComponent, CreateProjectDialogResult } from '../dialogs/create-project-dialog/create-project-dialog.component';
 import { CompleteSessionDecision, CompleteSessionDialogComponent } from '../dialogs/complete-session-dialog/complete-session-dialog.component';
 import { CreateProjectTriggerPayload } from '../drawer/event-drawer/event-drawer.component';
@@ -58,7 +58,7 @@ import { ProjectsService } from '../../../core/services/projects/projects.servic
 })
 export class CalendarShellComponent implements OnChanges {
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly snackBar = inject(UiFeedbackService);
   private readonly router = inject(Router);
   private readonly sheet = inject(MatBottomSheet);
 

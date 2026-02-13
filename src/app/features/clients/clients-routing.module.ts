@@ -4,7 +4,6 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { BookingHistoryComponent } from './components/booking-history/booking-history.component';
 import { MessagingComponent } from './components/messaging/messaging.component';
 import { ReviewsComponent } from './components/reviews/reviews.component';
-import { SettingsComponent } from './components/settings/settings.component';
 import { PromoReferralComponent } from './components/promo-referral/promo-referral.component';
 
 const routes: Routes = [
@@ -13,7 +12,6 @@ const routes: Routes = [
     { path: 'booking-history', component: BookingHistoryComponent },
     { path: 'buoni', component: PromoReferralComponent },
     { path: 'reviews', component: ReviewsComponent },
-    { path: 'settings', component: SettingsComponent },
     { path: 'chat', component: MessagingComponent }
 
 ];

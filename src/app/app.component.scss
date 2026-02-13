@@ -21,6 +21,10 @@ $text-light: #f0f0f0;
     align-items: center;
     justify-content: center;
   }
+
+  .hidden {
+    display: none;
+  }
 }
 
 .notif-menu .mat-menu-item {

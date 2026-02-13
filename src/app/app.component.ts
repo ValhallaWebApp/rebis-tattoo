@@ -1,90 +1,104 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { map, Observable, of } from 'rxjs';
-import { MatSidenav } from '@angular/material/sidenav';
-import { Database, ref, set } from '@angular/fire/database';
-import { MenuItem, MenuService } from './core/services/menu/menu.service';
-import { AuthService } from './core/services/auth/authservice';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
+import { Component, effect, OnInit, ViewChild } from '@angular/core';
+import { MatSidenav } from '@angular/material/sidenav';
+import { Router, RouterModule } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { AuthService } from './core/services/auth/authservice';
+import { MenuItem, MenuService } from './core/services/menu/menu.service';
 import { MaterialModule } from './core/modules/material.module';
-import { ChatBotComponent } from './shared/components/chat-bot/chat-bot.component';
+import { AppNotification } from './core/models/notification.model';
+import { NotificationService } from './core/services/notifications/notification.service';
 import { ChatBotPopupComponent } from './shared/components/chat-bot/chat-bot-popup.component';
-import { effect } from '@angular/core';
 
 @Component({
   selector: 'app-root',
-   imports: [
-    CommonModule,
-    RouterModule,
-    MaterialModule,
-    ChatBotPopupComponent
-  ],
-  standalone:true,
+  imports: [CommonModule, RouterModule, MaterialModule, ChatBotPopupComponent],
+  standalone: true,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
-  modeSidenav:any = 'over';
+
+  modeSidenav: 'over' | 'side' = 'over';
   isMenuOpen = false;
-  userRole: any = 'public'; // da rimpiazzare con valore dinamico dopo login
+  userRole: 'public' | 'client' | 'staff' | 'admin' = 'public';
   navItem$!: Observable<MenuItem[]>;
-  isLoggedIn: boolean = false;
-  title: any;
-notifications = [
-  {
-    message: 'Hai una seduta prevista per il 10 luglio alle 15:00.',
-    icon: 'event',
-    date: new Date('2025-07-10T15:00:00')
-  },
-  {
-    message: 'La tua ultima recensione è stata approvata!',
-    icon: 'check_circle',
-    date: new Date('2025-07-07T09:00:00')
-  },
-  {
-    message: 'Hai ricevuto una risposta nel messaggio con lo studio.',
-    icon: 'chat',
-    date: new Date('2025-07-06T17:30:00')
-  }
-];
+  isLoggedIn = false;
+
+  notifications$: Observable<AppNotification[]> = of([]);
+  unreadCount$: Observable<number> = of(0);
 
   constructor(
     private menuService: MenuService,
     private auth: AuthService,
+    private notificationService: NotificationService,
+    private router: Router
   ) {}
- private userEffect = effect(() => {
+
+  private userEffect = effect(() => {
     const user = this.auth.userSig();
-    console.log(user);
+    this.isLoggedIn = !!user;
+
     if (user) {
-      this.loadMenu(user.role);
+      this.loadMenu(this.toMenuRole(user.role));
+      this.bindNotifications(user.uid);
+      return;
     }
+
+    this.loadMenu('public');
+    this.notifications$ = of([]);
+    this.unreadCount$ = of(0);
   });
-isLoadingMenu = true;
-ngOnInit() {
-  this.loadMenu('public');
-}
 
+  ngOnInit(): void {
+    this.loadMenu('public');
+  }
 
+  loadMenu(role: 'public' | 'client' | 'staff' | 'admin'): void {
+    this.userRole = role;
+    this.navItem$ = this.menuService.getMenuByRole(role);
+  }
 
+  private toMenuRole(role: string | undefined): 'public' | 'client' | 'staff' | 'admin' {
+    if (role === 'admin' || role === 'client' || role === 'staff' || role === 'public') return role;
+    return 'public';
+  }
 
+  private bindNotifications(userId: string): void {
+    this.notifications$ = this.notificationService.getUserNotifications(userId);
+    this.unreadCount$ = this.notificationService.getUnreadCount(userId);
+  }
 
-
-loadMenu(role:any): void {
-  this.navItem$ = this.menuService.getMenuByRole(role); // menu completo
-}
-
-
-  toggleMenu() {
+  toggleMenu(): void {
     this.isMenuOpen = !this.isMenuOpen;
   }
 
-  closeMenu() {
+  closeMenu(): void {
     this.isMenuOpen = false;
   }
 
-  logout() {
-    this.auth.logout(); // supponendo esista una funzione logout
+  logout(): void {
+    this.auth.logout();
+  }
+
+  async openNotification(notification: AppNotification): Promise<void> {
+    const user = this.auth.userSig();
+    if (!user) return;
+
+    if (!notification.readAt) {
+      await this.notificationService.markAsRead(user.uid, notification.id);
+    }
+
+    const role = this.toMenuRole(user.role);
+    const target = this.notificationService.resolveNotificationLink(notification, role);
+    await this.router.navigateByUrl(target);
+  }
+
+  async markAllNotificationsAsRead(): Promise<void> {
+    const user = this.auth.userSig();
+    if (!user) return;
+
+    await this.notificationService.markAllAsRead(user.uid);
   }
 }

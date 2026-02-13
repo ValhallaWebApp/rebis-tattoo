@@ -68,6 +68,12 @@ quickLinks = [
     route: '/admin/staff'
   },
   {
+    title: 'Bonus',
+    description: 'Codici promo e gift card',
+    icon: 'redeem',
+    route: '/admin/bonus'
+  },
+  {
     title: 'Recensioni',
     description: 'Valutazioni e feedback clienti',
     icon: 'star',

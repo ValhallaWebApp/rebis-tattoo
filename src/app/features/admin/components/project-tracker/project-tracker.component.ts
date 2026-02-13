@@ -5,7 +5,7 @@ import { combineLatest, from, map, of, startWith, switchMap } from 'rxjs';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 
 import { ProjectsService, TattooProject, ProjectStatus } from '../../../../core/services/projects/projects.service';
 import { BookingService } from '../../../../core/services/bookings/booking.service';
@@ -52,7 +52,7 @@ type Vm = {
 export class ProjectTrackerComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly snackBar = inject(UiFeedbackService);
 
   private readonly projectsService = inject(ProjectsService);
   private readonly bookingService = inject(BookingService);

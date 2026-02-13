@@ -1,58 +1,84 @@
-<section class="promo-referral-container">
+<section class="bonus-page">
+  <header class="bonus-header">
+    <h2>{{ lang.t('bonus.client.header.title') }}</h2>
+    <p>{{ lang.t('bonus.client.header.subtitle') }}</p>
+  </header>
 
-  <!-- 🔓 Codici Promo -->
-  <mat-card class="promo-card">
+  <div class="bonus-grid">
+    <mat-card class="wallet-card" *ngIf="wallet$ | async as wallet">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>account_balance_wallet</mat-icon>
+        <mat-card-title>{{ lang.t('bonus.client.wallet.title') }}</mat-card-title>
+        <mat-card-subtitle>{{ lang.t('bonus.client.wallet.updatedAt') }}: {{ wallet.updatedAt | date:'dd/MM/yyyy HH:mm' }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="wallet-balance">{{ wallet.balance | currency:'EUR':'symbol':'1.2-2' }}</p>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="action-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>sell</mat-icon>
+        <mat-card-title>{{ lang.t('bonus.client.promo.title') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="promoForm" (ngSubmit)="applyPromo()" class="action-form">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ lang.t('bonus.client.promo.codeLabel') }}</mat-label>
+            <input matInput formControlName="code" [placeholder]="lang.t('bonus.client.promo.placeholder')" />
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="promoForm.invalid || applyingPromo">
+            {{ applyingPromo ? lang.t('bonus.client.promo.loading') : lang.t('bonus.client.promo.submit') }}
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="action-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>redeem</mat-icon>
+        <mat-card-title>{{ lang.t('bonus.client.gift.title') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="giftForm" (ngSubmit)="redeemGiftCard()" class="action-form">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ lang.t('bonus.client.gift.codeLabel') }}</mat-label>
+            <input matInput formControlName="code" [placeholder]="lang.t('bonus.client.gift.placeholder')" />
+          </mat-form-field>
+
+          <button mat-flat-button color="accent" type="submit" [disabled]="giftForm.invalid || redeemingGift">
+            {{ redeemingGift ? lang.t('bonus.client.gift.loading') : lang.t('bonus.client.gift.submit') }}
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <mat-card class="ledger-card" *ngIf="ledger$ | async as ledger">
     <mat-card-header>
-      <mat-icon class="promo-icon">redeem</mat-icon>
-      <mat-card-title>Codici Promo</mat-card-title>
+      <mat-icon mat-card-avatar>history</mat-icon>
+      <mat-card-title>{{ lang.t('bonus.client.ledger.title') }}</mat-card-title>
+      <mat-card-subtitle>{{ lang.t('bonus.client.ledger.subtitle') }}</mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
-      <p>Inserisci un codice per ottenere sconti esclusivi.</p>
-      <form [formGroup]="promoForm" (ngSubmit)="applyPromo()" class="promo-form">
-        <mat-form-field appearance="outline" class="promo-input" [color]="promoStatusColor">
-          <mat-label>Codice promo</mat-label>
-          <input matInput formControlName="code" placeholder="Es. SUMMER25">
-          <mat-icon matSuffix *ngIf="promoStatusIcon">{{ promoStatusIcon }}</mat-icon>
-        </mat-form-field>
-        <button mat-flat-button color="primary" type="submit" [disabled]="promoForm.invalid">Applica</button>
-      </form>
-      <p class="promo-status" [ngClass]="promoStatusColor" *ngIf="promoStatus">{{ promoStatus }}</p>
-    </mat-card-content>
-  </mat-card>
+      <div class="ledger-list" *ngIf="ledger.length; else noLedger">
+        <div class="ledger-row" *ngFor="let row of ledger; trackBy: trackLedger">
+          <div class="left">
+            <p class="code">{{ row.code }}</p>
+            <p class="meta">{{ ledgerTypeLabel(row.type) }} - {{ row.at | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
 
-  <!-- 🤝 Referral Program -->
-  <mat-card class="referral-card">
-    <mat-card-header>
-      <mat-icon class="referral-icon">group_add</mat-icon>
-      <mat-card-title>Programma Referral</mat-card-title>
-    </mat-card-header>
-
-    <mat-card-content>
-      <p>Condividi il tuo codice con un amico e ricevi un premio!</p>
-
-      <div class="referral-code-box">
-        <span class="referral-code">{{ userReferralCode }}</span>
-        <button mat-icon-button (click)="copyReferralCode()" matTooltip="Copia codice">
-          <mat-icon>content_copy</mat-icon>
-        </button>
-      </div>
-
-      <p *ngIf="copyMessage" class="copy-message">{{ copyMessage }}</p>
-
-      <div class="referral-progress">
-        <p><strong>Inviti completati:</strong> {{ completedReferrals.length }}</p>
-        <mat-progress-bar mode="determinate" [value]="completedReferrals.length * 10"></mat-progress-bar>
-      </div>
-
-      <div class="referral-bonus-list">
-        <div>
-          <mat-chip *ngFor="let bonus of completedReferrals" color="accent" selected>
-            🎉 {{ bonus }}
-          </mat-chip>
+          <div class="right">
+            <strong>+{{ row.amount | currency:'EUR':'symbol':'1.2-2' }}</strong>
+          </div>
         </div>
       </div>
+
+      <ng-template #noLedger>
+        <p class="empty">{{ lang.t('bonus.client.ledger.empty') }}</p>
+      </ng-template>
     </mat-card-content>
   </mat-card>
-
 </section>

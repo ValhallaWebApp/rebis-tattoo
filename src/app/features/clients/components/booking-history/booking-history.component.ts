@@ -6,7 +6,7 @@ import { MaterialModule } from '../../../../core/modules/material.module';
 import { Booking, BookingService } from '../../../../core/services/bookings/booking.service';
 import { StaffService } from '../../../../core/services/staff/staff.service';
 import { AuthService } from '../../../../core/services/auth/authservice';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatDialog } from '@angular/material/dialog';
 import { ReviewsService } from '../../../../core/services/reviews/rewies.service';
@@ -39,7 +39,7 @@ export class BookingHistoryComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly bookingService = inject(BookingService);
   private readonly staffService = inject(StaffService);
-  private readonly snackbar = inject(MatSnackBar);
+  private readonly snackbar = inject(UiFeedbackService);
   private readonly dialog = inject(MatDialog);
   private readonly reviewsService = inject(ReviewsService);
   private readonly router = inject(Router);

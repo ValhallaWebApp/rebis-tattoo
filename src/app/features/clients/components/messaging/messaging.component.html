@@ -29,17 +29,17 @@
       <li *ngFor="let thread of filteredThreads()"
           (click)="selectThread(thread); sidebarOpen = false"
           [class.active]="thread.id === (selectedThread()?.id || null)">
-        <span class="state" [ngClass]="thread.status || 'aperto'"></span>
+        <span class="state" [ngClass]="statusLabel(thread.status)"></span>
         <div class="info">
           <strong>{{ thread.summary || ('Conversazione #' + (thread.id | slice:-6)) }}</strong>
-          <small>{{ thread.createAt | date:'short' }}</small>
+          <small>{{ (thread.lastMessageAt || thread.createdAt) | date:'short' }}</small>
         </div>
       </li>
 
       <li *ngIf="!filteredThreads()?.length" class="empty-state">
         Nessuna chat trovata.
         <div class="cta">
-          <button mat-stroked-button color="primary" (click)="sidebarOpen = false">Nuova chat</button>
+          <button mat-stroked-button color="primary" (click)="createConversation(); sidebarOpen = false">Nuova chat</button>
         </div>
       </li>
     </ul>
@@ -58,9 +58,9 @@
             {{ selectedThread()?.summary || 'Seleziona una conversazione' }}
           </div>
           <div class="pill"
-               [ngClass]="(selectedThread()?.status || 'aperto')"
+               [ngClass]="statusLabel(selectedThread()?.status)"
                *ngIf="selectedThread()">
-            {{ (selectedThread()?.status || 'aperto') | titlecase }}
+            {{ statusLabel(selectedThread()?.status) | titlecase }}
           </div>
         </div>
       </div>
@@ -71,13 +71,13 @@
         </button>
 
         <button mat-stroked-button color="primary"
-                *ngIf="(selectedThread()?.status || 'aperto') === 'aperto'"
+                *ngIf="statusLabel(selectedThread()?.status) === 'aperto'"
                 (click)="setStatus('chiuso')">
           <mat-icon>check_circle</mat-icon>&nbsp;Chiudi
         </button>
 
         <button mat-stroked-button color="primary"
-                *ngIf="(selectedThread()?.status || 'aperto') === 'chiuso'"
+                *ngIf="statusLabel(selectedThread()?.status) === 'chiuso'"
                 (click)="setStatus('aperto')">
           <mat-icon>undo</mat-icon>&nbsp;Riapri
         </button>
@@ -91,10 +91,10 @@
     <!-- Messaggi -->
     <div class="messages" #msgBox>
       <ng-container *ngIf="selectedThread(); else noThread">
-        <div *ngFor="let m of messages()" class="bubble" [class.user]="m.from === 'user'" [class.bot]="m.from !== 'user'">
+        <div *ngFor="let m of messages()" class="bubble" [class.user]="isOwnMessage(m)" [class.bot]="!isOwnMessage(m)">
           <div class="text" [innerHTML]="m.text"></div>
           <div class="meta">
-            <span>{{ m.timestamp ? (m.timestamp | date:'shortTime') : 'adesso' }}</span>
+            <span>{{ m.createdAt ? (m.createdAt | date:'shortTime') : 'adesso' }}</span>
           </div>
         </div>
       </ng-container>

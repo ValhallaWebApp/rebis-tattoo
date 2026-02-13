@@ -13,7 +13,7 @@ import {
   equalTo
 } from '@angular/fire/database';
 import { map, Observable } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../ui/ui-feedback.service';
 
 export type ProjectStatus = 'draft' | 'scheduled' | 'active' | 'healing' | 'completed' | 'cancelled';
 
@@ -64,7 +64,7 @@ export class ProjectsService {
 
   private readonly db = inject(Database);
   private readonly zone = inject(NgZone);
-  private readonly snackbar = inject(MatSnackBar);
+  private readonly ui = inject(UiFeedbackService);
 
   // -----------------------------
   // Read
@@ -197,10 +197,11 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
   // utils
   // -----------------------------
   private toast(message: string, isError = false) {
-    this.snackbar.open(message, 'Chiudi', {
-      duration: 2500,
-      panelClass: isError ? ['mat-warn'] : ['mat-primary']
-    });
+    if (isError) {
+      this.ui.error(message);
+      return;
+    }
+    this.ui.success(message);
   }
 
   private stripUndef<T extends Record<string, any>>(o: T): T {

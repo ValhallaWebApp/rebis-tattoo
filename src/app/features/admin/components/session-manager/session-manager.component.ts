@@ -3,7 +3,7 @@ import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatDrawer } from '@angular/material/sidenav';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 import { MatDialogModule } from '@angular/material/dialog';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -24,7 +24,7 @@ export class SessionManagerComponent implements OnInit {
 
   private sessionService = inject(SessionService);
   private staffService = inject(StaffService);
-  private snackbar = inject(MatSnackBar);
+  private snackbar = inject(UiFeedbackService);
   private fb = inject(FormBuilder);
 
   sessions: Session[] = [];

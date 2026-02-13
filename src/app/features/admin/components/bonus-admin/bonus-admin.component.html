@@ -1,0 +1,121 @@
+<section class="bonus-admin-page">
+  <header class="page-head">
+    <h2>{{ lang.t('bonus.admin.header.title') }}</h2>
+    <p>{{ lang.t('bonus.admin.header.subtitle') }}</p>
+  </header>
+
+  <div class="forms-grid">
+    <mat-card>
+      <mat-card-header>
+        <mat-icon mat-card-avatar>sell</mat-icon>
+        <mat-card-title>{{ lang.t('bonus.admin.promoForm.title') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="promoForm" (ngSubmit)="createPromo()" class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ lang.t('bonus.admin.promoForm.codeLabel') }}</mat-label>
+            <input matInput formControlName="code" [placeholder]="lang.t('bonus.admin.promoForm.codePlaceholder')" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ lang.t('bonus.admin.promoForm.creditLabel') }}</mat-label>
+            <input matInput type="number" formControlName="creditAmount" min="1" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ lang.t('bonus.admin.promoForm.maxUsesLabel') }}</mat-label>
+            <input matInput type="number" formControlName="maxUses" min="1" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ lang.t('bonus.admin.promoForm.expiryLabel') }}</mat-label>
+            <input matInput type="date" formControlName="expiresAt" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>{{ lang.t('bonus.admin.promoForm.descriptionLabel') }}</mat-label>
+            <textarea matInput rows="2" formControlName="description"></textarea>
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="promoForm.invalid || savingPromo">
+            {{ savingPromo ? lang.t('bonus.admin.promoForm.loading') : lang.t('bonus.admin.promoForm.submit') }}
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-icon mat-card-avatar>redeem</mat-icon>
+        <mat-card-title>{{ lang.t('bonus.admin.giftForm.title') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="giftForm" (ngSubmit)="createGiftCard()" class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ lang.t('bonus.admin.giftForm.codeLabel') }}</mat-label>
+            <input matInput formControlName="code" [placeholder]="lang.t('bonus.admin.giftForm.codePlaceholder')" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ lang.t('bonus.admin.giftForm.amountLabel') }}</mat-label>
+            <input matInput type="number" formControlName="amount" min="1" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ lang.t('bonus.admin.giftForm.expiryLabel') }}</mat-label>
+            <input matInput type="date" formControlName="expiresAt" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>{{ lang.t('bonus.admin.giftForm.noteLabel') }}</mat-label>
+            <textarea matInput rows="2" formControlName="note"></textarea>
+          </mat-form-field>
+
+          <button mat-flat-button color="accent" type="submit" [disabled]="giftForm.invalid || savingGift">
+            {{ savingGift ? lang.t('bonus.admin.giftForm.loading') : lang.t('bonus.admin.giftForm.submit') }}
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="lists-grid">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ lang.t('bonus.admin.list.promoTitle') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="list" *ngIf="promoCodes$ | async as promos">
+          <div class="row" *ngFor="let item of promos; trackBy: trackPromo">
+            <div class="info">
+              <p class="code">{{ item.code }}</p>
+              <p class="meta">+{{ item.creditAmount | currency:'EUR':'symbol':'1.2-2' }} - {{ promoUsageLabel(item) }}</p>
+            </div>
+            <mat-slide-toggle [checked]="item.active" (change)="togglePromo(item)">{{ lang.t('bonus.admin.list.activeToggle') }}</mat-slide-toggle>
+          </div>
+
+          <p class="empty" *ngIf="!promos.length">{{ lang.t('bonus.admin.list.noPromos') }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ lang.t('bonus.admin.list.giftTitle') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="list" *ngIf="giftCards$ | async as gifts">
+          <div class="row" *ngFor="let item of gifts; trackBy: trackGift">
+            <div class="info">
+              <p class="code">{{ item.code }}</p>
+              <p class="meta">{{ item.balance | currency:'EUR':'symbol':'1.2-2' }} {{ lang.t('bonus.admin.list.balanceSuffix') }} {{ item.initialAmount | currency:'EUR':'symbol':'1.2-2' }}</p>
+            </div>
+            <mat-slide-toggle [checked]="item.active" (change)="toggleGift(item)">{{ lang.t('bonus.admin.list.activeToggle') }}</mat-slide-toggle>
+          </div>
+
+          <p class="empty" *ngIf="!gifts.length">{{ lang.t('bonus.admin.list.noGifts') }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</section>

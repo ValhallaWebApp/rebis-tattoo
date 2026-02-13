@@ -1,4 +1,8 @@
 import {
+  MatButton,
+  MatButtonModule
+} from "./chunk-QM54LZOE.js";
+import {
   Overlay,
   OverlayConfig,
   OverlayModule
@@ -12,10 +16,6 @@ import {
   TemplatePortal
 } from "./chunk-NHOKREJB.js";
 import "./chunk-YILWSCUT.js";
-import {
-  MatButton,
-  MatButtonModule
-} from "./chunk-QM54LZOE.js";
 import {
   BreakpointObserver,
   Breakpoints,

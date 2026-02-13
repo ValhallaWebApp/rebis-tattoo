@@ -1,20 +1,40 @@
-<section class="services-container">
-  <h2 class="services-title">
-    {{ lang.t('home.services.title') }}
-  </h2>
-  <p class="services-subtitle">
-    {{ lang.t('home.services.subtitle') }}
-  </p>
+<section class="services">
+  <header class="services__head">
+    <h2 class="services__title">{{ lang.t('home.services.title') }}</h2>
+    <p class="services__subtitle">{{ lang.t('home.services.subtitle') }}</p>
+  </header>
 
-  <div class="services-grid">
-    <div
-      class="service-card"
-      *ngFor="let service of services; let i = index"
-      [ngClass]="{ 'nbt': i < 3, 'nbb': i >= 3 }"
-    >
-      <img [src]="service.icon" [alt]="service.title + ' icon'" />
-      <h3>{{ service.title }}</h3>
-      <p>{{ service.desc }}</p>
+  <ng-container *ngIf="services$ | async as services">
+    <div class="services__grid" *ngIf="services.length; else empty">
+      <article class="service-card" *ngFor="let service of services">
+        <div class="preview">
+          <div class="icon">
+            <img [src]="iconFor(service)" [alt]="titleOf(service) + ' icon'" loading="lazy" decoding="async" />
+          </div>
+          <div class="content">
+            <h3>{{ titleOf(service) }}</h3>
+            <p>{{ descOf(service) }}</p>
+            <div class="meta">
+              <span class="pill">
+                {{ service.prezzoDaConcordare ? 'Prezzo su richiesta' : ('€' + service.prezzo) }}
+              </span>
+              <span class="pill">
+                {{ service.durataDaConcordare ? 'Durata su richiesta' : (service.durata + ' min') }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </article>
     </div>
-  </div>
+  </ng-container>
+
+  <ng-template #empty>
+    <div class="empty">
+      <mat-icon>search_off</mat-icon>
+      <div>
+        <strong>Nessun servizio disponibile</strong>
+        <div class="muted">Torna a trovarci presto.</div>
+      </div>
+    </div>
+  </ng-template>
 </section>

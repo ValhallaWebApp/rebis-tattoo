@@ -1,15 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDrawer } from '@angular/material/sidenav';
-import { Timestamp } from 'firebase/firestore';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { Service, ServicesService } from '../../../../core/services/services/services.service';
 import { ConfirmDialogComponent } from '../../../../shared/components/dialogs/confirm-dialog/confirm-dialog.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ServiceEditorDialogComponent, ServiceEditorDialogData } from './service-editor-dialog/service-editor-dialog.component';
 
 
 @Component({
@@ -23,39 +22,20 @@ export class ServicesAdminComponent implements OnInit {
   services: Service[] = [];
   filteredServices: Service[] = [];
 
-  serviceForm!: FormGroup;
   filterForm!: FormGroup;
 
   editingId: string | null = null;
-
-  @ViewChild('drawer') drawer!: MatDrawer;
 
   constructor(
     private fb: FormBuilder,
     private serviceService: ServicesService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: UiFeedbackService
   ) {}
 
   ngOnInit(): void {
-    this.initForm();
     this.initFilterForm();
     this.loadServices();
-  }
-
-  /* ==============
-     INIT FORM
-     ============== */
-
-  private initForm(): void {
-    this.serviceForm = this.fb.group({
-      name: ['', Validators.required],
-      description: [''],
-      prezzo: [0, [Validators.required, Validators.min(0)]],
-      durata: [0, [Validators.required, Validators.min(0)]],
-      categoria: ['tatuaggio', Validators.required],
-      visibile: [true],
-    });
   }
 
   private initFilterForm(): void {
@@ -108,76 +88,41 @@ export class ServicesAdminComponent implements OnInit {
      UI / DRAWER
      ============== */
 
-  toggleDrawer(): void {
-    if (this.drawer?.opened) {
-      this.cancel();
-    } else {
-      this.drawer.open();
-    }
+  openCreate(): void {
+    const data: ServiceEditorDialogData = { mode: 'create' };
+    const ref = this.dialog.open(ServiceEditorDialogComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      panelClass: 'service-editor-dialog',
+      data
+    });
+    ref.afterClosed().subscribe((result: Partial<Service> | null) => {
+      if (!result) return;
+      this.serviceService.addService(result as any)
+        .then(() => this.showSnack('Nuovo servizio creato'))
+        .catch(() => this.showSnack('Errore durante la creazione'));
+    });
   }
 
-  edit(service: Service): void {
-    this.editingId = service.id;
-    this.serviceForm.patchValue(service);
-    this.drawer.open();
-  }
-
-  cancel(): void {
-    this.editingId = null;
-    this.resetForm();
-    if (this.drawer?.opened) {
-      this.drawer.close();
-    }
-  }
-
-  resetForm(): void {
-    this.serviceForm.reset({
-      name: '',
-      description: '',
-      prezzo: 0,
-      durata: 0,
-      categoria: 'tatuaggio',
-      visibile: true,
+  openEdit(service: Service): void {
+    const data: ServiceEditorDialogData = { mode: 'edit', service };
+    const ref = this.dialog.open(ServiceEditorDialogComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      panelClass: 'service-editor-dialog',
+      data
+    });
+    ref.afterClosed().subscribe((result: Partial<Service> | null) => {
+      if (!result) return;
+      this.serviceService.updateService(service.id, result)
+        .then(() => this.showSnack('Servizio aggiornato correttamente'))
+        .catch(() => this.showSnack('Errore durante l\'aggiornamento'));
     });
   }
 
   /* ==============
      CRUD + SNACKBAR
      ============== */
-
-  submit(): void {
-    if (this.serviceForm.invalid) {
-      this.serviceForm.markAllAsTouched();
-      this.showSnack('Compila correttamente i campi obbligatori');
-      return;
-    }
-
-    const data: Service = this.serviceForm.value;
-
-    if (this.editingId) {
-      // UPDATE
-      this.serviceService.updateService(this.editingId, data)
-        .then(() => {
-          this.showSnack('Servizio aggiornato correttamente');
-          this.cancel();
-        })
-        .catch((err) => {
-          console.error(err);
-          this.showSnack('Errore durante l\'aggiornamento');
-        });
-    } else {
-      // CREATE
-      this.serviceService.addService(data)
-        .then(() => {
-          this.showSnack('Nuovo servizio creato');
-          this.resetForm();
-        })
-        .catch((err) => {
-          console.error(err);
-          this.showSnack('Errore durante la creazione');
-        });
-    }
-  }
 
   deleteService(serviceId: string): void {
     const confirmRef = this.dialog.open(ConfirmDialogComponent, {

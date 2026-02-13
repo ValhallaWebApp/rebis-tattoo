@@ -60,6 +60,11 @@
     color: #BE9045;
   }
 
+  .status-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
   .messages {
     flex: 1;
     overflow-y: auto;

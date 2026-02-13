@@ -2,7 +2,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 import { Observable, combineLatest, map, startWith } from 'rxjs';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
@@ -23,7 +23,7 @@ import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
   styleUrls: ['./review-list-admin.component.scss']
 })
 export class ReviewListAdminComponent implements OnInit {
-  private readonly snackbar = inject(MatSnackBar);
+  private readonly snackbar = inject(UiFeedbackService);
 
   private readonly reviewService = inject(ReviewsService);
   private readonly staffService = inject(StaffService);

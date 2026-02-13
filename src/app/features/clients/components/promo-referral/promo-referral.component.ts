@@ -1,62 +1,89 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable, of } from 'rxjs';
+import { AuthService } from '../../../../core/services/auth/authservice';
+import {
+  BonusService,
+  UserWallet,
+  WalletLedgerEntry
+} from '../../../../core/services/bonus/bonus.service';
 import { MaterialModule } from '../../../../core/modules/material.module';
-import { ThemePalette } from '@angular/material/core';
-
+import { LanguageService } from '../../../../core/services/language/language.service';
 
 @Component({
   selector: 'app-promo-referral',
-  standalone:true,
-  imports:[CommonModule,MaterialModule,ReactiveFormsModule],
+  standalone: true,
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule],
   templateUrl: './promo-referral.component.html',
   styleUrls: ['./promo-referral.component.scss']
 })
 export class PromoReferralComponent implements OnInit {
-  promoForm!: FormGroup;
-  promoStatus: string = '';
-promoStatusColor: ThemePalette | undefined;
-  promoStatusIcon: string = '';
-  copyMessage: string = '';
-  userReferralCode: string = 'REBIS123';
-  completedReferrals: string[] = [
-    'Ricevuto bonus per invito completato!',
-    'Ricevuto bonus per invito completato!',
-    'Ricevuto bonus per invito completato!'
-  ];
+  private fb = inject(FormBuilder);
 
-  constructor(private fb: FormBuilder) {}
+  promoForm = this.fb.group({
+    code: ['', [Validators.required, Validators.minLength(3)]]
+  });
 
-  ngOnInit(): void {
-    this.promoForm = this.fb.group({
-      code: ['', Validators.required]
-    });
+  giftForm = this.fb.group({
+    code: ['', [Validators.required, Validators.minLength(3)]]
+  });
+
+  wallet$: Observable<UserWallet> = of({ userId: '', balance: 0, updatedAt: new Date(0).toISOString() });
+  ledger$: Observable<WalletLedgerEntry[]> = of([]);
+
+  applyingPromo = false;
+  redeemingGift = false;
+
+  constructor(
+    private auth: AuthService,
+    private bonusService: BonusService,
+    public lang: LanguageService
+  ) {}
+
+  async ngOnInit(): Promise<void> {
+    const user = await this.auth.resolveCurrentUser();
+    if (!user) return;
+
+    this.wallet$ = this.bonusService.streamWallet(user.uid);
+    this.ledger$ = this.bonusService.streamWalletLedger(user.uid);
   }
 
-  applyPromo(): void {
-    const enteredCode = this.promoForm.value.code.trim().toUpperCase();
+  async applyPromo(): Promise<void> {
+    if (this.promoForm.invalid || this.applyingPromo) return;
 
-    // Dati statici di esempio
-    const validCodes = ['SUMMER25', 'REBIS10', 'WELCOME5'];
-
-    if (validCodes.includes(enteredCode)) {
-      this.promoStatus = `✅ Codice "${enteredCode}" applicato con successo!`;
-      this.promoStatusColor = 'primary';
-      this.promoStatusIcon = 'check_circle';
-    } else {
-      this.promoStatus = `❌ Codice "${enteredCode}" non valido.`;
-      this.promoStatusColor = 'warn';
-      this.promoStatusIcon = 'error';
+    this.applyingPromo = true;
+    try {
+      await this.bonusService.applyPromoCodeForCurrentUser(this.promoForm.value.code || '');
+      this.promoForm.reset();
+    } catch (error) {
+      console.error('[PromoReferralComponent] applyPromo error', error);
+    } finally {
+      this.applyingPromo = false;
     }
-
-    // Reset campo input dopo invio
-    this.promoForm.reset();
   }
 
-  copyReferralCode(): void {
-    navigator.clipboard.writeText(this.userReferralCode).then(() => {
-      this.copyMessage = 'Codice copiato negli appunti!';
-      setTimeout(() => this.copyMessage = '', 2500);
-    });
+  async redeemGiftCard(): Promise<void> {
+    if (this.giftForm.invalid || this.redeemingGift) return;
+
+    this.redeemingGift = true;
+    try {
+      await this.bonusService.redeemGiftCardForCurrentUser(this.giftForm.value.code || '');
+      this.giftForm.reset();
+    } catch (error) {
+      console.error('[PromoReferralComponent] redeemGiftCard error', error);
+    } finally {
+      this.redeemingGift = false;
+    }
+  }
+
+  trackLedger(_index: number, row: WalletLedgerEntry): string {
+    return row.id;
+  }
+
+  ledgerTypeLabel(type: WalletLedgerEntry['type']): string {
+    if (type === 'promo') return this.lang.t('bonus.client.ledger.typePromo');
+    if (type === 'gift_card') return this.lang.t('bonus.client.ledger.typeGift');
+    return this.lang.t('bonus.client.ledger.typeAdjustment');
   }
 }

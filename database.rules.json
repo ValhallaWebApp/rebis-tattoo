@@ -1,0 +1,24 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+
+    "adminUids": {
+      "$uid": {
+        ".read": "auth != null && root.child('adminUids/' + auth.uid).val() === true",
+        ".write": "auth != null && root.child('adminUids/' + auth.uid).val() === true",
+        ".validate": "newData.isBoolean()"
+      }
+    },
+
+    "notifications": {
+      "$userId": {
+        ".read": "auth != null && (auth.uid === $userId || root.child('adminUids/' + auth.uid).val() === true)",
+        "$notificationId": {
+          ".write": "auth != null && (auth.uid === $userId || root.child('adminUids/' + auth.uid).val() === true)",
+          ".validate": "!newData.exists() || (newData.hasChildren(['id','userId','type','title','message','priority','createdAt','readAt']) && newData.child('id').isString() && newData.child('id').val() === $notificationId && newData.child('userId').isString() && newData.child('userId').val() === $userId && newData.child('type').isString() && newData.child('title').isString() && newData.child('message').isString() && newData.child('priority').isString() && newData.child('createdAt').isString() && (newData.child('readAt').val() === null || newData.child('readAt').isString()))"
+        }
+      }
+    }
+  }
+}

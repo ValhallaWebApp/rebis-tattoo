@@ -46,3 +46,28 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   font-optical-sizing: auto;
   font-style: normal;
 }
+
+.mat-mdc-snack-bar-container.app-snackbar-success .mdc-snackbar__surface {
+  background: #1f6f43 !important;
+  color: #ffffff !important;
+}
+
+.mat-mdc-snack-bar-container.app-snackbar-error .mdc-snackbar__surface {
+  background: #9d1c1c !important;
+  color: #ffffff !important;
+}
+
+.mat-mdc-snack-bar-container.app-snackbar-info .mdc-snackbar__surface {
+  background: #154a8a !important;
+  color: #ffffff !important;
+}
+
+.mat-mdc-snack-bar-container.app-snackbar-warn .mdc-snackbar__surface {
+  background: #8a5b10 !important;
+  color: #ffffff !important;
+}
+
+.mat-mdc-snack-bar-container.app-snackbar .mdc-button__label {
+  color: #ffffff !important;
+  font-weight: 600;
+}

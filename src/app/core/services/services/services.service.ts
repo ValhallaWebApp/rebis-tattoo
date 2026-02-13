@@ -19,6 +19,9 @@ export interface Service {
   prezzo: number;
   durata: number;
   visibile: boolean;
+  prezzoDaConcordare?: boolean;
+  durataDaConcordare?: boolean;
+  icon?: string;
   createdAt: number;
   updatedAt: number;
   creatoreId: string;
@@ -47,7 +50,7 @@ export class ServicesService {
       updatedAt: now,
       creatoreId: 'admin', // se usi auth → sostituisci con user.uid
       ...service,
-      visibile: service.visibile ?? true
+      visibile: service.visibile ?? false
     };
 
     return set(newRef, payload);

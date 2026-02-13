@@ -1,0 +1,105 @@
+<div class="dlg">
+  <header class="dlg__head">
+    <div>
+      <h3>{{ data.mode === 'edit' ? 'Modifica servizio' : 'Nuovo servizio' }}</h3>
+      <p>Compila i campi essenziali. Prezzo e durata possono essere su richiesta.</p>
+    </div>
+    <div class="head-actions">
+      <button mat-icon-button (click)="toggleExpand()" aria-label="espandi">
+        <mat-icon>{{ isExpanded ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      </button>
+      <button mat-icon-button (click)="cancel()" aria-label="chiudi">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  <div class="dlg__body">
+    <form [formGroup]="form" class="form">
+      <div class="col">
+        <mat-form-field appearance="outline">
+          <mat-label>Nome*</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Categoria*</mat-label>
+          <mat-select formControlName="categoria">
+            <mat-option value="tatuaggio">Tatuaggio</mat-option>
+            <mat-option value="piercing">Piercing</mat-option>
+            <mat-option value="laser">Laser</mat-option>
+            <mat-option value="consulenza">Consulenza</mat-option>
+            <mat-option value="altro">Altro</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Icona</mat-label>
+          <mat-select formControlName="icon">
+            <mat-option value="">Automatica</mat-option>
+            <mat-option value="/home/icon-01-80x80.png">Tatuaggi</mat-option>
+            <mat-option value="/home/icon-07-80x80.png">Fine Line</mat-option>
+            <mat-option value="/home/icon-03-80x80.png">Copertura</mat-option>
+            <mat-option value="/home/icon-04-80x80.png">Design</mat-option>
+            <mat-option value="/home/icon-05-80x80.png">Trucco permanente</mat-option>
+            <mat-option value="/home/icon-custom-02.png">Su misura</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Descrizione</mat-label>
+          <textarea matInput rows="4" formControlName="description"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="col">
+        <div class="toggles">
+          <mat-slide-toggle formControlName="prezzoDaConcordare">
+            Prezzo su richiesta
+          </mat-slide-toggle>
+          <mat-slide-toggle formControlName="durataDaConcordare">
+            Durata su richiesta
+          </mat-slide-toggle>
+        </div>
+
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Prezzo (€)</mat-label>
+            <input matInput type="number" formControlName="prezzo" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Durata (min)</mat-label>
+            <input matInput type="number" formControlName="durata" />
+          </mat-form-field>
+        </div>
+
+        <mat-slide-toggle formControlName="visibile">
+          Pubblica il servizio
+        </mat-slide-toggle>
+
+        <div class="preview">
+          <div class="icon">
+            <img *ngIf="form.value.icon" [src]="form.value.icon" alt="" />
+            <mat-icon *ngIf="!form.value.icon">brush</mat-icon>
+          </div>
+          <div>
+            <strong>{{ form.value.name || 'Nome servizio' }}</strong>
+            <div class="muted">{{ form.value.categoria || 'Categoria' }}</div>
+            <div class="meta">
+              {{ form.value.prezzoDaConcordare ? 'Prezzo su richiesta' : ('€' + (form.value.prezzo || '0')) }} -
+              {{ form.value.durataDaConcordare ? 'Durata su richiesta' : ((form.value.durata || '0') + ' min') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <footer class="dlg__footer">
+    <button mat-stroked-button type="button" (click)="cancel()">Annulla</button>
+    <button mat-flat-button color="primary" type="button" (click)="save()">
+      {{ data.mode === 'edit' ? 'Salva modifiche' : 'Crea servizio' }}
+    </button>
+  </footer>
+</div>

@@ -1,13 +1,13 @@
-import { Component, ElementRef, ViewChild, inject, effect, Injector, signal, computed } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
-import { MatDialog } from '@angular/material/dialog';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../../../core/services/auth/authservice';
-import {  ChatMessage, ChatService } from '../../../../core/services/chatBot/chat-bot.service';
-
-type Thread = any; // compat
+import { MessagingService } from '../../../../core/services/messaging/messaging.service';
+import { Conversation, ConversationMessage, ConversationStatus, ParticipantRole } from '../../../../core/models/messaging.model';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 
 @Component({
   selector: 'app-messaging',
@@ -16,155 +16,205 @@ type Thread = any; // compat
   templateUrl: './messaging.component.html',
   styleUrls: ['./messaging.component.scss']
 })
-export class MessagingComponent {
-  // services + injector per effect (no NG0203)
+export class MessagingComponent implements OnDestroy {
   private readonly auth = inject(AuthService);
-  private readonly chat = inject(ChatService);
-  private readonly dialog = inject(MatDialog);
-  private readonly injector = inject(Injector);
+  private readonly messaging = inject(MessagingService);
+  private readonly ui = inject(UiFeedbackService);
 
-  // UI state
   isDesktop = window.innerWidth >= 768;
   sidebarOpen = false;
   emojiPickerVisible = false;
   galleryOpen = false;
   expandedImage: string | null = null;
 
-  // filtro e search
   statusFilter = signal<'aperte' | 'chiuse' | 'tutte'>('aperte');
   searchCtrl = new FormControl<string>('', { nonNullable: true });
 
-  // dati
-  threads = signal<Thread[]>([]);
-  selectedThread = signal<Thread | null>(null);
-  messages = signal<ChatMessage[]>([]);
+  threads = signal<Conversation[]>([]);
+  selectedThread = signal<Conversation | null>(null);
+  messages = signal<ConversationMessage[]>([]);
   newMessage = '';
 
-  // derived
-  filteredThreads = computed(() => {
+  emojiCategories: any[] = ['smileys', 'foods', 'activities', 'objects'];
+  projectImages: string[] = [];
+
+  private convSub?: Subscription;
+  private msgSub?: Subscription;
+  private currentUserId: string | null = null;
+  private currentUserRole: ParticipantRole = 'client';
+
+  readonly filteredThreads = computed(() => {
     const q = (this.searchCtrl.value || '').toLowerCase();
     const mode = this.statusFilter();
     return this.threads().filter(t => {
       const matchesStatus =
         mode === 'tutte' ? true :
-        mode === 'aperte' ? (t.status || 'aperto') === 'aperto' :
-                            (t.status || 'aperto') === 'chiuso';
-      const lastText = t.summary || '';
-      const matchesQuery = !q || t.id?.toLowerCase().includes(q) || lastText.toLowerCase().includes(q);
+        mode === 'aperte' ? t.status === 'open' :
+        t.status === 'closed';
+      const lastText = t.lastMessageText || t.summary || '';
+      const matchesQuery = !q || t.id.toLowerCase().includes(q) || lastText.toLowerCase().includes(q);
       return matchesStatus && matchesQuery;
     });
   });
 
-  // emoji categories, media mock (come prima)
-  emojiCategories: any[] = ['smileys', 'foods', 'activities', 'objects'];
-  projectImages: string[] = []; // riempita da updateGallery()
-
-  // effect: reagisce all'utente loggato e carica le chat
-  private readonly dataEffect = effect((onCleanup) => {
-    const u = this.auth.userSig();
-    if (!u?.uid) return;
-
-    // const sub = this.chat.getChatsByClient(u.uid).subscribe(list => {
-      // this.threads.set(list);
-      // selezione automatica: prima aperta, altrimenti prima disponibile
-      const current = this.selectedThread();
-      // if (!current || !list.some(t => t.id === current.id)) {
-      //   const firstOpen = list.find(t => (t.status || 'aperto') === 'aperto');
-      //   this.selectThread(firstOpen || list[0] || null);
-      // }
-    });
-
-  //   onCleanup(() => sub.unsubscribe());
-  // }, { injector: this.injector });
-
-  constructor() {
-    // resize listener minimale
-    window.addEventListener('resize', () => this.isDesktop = window.innerWidth >= 768);
-  }
-
-  // selezione thread → subscribe messaggi realtime
   @ViewChild('msgBox') msgBox!: ElementRef<HTMLDivElement>;
 
-  selectThread(t: Thread | null) {
+  constructor() {
+    window.addEventListener('resize', this.onResize);
+    void this.bootstrap();
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('resize', this.onResize);
+    this.convSub?.unsubscribe();
+    this.msgSub?.unsubscribe();
+  }
+
+  async createConversation(): Promise<void> {
+    if (!this.currentUserId) return;
+    const id = await this.messaging.createConversationForClient(this.currentUserId, 'Chat con studio');
+    const created = this.threads().find(t => t.id === id) ?? null;
+    if (created) this.selectThread(created);
+  }
+
+  selectThread(t: Conversation | null): void {
     this.selectedThread.set(t);
     this.messages.set([]);
-    if (!t?.id) return;
+    this.msgSub?.unsubscribe();
 
-    const sub = this.chat.getMessages(t.id).subscribe(msgs => {
+    if (!t?.id || !this.currentUserId) return;
+
+    this.msgSub = this.messaging.streamMessages(t.id).subscribe(msgs => {
       this.messages.set(msgs);
       setTimeout(() => this.scrollBottom(), 0);
       this.updateGallery();
     });
 
-    // quando cambio thread, pulisco la sub precedente
-    // (usiamo un trick: metto la sub in un campo della funzione per poterla chiudere)
-    (this.selectThread as any)._sub?.unsubscribe?.();
-    (this.selectThread as any)._sub = sub;
+    void this.messaging.markAsRead(t.id, this.currentUserId);
   }
 
-  // invio testo
   async sendMessage(): Promise<void> {
     const text = this.newMessage.trim();
     const t = this.selectedThread();
-    if (!text || !t?.id) return;
+    if (!text || !t?.id || !this.currentUserId) return;
 
-    await this.chat.addMessage(t.id, { from: 'user', text, timestamp: '', chips: null });
+    await this.messaging.sendMessage({
+      conversationId: t.id,
+      senderId: this.currentUserId,
+      senderRole: this.currentUserRole,
+      text,
+      kind: 'text'
+    });
+
     this.newMessage = '';
     this.emojiPickerVisible = false;
   }
 
-  // upload immagine (come prima, ma persistente se vuoi – qui blob URL locale)
-  uploadMedia(ev: Event): void {
+  async uploadMedia(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     const t = this.selectedThread();
-    if (!file || !t?.id) return;
+    if (!file || !t?.id || !this.currentUserId) return;
+
     const url = URL.createObjectURL(file);
-    this.chat.addMessage(t.id, { from: 'user', text: '', timestamp: '', chips: null }).then(async (msgId) => {
-      // se hai storage, qui salvi realmente l’immagine e metti l’url definitivo
-      // per ora, aggiungiamo un messaggio testuale con link
-      await this.chat.addMessage(t.id, { from: 'user', text: `📎 Media: ${url}`, timestamp: '', chips: null });
+    await this.messaging.sendMessage({
+      conversationId: t.id,
+      senderId: this.currentUserId,
+      senderRole: this.currentUserRole,
+      text: `📎 Media: ${url}`,
+      kind: 'media'
     });
   }
 
-  // chiudi/riapri/elimina
-  async startCloseThread() {
-    // mostra input nota come facevi già nel TS, oppure dialog rapido
-    // qui, per brevità, chiudo senza nota
-    await this.setStatus('chiuso');
-  }
-  async setStatus(status: any, note?: string) {
+  async setStatus(status: 'aperto' | 'chiuso'): Promise<void> {
     const t = this.selectedThread();
-    if (!t?.id) return;
-    // await this.chat.setChatStatus(t.id, status, note);
-    // aggiorna selezione se hai filtrato “aperte”
-    if (status === 'chiuso' && this.statusFilter() === 'aperte') {
-      const next = this.filteredThreads()[0] || null;
-      this.selectThread(next);
-    }
-  }
-  async deleteThread() {
-    const t = this.selectedThread();
-    if (!t?.id) return;
-    // await this.chat.deleteChat(t.id);
-    this.selectThread(null);
+    if (!t?.id || !this.currentUserId) return;
+
+    const mapped: ConversationStatus = status === 'chiuso' ? 'closed' : 'open';
+    await this.messaging.setConversationStatus(t.id, mapped, this.currentUserId, this.currentUserRole);
   }
 
-  // utility UI
-  addEmoji(e: any) { this.newMessage += e.emoji.native; this.emojiPickerVisible = false; }
-  hasGallery(): boolean { return this.messages().some(m => /https?:\/\/.+\.(png|jpe?g|webp|gif)/i.test(m.text)); }
-  openGallery() { this.updateGallery(); this.galleryOpen = true; }
-  toggleExpand(img: string) { this.expandedImage = this.expandedImage === img ? null : img; }
-  private scrollBottom() {
+  async deleteThread(): Promise<void> {
+    const t = this.selectedThread();
+    if (!t?.id || !this.currentUserId) return;
+
+    await this.messaging.archiveConversationForUser(t.id, this.currentUserId);
+    this.selectThread(null);
+    this.ui.info('Conversazione archiviata');
+  }
+
+  isOwnMessage(m: ConversationMessage): boolean {
+    return !!this.currentUserId && m.senderId === this.currentUserId;
+  }
+
+  statusLabel(status: ConversationStatus | undefined): string {
+    return status === 'closed' ? 'chiuso' : 'aperto';
+  }
+
+  addEmoji(e: any): void {
+    this.newMessage += e.emoji.native;
+    this.emojiPickerVisible = false;
+  }
+
+  hasGallery(): boolean {
+    return this.messages().some(m => /https?:\/\/.+\.(png|jpe?g|webp|gif)/i.test(m.text));
+  }
+
+  openGallery(): void {
+    this.updateGallery();
+    this.galleryOpen = true;
+  }
+
+  toggleExpand(img: string): void {
+    this.expandedImage = this.expandedImage === img ? null : img;
+  }
+
+  private async bootstrap(): Promise<void> {
+    const user = await this.auth.resolveCurrentUser();
+    if (!user?.uid) return;
+
+    this.currentUserId = user.uid;
+    this.currentUserRole = this.toParticipantRole(user.role);
+    this.bindConversations(user.uid);
+  }
+
+  private bindConversations(userId: string): void {
+    this.convSub?.unsubscribe();
+    this.convSub = this.messaging.streamConversationsForUser(userId).subscribe(async list => {
+      this.threads.set(list);
+
+      const selected = this.selectedThread();
+      if (selected && list.some(t => t.id === selected.id)) return;
+
+      if (!list.length) {
+        const id = await this.messaging.createConversationForClient(userId, 'Chat con studio');
+        const created = this.threads().find(t => t.id === id) ?? null;
+        this.selectThread(created);
+        return;
+      }
+
+      this.selectThread(list[0] ?? null);
+    });
+  }
+
+  private toParticipantRole(role?: string): ParticipantRole {
+    if (role === 'admin') return 'admin';
+    if (role === 'staff') return 'staff';
+    return 'client';
+  }
+
+  private scrollBottom(): void {
     const el = this.msgBox?.nativeElement;
     if (el) el.scrollTop = el.scrollHeight;
   }
-  private updateGallery() {
+
+  private updateGallery(): void {
     this.projectImages = this.messages()
-      .map(m => {
-        const mUrl = m.text?.match(/https?:\/\/\S+\.(?:png|jpe?g|webp|gif)/i)?.[0];
-        return mUrl || null;
-      })
+      .map(m => m.text?.match(/https?:\/\/\S+\.(?:png|jpe?g|webp|gif)/i)?.[0] || null)
       .filter(Boolean) as string[];
   }
+
+  private readonly onResize = (): void => {
+    this.isDesktop = window.innerWidth >= 768;
+  };
 }

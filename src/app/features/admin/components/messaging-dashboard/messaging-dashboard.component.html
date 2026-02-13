@@ -1,29 +1,48 @@
 <div class="sidebar">
   <h3>Conversazioni</h3>
   <mat-list>
-    <mat-list-item class="white" *ngFor="let thread of threads" (click)="selectThread(thread)" [class.unread]="thread.unread">
+    <mat-list-item
+      class="white"
+      *ngFor="let thread of threads"
+      (click)="selectThread(thread)"
+      [class.unread]="(thread.unreadBy?.[actorId] ?? 0) > 0"
+    >
       <span style="color: whitesmoke;">
-        {{ thread.userName }} ({{ thread.source }})
+        {{ thread.summary || ('Conversazione #' + (thread.id | slice:-6)) }} ({{ labelStatus(thread.status) }})
       </span>
     </mat-list-item>
   </mat-list>
 </div>
 
 <div class="chat-window" *ngIf="selectedThread">
-  <h3>{{ selectedThread.userName }} – {{ selectedThread.source }}</h3>
+  <h3>{{ selectedThread.summary || ('Conversazione #' + (selectedThread.id | slice:-6)) }} - {{ labelStatus(selectedThread.status) }}</h3>
+
+  <div class="status-actions">
+    <button mat-stroked-button color="primary" *ngIf="selectedThread.status !== 'closed'" (click)="setStatus('chiuso')">
+      Chiudi
+    </button>
+    <button mat-stroked-button color="primary" *ngIf="selectedThread.status === 'closed'" (click)="setStatus('aperto')">
+      Riapri
+    </button>
+  </div>
+
   <div class="messages">
-    <div *ngFor="let msg of selectedThread.messages">
-      <p [class.admin]="msg.sender === 'admin'" [class.chatbot]="msg.sender === 'chatbot'">
-        <strong>{{ msg.sender }}:</strong> {{ msg.text }}
+    <div *ngFor="let msg of messages">
+      <p [class.admin]="isAdminMessage(msg)" [class.chatbot]="msg.senderRole === 'bot'">
+        <strong>{{ msg.senderRole }}:</strong> {{ msg.text }}
       </p>
     </div>
   </div>
+
   <mat-form-field appearance="outline" class="message-input">
     <input matInput placeholder="Scrivi una risposta..." [(ngModel)]="newMessage" />
   </mat-form-field>
-  <button mat-flat-button color="primary" (click)="sendMessage()">Invia</button>
+
+  <button mat-flat-button color="primary" (click)="sendMessage()" [disabled]="!newMessage.trim() || selectedThread.status === 'closed'">
+    Invia
+  </button>
 </div>
 
 <div class="chat-window" *ngIf="!selectedThread">
-
+  <p>Seleziona una conversazione.</p>
 </div>

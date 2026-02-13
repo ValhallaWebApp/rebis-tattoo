@@ -19,11 +19,27 @@
   border: 1px solid rgba(255,255,255,.08);
   background: rgba(255,255,255,.03);
 
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   h1 {
     margin: 0;
     font-size: 22px;
     font-weight: 900;
     letter-spacing: .3px;
+  }
+
+  .count-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.35);
+    font-weight: 900;
+    font-size: 12px;
+    opacity: .95;
   }
 
   p {
@@ -52,7 +68,7 @@
 .filters {
   padding: 14px 16px 18px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
   gap: 12px;
 
   .reset-btn {
@@ -77,6 +93,54 @@
   .filters {
     grid-template-columns: 1fr;
   }
+}
+
+.chip-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 0 4px;
+}
+
+.chip-label {
+  font-size: 12px;
+  opacity: .75;
+  font-weight: 700;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  border-radius: 999px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.25);
+  color: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .2px;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,.2);
+}
+
+.chip.active {
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.3);
+}
+
+.chip.toggle {
+  align-self: start;
+  height: 36px;
+  justify-self: start;
 }
 
 /* ====== GRID ====== */

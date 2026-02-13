@@ -94,7 +94,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       )
       .subscribe(p => {
         const normalized = p ? this.normalizeProject(p as any) : undefined;
-        if (normalized && (normalized as any).isPublic === false) {
+        if (normalized && ((normalized as any).isPublic === false || String((normalized as any).status ?? '').trim() !== 'completed')) {
           this.project = undefined;
           this.notFound = true;
           this.loading = false;

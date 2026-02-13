@@ -1,23 +1,21 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router, UrlTree } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth/authservice';
 
-export const AuthGuard: CanActivateFn = () => {
+export const AuthGuard: CanActivateFn = async (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  const user = auth.userSig();
+  const user = await auth.resolveCurrentUser();
 
-  // 🔹 Non loggato → redirect login
   if (!user) {
+    localStorage.setItem('pre-log', state.url || '/dashboard');
     return router.createUrlTree(['/login']);
   }
 
-  // 🔹 Loggato ma ruolo diverso da 'client' → redirect home
-  if (user.role !== 'client' && user.role !== 'admin') {
+  if (user.role !== 'client' && user.role !== 'admin' && user.role !== 'staff') {
     return router.createUrlTree(['/']);
   }
 
-  // ✅ Ok, accesso consentito
   return true;
 };

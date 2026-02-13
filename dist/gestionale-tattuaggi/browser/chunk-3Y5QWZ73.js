@@ -1,0 +1,1 @@
+import"./chunk-ACKELEN3.js";var t=[{path:"",loadComponent:()=>import("./chunk-MZEIY52V.js").then(o=>o.ProjectListComponent)},{path:":artistId",loadComponent:()=>import("./chunk-MZEIY52V.js").then(o=>o.ProjectListComponent)}];export{t as PROJECTS_ROUTES};

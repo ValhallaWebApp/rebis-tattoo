@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, ViewChild, inject, effect, DestroyRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 import { MatDrawer } from '@angular/material/sidenav';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
@@ -24,7 +24,7 @@ type ReviewStatus = 'pending' | 'approved' | 'rejected' | string;
 export class ReviewsComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
-  private readonly snackbar = inject(MatSnackBar);
+  private readonly snackbar = inject(UiFeedbackService);
   private readonly reviewsService = inject(ReviewsService);
   private readonly staffService = inject(StaffService);
   private readonly destroyRef = inject(DestroyRef);

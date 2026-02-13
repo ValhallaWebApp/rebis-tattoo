@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subscription, combineLatest, map } from 'rxjs';
 
 import { MaterialModule } from '../../../../../core/modules/material.module';
@@ -18,6 +18,7 @@ import { TattooProject, ProjectsService } from '../../../../../core/services/pro
 })
 export class ProjectListComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly staffService = inject(StaffService);
   private readonly projectsService = inject(ProjectsService);
   public readonly lang = inject(LanguageService);
@@ -34,10 +35,13 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   selectedArtistId: string | 'all' = 'all';
   selectedStyle: string | 'all' = 'all';
   selectedSubject: string | 'all' = 'all';
+  selectedZone: string | 'all' = 'all';
+  onlyWithImages = false;
 
   // OPTIONS
   styles: string[] = [];
   subjects: string[] = [];
+  zones: string[] = [];
 
   // UI
   readonly fallbackCover = `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -59,13 +63,12 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     );
 
     const projects$ = this.projectsService.getProjects().pipe(
-      map(list => (list ?? []).filter(p => (p as any).isPublic !== false))
+      map(list => (list ?? []).filter(p => (p as any).isPublic !== false && String((p as any).status ?? '').trim() === 'completed'))
     );
-    const routeArtistId$ = this.route.paramMap.pipe(
-      map(pm => pm.get('artistId'))
-    );
+    const routeArtistId$ = this.route.paramMap.pipe(map(pm => pm.get('artistId')));
+    const queryParams$ = this.route.queryParamMap;
 
-    this.sub = combineLatest([projects$, staff$, routeArtistId$]).subscribe(([projects, staff, routeArtistId]) => {
+    this.sub = combineLatest([projects$, staff$, routeArtistId$, queryParams$]).subscribe(([projects, staff, routeArtistId, qpm]) => {
       this.projects = projects ?? [];
       this.artists = staff ?? [];
 
@@ -75,6 +78,18 @@ export class ProjectListComponent implements OnInit, OnDestroy {
         this.selectedArtistId = currentRouteId ?? 'all';
       }
 
+      const qArtist = qpm.get('artistId');
+      const qStyle = qpm.get('style');
+      const qSubject = qpm.get('subject');
+      const qZone = qpm.get('zone');
+      const qImages = qpm.get('images');
+
+      if (qArtist && qArtist !== this.selectedArtistId) this.selectedArtistId = qArtist;
+      if (qStyle && qStyle !== this.selectedStyle) this.selectedStyle = qStyle;
+      if (qSubject && qSubject !== this.selectedSubject) this.selectedSubject = qSubject;
+      if (qZone && qZone !== this.selectedZone) this.selectedZone = qZone;
+      if (qImages && qImages !== (this.onlyWithImages ? '1' : '0')) this.onlyWithImages = qImages === '1';
+
       // build options
       this.styles = Array.from(
         new Set(this.projects.flatMap(p => this.stylesOf(p)).filter(Boolean))
@@ -82,6 +97,10 @@ export class ProjectListComponent implements OnInit, OnDestroy {
 
       this.subjects = Array.from(
         new Set(this.projects.flatMap(p => this.subjectsOf(p)).filter(Boolean))
+      ).sort((a, b) => a.localeCompare(b));
+
+      this.zones = Array.from(
+        new Set(this.projects.flatMap(p => this.zonesOf(p)).filter(Boolean))
       ).sort((a, b) => a.localeCompare(b));
 
       this.applyFilters();
@@ -96,18 +115,24 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     const artistId = this.selectedArtistId;
     const style = this.selectedStyle;
     const subject = this.selectedSubject;
+    const zone = this.selectedZone;
+    const onlyImages = this.onlyWithImages;
     this.filteredProjects = (this.projects ?? []).filter(p => {
       const artistIds = this.artistIdsOf(p);
       const matchArtist = artistId === 'all' || artistIds.includes(String(artistId));
 
       const matchStyle = style === 'all' || this.matchTag(style, this.stylesOf(p));
       const matchSubject = subject === 'all' || this.matchTag(subject, this.subjectsOf(p));
+      const matchZone = zone === 'all' || this.matchTag(zone, this.zonesOf(p));
 
       // se isPublic e' undefined, trattiamolo come "visibile"
       const isPublic = (p as any).isPublic as boolean | undefined;
       const matchVisibility = isPublic !== false;
 
-      return matchArtist && matchStyle && matchSubject && matchVisibility;
+      const hasImages = this.imageUrlsOf(p).length > 0;
+      const matchImages = !onlyImages || hasImages;
+
+      return matchArtist && matchStyle && matchSubject && matchZone && matchVisibility && matchImages;
     });
 
     // ordinamento: più recenti prima
@@ -117,11 +142,54 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   }
 
   resetFilters(): void {
-    const artistFromRoute = this.route.snapshot.paramMap.get('artistId');
-    this.selectedArtistId = artistFromRoute ?? 'all';
+    this.selectedArtistId = 'all';
     this.selectedStyle = 'all';
     this.selectedSubject = 'all';
+    this.selectedZone = 'all';
+    this.onlyWithImages = false;
     this.applyFilters();
+    void this.router.navigate(['/progetti'], { queryParams: {} });
+  }
+
+  onArtistChange(): void {
+    this.applyFilters();
+    this.syncToQueryParams();
+  }
+
+  setStyle(value: string | 'all'): void {
+    this.selectedStyle = value;
+    this.applyFilters();
+    this.syncToQueryParams();
+  }
+
+  setSubject(value: string | 'all'): void {
+    this.selectedSubject = value;
+    this.applyFilters();
+    this.syncToQueryParams();
+  }
+
+  setZone(value: string | 'all'): void {
+    this.selectedZone = value;
+    this.applyFilters();
+    this.syncToQueryParams();
+  }
+
+  toggleOnlyImages(): void {
+    this.onlyWithImages = !this.onlyWithImages;
+    this.applyFilters();
+    this.syncToQueryParams();
+  }
+
+  isStyleActive(value: string | 'all'): boolean {
+    return this.selectedStyle === value;
+  }
+
+  isSubjectActive(value: string | 'all'): boolean {
+    return this.selectedSubject === value;
+  }
+
+  isZoneActive(value: string | 'all'): boolean {
+    return this.selectedZone === value;
   }
 
   artistNameById(id: string): string {
@@ -144,6 +212,10 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     return String((p as any).subject ?? '').trim();
   }
 
+  zoneOf(p: TattooProject): string {
+    return String((p as any).zone ?? (p as any).bodyPart ?? '').trim();
+  }
+
   private artistIdsOf(p: TattooProject): string[] {
     const single = String((p as any).artistId ?? '').trim();
     const arr = Array.isArray((p as any).artistIds) ? (p as any).artistIds : [];
@@ -160,6 +232,12 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     return this.splitTags(this.subjectOf(p));
   }
 
+  private zonesOf(p: TattooProject): string[] {
+    const z = this.zoneOf(p);
+    const placement = String((p as any).placement ?? '').trim();
+    return this.splitTags([z, placement].filter(Boolean).join(', '));
+  }
+
   private splitTags(input: string): string[] {
     if (!input) return [];
     const raw = input
@@ -173,6 +251,21 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     const s = String(selected ?? '').trim().toLowerCase();
     if (!s) return true;
     return values.some(v => String(v ?? '').trim().toLowerCase() === s);
+  }
+
+  private syncToQueryParams(): void {
+    const params: Record<string, any> = {
+      artistId: this.selectedArtistId !== 'all' ? this.selectedArtistId : null,
+      style: this.selectedStyle !== 'all' ? this.selectedStyle : null,
+      subject: this.selectedSubject !== 'all' ? this.selectedSubject : null,
+      zone: this.selectedZone !== 'all' ? this.selectedZone : null,
+      images: this.onlyWithImages ? '1' : null
+    };
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: params,
+      queryParamsHandling: 'merge'
+    });
   }
 
   private imageUrlsOf(p: TattooProject): string[] {

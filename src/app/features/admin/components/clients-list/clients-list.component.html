@@ -28,14 +28,48 @@
   <div class="user-cards">
     <mat-card *ngFor="let u of filteredUsers" class="user-card">
       <div class="user-info">
-        <img [src]="u.urlAvatar || '/assets/avatar-placeholder.png'" alt="avatar" />
+        <img [src]="getAvatarUrl(u)" (error)="onAvatarError($event)" alt="avatar" />
         <div>
           <h3>{{ u.name }}</h3>
           <p>{{ u.email }}</p>
-          <span class="role">{{ u.role }}</span>
+          <div class="role-editor">
+            <span class="role">{{ displayRole(u) }}</span>
+            <span class="role active-flag" [class.off]="u.isActive === false">
+              {{ u.isActive === false ? 'inactive' : 'active' }}
+            </span>
+            <mat-form-field *ngIf="canChangeRole(u)" appearance="outline" class="role-select">
+              <mat-label>Grado</mat-label>
+              <mat-select
+                [value]="displayRole(u)"
+                [disabled]="isRoleUpdating(u.id) || isStatusUpdating(u.id)"
+                (selectionChange)="changeUserRole(u, $event.value)"
+              >
+                <mat-option *ngFor="let option of roleOptions" [value]="option">
+                  {{ option }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
         </div>
       </div>
       <div class="user-actions">
+        <button
+          mat-icon-button
+          [matTooltip]="u.isActive === false ? 'Attiva account' : 'Disattiva account'"
+          [disabled]="isSelf(u) || isStatusUpdating(u.id)"
+          (click)="toggleUserActive(u)"
+        >
+          <mat-icon>{{ u.isActive === false ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          color="warn"
+          matTooltip="Nascondi utente"
+          [disabled]="isSelf(u) || isStatusUpdating(u.id)"
+          (click)="hideUser(u)"
+        >
+          <mat-icon>visibility_off</mat-icon>
+        </button>
         <button mat-icon-button color="primary" matTooltip="Visualizza appuntamenti" (click)="viewAppointments(u)">
           <mat-icon>event</mat-icon>
         </button>

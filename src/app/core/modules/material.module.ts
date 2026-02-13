@@ -27,6 +27,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @NgModule({
   imports: [
@@ -60,6 +61,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
     MatSnackBarModule,
     MatProgressBarModule,
     MatAutocompleteModule,
+    MatTooltipModule,
     MatSidenavModule,
     MatMenuTrigger
 
@@ -93,6 +95,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatAutocompleteModule,
+    MatTooltipModule,
     MatSidenavModule,
     MatMenuTrigger
   ],

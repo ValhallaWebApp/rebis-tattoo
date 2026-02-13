@@ -8,7 +8,7 @@ import { StaffService, StaffMember } from '../../core/services/staff/staff.servi
 import { BookingService } from '../../core/services/bookings/booking.service';
 import { SessionService } from '../../core/services/session/session.service';
 import { MaterialModule } from '../../core/modules/material.module';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UiFeedbackService } from '../../core/services/ui/ui-feedback.service';
 import { ProjectsService } from '../../core/services/projects/projects.service';
 
 // ✅ Adatta questi tipi alle tue interfacce reali se differiscono
@@ -26,7 +26,7 @@ export class CalendarComponent {
   private readonly staffService = inject(StaffService);
   private readonly bookingService = inject(BookingService);
   private readonly sessionService = inject(SessionService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly snackBar = inject(UiFeedbackService);
   private readonly projectService = inject(ProjectsService);
 
   // --- STATE ---

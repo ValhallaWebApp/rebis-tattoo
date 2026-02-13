@@ -1,20 +1,12 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { MaterialModule } from '../../../../core/modules/material.module';
-interface ChatMessage {
-  sender: 'utente' | 'admin' | 'chatbot';
-  text: string;
-  timestamp: Date;
-}
-
-interface ChatThread {
-  userId: string;
-  userName: string;
-  source: 'form' | 'chatbot';
-  messages: ChatMessage[];
-  unread: boolean;
-}
+import { Conversation, ConversationMessage, ParticipantRole } from '../../../../core/models/messaging.model';
+import { AuthService } from '../../../../core/services/auth/authservice';
+import { MessagingService } from '../../../../core/services/messaging/messaging.service';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 
 @Component({
   selector: 'app-messaging-dashboard',
@@ -23,58 +15,91 @@ interface ChatThread {
   templateUrl: './messaging-dashboard.component.html',
   styleUrls: ['./messaging-dashboard.component.scss']
 })
-export class MessagingDashboardComponent {
-  users = [
-    { name: 'Mario Rossi' },
-    { name: 'Giulia Verdi' },
-    { name: 'Luca Bianchi' }
-  ];
-
-  messages = [
-    { sender: 'Mario', text: 'Ciao, quando posso passare?' },
-    { sender: 'Admin', text: 'Domani alle 15:00 è libero.' }
-  ];
-  threads: ChatThread[] = [
-    {
-      userId: 'u1',
-      userName: 'Mario Rossi',
-      source: 'form',
-      unread: true,
-      messages: [
-        { sender: 'utente', text: 'Salve, volevo informazioni.', timestamp: new Date() },
-        { sender: 'admin', text: 'Certamente, dimmi pure.', timestamp: new Date() }
-      ]
-    },
-    {
-      userId: 'u2',
-      userName: 'Giulia Verdi',
-      source: 'chatbot',
-      unread: false,
-      messages: [
-        { sender: 'chatbot', text: 'Hai bisogno di un appuntamento?', timestamp: new Date() },
-        { sender: 'utente', text: 'Sì, per sabato.', timestamp: new Date() }
-      ]
-    }
-  ];
-
-  selectedThread: ChatThread | any = null
+export class MessagingDashboardComponent implements OnDestroy {
+  threads: Conversation[] = [];
+  selectedThread: Conversation | null = null;
+  messages: ConversationMessage[] = [];
   newMessage = '';
 
-  selectThread(thread: ChatThread) {
-    this.selectedThread = thread;
-    thread.unread = false;
+  private convSub?: Subscription;
+  private msgSub?: Subscription;
+  actorId = '';
+  private actorRole: ParticipantRole = 'admin';
+
+  constructor(
+    private messaging: MessagingService,
+    private auth: AuthService,
+    private ui: UiFeedbackService
+  ) {
+    void this.bootstrap();
   }
 
-  sendMessage() {
-    if (!this.selectedThread || !this.newMessage.trim()) return;
+  ngOnDestroy(): void {
+    this.convSub?.unsubscribe();
+    this.msgSub?.unsubscribe();
+  }
 
-    this.selectedThread.messages.push({
-      sender: 'admin',
-      text: this.newMessage.trim(),
-      timestamp: new Date()
+  selectThread(thread: Conversation): void {
+    this.selectedThread = thread;
+    this.msgSub?.unsubscribe();
+    this.messages = [];
+
+    this.msgSub = this.messaging.streamMessages(thread.id).subscribe(list => {
+      this.messages = list;
+    });
+
+    if (this.actorId) {
+      void this.messaging.markAsRead(thread.id, this.actorId);
+    }
+  }
+
+  async sendMessage(): Promise<void> {
+    if (!this.selectedThread || !this.newMessage.trim() || !this.actorId) return;
+
+    await this.messaging.sendMessage({
+      conversationId: this.selectedThread.id,
+      senderId: this.actorId,
+      senderRole: this.actorRole,
+      text: this.newMessage.trim()
     });
 
     this.newMessage = '';
   }
 
+  async setStatus(status: 'aperto' | 'chiuso'): Promise<void> {
+    if (!this.selectedThread || !this.actorId) return;
+
+    await this.messaging.setConversationStatus(
+      this.selectedThread.id,
+      status === 'chiuso' ? 'closed' : 'open',
+      this.actorId,
+      this.actorRole
+    );
+    this.ui.info(`Conversazione ${status === 'chiuso' ? 'chiusa' : 'riaperta'}`);
+  }
+
+  labelStatus(status?: string): string {
+    return status === 'closed' ? 'chiusa' : 'aperta';
+  }
+
+  isAdminMessage(msg: ConversationMessage): boolean {
+    return msg.senderRole === 'admin' || msg.senderRole === 'staff';
+  }
+
+  private async bootstrap(): Promise<void> {
+    const user = await this.auth.resolveCurrentUser();
+    if (!user?.uid) return;
+    this.actorId = user.uid;
+    this.actorRole = user.role === 'staff' ? 'staff' : 'admin';
+
+    this.convSub = this.messaging.streamAllConversations().subscribe(list => {
+      this.threads = list;
+      if (!this.selectedThread && this.threads.length) {
+        this.selectThread(this.threads[0]);
+      } else if (this.selectedThread) {
+        const latest = this.threads.find(t => t.id === this.selectedThread!.id);
+        if (latest) this.selectedThread = latest;
+      }
+    });
+  }
 }

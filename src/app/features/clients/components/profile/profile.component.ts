@@ -30,9 +30,8 @@ export class ProfileComponent implements OnInit {
 
   sections = [
     { icon: 'event', title: 'Storico Prenotazioni', description: 'Controlla tutte le tue sedute passate e future.', route: 'booking-history' },
-    { icon: 'chat', title: 'Codici Promo & Buoni', description: 'Comunica con il team e ricevi assistenza diretta.', route: 'buoni' },
-    { icon: 'reviews', title: 'Le Tue Recensioni', description: 'Gestisci le recensioni lasciate agli artisti.', route: 'reviews' },
-    { icon: 'settings', title: 'Impostazioni', description: 'Personalizza le preferenze del tuo account.', route: 'settings' }
+    { icon: 'redeem', title: 'Codici Promo & Buoni', description: 'Riscatta promo e gift card nel wallet crediti.', route: 'buoni' },
+    { icon: 'reviews', title: 'Le Tue Recensioni', description: 'Gestisci le recensioni lasciate agli artisti.', route: 'reviews' }
   ];
 
   // servizi
@@ -78,7 +77,7 @@ export class ProfileComponent implements OnInit {
         });
 
         // carica dati aggiuntivi
-        this.loadBookings(user.name);   // (lasciato come nel tuo codice)
+        this.loadBookings(user.uid);
         this.loadNotifications();
       });
     });
@@ -93,8 +92,8 @@ export class ProfileComponent implements OnInit {
     ];
   }
 
-  loadBookings(clientName: string): void {
-    this.bookingService.getBookingsByClient(clientName).subscribe(bookings => {
+  loadBookings(clientId: string): void {
+    this.bookingService.getBookingsByClient(clientId).subscribe(bookings => {
       if (!bookings?.length) return;
 
       const sorted = bookings.sort((a, b) =>

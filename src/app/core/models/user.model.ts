@@ -1,11 +1,16 @@
-export type UserRole = 'admin' | 'client';
+export type UserRole = 'admin' | 'client' | 'staff' | 'public' | 'guest';
 
 export interface AppUser {
-  id: string;
+  uid: string;
   email: string;
-  displayName: string;
+  name: string;
   role: UserRole;
-  photoURL?: string;
-  phoneNumber?: string;
-  createdAt: string;
+  isActive?: boolean;
+  phone?: string;
+  avatar?: string;
+  dateOfBirth?: unknown;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
 }
