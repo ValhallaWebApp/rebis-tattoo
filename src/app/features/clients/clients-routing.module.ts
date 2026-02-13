@@ -10,6 +10,8 @@ const routes: Routes = [
 
     { path: '', component: ProfileComponent },
     { path: 'booking-history', component: BookingHistoryComponent },
+    { path: 'ticket', component: MessagingComponent },
+    { path: 'invoices', component: BookingHistoryComponent },
     { path: 'buoni', component: PromoReferralComponent },
     { path: 'reviews', component: ReviewsComponent },
     { path: 'chat', component: MessagingComponent }

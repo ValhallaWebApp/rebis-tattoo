@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../core/modules/material.module';
 import { AuthService } from '../../../core/services/auth/authservice';
 
@@ -19,12 +19,26 @@ export class LoginComponent {
   errorMessage = '';
   isLoading = false;
 
-  constructor(private authService: AuthService, private fb: FormBuilder, private router: Router) {
+  constructor(
+    private authService: AuthService,
+    private fb: FormBuilder,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       rememberMe: [true]
     });
+  }
+
+  ngOnInit() {
+    const mode = this.router.url.includes('/register') || this.router.url.includes('/auth/register')
+      ? 'register'
+      : this.route.snapshot.data?.['mode'];
+    if (mode === 'register') {
+      this.isLoginMode = false;
+    }
   }
 
   toggleMode() {

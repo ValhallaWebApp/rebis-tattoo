@@ -31,6 +31,7 @@ const routes: Routes = [
   { path: 'documents', component: DocumentsComponent },
   { path: 'waitlist', component: WaitlistComponent },
   { path: 'messaging', component: MessagingDashboardComponent },
+  { path: 'ticket', component: MessagingDashboardComponent },
 
   { path: 'portfolio', component: ProjectManagerComponent },
   { path: 'portfolio/:projectId', component: ProjectTrackerComponent },

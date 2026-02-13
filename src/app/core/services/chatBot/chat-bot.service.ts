@@ -7,7 +7,7 @@ import {
   get,
   onValue
 } from '@angular/fire/database';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom } from 'rxjs';
 import { StaffService } from '../staff/staff.service';
 import { BookingService } from '../bookings/booking.service';
@@ -40,7 +40,8 @@ export interface BotPlan {
 @Injectable({ providedIn: 'root' })
 export class ChatService {
   private readonly path = 'chats';
-  private readonly OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+  // Backend proxy endpoint: no secret in frontend.
+  private readonly chatPlanUrl = 'http://localhost:3001/api/chat/plan';
 
   constructor(
     private db: Database,
@@ -49,10 +50,6 @@ export class ChatService {
     private bookingService: BookingService,
     private authService: AuthService
   ) {}
-
-  getApiKey(): string | null {
-    return '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';
-  }
 
   /**
    * Crea o riusa una chat a partire dalla email (che diventa chiave)
@@ -111,12 +108,9 @@ export class ChatService {
   }
 
   /**
-   * Costruisce un prompt dinamico per GPT e gestisce risposta
+   * Crea risposta bot: preferisce backend proxy, fallback locale se non disponibile.
    */
   async replyWithPlan(chatId: string, history: ChatMessage[]): Promise<BotPlan> {
-    const apiKey = this.getApiKey();
-    if (!apiKey) return { message: '🔑 Nessuna API Key trovata.', chips: [] };
-
     const staff = await firstValueFrom(this.staffService.getAllStaff());
     const artists = staff.filter(s => s.isActive && s.role === 'tatuatore');
 
@@ -139,85 +133,65 @@ export class ChatService {
 
     const user = this.authService.userSig();
     const userInfo = user
-      ? `Utente loggato: ${user.name} – Email: ${user.email}`
-      : 'Utente non loggato. Chiedi gentilmente: nome, cognome, età e un contatto (email o telefono).';
-
-    const prompt = [
-  'Sei l’assistente virtuale di Rebis Tattoo.',
-  'Aiuta l’utente a prenotare una consulenza di 60 minuti, gestendo chiarimenti e domande.',
-  'Quando tutti i dati necessari (artista, giorno, ora, contatto) sono presenti, genera il seguente blocco:',
-  '<JSON>{"chips":[],"action":{"type":"booking-draft","draft":{"artistId":"idArtista","date":"YYYY-MM-DD","time":"HH:mm","duration":60,"note":"testo facoltativo"}}}</JSON>',
-  'Scrivi la risposta normale PRIMA del blocco JSON, e non aggiungere testo dopo di esso.',
-  'Se mancano dati, chiedili esplicitamente uno alla volta.',
-  'Non creare JSON se non hai tutti i dati necessari.',
-  'Artisti attivi: ' + artists.map(a => `${a.name} (id: ${a.id})`).join(', '),
-  'Disponibilità:',
-  ...Object.entries(availability).map(
-    ([name, slots]) => `• ${name} → ${slots.join(' | ')}`
-  ),
-  userInfo
-].join('\n');
-
-
-    const messages = [
-      { role: 'system', content: prompt },
-      ...history.map(m => ({
-        role: m.from === 'user' ? 'user' : 'assistant',
-        content: m.text
-      }))
-    ];
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
-    });
-
-    const body = {
-      model: 'gpt-4o-mini',
-      messages,
-      temperature: 0.3
-    };
+      ? `Utente loggato: ${user.name} - Email: ${user.email}`
+      : 'Utente non loggato. Chiedi nome e contatto.';
 
     try {
-      const res: any = await firstValueFrom(this.http.post(this.OPENAI_URL, body, { headers }));
-      const fullText = res?.choices?.[0]?.message?.content ?? '';
+      const response = await firstValueFrom(
+        this.http.post<BotPlan>(this.chatPlanUrl, {
+          chatId,
+          history,
+          artists,
+          availability,
+          userInfo
+        })
+      );
 
-      const jsonMatch = fullText.match(/<JSON>(.*?)<\/JSON>/s);
-      const text = fullText.replace(/<JSON>.*<\/JSON>/s, '').trim();
-      const json = jsonMatch?.[1];
-
-      let chips: string[] = [];
-      let action: BotPlan['action'];
-
-      if (json) {
-        const parsed = JSON.parse(json);
-        chips = parsed.chips || [];
-        action = parsed.action;
+      if (response?.message) {
+        return {
+          message: response.message,
+          chips: (response.chips ?? []).slice(0, 3),
+          action: response.action
+        };
       }
-
-      return { message: text, chips: chips.slice(0, 3), action };
-    } catch (err:any) {
-      console.error('[ChatBotService] GPT error →', err);
-
-       if (err.status === 429) {
-    console.warn('[ChatService] Rate limit superato. Riprovo dopo 5 secondi...');
-    await new Promise(res => setTimeout(res, 5000)); // aspetta 5 secondi
-    const retry = await firstValueFrom(this.http.post<OpenAIResponse>(this.OPENAI_URL, body, { headers }));
-    const fullText = retry?.choices?.[0]?.message?.content ?? '';
-    // processa il retry come sopra...
-  } else {
-    console.error('[ChatBotService] GPT error →', err);
-    return { message: '❌ Errore del bot.', chips: [] };
-  }
+    } catch (err: any) {
+      console.warn('[ChatService] chat proxy unavailable, fallback locale.', err?.message ?? err);
     }
-      return { message: '⚠ Errore imprevisto.', chips: [] };
 
+    return this.localFallbackPlan(artists, availability, history);
   }
-}
-interface OpenAIResponse {
-  choices: {
-    message: {
-      content: string;
+
+  private localFallbackPlan(
+    artists: Array<{ id?: string; name?: string }>,
+    availability: Record<string, string[]>,
+    history: ChatMessage[]
+  ): BotPlan {
+    const lastUser = [...history].reverse().find(m => m.from === 'user')?.text?.toLowerCase() ?? '';
+
+    if (!artists.length) {
+      return {
+        message: 'Al momento non trovo artisti disponibili. Riprova tra poco o contattaci direttamente.',
+        chips: []
+      };
+    }
+
+    if (lastUser.includes('orari') || lastUser.includes('disponibil') || lastUser.includes('quando')) {
+      const preview = Object.entries(availability)
+        .slice(0, 2)
+        .map(([name, slots]) => `${name}: ${slots.slice(0, 2).join(' | ')}`)
+        .join(' - ');
+
+      return {
+        message: preview
+          ? `Ti mostro alcune disponibilita: ${preview}. Dimmi artista, giorno e orario preferiti.`
+          : 'Posso aiutarti a prenotare: indicami artista e giorno preferito.',
+        chips: artists.slice(0, 3).map(a => a.name || 'Artista').filter(Boolean)
+      };
+    }
+
+    return {
+      message: 'Perfetto, iniziamo dalla scelta artista. Poi ti propongo giorno e orario disponibili.',
+      chips: artists.slice(0, 3).map(a => a.name || 'Artista').filter(Boolean)
     };
-  }[];
+  }
 }

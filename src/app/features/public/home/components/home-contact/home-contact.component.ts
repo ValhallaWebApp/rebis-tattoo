@@ -107,12 +107,12 @@ export class HomeContactComponent {
 
   goLogin(): void {
     sessionStorage.setItem('returnUrl', this.router.url);
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/login']);
   }
 
   goRegister(): void {
     sessionStorage.setItem('returnUrl', this.router.url);
-    this.router.navigate(['/auth/register']);
+    this.router.navigate(['/register']);
   }
 
   onSubmit(): void {

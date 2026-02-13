@@ -9,6 +9,15 @@ import { FastBookingPageComponent } from './features/public/fast-booking/pages/f
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'register', component: LoginComponent, data: { mode: 'register' } },
+  { path: 'auth/login', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'auth/register', redirectTo: 'register', pathMatch: 'full' },
+  {
+    path: 'access-denied',
+    loadComponent: () =>
+      import('./shared/components/access-denied/access-denied.component')
+        .then(m => m.AccessDeniedComponent),
+  },
 
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   { path: 'home', loadChildren: () => import('./features/public/home/home.module').then(m => m.HomeModule) },
