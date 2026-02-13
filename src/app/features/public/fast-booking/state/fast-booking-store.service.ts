@@ -372,11 +372,21 @@ effect(() => {
       }
 
       const paid = this.depositEuro();
+      const booking = await this.bookingService.getBookingById(id);
+      if (!booking) {
+        this.error.set('Booking non trovato.');
+        return;
+      }
+
+      // Transizione valida: draft/pending -> confirmed -> paid
+      if (booking.status === 'draft' || booking.status === 'pending') {
+        await this.bookingService.safeSetStatus(id, 'confirmed');
+      }
 
       await this.bookingService.safeSetStatus(id, 'paid', {
         paidAmount: paid,
         price: paid,
-        updateAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       } as any);
 
       this.go('success');
