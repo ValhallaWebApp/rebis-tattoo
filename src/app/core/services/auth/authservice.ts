@@ -27,6 +27,9 @@ export interface AppUser {
   email: string;
   name: string;
   role: 'admin' | 'client' | 'staff' | 'public' | 'guest';
+  permissions?: {
+    canManageRoles?: boolean;
+  };
   isActive?: boolean;
 
   phone?: string;
@@ -52,7 +55,10 @@ export class AuthService {
     return {
       ...(data as any),
       uid,
-      role: (role as AppUser['role']) || 'public'
+      role: (role as AppUser['role']) || 'public',
+      permissions: {
+        canManageRoles: (data as any)?.permissions?.canManageRoles === true
+      }
     };
   }
 

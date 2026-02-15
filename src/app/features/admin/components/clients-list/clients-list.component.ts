@@ -22,6 +22,7 @@ export class ClientsListComponent implements OnInit {
   roles: UserRole[] = ['admin', 'user', 'staff'];
   roleOptions: Array<'admin' | 'user' | 'staff'> = ['admin', 'user', 'staff'];
   updatingRoleByUserId: Record<string, boolean> = {};
+  updatingRolePermissionByUserId: Record<string, boolean> = {};
   updatingStatusByUserId: Record<string, boolean> = {};
 
   constructor(
@@ -80,8 +81,13 @@ export class ClientsListComponent implements OnInit {
   }
 
   canChangeRole(user: User): boolean {
+    if (!this.userService.canCurrentUserManageRoles()) return false;
+
+    const currentRole = this.userService.getCurrentUserRole();
     const role = this.displayRole(user);
-    return role === 'admin' || role === 'user' || role === 'staff';
+    if (!(role === 'admin' || role === 'user' || role === 'staff')) return false;
+    if (currentRole === 'staff' && role === 'admin') return false;
+    return true;
   }
 
   isRoleUpdating(userId: string): boolean {
@@ -104,12 +110,64 @@ export class ClientsListComponent implements OnInit {
     try {
       await this.userService.updateUser(user.id, { role: nextRole });
       const updatedUsers = this.allUsers.map(item =>
-        item.id === user.id ? { ...item, role: nextRole } : item
+        item.id === user.id
+          ? {
+              ...item,
+              role: nextRole,
+              permissions: nextRole === 'staff' ? item.permissions : { ...item.permissions, canManageRoles: false }
+            }
+          : item
       );
       this.allUsers = updatedUsers;
       this.applyFilters();
     } finally {
       this.updatingRoleByUserId[user.id] = false;
+    }
+  }
+
+  roleOptionsFor(user: User): Array<'admin' | 'user' | 'staff'> {
+    const currentRole = this.userService.getCurrentUserRole();
+    if (currentRole === 'staff') return ['user', 'staff'];
+    return this.roleOptions;
+  }
+
+  canGrantRolePermissionToggle(user: User): boolean {
+    return this.userService.isCurrentUserAdmin() && this.displayRole(user) === 'staff';
+  }
+
+  hasRoleManagementPermission(user: User): boolean {
+    return user.permissions?.canManageRoles === true;
+  }
+
+  isRolePermissionUpdating(userId: string): boolean {
+    return this.updatingRolePermissionByUserId[userId] === true;
+  }
+
+  async toggleRolePermission(user: User, enabled: boolean): Promise<void> {
+    if (!this.canGrantRolePermissionToggle(user) || this.isRolePermissionUpdating(user.id)) return;
+
+    this.updatingRolePermissionByUserId[user.id] = true;
+    try {
+      await this.userService.updateUser(user.id, {
+        permissions: {
+          ...(user.permissions ?? {}),
+          canManageRoles: enabled
+        }
+      });
+      this.allUsers = this.allUsers.map(item =>
+        item.id === user.id
+          ? {
+              ...item,
+              permissions: {
+                ...(item.permissions ?? {}),
+                canManageRoles: enabled
+              }
+            }
+          : item
+      );
+      this.applyFilters();
+    } finally {
+      this.updatingRolePermissionByUserId[user.id] = false;
     }
   }
 

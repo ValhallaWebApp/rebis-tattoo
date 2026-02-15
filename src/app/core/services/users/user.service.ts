@@ -8,6 +8,10 @@ import { AuditLogService } from '../audit/audit-log.service';
 
 export type UserRole = 'admin' | 'staff' | 'client' | 'user' | 'guest' | 'public';
 
+export interface UserPermissions {
+  canManageRoles?: boolean;
+}
+
 export interface User {
   id: string;
   /** @deprecated usa `id` come chiave utente */
@@ -15,6 +19,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  permissions?: UserPermissions;
   phone?: string;
   isActive?: boolean;
   isVisible?: boolean;
@@ -46,6 +51,9 @@ export class UserService {
       name: String(raw['name'] ?? ''),
       email: String(raw['email'] ?? ''),
       role: (String(raw['role'] ?? 'guest') as UserRole),
+      permissions: {
+        canManageRoles: raw['permissions']?.['canManageRoles'] === true
+      },
       phone: raw['phone'] ? String(raw['phone']) : undefined,
       isActive: raw['isActive'] !== undefined ? Boolean(raw['isActive']) : undefined,
       isVisible: raw['isVisible'] !== undefined ? Boolean(raw['isVisible']) : undefined,
@@ -114,10 +122,26 @@ export class UserService {
     return this.auth.userSig()?.role || 'guest';
   }
 
+  isCurrentUserAdmin(): boolean {
+    return this.getCurrentUserRole() === 'admin';
+  }
+
+  canCurrentUserManageRoles(): boolean {
+    const current = this.auth.userSig();
+    if (!current) return false;
+    if (current.role === 'admin') return true;
+    return current.permissions?.canManageRoles === true;
+  }
+
   private assertAdminAction(): void {
-    const role = this.getCurrentUserRole();
-    if (role !== 'admin') {
+    if (!this.isCurrentUserAdmin()) {
       throw new Error('Azione consentita solo ad admin');
+    }
+  }
+
+  private assertCanManageRolesAction(): void {
+    if (!this.canCurrentUserManageRoles()) {
+      throw new Error('Azione consentita solo ad admin o staff abilitato');
     }
   }
 
@@ -157,8 +181,7 @@ export class UserService {
   }
 
   getManageableUsers(): Observable<User[]> {
-    const role = this.getCurrentUserRole();
-    if (role !== 'admin') return of([]);
+    if (!this.canCurrentUserManageRoles()) return of([]);
 
     const usersRef = collection(this.firestore, 'users');
     const usersQuery = query(usersRef, where('role', 'in', ['user', 'client', 'staff', 'admin']));
@@ -196,7 +219,14 @@ export class UserService {
   async updateUser(userId: string, patch: Partial<User>): Promise<void> {
     const actor = this.auth.userSig();
     try {
-      this.assertAdminAction();
+      const patchKeys = Object.keys(patch ?? {});
+      const roleOnlyUpdate = patchKeys.length === 1 && patchKeys[0] === 'role';
+      if (roleOnlyUpdate) {
+        this.assertCanManageRolesAction();
+      } else {
+        this.assertAdminAction();
+      }
+
       const userRef = doc(this.firestore, 'users', userId);
       const snap = await getDoc(userRef);
       if (!snap.exists()) {
@@ -213,9 +243,16 @@ export class UserService {
       const current = (currentSnap.data() ?? {}) as Record<string, any>;
       const currentRole = String(current['role'] ?? '');
       const nextRole = patch.role ? String(patch.role) : null;
+      const actorRole = String(actor?.role ?? '');
 
       if (actor?.uid === userId && nextRole && nextRole !== currentRole) {
         throw new Error('Non puoi cambiare il tuo ruolo');
+      }
+
+      if (roleOnlyUpdate && actorRole === 'staff') {
+        if (currentRole === 'admin' || nextRole === 'admin') {
+          throw new Error('Lo staff abilitato non puo modificare ruoli admin');
+        }
       }
 
       if (currentRole === 'admin' && nextRole && nextRole !== 'admin') {

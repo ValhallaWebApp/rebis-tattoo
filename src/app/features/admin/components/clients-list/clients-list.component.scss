@@ -86,12 +86,17 @@
       .role-editor {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 0.6rem;
         margin-top: 4px;
       }
 
       .role-select {
         width: 120px;
+      }
+
+      .role-permission-toggle {
+        font-size: 0.75rem;
       }
     }
 

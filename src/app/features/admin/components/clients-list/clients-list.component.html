@@ -41,14 +41,23 @@
               <mat-label>Grado</mat-label>
               <mat-select
                 [value]="displayRole(u)"
-                [disabled]="isRoleUpdating(u.id) || isStatusUpdating(u.id)"
+                [disabled]="isRoleUpdating(u.id) || isStatusUpdating(u.id) || isRolePermissionUpdating(u.id)"
                 (selectionChange)="changeUserRole(u, $event.value)"
               >
-                <mat-option *ngFor="let option of roleOptions" [value]="option">
+                <mat-option *ngFor="let option of roleOptionsFor(u)" [value]="option">
                   {{ option }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
+            <mat-slide-toggle
+              *ngIf="canGrantRolePermissionToggle(u)"
+              class="role-permission-toggle"
+              [checked]="hasRoleManagementPermission(u)"
+              [disabled]="isRolePermissionUpdating(u.id) || isStatusUpdating(u.id) || isRoleUpdating(u.id)"
+              (change)="toggleRolePermission(u, $event.checked)"
+            >
+              Gestione ruoli
+            </mat-slide-toggle>
           </div>
         </div>
       </div>
