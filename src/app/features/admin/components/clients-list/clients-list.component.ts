@@ -15,7 +15,7 @@ import { UserEditDialogComponent } from './user-edit-dialog.component';
   imports: [CommonModule, ReactiveFormsModule, MaterialModule]
 })
 export class ClientsListComponent implements OnInit {
-  readonly avatarFallback = 'assets/logo-rebis-ink-256.png';
+  readonly avatarFallback = '/loghi/logo.png';
   filterForm!: FormGroup;
   allUsers: User[] = [];
   filteredUsers: User[] = [];
