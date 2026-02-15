@@ -1,4 +1,4 @@
-<section class="about-section">
+﻿<section class="about-section">
   <div class="about-wrapper">
     <div class="about-image">
       <img src="/ink/woman-1.webp" alt="Tattoo in corso" />
@@ -10,12 +10,23 @@
       <p>
         {{ lang.t('home.about.paragraph1') }}
       </p>
-      <p class="cta">
+      <!-- <p class="cta">
         {{ lang.t('home.about.paragraph2') }}
-      </p>
+      </p> -->
+
+      <div class="approach-box">
+
+        <ul>
+          <li *ngFor="let item of clientApproach">
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.text }}</span>
+          </li>
+        </ul>
+      </div>
+
       <a routerLink="/chi-siamo" class="read-more">
         {{ lang.t('home.about.cta') }}
-        <span class="arrow">↗</span>
+        <span class="arrow">-></span>
       </a>
     </div>
   </div>

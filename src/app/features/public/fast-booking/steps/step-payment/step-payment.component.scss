@@ -42,6 +42,15 @@
 
 .actions { margin-top: 14px; display: flex; justify-content: flex-end; }
 
-.debug { margin-top: 14px; opacity: .85; }
+.processing {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(25, 118, 210, 0.08);
+}
+
+.stripe-box { margin-top: 14px; opacity: .95; }
 .small { font-size: 12px; margin-bottom: 6px; }
-.ok { margin-top: 8px; }

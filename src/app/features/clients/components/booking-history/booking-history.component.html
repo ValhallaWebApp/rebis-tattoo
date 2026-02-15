@@ -42,7 +42,7 @@
                 <div class="sub">
                   <span class="row">
                     <mat-icon inline>calendar_today</mat-icon>
-                    {{ nextBooking.start | date:'fullDate' }} · {{ nextBooking.start | date:'shortTime' }}
+                    {{ nextBooking.start | date:'fullDate' }} - {{ nextBooking.start | date:'shortTime' }}
                   </span>
                   <span class="row">
                     <mat-icon inline>person</mat-icon>
@@ -62,7 +62,7 @@
               </span>
 
               <span class="meta-item" *ngIf="getDeposit(nextBooking) as dep">
-                <mat-icon inline>payments</mat-icon> Caparra {{ dep }}€
+                <mat-icon inline>payments</mat-icon> Caparra EUR {{ dep }}
               </span>
 
               <span class="meta-item" *ngIf="nextBooking.type">
@@ -165,7 +165,7 @@
                     <mat-icon inline>timelapse</mat-icon> {{ mins }} min
                   </span>
                   <span class="meta-item" *ngIf="getDeposit(b) as dep">
-                    <mat-icon inline>payments</mat-icon> Caparra {{ dep }}€
+                    <mat-icon inline>payments</mat-icon> Caparra EUR {{ dep }}
                   </span>
                 </div>
 
@@ -235,7 +235,9 @@
                     </div>
                   </div>
 
-                  <span class="status-pill done">Completata</span>
+                  <span class="status-pill" [ngClass]="getStatusClass(b.status)">
+                    {{ getStatusLabel(b.status) }}
+                  </span>
                 </div>
 
                 <div class="card-actions">

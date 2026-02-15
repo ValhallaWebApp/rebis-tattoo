@@ -11,13 +11,13 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
-import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatDatepickerModule } from '@angular/material/datepicker';  // Aggiunto
-import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE, MatNativeDateModule, MatOptionModule, MatPseudoCheckboxModule, NativeDateAdapter } from '@angular/material/core'; // Aggiungi gli adattatori
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule, MatOptionModule, MatPseudoCheckboxModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -46,9 +46,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatPaginatorModule,
     MatSortModule,
     MatSnackBarModule,
-    MatDatepickerModule,  // Aggiunto
-    MatProgressSpinnerModule,
     MatDatepickerModule,
+    MatProgressSpinnerModule,
     MatNativeDateModule,
     MatPseudoCheckboxModule,
     MatCheckboxModule,
@@ -58,13 +57,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatSelectModule,
     MatSlideToggleModule,
     MatChipsModule,
-    MatSnackBarModule,
     MatProgressBarModule,
     MatAutocompleteModule,
-    MatTooltipModule,
-    MatSidenavModule,
-    MatMenuTrigger
-
+    MatTooltipModule
   ],
   exports: [
     MatToolbarModule,
@@ -92,13 +87,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatSelectModule,
     MatSlideToggleModule,
     MatChipsModule,
-    MatSnackBarModule,
     MatProgressSpinnerModule,
     MatAutocompleteModule,
-    MatTooltipModule,
-    MatSidenavModule,
-    MatMenuTrigger
+    MatTooltipModule
   ],
-
 })
 export class MaterialModule {}

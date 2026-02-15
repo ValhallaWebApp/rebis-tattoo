@@ -64,6 +64,7 @@ export interface Booking {
   artistId: string;
   projectId?: string; // booking può esistere senza project (booking future/consulenze)
   type?: 'consultation' | 'session';
+  source?: 'fast-booking' | 'chat-bot' | 'manual';
 
   title: string;
   start: string; // "YYYY-MM-DDTHH:mm:ss" (locale)
@@ -92,6 +93,10 @@ export interface Booking {
   updateAt?: string;
   eta?: string;
 }
+
+export type ServiceResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
 
 /* =============================================================================
  * BookingDraftService (in-memory)
@@ -564,6 +569,22 @@ export class BookingService {
     await this.updateBooking(id, { status: newStatus, ...extra });
   }
 
+  async safeSetStatusSafe(
+    id: string,
+    newStatus: BookingStatus,
+    extra: Partial<Booking> = {}
+  ): Promise<ServiceResult<void>> {
+    try {
+      await this.safeSetStatus(id, newStatus, extra);
+      return { ok: true, data: undefined };
+    } catch (err: any) {
+      return {
+        ok: false,
+        error: String(err?.message ?? `Errore aggiornamento stato a ${newStatus}`)
+      };
+    }
+  }
+
   async rescheduleBooking(
     id: string,
     newStart: string,
@@ -613,9 +634,14 @@ export class BookingService {
   // ---------------------------------------------------------------------------
   buildDraftPayloadFromChat(
     draft: BookingChatDraft,
-    params: { clientId: string; clientName?: string; type?: 'consultation' | 'session' }
+    params: {
+      clientId: string;
+      clientName?: string;
+      type?: 'consultation' | 'session';
+      source?: 'fast-booking' | 'chat-bot' | 'manual';
+    }
   ): Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> {
-    const { clientId, clientName, type } = params;
+    const { clientId, clientName, type, source } = params;
 
     let start = draft.start ? this.normalizeLocalDateTime(draft.start) : '';
     let end = draft.end ? this.normalizeLocalDateTime(draft.end) : '';
@@ -633,6 +659,7 @@ export class BookingService {
       clientId,
       artistId: draft.artistId || '',
       type: type ?? 'consultation',
+      source: source ?? 'chat-bot',
 
       title: `${clientName || 'Cliente'} - Prenotazione`,
       start,
@@ -653,7 +680,12 @@ export class BookingService {
 
   async addDraftFromChat(
     draft: BookingChatDraft,
-    params: { idClient?: string; clientId?: string; clientName?: string }
+    params: {
+      idClient?: string;
+      clientId?: string;
+      clientName?: string;
+      source?: 'fast-booking' | 'chat-bot' | 'manual';
+    }
   ): Promise<string> {
     const clientId = params.clientId ?? params.idClient ?? '';
     if (!clientId) throw new Error('clientId mancante');
@@ -661,10 +693,31 @@ export class BookingService {
     const payload = this.buildDraftPayloadFromChat(draft, {
       clientId,
       clientName: params.clientName,
-      type: 'consultation'
+      type: 'consultation',
+      source: params.source ?? 'chat-bot'
     });
 
     return this.addDraft(payload);
+  }
+
+  async addDraftFromChatSafe(
+    draft: BookingChatDraft,
+    params: {
+      idClient?: string;
+      clientId?: string;
+      clientName?: string;
+      source?: 'fast-booking' | 'chat-bot' | 'manual';
+    }
+  ): Promise<ServiceResult<string>> {
+    try {
+      const bookingId = await this.addDraftFromChat(draft, params);
+      return { ok: true, data: bookingId };
+    } catch (err: any) {
+      return {
+        ok: false,
+        error: String(err?.message ?? 'Errore creazione bozza prenotazione')
+      };
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -798,7 +851,17 @@ export class BookingService {
       priority?: 'low' | 'normal' | 'high';
     }
   ): Promise<void> {
-    const recipients = [...new Set(userIds.filter(Boolean))];
+    const actor = this.auth.userSig();
+    const actorId = actor?.uid ?? null;
+    const actorRole = actor?.role ?? 'guest';
+    const isAdmin = actorRole === 'admin';
+
+    let recipients = [...new Set(userIds.filter(Boolean))];
+    if (!isAdmin) {
+      // RTDB rules allow writing notifications for own user unless admin.
+      recipients = actorId ? recipients.filter(userId => userId === actorId) : [];
+    }
+
     if (recipients.length === 0) return;
 
     const results = await Promise.allSettled(
@@ -826,12 +889,20 @@ export class BookingService {
       });
 
     if (failures.length > 0) {
-      console.error('[BookingService] notifyUsers failed', failures);
       const permissionDenied = failures.some(f => String(f.code).includes('PERMISSION_DENIED'));
-      if (permissionDenied) {
+      if (permissionDenied && !isAdmin) {
+        console.warn('[BookingService] notifyUsers skipped by RTDB rules for non-admin actor', {
+          actorId,
+          actorRole,
+          failedCount: failures.length
+        });
+      } else if (permissionDenied) {
         console.warn(
           '[BookingService] RTDB rules stanno bloccando la scrittura notifiche su utenti terzi. Verifica rules su notifications/{userId}.'
         );
+        console.error('[BookingService] notifyUsers failed', failures);
+      } else {
+        console.error('[BookingService] notifyUsers failed', failures);
       }
     }
   }

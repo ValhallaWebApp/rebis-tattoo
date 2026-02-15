@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+﻿import { Component, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../core/modules/material.module';
@@ -19,12 +19,13 @@ import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.serv
 export class StaffMembersAdminComponent implements OnInit {
   staff: StaffMember[] = [];
   filteredStaff: StaffMember[] = [];
+  staffCandidates: Array<{ id: string; name: string; email?: string; phone?: string }> = [];
 
   staffForm!: FormGroup;
   filterForm!: FormGroup;
 
   editingId: string | null = null;
-  imagePreview: any  = '';
+  imagePreview: any = '';
 
   @ViewChild('drawer') drawer!: MatDrawer;
 
@@ -41,40 +42,63 @@ export class StaffMembersAdminComponent implements OnInit {
     this.loadStaff();
   }
 
-  // ---- UI / DRAWER ----
   toggleDrawer(): void {
     if (this.drawer?.opened) {
       this.drawer.close();
       this.resetForm();
       this.editingId = null;
-    } else {
-      this.drawer.open();
+      return;
     }
+    this.drawer.open();
   }
 
   edit(member: StaffMember): void {
     this.drawer.open();
     this.editingId = member.id!;
-    this.staffForm.patchValue(member);
+    this.staffForm.patchValue({
+      userId: member.userId ?? member.id ?? '',
+      name: member.name,
+      role: member.role,
+      bio: member.bio ?? '',
+      photoUrl: member.photoUrl ?? '',
+      isActive: member.isActive ?? true,
+      email: member.email ?? '',
+      phone: member.phone ?? ''
+    });
     this.imagePreview = member.photoUrl;
   }
 
-  // ---- FORM PRINCIPALE ----
   initForm(): void {
     this.staffForm = this.fb.group({
+      userId: [''],
       name: ['', Validators.required],
       role: ['tatuatore', Validators.required],
       bio: [''],
       photoUrl: [''],
-      isActive: [true]
+      isActive: [true],
+      email: [''],
+      phone: ['']
     });
 
     this.staffForm.get('photoUrl')?.valueChanges.subscribe(value => {
       this.imagePreview = value;
     });
+
+    this.staffForm.get('userId')?.valueChanges.subscribe((uid) => {
+      if (this.editingId) return;
+      const selected = this.staffCandidates.find(c => c.id === uid);
+      if (!selected) return;
+      this.staffForm.patchValue(
+        {
+          name: selected.name || '',
+          email: selected.email || '',
+          phone: selected.phone || ''
+        },
+        { emitEvent: false }
+      );
+    });
   }
 
-  // ---- FORM FILTRI ----
   initFilterForm(): void {
     this.filterForm = this.fb.group({
       name: [''],
@@ -85,11 +109,14 @@ export class StaffMembersAdminComponent implements OnInit {
     this.filterForm.valueChanges.subscribe(() => this.applyFilters());
   }
 
-  // ---- DATA ----
   loadStaff(): void {
     this.staffService.getAllStaff().subscribe(staff => {
       this.staff = staff;
       this.applyFilters();
+    });
+
+    this.staffService.getStaffCandidates().subscribe(candidates => {
+      this.staffCandidates = candidates ?? [];
     });
   }
 
@@ -113,18 +140,33 @@ export class StaffMembersAdminComponent implements OnInit {
     });
   }
 
-  // ---- CRUD ----
   submit(): void {
+    if (this.staffForm.invalid) {
+      this.staffForm.markAllAsTouched();
+      this.showSnack('Compila i campi obbligatori');
+      return;
+    }
+
     const data: StaffMember = this.staffForm.value;
+    if (!this.editingId && !String(data.userId ?? '').trim()) {
+      this.showSnack('Seleziona un utente da promuovere a staff');
+      return;
+    }
 
     if (this.editingId) {
-      this.staffService.updateStaff(this.editingId, data).then(() => {
-        this.cancel();
-      });
+      this.staffService.updateStaff(this.editingId, data)
+        .then(() => this.cancel())
+        .catch((err) => {
+          console.error(err);
+          this.showSnack('Errore durante l\'aggiornamento');
+        });
     } else {
-      this.staffService.addStaff(data).then(() => {
-        this.resetForm();
-      });
+      this.staffService.addStaff(data)
+        .then(() => this.resetForm())
+        .catch((err) => {
+          console.error(err);
+          this.showSnack('Errore durante la creazione');
+        });
     }
   }
 
@@ -133,18 +175,14 @@ export class StaffMembersAdminComponent implements OnInit {
   }
 
   delete(id: string): void {
-    if (!id) {
-      return;
-    }
+    if (!id) return;
 
-    const conferma = confirm('Confermi l\'eliminazione di questo membro?');
-    if (!conferma) {
-      return;
-    }
+    const conferma = confirm('Confermi la disattivazione di questo membro?');
+    if (!conferma) return;
 
     this.staffService.deleteStaff(id)
       .then(() => {
-        this.showSnack('Membro eliminato');
+        this.showSnack('Membro disattivato');
       })
       .catch((err) => {
         console.error(err);
@@ -179,27 +217,28 @@ export class StaffMembersAdminComponent implements OnInit {
 
   resetForm(): void {
     this.staffForm.reset({
+      userId: '',
       name: '',
       role: 'tatuatore',
       bio: '',
       photoUrl: '',
-      isActive: true
+      isActive: true,
+      email: '',
+      phone: ''
     });
     this.editingId = null;
     this.imagePreview = '';
   }
 
-  // ---- AZIONI MOCK (come in clients-list) ----
   openAgenda(member: StaffMember): void {
     console.log('Apri agenda per', member);
-    // TODO: navigazione alla day/week view filtrata su questo artista
   }
 
   contactStaff(member: StaffMember): void {
     console.log('Apri chat con', member);
-    // TODO: apri chat / chatbot con staff pre-selezionato
   }
-    private showSnack(message: string): void {
+
+  private showSnack(message: string): void {
     this.snackBar.open(message, 'OK', {
       duration: 2500,
       horizontalPosition: 'right',

@@ -1,0 +1,22 @@
+{
+  "name": "rebis-payment-functions",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions",
+    "lint": "node -e \"require('./index.js'); console.log('functions loaded')\""
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "firebase-functions": "^6.3.2",
+    "gestionale-tattuaggi": "file:..",
+    "stripe": "^19.3.0"
+  }
+}

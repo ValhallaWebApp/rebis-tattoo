@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import {
   Database,
   ref,
@@ -15,11 +15,11 @@ import {
 import { Observable } from 'rxjs';
 
 export interface Invoice {
-bookingId: string;
+  bookingId: string;
   id?: string;
   clientId: string;
   clientName: string;
-  date: string; // ISO string
+  date: string;
   amount: number;
   status: 'paid' | 'pending' | 'cancelled';
   items: {
@@ -43,13 +43,18 @@ export class InvoicesService {
   getInvoices(): Observable<Invoice[]> {
     return new Observable<Invoice[]>((observer) => {
       const invoicesRef = ref(this.db, this.path);
-      onValue(invoicesRef, (snapshot) => {
-        const data = snapshot.val();
-        const invoices: Invoice[] = data
-          ? Object.entries(data).map(([id, val]: any) => ({ id, ...val }))
-          : [];
-        observer.next(invoices);
-      });
+      const unsub = onValue(
+        invoicesRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          const invoices: Invoice[] = data
+            ? Object.entries(data).map(([id, val]: any) => ({ id, ...val }))
+            : [];
+          observer.next(invoices);
+        },
+        (error) => observer.error(error)
+      );
+      return () => unsub();
     });
   }
 
@@ -61,13 +66,18 @@ export class InvoicesService {
         equalTo(clientId)
       );
 
-      onValue(invoicesQuery, (snapshot) => {
-        const data = snapshot.val();
-        const invoices: Invoice[] = data
-          ? Object.entries(data).map(([id, val]: any) => ({ id, ...val }))
-          : [];
-        observer.next(invoices);
-      });
+      const unsub = onValue(
+        invoicesQuery,
+        (snapshot) => {
+          const data = snapshot.val();
+          const invoices: Invoice[] = data
+            ? Object.entries(data).map(([id, val]: any) => ({ id, ...val }))
+            : [];
+          observer.next(invoices);
+        },
+        (error) => observer.error(error)
+      );
+      return () => unsub();
     });
   }
 
@@ -102,18 +112,23 @@ export class InvoicesService {
   getTotalRevenue(): Observable<number> {
     return new Observable<number>((observer) => {
       const invoicesRef = ref(this.db, this.path);
-      onValue(invoicesRef, (snapshot) => {
-        const data = snapshot.val();
-        let total = 0;
-        if (data) {
-          Object.values(data).forEach((i: any) => {
-            if (i.status === 'paid' && typeof i.amount === 'number') {
-              total += i.amount;
-            }
-          });
-        }
-        observer.next(total);
-      });
+      const unsub = onValue(
+        invoicesRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          let total = 0;
+          if (data) {
+            Object.values(data).forEach((i: any) => {
+              if (i.status === 'paid' && typeof i.amount === 'number') {
+                total += i.amount;
+              }
+            });
+          }
+          observer.next(total);
+        },
+        (error) => observer.error(error)
+      );
+      return () => unsub();
     });
   }
 }

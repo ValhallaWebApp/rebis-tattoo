@@ -2,10 +2,13 @@
 
 export type BookingStatus =
   | 'draft'
+  | 'pending'
+  | 'confirmed'
   | 'paid'
-  | 'on-going'
+  | 'in_progress'
   | 'completed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'no_show';
 
 /** Draft leggero che può arrivare dal chatbot */
 export interface BookingChatDraft {
@@ -48,6 +51,7 @@ export interface Booking {
   // Info UI (opzionali)
   clientName?: string;
   artistName?: string;
+  source?: 'fast-booking' | 'chat-bot' | 'manual';
 
   // Relazioni future (opzionali)
   serviceId?: string;

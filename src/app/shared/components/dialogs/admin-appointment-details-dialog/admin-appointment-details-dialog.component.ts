@@ -29,16 +29,16 @@ export class AdminAppointmentDetailsDialogComponent {
 
   confirmBooking(): void {
     if (this.data.id) {
-      this.bookingService.updateBooking(this.data.id, { status: 'completed' }).then(() => {
-        this.dialogRef.close(true);
+      this.bookingService.safeSetStatusSafe(this.data.id, 'completed').then((res) => {
+        this.dialogRef.close(!!res.ok);
       });
     }
   }
 
   cancelBooking(): void {
     if (this.data.id) {
-      this.bookingService.updateBooking(this.data.id, { status: 'cancelled' }).then(() => {
-        this.dialogRef.close(true);
+      this.bookingService.safeSetStatusSafe(this.data.id, 'cancelled').then((res) => {
+        this.dialogRef.close(!!res.ok);
       });
     }
   }

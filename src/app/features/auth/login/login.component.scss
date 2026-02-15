@@ -1,41 +1,211 @@
-.login-wrapper {
+﻿:host {
+  --auth-bg-a: #0f1115;
+  --auth-bg-b: #171c24;
+  --auth-panel: #ffffff;
+  --auth-panel-muted: #f5f7fb;
+  --auth-ink: #111826;
+  --auth-sub: #5f6878;
+  --auth-line: #d9deea;
+  --auth-primary: #0b5fff;
+  --auth-primary-ink: #ffffff;
+  --auth-danger-bg: #ffe6e6;
+  --auth-danger-ink: #a41111;
+}
+
+.auth-shell {
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(145deg, #121212, #1f1f1f);
-  padding: 16px;
-}
-
-.login-card {
-  width: 100%;
-  max-width: 400px;
+  display: grid;
+  place-items: center;
   padding: 24px;
-  background-color: #fff;
-  border-radius: 12px;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(11, 95, 255, 0.18), transparent 40%),
+    radial-gradient(circle at 88% 84%, rgba(29, 191, 151, 0.14), transparent 45%),
+    linear-gradient(160deg, var(--auth-bg-a), var(--auth-bg-b));
+  position: relative;
+  overflow: hidden;
 }
 
-.card-header {
+.bg-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(20px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.orb-a {
+  width: 280px;
+  height: 280px;
+  top: 8%;
+  right: -80px;
+  background: #1dbf97;
+}
+
+.orb-b {
+  width: 340px;
+  height: 340px;
+  bottom: -120px;
+  left: -120px;
+  background: #0b5fff;
+}
+
+.auth-card {
+  width: min(980px, 100%);
+  border-radius: 18px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  background: var(--auth-panel);
+  animation: card-in 240ms ease-out;
+}
+
+.brand-panel {
+  background: var(--auth-panel-muted);
+  padding: 40px 34px;
+  border-right: 1px solid var(--auth-line);
+}
+
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--auth-sub);
+}
+
+.brand-panel h1 {
+  margin: 10px 0 8px;
+  font-size: clamp(26px, 4vw, 34px);
+  line-height: 1.1;
+  color: var(--auth-ink);
+}
+
+.lead {
+  margin: 0;
+  color: var(--auth-sub);
+  line-height: 1.5;
+}
+
+.chips {
+  margin-top: 24px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-
-  h2 { margin: 0; font-weight: 600; }
-  .header-icon { font-size: 32px; color: #3f51b5; }
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.login-form { display: flex; flex-direction: column; gap: 16px; }
-.full-width { width: 100%; }
+.chips span {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #e8eefc;
+  color: #20418c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.form-panel {
+  padding: 34px;
+}
+
+.head h2 {
+  margin: 0;
+  font-size: 28px;
+  color: var(--auth-ink);
+}
+
+.head p {
+  margin: 6px 0 0;
+  color: var(--auth-sub);
+}
+
+.login-form {
+  margin-top: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+}
+
+.center {
+  align-items: center;
+}
+
+.between {
+  justify-content: space-between;
+}
+
+.ghost-link {
+  text-transform: none;
+  opacity: 0.6;
+}
 
 .global-error {
-  display: flex; align-items: center; gap: 6px;
-  color: #d32f2f; font-size: 14px; margin: -8px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: var(--auth-danger-bg);
+  color: var(--auth-danger-ink);
+  padding: 10px 12px;
+  font-size: 13px;
 }
 
-.row { display: flex; gap: 12px; }
-.center { align-items: center; }
-.between { justify-content: space-between; }
-.linklike { text-transform: none; padding: 0 8px; }
+.cta {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 2px;
+}
 
-.toggle-btn { margin-top: 12px; text-align: center; width: 100%; }
+.mode-switch {
+  margin-top: 10px;
+  width: 100%;
+  text-transform: none;
+}
+
+@keyframes card-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--auth-line);
+    padding: 24px;
+  }
+
+  .form-panel {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 560px) {
+  .auth-shell {
+    padding: 12px;
+  }
+
+  .brand-panel,
+  .form-panel {
+    padding: 18px;
+  }
+}

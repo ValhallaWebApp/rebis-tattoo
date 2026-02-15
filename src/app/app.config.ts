@@ -15,6 +15,7 @@ import {
   MAT_DATE_FORMATS,
   MAT_NATIVE_DATE_FORMATS,
 } from '@angular/material/core';
+import { environment } from '../environment';
 
 import { routes } from './app.routes';
 
@@ -42,16 +43,7 @@ export const appConfig: ApplicationConfig = {
 
     // 🔥 Firebase (una sola volta, corretto)
     provideFirebaseApp(() =>
-      initializeApp({
-        projectId: 'rebis-tattoo-55816',
-        appId: '1:70352364616:web:24a6df01d24f6b4947647d',
-        databaseURL: 'https://rebis-tattoo-55816-default-rtdb.europe-west1.firebasedatabase.app',
-        storageBucket: 'rebis-tattoo-55816.firebasestorage.app',
-        apiKey: 'AIzaSyDFOFTJ9p60YeoVdLGo8ZfuaOOaUpgAP5E',
-        authDomain: 'rebis-tattoo-55816.firebaseapp.com',
-        messagingSenderId: '70352364616',
-        measurementId: 'G-1HW9SPJ1CN',
-      })
+      initializeApp(environment.firebaseConfig)
     ),
 
     provideAuth(() => getAuth()),

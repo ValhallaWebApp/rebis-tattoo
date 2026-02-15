@@ -5,6 +5,7 @@ import { BookingChatDraft, BookingService } from '../../../../core/services/book
 import { UserService } from '../../../../core/services/users/user.service';
 import { PaymentApiService } from '../../../../core/services/payments/payment-api.service';
 import { AuthService } from '../../../../core/services/auth/authservice';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 
 type Step =
   | 'intro'
@@ -32,6 +33,7 @@ export class FastBookingStore {
   private readonly userService = inject(UserService);
   private readonly paymentApi = inject(PaymentApiService);
   private readonly auth = inject(AuthService);
+  private readonly ui = inject(UiFeedbackService);
 
  HOME_SEED_KEY = 'FAST_BOOKING_HOME_SEED';
 
@@ -66,6 +68,7 @@ export class FastBookingStore {
   readonly paymentClientSecret = signal<string | null>(null);
   readonly paymentIntentId = signal<string | null>(null);
   readonly paying = signal(false);
+  readonly confirmingPayment = signal(false);
 
   // UI ERROR
   readonly error = signal<string | null>(null);
@@ -303,6 +306,9 @@ effect(() => {
   // PAYMENT FLOW (REAL DATA + hook)
   async startPayment() {
     try {
+      if (this.paying()) return;
+      if (this.paymentClientSecret()) return;
+
       this.error.set(null);
       this.paying.set(true);
 
@@ -332,31 +338,52 @@ effect(() => {
         note: d.description,
       };
 
-      const bookingId = await this.bookingService.addDraftFromChat(chatDraft, {
+      const draftRes = await this.bookingService.addDraftFromChatSafe(chatDraft, {
         idClient: uid,
         clientName: d.name,
+        source: 'fast-booking'
       });
+      if (!draftRes.ok) {
+        this.error.set(draftRes.error);
+        this.ui.error(draftRes.error);
+        return;
+      }
+      const bookingId = draftRes.data;
 
       this.bookingId.set(bookingId);
 
       // 2) crea PaymentIntent (caparra)
       const amountCents = Math.round(this.depositEuro() * 100);
 
-      const payRes = await firstValueFrom(
-        this.paymentApi.createPaymentIntent({
-          amount: amountCents,
-          currency: 'eur',
-          description: `Caparra consulenza Rebis Tattoo - booking ${bookingId}`,
-        })
-      );
+      const payRes = await this.paymentApi.createPaymentIntentSafe({
+        amount: amountCents,
+        currency: 'eur',
+        description: `Caparra consulenza Rebis Tattoo - booking ${bookingId}`,
+        bookingId,
+      });
 
-      this.paymentClientSecret.set(payRes.clientSecret);
-      this.paymentIntentId.set(payRes.paymentIntentId);
+      if (!payRes.ok) {
+        // La bozza esiste ma il pagamento non e stato inizializzato.
+        // Portiamo la bozza in pending per retry controllato lato admin/cliente.
+        await this.bookingService.safeSetStatusSafe(bookingId, 'pending', {
+          updatedAt: new Date().toISOString(),
+          notes: `${d.description ?? ''}\n[payment-init-failed] ${payRes.error}`.trim()
+        } as any);
+        this.error.set(payRes.error);
+        this.ui.error(payRes.error);
+        return;
+      }
+
+      this.paymentClientSecret.set(payRes.data.clientSecret);
+      this.paymentIntentId.set(payRes.data.paymentIntentId);
+      this.ui.success('Pagamento inizializzato correttamente.');
 
       // 3) Stripe Elements gestito nello step payment
     } catch (e: any) {
       console.error(e);
-      this.error.set('Errore durante la creazione del pagamento. Riprova.');
+      const msg = String(e?.message ?? 'Errore durante la creazione del pagamento. Riprova.');
+      this.error.set(msg);
+      this.ui.error(msg);
     } finally {
       this.paying.set(false);
     }
@@ -364,7 +391,10 @@ effect(() => {
 
   // CHIAMA QUESTO QUANDO STRIPE CONFERMA OK (webhook o return-url)
   async confirmPaymentSuccess() {
+    if (this.confirmingPayment()) return;
+
     try {
+      this.confirmingPayment.set(true);
       const id = this.bookingId();
       if (!id) {
         this.error.set('Booking non trovato.');
@@ -375,24 +405,58 @@ effect(() => {
       const booking = await this.bookingService.getBookingById(id);
       if (!booking) {
         this.error.set('Booking non trovato.');
+        this.ui.error('Booking non trovato.');
+        return;
+      }
+
+      if (booking.status === 'paid') {
+        this.go('success');
+        return;
+      }
+
+      if (booking.status === 'cancelled' || booking.status === 'completed' || booking.status === 'no_show') {
+        const msg = `Stato booking non valido per conferma pagamento: ${booking.status}`;
+        this.error.set(msg);
+        this.ui.error(msg);
         return;
       }
 
       // Transizione valida: draft/pending -> confirmed -> paid
       if (booking.status === 'draft' || booking.status === 'pending') {
-        await this.bookingService.safeSetStatus(id, 'confirmed');
+        const toConfirmed = await this.bookingService.safeSetStatusSafe(id, 'confirmed');
+        if (!toConfirmed.ok) {
+          this.error.set(toConfirmed.error);
+          this.ui.error(toConfirmed.error);
+          return;
+        }
       }
 
-      await this.bookingService.safeSetStatus(id, 'paid', {
+      const toPaid = await this.bookingService.safeSetStatusSafe(id, 'paid', {
         paidAmount: paid,
         price: paid,
         updatedAt: new Date().toISOString(),
       } as any);
+      if (!toPaid.ok) {
+        const fresh = await this.bookingService.getBookingById(id);
+        if (fresh?.status === 'paid') {
+          this.go('success');
+          return;
+        }
+
+        this.error.set(toPaid.error);
+        this.ui.error(toPaid.error);
+        return;
+      }
 
       this.go('success');
+      this.ui.success('Pagamento registrato con successo.');
     } catch (e: any) {
       console.error(e);
-      this.error.set('Pagamento registrato? Non riesco ad aggiornare lo stato booking.');
+      const msg = 'Pagamento registrato? Non riesco ad aggiornare lo stato booking.';
+      this.error.set(msg);
+      this.ui.error(msg);
+    } finally {
+      this.confirmingPayment.set(false);
     }
   }
 

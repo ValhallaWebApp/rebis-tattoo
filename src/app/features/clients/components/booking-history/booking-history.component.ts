@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, effect, Injector } from '@angular/core';
+﻿import { Component, OnInit, inject, effect, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../core/modules/material.module';
@@ -108,12 +108,14 @@ private readonly invoicesService = inject(InvoicesService);
       // cancelled
       this.cancelledBookings = all.filter(b => this.normStatus(b.status) === 'cancelled');
 
-      // history: completate o confermate già finite
+      // history: stati finali + appuntamenti ormai passati
       this.historyBookings = all.filter(b => {
         const s = this.normStatus(b.status);
         if (s === 'cancelled') return false;
-        if (s === 'completed') return true;
-        if (s === 'confirmed') return this.getEndMs(b) < now;
+        if (s === 'completed' || s === 'no_show') return true;
+        if (['confirmed', 'paid', 'in_progress', 'pending'].includes(s)) {
+          return this.getEndMs(b) < now;
+        }
         return false;
       });
 
@@ -121,7 +123,7 @@ private readonly invoicesService = inject(InvoicesService);
       const activeFuture = all
         .filter(b => {
           const s = this.normStatus(b.status);
-          if (s === 'cancelled') return false;
+          if (s === 'cancelled' || s === 'completed' || s === 'no_show') return false;
           // future
           return this.getStartMs(b) >= now;
         })
@@ -190,9 +192,9 @@ private readonly invoicesService = inject(InvoicesService);
   // ===========
   getBookingLabel(b: Booking): string {
     const note = ((b as any).notes ?? '').trim();
-    const artist = this.artistMap[(b as any).artistId] ? ` • ${this.artistMap[(b as any).artistId]}` : '';
+    const artist = this.artistMap[(b as any).artistId] ? ` - ${this.artistMap[(b as any).artistId]}` : '';
     if (note) return `${note}${artist}`;
-    const pid = (b as any).projectId ? ` • ${String((b as any).projectId)}` : '';
+    const pid = (b as any).projectId ? ` - ${String((b as any).projectId)}` : '';
     return `Prenotazione ${(b as any).id ?? ''}${pid}${artist}`.trim();
   }
 
@@ -204,8 +206,10 @@ private readonly invoicesService = inject(InvoicesService);
     const s = this.normStatus(status);
     if (s === 'pending') return 'In attesa';
     if (s === 'confirmed') return 'Confermata';
-    if (s === 'in_progress' || s === 'on-going' || s === 'ongoing' || s === 'paid') return 'In corso';
+    if (s === 'paid') return 'Pagata';
+    if (s === 'in_progress' || s === 'on-going' || s === 'ongoing') return 'In corso';
     if (s === 'cancelled') return 'Annullata';
+    if (s === 'no_show') return 'No show';
     if (s === 'completed' || s === 'done') return 'Completata';
     if (s === 'draft') return 'Bozza';
     return 'Prenotazione';
@@ -215,8 +219,9 @@ private readonly invoicesService = inject(InvoicesService);
     const s = this.normStatus(status);
     if (s === 'pending') return 'pending';
     if (s === 'confirmed') return 'confirmed';
-    if (s === 'in_progress' || s === 'on-going' || s === 'ongoing' || s === 'paid') return 'in_progress';
-    if (s === 'cancelled') return 'cancelled';
+    if (s === 'in_progress' || s === 'on-going' || s === 'ongoing') return 'in_progress';
+    if (s === 'paid') return 'confirmed';
+    if (s === 'cancelled' || s === 'no_show') return 'cancelled';
     if (s === 'completed' || s === 'done') return 'done';
     return '';
   }
@@ -225,7 +230,7 @@ private readonly invoicesService = inject(InvoicesService);
   // ACTIONS (client UX)
   // ===========
   openDetails(b: Booking) {
-    // se hai già una route dettagli, cambiala qui
+    // se hai gia una route dettagli, cambiala qui
     this.snackbar.open(`Dettagli: ${this.getBookingLabel(b)}`, 'Chiudi', { duration: 2200 });
   }
 
@@ -244,7 +249,7 @@ private readonly invoicesService = inject(InvoicesService);
   }
 
   openAftercare() {
-    // metti qui la tua pagina guida se ce l’hai
+    // metti qui la tua pagina guida se ce l'hai
     this.router.navigateByUrl('/contatti');
   }
 
@@ -268,7 +273,7 @@ private readonly invoicesService = inject(InvoicesService);
     this.router.navigate(['/fast-booking'], { queryParams: { artistId: (b as any).artistId } });
   }
 
-  // (opzionale) recensione, se già lo usavi
+  // (opzionale) recensione, se gia lo usavi
   openReviewDialog(b: Booking) {
     const uid = this.user?.uid || this.user?.user?.uid || null;
     if (!uid) {
@@ -319,7 +324,7 @@ async downloadInvoice(b: Booking): Promise<void> {
     const html = this.buildInvoiceHtml(inv, b);
     this.downloadHtmlFile(html, `fattura-${(inv as any).number ?? (inv as any).id ?? bookingId}.html`);
 
-    this.snackbar.open('Fattura pronta: file HTML scaricato. Aprilo e stampa → “Salva come PDF”.', 'Chiudi', {
+    this.snackbar.open('Fattura pronta: file HTML scaricato. Aprilo e stampa -> "Salva come PDF".', 'Chiudi', {
       duration: 4500
     });
   } catch (err) {
@@ -331,18 +336,18 @@ async downloadInvoice(b: Booking): Promise<void> {
 }
 private async safeGetInvoicesArray(): Promise<any[]> {
   // Se il tuo InvoicesService espone un observable diverso, qui almeno lo intercettiamo con fallback.
-  // ATTENZIONE: qui presuppongo che tu abbia già `private readonly invoicesService = inject(InvoicesService);`
+  // ATTENZIONE: qui presuppongo che tu abbia gia `private readonly invoicesService = inject(InvoicesService);`
   const obs: any = (this as any).invoicesService?.getInvoices?.();
 
   if (!obs || typeof obs.subscribe !== 'function') {
-    throw new Error('InvoicesService.getInvoices() non disponibile o non è un Observable');
+    throw new Error('InvoicesService.getInvoices() non disponibile o non e un Observable');
   }
 
-  // firstValueFrom con timeout “soft” per non restare appeso
+  // firstValueFrom con timeout "soft" per non restare appeso
   const { firstValueFrom, timeout, catchError, of } = await import('rxjs');
   const { timeoutWith } = await import('rxjs/operators').catch(() => ({ timeoutWith: null as any }));
 
-  // Se non hai rxjs/operators importabili, usiamo un wrapper più semplice:
+  // Se non hai rxjs/operators importabili, usiamo un wrapper piu semplice:
   return await new Promise<any[]>((resolve, reject) => {
     const t = setTimeout(() => {
       sub.unsubscribe();
@@ -380,7 +385,7 @@ private buildInvoiceHtml(invoice: any, booking: any): string {
   const bookingStart = new Date(booking.start);
   const bookingLine = isFinite(bookingStart.getTime())
     ? `${bookingStart.toLocaleDateString()} ${bookingStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-    : '—';
+    : '-';
 
   const rows = items.length
     ? items.map((it: any, idx: number) => {
@@ -431,7 +436,7 @@ private buildInvoiceHtml(invoice: any, booking: any): string {
 </head>
 <body>
   <div class="wrap">
-    <div class="hint">Apri questo file → Stampa → “Salva come PDF”.</div>
+    <div class="hint">Apri questo file -> Stampa -> "Salva come PDF".</div>
 
     <div class="top">
       <div>
@@ -446,8 +451,8 @@ private buildInvoiceHtml(invoice: any, booking: any): string {
       <div><div class="k">Data</div><div class="v">${date.toLocaleDateString()}</div></div>
       <div><div class="k">Artista</div><div class="v">${this.escapeHtml(artistName)}</div></div>
       <div><div class="k">Appuntamento</div><div class="v">${this.escapeHtml(bookingLine)}</div></div>
-      <div><div class="k">Booking ID</div><div class="v">${this.escapeHtml(String(booking.id ?? '—'))}</div></div>
-      <div><div class="k">Cliente</div><div class="v">${this.escapeHtml(String(invoice.clientId ?? invoice.clientName ?? '—'))}</div></div>
+      <div><div class="k">Booking ID</div><div class="v">${this.escapeHtml(String(booking.id ?? '-'))}</div></div>
+      <div><div class="k">Cliente</div><div class="v">${this.escapeHtml(String(invoice.clientId ?? invoice.clientName ?? '-'))}</div></div>
     </div>
 
     <div class="card">
@@ -456,7 +461,7 @@ private buildInvoiceHtml(invoice: any, booking: any): string {
         <thead>
           <tr>
             <th>Descrizione</th>
-            <th class="num">Qtà</th>
+            <th class="num">Qta</th>
             <th class="num">Prezzo</th>
             <th class="num">Totale</th>
           </tr>
@@ -511,3 +516,5 @@ private escapeHtml(input: string): string {
 }
 
 }
+
+

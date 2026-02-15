@@ -204,28 +204,28 @@
 
             <div class="line">
               <span class="k">Status</span>
-              <span class="v">{{ row.booking?.status || '-' }}</span>
+              <span class="v">{{ row.booking.status || '-' }}</span>
             </div>
 
-            <div class="line" *ngIf="row.booking?.projectId">
+            <div class="line" *ngIf="row.booking.projectId">
               <span class="k">ProjectId</span>
-              <span class="v">{{ row.booking?.projectId }}</span>
+              <span class="v">{{ row.booking.projectId }}</span>
             </div>
 
             <div class="moneygrid">
-              <div class="m" *ngIf="row.booking?.depositRequired != null">
+              <div class="m" *ngIf="row.booking.depositRequired != null">
                 <span>Acconto richiesto</span>
-                <strong>{{ money(row.booking?.depositRequired) }}</strong>
+                <strong>{{ money(row.booking.depositRequired) }}</strong>
               </div>
 
-              <div class="m" *ngIf="row.booking?.paidAmount != null">
+              <div class="m" *ngIf="row.booking.paidAmount != null">
                 <span>Pagato (booking)</span>
-                <strong>{{ money(row.booking?.paidAmount) }}</strong>
+                <strong>{{ money(row.booking.paidAmount) }}</strong>
               </div>
 
-              <div class="m" *ngIf="row.booking?.price != null">
+              <div class="m" *ngIf="row.booking.price != null">
                 <span>Prezzo (booking)</span>
-                <strong>{{ money(row.booking?.price) }}</strong>
+                <strong>{{ money(row.booking.price) }}</strong>
               </div>
             </div>
           </div>

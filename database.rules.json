@@ -6,7 +6,7 @@
     "adminUids": {
       "$uid": {
         ".read": "auth != null && root.child('adminUids/' + auth.uid).val() === true",
-        ".write": "auth != null && root.child('adminUids/' + auth.uid).val() === true",
+        ".write": "auth != null && (!root.child('adminUids').exists() || root.child('adminUids/' + auth.uid).val() === true)",
         ".validate": "newData.isBoolean()"
       }
     },
@@ -21,6 +21,7 @@
     "notifications": {
       "$userId": {
         ".read": "auth != null && (auth.uid === $userId || root.child('adminUids/' + auth.uid).val() === true)",
+        ".indexOn": ["createdAt", "readAt", "type", "priority"],
         "$notificationId": {
           ".write": "auth != null && (auth.uid === $userId || root.child('adminUids/' + auth.uid).val() === true)",
           ".validate": "!newData.exists() || (newData.hasChildren(['id','userId','type','title','message','priority','createdAt','readAt']) && newData.child('id').isString() && newData.child('id').val() === $notificationId && newData.child('userId').isString() && newData.child('userId').val() === $userId && newData.child('type').isString() && newData.child('title').isString() && newData.child('message').isString() && newData.child('priority').isString() && newData.child('createdAt').isString() && (newData.child('readAt').val() === null || newData.child('readAt').isString()))"
@@ -29,6 +30,8 @@
     },
 
     "bookings": {
+      ".read": false,
+      ".indexOn": ["clientId", "idClient", "artistId", "idArtist", "start", "status", "projectId"],
       "$bookingId": {
         ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || data.child('clientId').val() === auth.uid || data.child('idClient').val() === auth.uid || data.child('artistId').val() === auth.uid || data.child('idArtist').val() === auth.uid)",
         ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || data.child('clientId').val() === auth.uid || data.child('idClient').val() === auth.uid || data.child('artistId').val() === auth.uid || data.child('idArtist').val() === auth.uid || newData.child('clientId').val() === auth.uid || newData.child('idClient').val() === auth.uid || newData.child('artistId').val() === auth.uid || newData.child('idArtist').val() === auth.uid)"
@@ -36,6 +39,8 @@
     },
 
     "sessions": {
+      ".read": "auth != null",
+      ".indexOn": ["idArtist", "idClient", "projectId", "bookingId", "start", "status"],
       "$sessionId": {
         ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || data.child('clientId').val() === auth.uid || data.child('idClient').val() === auth.uid || data.child('artistId').val() === auth.uid || data.child('idArtist').val() === auth.uid)",
         ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || data.child('clientId').val() === auth.uid || data.child('idClient').val() === auth.uid || data.child('artistId').val() === auth.uid || data.child('idArtist').val() === auth.uid || newData.child('clientId').val() === auth.uid || newData.child('idClient').val() === auth.uid || newData.child('artistId').val() === auth.uid || newData.child('idArtist').val() === auth.uid)"
@@ -43,20 +48,28 @@
     },
 
     "invoices": {
+      ".read": "auth != null",
+      ".indexOn": ["clientId", "bookingId", "status", "date"],
       "$invoiceId": {
-        ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || data.child('clientId').val() === auth.uid || newData.child('clientId').val() === auth.uid)",
+        ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || data.child('clientId').val() === auth.uid)",
         ".write": "auth != null && root.child('adminUids/' + auth.uid).val() === true"
       }
     },
 
     "auditLogs": {
       ".read": "auth != null && root.child('adminUids/' + auth.uid).val() === true",
-      ".write": "auth != null"
+      ".write": "auth != null && root.child('adminUids/' + auth.uid).val() === true"
     },
 
     "staff": {
+      ".read": false,
+      ".write": false
+    },
+
+    "staffProfiles": {
       ".read": true,
-      ".write": "auth != null && root.child('adminUids/' + auth.uid).val() === true"
+      ".write": "auth != null && root.child('adminUids/' + auth.uid).val() === true",
+      ".indexOn": ["isActive", "role", "deletedAt"]
     },
 
     "services": {
@@ -66,17 +79,23 @@
 
     "projects": {
       ".read": true,
-      ".write": "auth != null && root.child('adminUids/' + auth.uid).val() === true"
+      ".write": "auth != null && root.child('adminUids/' + auth.uid).val() === true",
+      ".indexOn": ["clientId", "artistId", "status", "isPublic", "createdAt"]
     },
 
     "reviews": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null",
+      ".indexOn": ["userId", "bookingId", "artistId", "status", "date"]
     },
 
     "bonus": {
       ".read": "auth != null",
-      ".write": "auth != null"
+      ".write": "auth != null",
+      "promoCodes": { ".indexOn": ["code", "active", "expiresAt"] },
+      "giftCards": { ".indexOn": ["code", "active", "expiresAt"] },
+      "wallets": { ".indexOn": ["updatedAt"] },
+      "ledger": { ".indexOn": ["at", "type"] }
     },
 
     "chats": {
@@ -90,8 +109,9 @@
     },
 
     "conversations": {
+      ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('staffProfiles/' + auth.uid + '/isActive').val() === true)",
       "$conversationId": {
-        ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || data.child('participants/' + auth.uid).exists() || newData.child('participants/' + auth.uid).exists())",
+        ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || data.child('participants/' + auth.uid).exists())",
         ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || data.child('participants/' + auth.uid).exists() || newData.child('participants/' + auth.uid).exists())"
       }
     },

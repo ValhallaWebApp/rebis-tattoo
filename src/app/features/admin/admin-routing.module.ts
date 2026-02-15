@@ -21,6 +21,7 @@ import { Calendar } from '@fullcalendar/core/index.js';
 import { CalendarComponent } from '../calendar/calendar.component';
 import { ProjectDetailComponent } from '../public/projects/components/project-detail/project-detail.component';
 import { BonusAdminComponent } from './components/bonus-admin/bonus-admin.component';
+import { AdminOnlyGuard } from '../../core/guards/admin-only.guard';
 
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
@@ -41,7 +42,7 @@ const routes: Routes = [
 
   { path: 'servizi', component: ServicesAdminComponent },
 
-  { path: 'staff', component: StaffMembersAdminComponent },
+  { path: 'staff', component: StaffMembersAdminComponent, canActivate: [AdminOnlyGuard] },
   { path: 'bonus', component: BonusAdminComponent },
 
   { path: 'analytics', component: AnalyticsComponent },

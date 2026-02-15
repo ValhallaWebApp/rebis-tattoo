@@ -38,6 +38,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environment.ts",
+                  "with": "src/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -52,6 +58,17 @@
               ],
               "outputHashing": "all"
             },
+            "stage": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environment.ts",
+                  "with": "src/environment.stage.ts"
+                }
+              ],
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -65,6 +82,9 @@
           "configurations": {
             "production": {
               "buildTarget": "gestionale-tattuaggi:build:production"
+            },
+            "stage": {
+              "buildTarget": "gestionale-tattuaggi:build:stage"
             },
             "development": {
               "buildTarget": "gestionale-tattuaggi:build:development"

@@ -16,6 +16,7 @@ import {
   updateDoc,
   DocumentData
 } from '@angular/fire/firestore';
+import { Database, get as getDb, ref as dbRef } from '@angular/fire/database';
 import { of, switchMap, catchError, firstValueFrom } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
@@ -46,7 +47,7 @@ export class AuthService {
   readonly roleSig = computed(() => this._userSig()?.role || 'public');
 
   private normalizeUser(data: DocumentData | AppUser): AppUser {
-    const uid = String((data as any).uid ?? '');
+    const uid = String((data as any).uid ?? (data as any).id ?? '');
     const role = String((data as any).role ?? 'public');
     return {
       ...(data as any),
@@ -55,9 +56,43 @@ export class AuthService {
     };
   }
 
+  private async inferRoleFromRtdb(uid: string): Promise<AppUser['role']> {
+    try {
+      const adminSnap = await getDb(dbRef(this.db, `adminUids/${uid}`));
+      if (adminSnap.exists() && adminSnap.val() === true) return 'admin';
+
+      const staffSnap = await getDb(dbRef(this.db, `staffProfiles/${uid}`));
+      if (staffSnap.exists() && staffSnap.child('isActive').val() !== false) return 'staff';
+    } catch {
+      // ignore and fallback
+    }
+    return 'client';
+  }
+
+  private async ensureUserProfile(firebaseUser: User): Promise<AppUser | null> {
+    const userRef = doc(this.firestore, 'users', firebaseUser.uid);
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+      return this.normalizeUser({ id: firebaseUser.uid, uid: firebaseUser.uid, ...snap.data() });
+    }
+
+    const role = await this.inferRoleFromRtdb(firebaseUser.uid);
+    const profile: AppUser = {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      name: firebaseUser.displayName ?? '',
+      role,
+      isActive: true
+    };
+
+    await setDoc(userRef, { id: firebaseUser.uid, ...profile }, { merge: true });
+    return profile;
+  }
+
   constructor(
     private auth: Auth,
     private firestore: Firestore,
+    private db: Database,
     private router: Router,
     private ui: UiFeedbackService,
     private audit: AuditLogService
@@ -69,12 +104,10 @@ export class AuthService {
           this._userSig.set(null);
           return of(null);
         }
-        const ref = doc(this.firestore, 'users', firebaseUser.uid);
-        return getDoc(ref).then(snap => {
-          if (snap.exists()) {
-            const data = this.normalizeUser(snap.data());
-            this._userSig.set(data);
-            return data;
+        return this.ensureUserProfile(firebaseUser).then(profile => {
+          if (profile) {
+            this._userSig.set(profile);
+            return profile;
           }
           this._userSig.set(null);
           return null;
@@ -94,7 +127,7 @@ export class AuthService {
       const ref = doc(this.firestore, 'users', cred.user.uid);
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        const user = this.normalizeUser(snap.data());
+        const user = this.normalizeUser({ id: cred.user.uid, uid: cred.user.uid, ...snap.data() });
         this._userSig.set(user);
         void this.audit.log({
           action: 'auth.login',
@@ -105,14 +138,16 @@ export class AuthService {
           meta: { email }
         });
       } else {
-        this._userSig.set(null);
+        const profile = await this.ensureUserProfile(cred.user);
+        this._userSig.set(profile);
         void this.audit.log({
-          action: 'auth.login',
-          resource: 'auth',
-          status: 'error',
+          action: 'auth.login.bootstrap_profile',
+          resource: 'user',
+          status: 'success',
           actorId: cred.user.uid,
-          message: 'profile_not_found',
-          meta: { email }
+          actorRole: profile?.role,
+          targetUserId: cred.user.uid,
+          meta: { email, reason: 'profile_not_found' }
         });
       }
     } catch (error: any) {
@@ -137,7 +172,7 @@ export class AuthService {
         role: 'client',
         isActive: true
       };
-      await setDoc(doc(this.firestore, 'users', cred.user.uid), profile);
+      await setDoc(doc(this.firestore, 'users', cred.user.uid), { id: cred.user.uid, ...profile });
       this._userSig.set(profile);
       void this.audit.log({
         action: 'auth.register',
@@ -192,11 +227,12 @@ export class AuthService {
     const ref = doc(this.firestore, 'users', firebaseUser.uid);
     const snap = await getDoc(ref);
     if (!snap.exists()) {
-      this._userSig.set(null);
-      return null;
+      const profile = await this.ensureUserProfile(firebaseUser);
+      this._userSig.set(profile);
+      return profile;
     }
 
-    const user = this.normalizeUser({ uid: firebaseUser.uid, ...snap.data() });
+    const user = this.normalizeUser({ id: firebaseUser.uid, uid: firebaseUser.uid, ...snap.data() });
     this._userSig.set(user);
     return user;
   }

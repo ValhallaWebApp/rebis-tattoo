@@ -1,0 +1,41 @@
+:root {
+  --public-font-base: "Inter", "Segoe UI", Arial, sans-serif;
+  --public-font-display: "Inter", "Segoe UI", Arial, sans-serif;
+
+  --public-bg: #050508;
+  --public-bg-elevated: #101118;
+  --public-surface: #f5f5f5;
+  --public-surface-muted: #e9e9e9;
+  --public-ink: #0b0b0b;
+  --public-text: #ffffff;
+  --public-text-muted: #9ca3af;
+  --public-border-soft: rgba(255, 255, 255, 0.08);
+
+  --public-accent: #b79b55;
+  --public-accent-ink: #111111;
+  --public-primary: #0b0b0b;
+  --public-primary-ink: #f5f5f5;
+
+  --public-radius-sm: 10px;
+  --public-radius-md: 16px;
+  --public-radius-lg: 18px;
+  --public-shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.22);
+  --public-shadow-hard: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+body {
+  font-family: var(--public-font-base);
+  color: var(--public-ink);
+}
+
+.public-title {
+  font-family: var(--public-font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.public-card {
+  border-radius: var(--public-radius-md);
+  box-shadow: var(--public-shadow-soft);
+  border: 1px solid var(--public-border-soft);
+}

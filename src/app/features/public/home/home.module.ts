@@ -11,11 +11,7 @@ import { HomeContactComponent } from "./components/home-contact/home-contact.com
 import { HomeFeaturedArtistsComponent } from "./components/home-featured-artists/home-featured-artists.component";
 import { HomeFaqComponent } from './components/home-faq/home-faq.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ContattiComponent } from '../contatti/contatti.component';
 import { ShowcaseComponent } from './components/showcase/showcase.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { BrowserModule } from '@angular/platform-browser';
-import { TattooAvatarComponent } from '../../../shared/components/tattoo-avatar/tattoo-avatar.component';
 import { MaterialModule } from '../../../core/modules/material.module';
 
 

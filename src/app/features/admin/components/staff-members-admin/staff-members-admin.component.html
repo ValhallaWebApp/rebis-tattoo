@@ -48,6 +48,16 @@
 
       <!-- FORM STAFF -->
       <form [formGroup]="staffForm" (ngSubmit)="submit()" class="staff-form">
+        <mat-form-field appearance="outline" *ngIf="!editingId">
+          <mat-label>Utente Staff</mat-label>
+          <mat-select formControlName="userId">
+            <mat-option value="">Seleziona utente</mat-option>
+            <mat-option *ngFor="let u of staffCandidates" [value]="u.id">
+              {{ u.name }} <span *ngIf="u.email">({{ u.email }})</span>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
         <mat-form-field appearance="outline">
           <mat-label>Nome</mat-label>
           <input matInput formControlName="name" />

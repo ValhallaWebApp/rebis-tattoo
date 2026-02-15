@@ -8,3 +8,10 @@ apps/api/.env.*
 # logs/build
 apps/api/dist/
 apps/api/*.log
+
+# --- Firebase Functions ---
+functions/node_modules/
+functions/.env
+
+# frontend runtime config
+public/app-config.js

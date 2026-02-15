@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import {
   Database,
   ref,
@@ -54,32 +54,42 @@ export class ReviewsService {
   getAllReviews(): Observable<Review[]> {
     return new Observable<Review[]>((observer) => {
       const reviewsRef = ref(this.db, this.path);
-      onValue(reviewsRef, (snapshot) => {
-        const data = snapshot.val();
-        const reviews: Review[] = data
-          ? Object.keys(data).map((key) => ({ id: key, ...data[key] }))
-          : [];
-        observer.next(reviews);
-      });
+      const unsub = onValue(
+        reviewsRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          const reviews: Review[] = data
+            ? Object.keys(data).map((key) => ({ id: key, ...data[key] }))
+            : [];
+          observer.next(reviews);
+        },
+        (error) => observer.error(error)
+      );
+      return () => unsub();
     });
   }
 
   getRecentReviews(limit: number = 5): Observable<Review[]> {
     return new Observable<Review[]>((observer) => {
       const reviewsRef = ref(this.db, this.path);
-      onValue(reviewsRef, (snapshot) => {
-        const data = snapshot.val();
-        let reviews: Review[] = [];
+      const unsub = onValue(
+        reviewsRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          let reviews: Review[] = [];
 
-        if (data) {
-          reviews = Object.entries(data)
-            .map(([id, val]: any) => ({ id, ...val }))
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            .slice(0, limit);
-        }
+          if (data) {
+            reviews = Object.entries(data)
+              .map(([id, val]: any) => ({ id, ...val }))
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, limit);
+          }
 
-        observer.next(reviews);
-      });
+          observer.next(reviews);
+        },
+        (error) => observer.error(error)
+      );
+      return () => unsub();
     });
   }
 
@@ -96,47 +106,59 @@ export class ReviewsService {
         orderByChild('userId'),
         equalTo(userId)
       );
-      onValue(reviewQuery, (snapshot) => {
-        const data = snapshot.val();
-        const reviews: Review[] = data
-          ? Object.entries(data).map(([id, val]: any) => ({ id, ...val }))
-          : [];
-        observer.next(reviews);
-      });
+      const unsub = onValue(
+        reviewQuery,
+        (snapshot) => {
+          const data = snapshot.val();
+          const reviews: Review[] = data
+            ? Object.entries(data).map(([id, val]: any) => ({ id, ...val }))
+            : [];
+          observer.next(reviews);
+        },
+        (error) => observer.error(error)
+      );
+      return () => unsub();
     });
   }
 
-  /** Ottieni recensioni legate a una prenotazione specifica */
   getReviewsByBookingId(bookingId: string): Observable<Review[]> {
     return new Observable<Review[]>((observer) => {
       const q = query(ref(this.db, this.path), orderByChild('bookingId'), equalTo(bookingId));
-      onValue(q, (snapshot) => {
-        const data = snapshot.val();
-        const reviews: Review[] = data
-          ? Object.entries(data).map(([id, val]: any) => ({ id, ...val }))
-          : [];
-        observer.next(reviews);
-      });
+      const unsub = onValue(
+        q,
+        (snapshot) => {
+          const data = snapshot.val();
+          const reviews: Review[] = data
+            ? Object.entries(data).map(([id, val]: any) => ({ id, ...val }))
+            : [];
+          observer.next(reviews);
+        },
+        (error) => observer.error(error)
+      );
+      return () => unsub();
     });
   }
 
-  /** Ottieni recensioni di tutti i booking di un artista (filtrati localmente) */
   getReviewsByArtist(artistId: string): Observable<Review[]> {
     return new Observable<Review[]>((observer) => {
       const reviewsRef = ref(this.db, this.path);
-      onValue(reviewsRef, (snapshot) => {
-        const data = snapshot.val();
-        const reviews: Review[] = data
-          ? Object.entries(data)
-              .map(([id, val]: any) => ({ id, ...val }))
-              .filter(r => r.artistId === artistId && r.status === 'approved')
-          : [];
-        observer.next(reviews);
-      });
+      const unsub = onValue(
+        reviewsRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          const reviews: Review[] = data
+            ? Object.entries(data)
+                .map(([id, val]: any) => ({ id, ...val }))
+                .filter(r => r.artistId === artistId && r.status === 'approved')
+            : [];
+          observer.next(reviews);
+        },
+        (error) => observer.error(error)
+      );
+      return () => unsub();
     });
   }
 
-  /** Controlla se un booking ha già una recensione da parte di un utente */
   async checkIfAlreadyReviewed(bookingId: string, userId: string): Promise<boolean> {
     const snapshot = await get(ref(this.db, this.path));
     if (!snapshot.exists()) return false;

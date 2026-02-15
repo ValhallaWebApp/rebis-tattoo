@@ -97,13 +97,18 @@ export class ChatService {
   getMessages(chatId: string): Observable<ChatMessage[]> {
     return new Observable(obs => {
       const refChat = ref(this.db, `${this.path}/${chatId}/messages`);
-      onValue(refChat, snap => {
-        const data = snap.val() || {};
-        const sorted = Object.values(data).sort((a: any, b: any) =>
-          a.timestamp.localeCompare(b.timestamp)
-        );
-        obs.next(sorted as ChatMessage[]);
-      });
+      const unsub = onValue(
+        refChat,
+        snap => {
+          const data = snap.val() || {};
+          const sorted = Object.values(data).sort((a: any, b: any) =>
+            a.timestamp.localeCompare(b.timestamp)
+          );
+          obs.next(sorted as ChatMessage[]);
+        },
+        err => obs.error(err)
+      );
+      return () => unsub();
     });
   }
 

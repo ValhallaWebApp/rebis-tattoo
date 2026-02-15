@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,11 +13,13 @@ import { AuthService } from '../../../core/services/auth/authservice';
   standalone: true,
   imports: [MaterialModule, CommonModule, MatProgressSpinnerModule, ReactiveFormsModule]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   isLoginMode = true;
   errorMessage = '';
   isLoading = false;
+  hidePassword = true;
+  submitted = false;
 
   constructor(
     private authService: AuthService,
@@ -26,9 +28,14 @@ export class LoginComponent {
     private route: ActivatedRoute
   ) {
     this.loginForm = this.fb.group({
+      name: [''],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: [''],
+      acceptTerms: [false],
       rememberMe: [true]
+    }, {
+      validators: [this.passwordsMatchValidator]
     });
   }
 
@@ -39,18 +46,38 @@ export class LoginComponent {
     if (mode === 'register') {
       this.isLoginMode = false;
     }
+    this.configureValidatorsByMode();
+  }
+
+  get emailCtrl() {
+    return this.loginForm.get('email');
+  }
+
+  get passwordCtrl() {
+    return this.loginForm.get('password');
+  }
+
+  hasError(control: string, error: string): boolean {
+    const c = this.loginForm.get(control);
+    if (!c) return false;
+    return c.hasError(error) && (c.touched || this.submitted);
   }
 
   toggleMode() {
     this.isLoginMode = !this.isLoginMode;
     this.errorMessage = '';
+    this.submitted = false;
+    this.configureValidatorsByMode();
+    this.loginForm.markAsPristine();
+    this.loginForm.markAsUntouched();
   }
 
   async onSubmit() {
+    this.submitted = true;
     if (this.loginForm.invalid || this.isLoading) return;
 
-    const { email, password, rememberMe } = this.loginForm.value as
-      { email: string; password: string; rememberMe: boolean };
+    const { name, email, password, rememberMe } = this.loginForm.value as
+      { name: string; email: string; password: string; rememberMe: boolean };
 
     const redirectPath = localStorage.getItem('pre-log') || '/home';
     this.isLoading = true;
@@ -64,6 +91,10 @@ export class LoginComponent {
         await this.authService.login(email, password);
       } else {
         await this.authService.register(email, password);
+        const finalName = String(name ?? '').trim();
+        if (finalName) {
+          await this.authService.updateCurrentUserProfile({ name: finalName });
+        }
       }
 
       await this.router.navigateByUrl(redirectPath);
@@ -95,4 +126,39 @@ export class LoginComponent {
         return 'Errore sconosciuto. Riprova.';
     }
   }
+
+  private configureValidatorsByMode(): void {
+    const nameCtrl = this.loginForm.get('name');
+    const confirmCtrl = this.loginForm.get('confirmPassword');
+    const termsCtrl = this.loginForm.get('acceptTerms');
+    const passwordCtrl = this.loginForm.get('password');
+
+    if (!nameCtrl || !confirmCtrl || !termsCtrl || !passwordCtrl) return;
+
+    if (this.isLoginMode) {
+      nameCtrl.clearValidators();
+      confirmCtrl.clearValidators();
+      termsCtrl.clearValidators();
+    } else {
+      nameCtrl.setValidators([Validators.required, Validators.minLength(2)]);
+      confirmCtrl.setValidators([Validators.required]);
+      termsCtrl.setValidators([Validators.requiredTrue]);
+    }
+
+    passwordCtrl.setValidators([Validators.required, Validators.minLength(6)]);
+    nameCtrl.updateValueAndValidity({ emitEvent: false });
+    confirmCtrl.updateValueAndValidity({ emitEvent: false });
+    termsCtrl.updateValueAndValidity({ emitEvent: false });
+    passwordCtrl.updateValueAndValidity({ emitEvent: false });
+    this.loginForm.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private passwordsMatchValidator = (group: AbstractControl): ValidationErrors | null => {
+    if (this.isLoginMode) return null;
+    const password = group.get('password')?.value;
+    const confirm = group.get('confirmPassword')?.value;
+    if (!confirm) return null;
+    return password === confirm ? null : { passwordMismatch: true };
+  };
+
 }

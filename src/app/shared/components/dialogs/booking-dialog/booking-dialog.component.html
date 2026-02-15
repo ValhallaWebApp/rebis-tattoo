@@ -1,4 +1,4 @@
-<mat-dialog-content class="booking-dialog">
+﻿<mat-dialog-content class="booking-dialog">
   <h2 class="dialog-title">Prenotazione Appuntamento</h2>
 
   <!-- Barra di avanzamento -->
@@ -10,28 +10,28 @@
   </mat-progress-bar>
 
   <form [formGroup]="bookingForm">
-    <!-- Step 0 · Dati cliente -->
+    <!-- Step 0 Â· Dati cliente -->
     <app-dynamic-form
       *ngIf="stepIndex === 0"
       [fields]="step0Fields"
       [formGroup]="bookingForm">
     </app-dynamic-form>
 
-    <!-- Step 1 · Data e orario -->
+    <!-- Step 1 Â· Data e orario -->
     <app-dynamic-form
       *ngIf="stepIndex === 1"
       [fields]="step1Fields"
       [formGroup]="bookingForm">
     </app-dynamic-form>
 
-    <!-- Step 2 · Conferma pagamento -->
+    <!-- Step 2 Â· Conferma dati -->
     <app-dynamic-form
       *ngIf="stepIndex === 2"
       [fields]="step2Fields"
       [formGroup]="bookingForm">
     </app-dynamic-form>
 
-    <!-- Step 3 · Riepilogo -->
+    <!-- Step 3 Â· Riepilogo -->
     <div *ngIf="stepIndex === 3" class="step">
       <p><strong>Riepilogo:</strong></p>
       <ul>
@@ -70,3 +70,4 @@
     </button>
   </div>
 </mat-dialog-actions>
+

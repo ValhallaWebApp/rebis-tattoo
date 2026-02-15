@@ -86,7 +86,7 @@ export class HomeContactComponent {
     emailCtrl?.disable({ emitEvent: false });
 
     this.prefilledOnce.set(true);
-  });
+  }, { allowSignalWrites: true });
 
   constructor() {
     this.loadStaff();

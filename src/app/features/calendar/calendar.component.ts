@@ -301,9 +301,31 @@ export class CalendarComponent {
       const patch = this.stripUndef({ ...upd.patch, updatedAt: new Date().toISOString() });
 
       if (upd.type === 'booking') {
-        const fn = (this.bookingService as any).updateBooking ?? (this.bookingService as any).update;
-        if (!fn) throw new Error('BookingService.updateBooking non trovato');
-        await fn.call(this.bookingService, upd.id, patch);
+        const nextStatus = (patch as any)?.status;
+        const hasStatusChange = typeof nextStatus === 'string' && nextStatus.trim().length > 0;
+
+        if (hasStatusChange) {
+          const extra = this.stripUndef({ ...patch });
+          delete (extra as any).status;
+
+          const res = await this.bookingService.safeSetStatusSafe(
+            upd.id,
+            nextStatus as any,
+            extra as any
+          );
+          if (!res.ok) {
+            this.snackBar.open(res.error, 'OK', {
+              duration: 2800,
+              horizontalPosition: 'right',
+              verticalPosition: 'bottom'
+            });
+            return;
+          }
+        } else {
+          const fn = (this.bookingService as any).updateBooking ?? (this.bookingService as any).update;
+          if (!fn) throw new Error('BookingService.updateBooking non trovato');
+          await fn.call(this.bookingService, upd.id, patch);
+        }
       }
 
       if (upd.type === 'session') {

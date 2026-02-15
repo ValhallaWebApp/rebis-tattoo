@@ -1,27 +1,39 @@
-<section class="home-projects">
-<div class="section-header">
+﻿<section class="home-projects">
+  <div class="section-header">
     <h2>
       {{ lang.t('home.projects.title') }}
     </h2>
     <p>{{ lang.t('home.projects.subtitle') }}</p>
   </div>
 
-  <div class="project-gallery">
-    <div
+  <div class="project-gallery" *ngIf="projects.length; else noProjects">
+    <a
       class="project-card"
       *ngFor="let project of projects"
-     style="background: url('/projects/{{project.imageUrl}} ') center;background-size: cover;"
+      [routerLink]="project.id ? ['/progetto', project.id] : ['/progetti']"
     >
+      <img
+        class="cover-img"
+        [src]="project.imageUrl"
+        [alt]="project.title"
+        loading="lazy"
+        decoding="async"
+        (error)="onImgError($event)"
+      />
       <div class="overlay">
         <h3>{{ project.title }}</h3>
         <p>{{ project.description }}</p>
       </div>
-    </div>
+    </a>
   </div>
+
+  <ng-template #noProjects>
+    <div class="empty-state">Nessun progetto pubblico disponibile al momento.</div>
+  </ng-template>
+
   <div class="projects-cta">
     <a routerLink="/progetti" class="cta-button">
       Guarda tutti i progetti →
     </a>
   </div>
-
 </section>

@@ -1,19 +1,19 @@
-<section class="step">
+﻿<section class="step">
   <header class="head">
     <h1 class="h1">PAGAMENTO</h1>
-    <p class="p">Per confermare la consulenza è richiesta una caparra.</p>
+    <p class="p">Per confermare la consulenza e richiesta una caparra.</p>
   </header>
 
   <mat-card class="card">
     <div class="row">
       <div class="k">Caparra</div>
-      <div class="v">€ {{ depositEuro() }}</div>
+      <div class="v">EUR {{ depositEuro() }}</div>
     </div>
 
     <div class="note">
       <mat-icon class="ico">info</mat-icon>
       <div>
-        La caparra verrà <b>scalata dal prezzo finale</b> del tatuaggio.
+        La caparra verra <b>scalata dal prezzo finale</b> del tatuaggio.
       </div>
     </div>
 
@@ -24,21 +24,31 @@
       </div>
     }
 
-    <div class="actions">
-      <button mat-flat-button color="primary" (click)="pay()" [disabled]="paying()">
-        <mat-icon>lock</mat-icon>
-        Paga ora
-      </button>
-    </div>
-
-    @if (bookingId() && clientSecret()) {
-      <div class="debug">
-        <div class="small">Booking creato: <b>{{ bookingId() }}</b></div>
-        <div class="small">clientSecret pronto (Stripe).</div>
-
-        <button mat-stroked-button class="ok" (click)="confirmSuccess()">
-          Simula pagamento riuscito
+    @if (!clientSecret()) {
+      <div class="actions">
+        <button mat-flat-button color="primary" (click)="pay()" [disabled]="paying() || confirmingPayment()">
+          <mat-icon>lock</mat-icon>
+          @if (paying()) { Inizializzazione pagamento... } @else { Inizia pagamento }
         </button>
+      </div>
+    }
+
+    @if (confirmingPayment()) {
+      <div class="processing">
+        <mat-progress-spinner diameter="22" mode="indeterminate"></mat-progress-spinner>
+        <span>Conferma pagamento in corso, attendi...</span>
+      </div>
+    }
+
+    @if (bookingId() && clientSecret() && !confirmingPayment()) {
+      <div class="stripe-box">
+        <div class="small">Booking creato: <b>{{ bookingId() }}</b></div>
+        <app-stripe-payment
+          [publishableKey]="publishableKey"
+          [clientSecret]="clientSecret()!"
+          (paymentSuccess)="onStripeSuccess()"
+          (paymentError)="onStripeError($event)"
+        />
       </div>
     }
   </mat-card>

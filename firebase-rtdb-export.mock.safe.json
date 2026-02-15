@@ -1,0 +1,835 @@
+{
+    "services":  {
+                     "svc_consultation":  {
+                                              "id":  "svc_consultation",
+                                              "name":  "Consulenza Tattoo",
+                                              "description":  "Analisi progetto",
+                                              "categoria":  "Consultazione",
+                                              "prezzo":  49,
+                                              "durata":  60,
+                                              "visibile":  true,
+                                              "prezzoDaConcordare":  false,
+                                              "durataDaConcordare":  false,
+                                              "icon":  "/home/icon-01-80x80.png",
+                                              "createdAt":  1739361600000,
+                                              "updatedAt":  1739361600000,
+                                              "creatoreId":  "admin_1"
+                                          },
+                     "svc_small":  {
+                                       "id":  "svc_small",
+                                       "name":  "Tattoo Small",
+                                       "description":  "Tatuaggio piccolo",
+                                       "categoria":  "Tattoo",
+                                       "prezzo":  120,
+                                       "durata":  90,
+                                       "visibile":  true,
+                                       "prezzoDaConcordare":  false,
+                                       "durataDaConcordare":  false,
+                                       "icon":  "/home/icon-07-80x80.png",
+                                       "createdAt":  1739448000000,
+                                       "updatedAt":  1739448000000,
+                                       "creatoreId":  "admin_1"
+                                   },
+                     "svc_cover":  {
+                                       "id":  "svc_cover",
+                                       "name":  "Cover Up",
+                                       "description":  "Copertura tatuaggi",
+                                       "categoria":  "Tattoo",
+                                       "prezzo":  280,
+                                       "durata":  180,
+                                       "visibile":  true,
+                                       "prezzoDaConcordare":  false,
+                                       "durataDaConcordare":  false,
+                                       "icon":  "/home/icon-03-80x80.png",
+                                       "createdAt":  1739534400000,
+                                       "updatedAt":  1739534400000,
+                                       "creatoreId":  "admin_1"
+                                   }
+                 },
+    "bookings":  {
+                     "bk_001":  {
+                                    "id":  "bk_001",
+                                    "clientId":  "usr_client_1",
+                                    "artistId":  "stf_sara",
+                                    "projectId":  "prj_001",
+                                    "type":  "session",
+                                    "source":  "fast-booking",
+                                    "title":  "Mario Rossi - Geometrico",
+                                    "start":  "2026-02-20T10:00:00",
+                                    "end":  "2026-02-20T11:00:00",
+                                    "notes":  "Prima sessione",
+                                    "status":  "confirmed",
+                                    "price":  250,
+                                    "depositRequired":  80,
+                                    "paidAmount":  80,
+                                    "createdAt":  "2026-02-10T09:15:00",
+                                    "updatedAt":  "2026-02-12T11:20:00",
+                                    "idClient":  "usr_client_1",
+                                    "idArtist":  "stf_sara",
+                                    "description":  "Prima sessione",
+                                    "createAt":  "2026-02-10T09:15:00",
+                                    "updateAt":  "2026-02-12T11:20:00"
+                                },
+                     "bk_002":  {
+                                    "id":  "bk_002",
+                                    "clientId":  "usr_client_2",
+                                    "artistId":  "stf_matteo",
+                                    "projectId":  "prj_002",
+                                    "type":  "session",
+                                    "source":  "manual",
+                                    "title":  "Giulia Bianchi - Realism",
+                                    "start":  "2026-02-18T14:00:00",
+                                    "end":  "2026-02-18T16:00:00",
+                                    "notes":  "Sessione in corso",
+                                    "status":  "in_progress",
+                                    "price":  420,
+                                    "depositRequired":  120,
+                                    "paidAmount":  220,
+                                    "createdAt":  "2026-02-05T10:00:00",
+                                    "updatedAt":  "2026-02-18T14:30:00",
+                                    "idClient":  "usr_client_2",
+                                    "idArtist":  "stf_matteo",
+                                    "description":  "Sessione in corso",
+                                    "createAt":  "2026-02-05T10:00:00",
+                                    "updateAt":  "2026-02-18T14:30:00"
+                                },
+                     "bk_003":  {
+                                    "id":  "bk_003",
+                                    "clientId":  "usr_client_1",
+                                    "artistId":  "stf_sara",
+                                    "projectId":  "prj_003",
+                                    "type":  "session",
+                                    "source":  "manual",
+                                    "title":  "Mario Rossi - Floreale",
+                                    "start":  "2026-02-10T09:00:00",
+                                    "end":  "2026-02-10T10:30:00",
+                                    "notes":  "Progetto chiuso",
+                                    "status":  "completed",
+                                    "price":  300,
+                                    "depositRequired":  100,
+                                    "paidAmount":  300,
+                                    "createdAt":  "2026-02-01T09:00:00",
+                                    "updatedAt":  "2026-02-10T10:35:00",
+                                    "idClient":  "usr_client_1",
+                                    "idArtist":  "stf_sara",
+                                    "description":  "Progetto chiuso",
+                                    "createAt":  "2026-02-01T09:00:00",
+                                    "updateAt":  "2026-02-10T10:35:00"
+                                },
+                     "bk_004":  {
+                                    "id":  "bk_004",
+                                    "clientId":  "usr_client_3",
+                                    "artistId":  "stf_matteo",
+                                    "projectId":  "prj_004",
+                                    "type":  "session",
+                                    "source":  "fast-booking",
+                                    "title":  "Luca Pinna - Cover Up",
+                                    "start":  "2026-02-15T17:00:00",
+                                    "end":  "2026-02-15T18:30:00",
+                                    "notes":  "Annullata dal cliente",
+                                    "status":  "cancelled",
+                                    "cancelledBy":  "client",
+                                    "cancelReason":  "Imprevisto lavoro",
+                                    "price":  260,
+                                    "depositRequired":  70,
+                                    "paidAmount":  0,
+                                    "createdAt":  "2026-02-11T11:00:00",
+                                    "updatedAt":  "2026-02-14T08:00:00",
+                                    "idClient":  "usr_client_3",
+                                    "idArtist":  "stf_matteo",
+                                    "description":  "Annullata dal cliente",
+                                    "createAt":  "2026-02-11T11:00:00",
+                                    "updateAt":  "2026-02-14T08:00:00"
+                                },
+                     "bk_005":  {
+                                    "id":  "bk_005",
+                                    "clientId":  "usr_client_4",
+                                    "artistId":  "stf_sara",
+                                    "projectId":  "prj_005",
+                                    "type":  "session",
+                                    "source":  "chat-bot",
+                                    "title":  "Elisa Mura - Ornamental",
+                                    "start":  "2026-02-16T12:00:00",
+                                    "end":  "2026-02-16T13:00:00",
+                                    "notes":  "Cliente assente",
+                                    "status":  "no_show",
+                                    "price":  180,
+                                    "depositRequired":  50,
+                                    "paidAmount":  50,
+                                    "createdAt":  "2026-02-12T16:00:00",
+                                    "updatedAt":  "2026-02-16T12:30:00",
+                                    "idClient":  "usr_client_4",
+                                    "idArtist":  "stf_sara",
+                                    "description":  "Cliente assente",
+                                    "createAt":  "2026-02-12T16:00:00",
+                                    "updateAt":  "2026-02-16T12:30:00"
+                                },
+                     "bk_006":  {
+                                    "id":  "bk_006",
+                                    "clientId":  "usr_client_5",
+                                    "artistId":  "stf_sara",
+                                    "projectId":  "prj_005",
+                                    "type":  "consultation",
+                                    "source":  "fast-booking",
+                                    "title":  "Federica Sanna - Consulenza",
+                                    "start":  "2026-02-22T11:00:00",
+                                    "end":  "2026-02-22T11:30:00",
+                                    "notes":  "Bozza da confermare",
+                                    "status":  "pending",
+                                    "price":  0,
+                                    "depositRequired":  0,
+                                    "paidAmount":  0,
+                                    "createdAt":  "2026-02-13T10:00:00",
+                                    "updatedAt":  "2026-02-13T10:00:00",
+                                    "idClient":  "usr_client_5",
+                                    "idArtist":  "stf_sara",
+                                    "description":  "Bozza da confermare",
+                                    "createAt":  "2026-02-13T10:00:00",
+                                    "updateAt":  "2026-02-13T10:00:00"
+                                }
+                 },
+    "projects":  {
+                     "prj_001":  {
+                                     "id":  "prj_001",
+                                     "title":  "Blackwork Geometrico",
+                                     "artistId":  "stf_sara",
+                                     "clientId":  "usr_client_1",
+                                     "bookingId":  "bk_001",
+                                     "sessionIds":  [
+                                                        "ses_001"
+                                                    ],
+                                     "zone":  "Avambraccio",
+                                     "placement":  "Destro",
+                                     "notes":  "Linee nette",
+                                     "status":  "scheduled",
+                                     "createdAt":  "2026-02-09T14:00:00",
+                                     "updatedAt":  "2026-02-12T11:20:00",
+                                     "isPublic":  true,
+                                     "style":  "Blackwork",
+                                     "subject":  "Geometrico",
+                                     "imageUrls":  [
+                                                       "https://images.unsplash.com/photo-1542727365-19732a80dcfd?auto=format\u0026fit=crop\u0026w=900\u0026q=80"
+                                                   ],
+                                     "genere":  "Blackwork",
+                                     "copertine":  [
+
+                                                   ]
+                                 },
+                     "prj_002":  {
+                                     "id":  "prj_002",
+                                     "title":  "Realism Portrait",
+                                     "artistId":  "stf_matteo",
+                                     "clientId":  "usr_client_2",
+                                     "bookingId":  "bk_002",
+                                     "sessionIds":  [
+                                                        "ses_002",
+                                                        "ses_003"
+                                                    ],
+                                     "zone":  "Braccio",
+                                     "placement":  "Sinistro",
+                                     "notes":  "Seconda passata in corso",
+                                     "status":  "active",
+                                     "createdAt":  "2026-02-02T12:00:00",
+                                     "updatedAt":  "2026-02-18T14:30:00",
+                                     "isPublic":  true,
+                                     "style":  "Realism",
+                                     "subject":  "Portrait",
+                                     "imageUrls":  [
+                                                       "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format\u0026fit=crop\u0026w=900\u0026q=80"
+                                                   ],
+                                     "genere":  "Realism",
+                                     "copertine":  [
+
+                                                   ]
+                                 },
+                     "prj_003":  {
+                                     "id":  "prj_003",
+                                     "title":  "Floreale Fine Line",
+                                     "artistId":  "stf_sara",
+                                     "clientId":  "usr_client_1",
+                                     "bookingId":  "bk_003",
+                                     "sessionIds":  [
+                                                        "ses_004"
+                                                    ],
+                                     "zone":  "Spalla",
+                                     "placement":  "Sinistra",
+                                     "notes":  "Consegna completata",
+                                     "status":  "completed",
+                                     "createdAt":  "2026-01-15T16:30:00",
+                                     "updatedAt":  "2026-02-10T10:35:00",
+                                     "isPublic":  true,
+                                     "style":  "Fine Line",
+                                     "subject":  "Floreale",
+                                     "imageUrls":  [
+                                                       "https://images.unsplash.com/photo-1590246815117-62c3f783eec0?auto=format\u0026fit=crop\u0026w=900\u0026q=80"
+                                                   ],
+                                     "genere":  "Fine Line",
+                                     "copertine":  [
+
+                                                   ]
+                                 },
+                     "prj_004":  {
+                                     "id":  "prj_004",
+                                     "title":  "Cover Up Polpaccio",
+                                     "artistId":  "stf_matteo",
+                                     "clientId":  "usr_client_3",
+                                     "bookingId":  "bk_004",
+                                     "sessionIds":  [
+                                                        "ses_005"
+                                                    ],
+                                     "zone":  "Polpaccio",
+                                     "placement":  "Destro",
+                                     "notes":  "Progetto fermato",
+                                     "status":  "cancelled",
+                                     "createdAt":  "2026-02-10T10:30:00",
+                                     "updatedAt":  "2026-02-14T08:00:00",
+                                     "isPublic":  false,
+                                     "style":  "Cover Up",
+                                     "subject":  "Astratto",
+                                     "imageUrls":  [
+
+                                                   ],
+                                     "genere":  "Cover Up",
+                                     "copertine":  [
+
+                                                   ]
+                                 },
+                     "prj_005":  {
+                                     "id":  "prj_005",
+                                     "title":  "Ornamental Collar",
+                                     "artistId":  "stf_sara",
+                                     "clientId":  "usr_client_4",
+                                     "bookingId":  "bk_005",
+                                     "sessionIds":  [
+                                                        "ses_006"
+                                                    ],
+                                     "zone":  "Clavicola",
+                                     "placement":  "Centrale",
+                                     "notes":  "Da riprogrammare dopo no-show",
+                                     "status":  "healing",
+                                     "createdAt":  "2026-02-12T15:00:00",
+                                     "updatedAt":  "2026-02-16T12:30:00",
+                                     "isPublic":  true,
+                                     "style":  "Ornamental",
+                                     "subject":  "Mandala",
+                                     "imageUrls":  [
+                                                       "https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?auto=format\u0026fit=crop\u0026w=900\u0026q=80"
+                                                   ],
+                                     "genere":  "Ornamental",
+                                     "copertine":  [
+
+                                                   ]
+                                 }
+                 },
+    "sessions":  {
+                     "ses_001":  {
+                                     "id":  "ses_001",
+                                     "idArtist":  "stf_sara",
+                                     "idClient":  "usr_client_1",
+                                     "start":  "2026-02-20T10:00:00",
+                                     "end":  "2026-02-20T11:00:00",
+                                     "projectId":  "prj_001",
+                                     "bookingId":  "bk_001",
+                                     "sessionNumber":  1,
+                                     "notesByAdmin":  "Portare bozza",
+                                     "price":  250,
+                                     "paidAmount":  80,
+                                     "painLevel":  0,
+                                     "healingNotes":  "",
+                                     "photoUrlList":  [
+
+                                                      ],
+                                     "status":  "planned",
+                                     "createdAt":  "2026-02-12T11:20:00",
+                                     "updatedAt":  "2026-02-12T11:20:00"
+                                 },
+                     "ses_002":  {
+                                     "id":  "ses_002",
+                                     "idArtist":  "stf_matteo",
+                                     "idClient":  "usr_client_2",
+                                     "start":  "2026-02-18T14:00:00",
+                                     "end":  "2026-02-18T16:00:00",
+                                     "projectId":  "prj_002",
+                                     "bookingId":  "bk_002",
+                                     "sessionNumber":  1,
+                                     "notesByAdmin":  "Outline completato",
+                                     "price":  220,
+                                     "paidAmount":  220,
+                                     "painLevel":  5,
+                                     "healingNotes":  "Controllo in 10 giorni",
+                                     "photoUrlList":  [
+                                                          "https://images.unsplash.com/photo-1487412912498-0447578fcca8?auto=format\u0026fit=crop\u0026w=900\u0026q=80"
+                                                      ],
+                                     "status":  "completed",
+                                     "createdAt":  "2026-02-18T16:10:00",
+                                     "updatedAt":  "2026-02-18T16:10:00"
+                                 },
+                     "ses_003":  {
+                                     "id":  "ses_003",
+                                     "idArtist":  "stf_matteo",
+                                     "idClient":  "usr_client_2",
+                                     "start":  "2026-02-25T14:00:00",
+                                     "end":  "2026-02-25T15:30:00",
+                                     "projectId":  "prj_002",
+                                     "bookingId":  "bk_002",
+                                     "sessionNumber":  2,
+                                     "notesByAdmin":  "Seconda passata",
+                                     "price":  200,
+                                     "paidAmount":  0,
+                                     "painLevel":  0,
+                                     "healingNotes":  "",
+                                     "photoUrlList":  [
+
+                                                      ],
+                                     "status":  "planned",
+                                     "createdAt":  "2026-02-18T16:15:00",
+                                     "updatedAt":  "2026-02-18T16:15:00"
+                                 },
+                     "ses_004":  {
+                                     "id":  "ses_004",
+                                     "idArtist":  "stf_sara",
+                                     "idClient":  "usr_client_1",
+                                     "start":  "2026-02-10T09:00:00",
+                                     "end":  "2026-02-10T10:30:00",
+                                     "projectId":  "prj_003",
+                                     "bookingId":  "bk_003",
+                                     "sessionNumber":  2,
+                                     "notesByAdmin":  "Chiusura progetto",
+                                     "price":  300,
+                                     "paidAmount":  300,
+                                     "painLevel":  4,
+                                     "healingNotes":  "Crema 2x/die",
+                                     "photoUrlList":  [
+                                                          "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format\u0026fit=crop\u0026w=900\u0026q=80"
+                                                      ],
+                                     "status":  "completed",
+                                     "createdAt":  "2026-02-10T10:30:00",
+                                     "updatedAt":  "2026-02-10T10:35:00"
+                                 },
+                     "ses_005":  {
+                                     "id":  "ses_005",
+                                     "idArtist":  "stf_matteo",
+                                     "idClient":  "usr_client_3",
+                                     "start":  "2026-02-15T17:00:00",
+                                     "end":  "2026-02-15T18:30:00",
+                                     "projectId":  "prj_004",
+                                     "bookingId":  "bk_004",
+                                     "sessionNumber":  1,
+                                     "notesByAdmin":  "Non eseguita",
+                                     "price":  260,
+                                     "paidAmount":  0,
+                                     "painLevel":  0,
+                                     "healingNotes":  "",
+                                     "photoUrlList":  [
+
+                                                      ],
+                                     "status":  "cancelled",
+                                     "createdAt":  "2026-02-11T11:10:00",
+                                     "updatedAt":  "2026-02-14T08:00:00"
+                                 },
+                     "ses_006":  {
+                                     "id":  "ses_006",
+                                     "idArtist":  "stf_sara",
+                                     "idClient":  "usr_client_4",
+                                     "start":  "2026-02-16T12:00:00",
+                                     "end":  "2026-02-16T13:00:00",
+                                     "projectId":  "prj_005",
+                                     "bookingId":  "bk_005",
+                                     "sessionNumber":  1,
+                                     "notesByAdmin":  "Cliente assente",
+                                     "price":  180,
+                                     "paidAmount":  50,
+                                     "painLevel":  0,
+                                     "healingNotes":  "Da riprogrammare",
+                                     "photoUrlList":  [
+
+                                                      ],
+                                     "status":  "cancelled",
+                                     "createdAt":  "2026-02-12T16:00:00",
+                                     "updatedAt":  "2026-02-16T12:30:00"
+                                 }
+                 },
+    "invoices":  {
+                     "inv_001":  {
+                                     "id":  "inv_001",
+                                     "bookingId":  "bk_003",
+                                     "clientId":  "usr_client_1",
+                                     "clientName":  "Mario Rossi",
+                                     "date":  "2026-02-10T10:40:00.000Z",
+                                     "amount":  300,
+                                     "status":  "paid",
+                                     "items":  [
+                                                   {
+                                                       "description":  "Sessione tattoo",
+                                                       "quantity":  1,
+                                                       "price":  300
+                                                   }
+                                               ],
+                                     "notes":  "Saldo completato",
+                                     "createdAt":  "2026-02-10T10:40:00.000Z",
+                                     "updatedAt":  "2026-02-10T10:40:00.000Z"
+                                 },
+                     "inv_002":  {
+                                     "id":  "inv_002",
+                                     "bookingId":  "bk_001",
+                                     "clientId":  "usr_client_1",
+                                     "clientName":  "Mario Rossi",
+                                     "date":  "2026-02-12T12:00:00.000Z",
+                                     "amount":  80,
+                                     "status":  "pending",
+                                     "items":  [
+                                                   {
+                                                       "description":  "Acconto",
+                                                       "quantity":  1,
+                                                       "price":  80
+                                                   }
+                                               ],
+                                     "notes":  "In attesa",
+                                     "createdAt":  "2026-02-12T12:00:00.000Z",
+                                     "updatedAt":  "2026-02-12T12:00:00.000Z"
+                                 },
+                     "inv_003":  {
+                                     "id":  "inv_003",
+                                     "bookingId":  "bk_002",
+                                     "clientId":  "usr_client_2",
+                                     "clientName":  "Giulia Bianchi",
+                                     "date":  "2026-02-18T16:20:00.000Z",
+                                     "amount":  220,
+                                     "status":  "paid",
+                                     "items":  [
+                                                   {
+                                                       "description":  "Sessione 1 portrait",
+                                                       "quantity":  1,
+                                                       "price":  220
+                                                   }
+                                               ],
+                                     "notes":  "Parziale",
+                                     "createdAt":  "2026-02-18T16:20:00.000Z",
+                                     "updatedAt":  "2026-02-18T16:20:00.000Z"
+                                 }
+                 },
+    "reviews":  {
+                    "rev_001":  {
+                                    "id":  "rev_001",
+                                    "userId":  "usr_client_1",
+                                    "tattooId":  "prj_003",
+                                    "tattooTitle":  "Floreale Fine Line",
+                                    "comment":  "Ottimo risultato",
+                                    "rating":  5,
+                                    "status":  "approved",
+                                    "date":  1739184000000,
+                                    "bookingId":  "bk_003",
+                                    "artistId":  "stf_sara"
+                                },
+                    "rev_002":  {
+                                    "id":  "rev_002",
+                                    "userId":  "usr_client_2",
+                                    "tattooId":  "prj_002",
+                                    "tattooTitle":  "Realism Portrait",
+                                    "comment":  "Aspetto seconda sessione",
+                                    "rating":  4,
+                                    "status":  "pending",
+                                    "date":  1739270400000,
+                                    "bookingId":  "bk_002",
+                                    "artistId":  "stf_matteo"
+                                },
+                    "rev_003":  {
+                                    "id":  "rev_003",
+                                    "userId":  "usr_client_4",
+                                    "tattooId":  "prj_005",
+                                    "tattooTitle":  "Ornamental Collar",
+                                    "comment":  "Recensione rifiutata test",
+                                    "rating":  2,
+                                    "status":  "rejected",
+                                    "date":  1739356800000,
+                                    "bookingId":  "bk_005",
+                                    "artistId":  "stf_sara"
+                                }
+                },
+    "notifications":  {
+                          "usr_client_1":  {
+                                               "ntf_001":  {
+                                                               "id":  "ntf_001",
+                                                               "userId":  "usr_client_1",
+                                                               "type":  "booking",
+                                                               "title":  "Prenotazione aggiornata",
+                                                               "message":  "La tua prenotazione e confermata",
+                                                               "link":  "/dashboard/booking-history",
+                                                               "priority":  "normal",
+                                                               "createdAt":  "2026-02-12T11:20:00.000Z",
+                                                               "readAt":  null,
+                                                               "meta":  {
+                                                                            "bookingId":  "bk_001"
+                                                                        }
+                                                           }
+                                           },
+                          "stf_sara":  {
+                                           "ntf_002":  {
+                                                           "id":  "ntf_002",
+                                                           "userId":  "stf_sara",
+                                                           "type":  "chat",
+                                                           "title":  "Nuovo messaggio",
+                                                           "message":  "Vorrei una consulenza",
+                                                           "link":  "/admin/messaging",
+                                                           "priority":  "normal",
+                                                           "createdAt":  "2026-02-13T09:00:00.000Z",
+                                                           "readAt":  null,
+                                                           "meta":  {
+                                                                        "conversationId":  "conv_001"
+                                                                    }
+                                                       }
+                                       },
+                          "admin_1":  {
+                                          "ntf_003":  {
+                                                          "id":  "ntf_003",
+                                                          "userId":  "admin_1",
+                                                          "type":  "bonus",
+                                                          "title":  "Promo usata",
+                                                          "message":  "PROMO10 applicato",
+                                                          "link":  "/admin/bonus",
+                                                          "priority":  "high",
+                                                          "createdAt":  "2026-02-13T09:30:00.000Z",
+                                                          "readAt":  null,
+                                                          "meta":  {
+                                                                       "code":  "PROMO10"
+                                                                   }
+                                                      }
+                                      }
+                      },
+    "auditLogs":  {
+                      "aud_001":  {
+                                      "id":  "aud_001",
+                                      "at":  "2026-02-12T11:20:00.000Z",
+                                      "action":  "booking.update",
+                                      "resource":  "booking",
+                                      "resourceId":  "bk_001",
+                                      "status":  "success",
+                                      "actorId":  "admin_1",
+                                      "actorRole":  "admin",
+                                      "targetUserId":  "usr_client_1",
+                                      "message":  "",
+                                      "meta":  {
+                                                   "changedKeys":  [
+                                                                       "status",
+                                                                       "updatedAt"
+                                                                   ]
+                                               }
+                                  },
+                      "aud_002":  {
+                                      "id":  "aud_002",
+                                      "at":  "2026-02-16T12:30:00.000Z",
+                                      "action":  "booking.update",
+                                      "resource":  "booking",
+                                      "resourceId":  "bk_005",
+                                      "status":  "success",
+                                      "actorId":  "stf_sara",
+                                      "actorRole":  "staff",
+                                      "targetUserId":  "usr_client_4",
+                                      "message":  "",
+                                      "meta":  {
+                                                   "changedKeys":  [
+                                                                       "status"
+                                                                   ]
+                                               }
+                                  }
+                  },
+    "bonus":  {
+                  "promoCodes":  {
+                                     "promo_001":  {
+                                                       "id":  "promo_001",
+                                                       "code":  "PROMO10",
+                                                       "creditAmount":  10,
+                                                       "description":  "Benvenuto",
+                                                       "active":  true,
+                                                       "maxUses":  100,
+                                                       "usedCount":  1,
+                                                       "expiresAt":  "2026-12-31T23:59:59.000Z",
+                                                       "createdAt":  "2026-01-01T10:00:00.000Z",
+                                                       "updatedAt":  "2026-02-13T09:30:00.000Z",
+                                                       "createdBy":  "admin_1"
+                                                   }
+                                 },
+                  "giftCards":  {
+                                    "gift_001":  {
+                                                     "id":  "gift_001",
+                                                     "code":  "GIFT-ABCD12",
+                                                     "initialAmount":  50,
+                                                     "balance":  0,
+                                                     "note":  "Regalo",
+                                                     "active":  false,
+                                                     "redeemedBy":  "usr_client_1",
+                                                     "redeemedAt":  "2026-02-01T12:00:00.000Z",
+                                                     "usesCount":  1,
+                                                     "expiresAt":  "2026-12-31T23:59:59.000Z",
+                                                     "createdAt":  "2026-01-10T08:00:00.000Z",
+                                                     "updatedAt":  "2026-02-01T12:00:00.000Z",
+                                                     "createdBy":  "admin_1"
+                                                 }
+                                },
+                  "wallets":  {
+                                  "usr_client_1":  {
+                                                       "userId":  "usr_client_1",
+                                                       "balance":  60,
+                                                       "updatedAt":  "2026-02-13T09:30:00.000Z"
+                                                   }
+                              },
+                  "ledger":  {
+                                 "usr_client_1":  {
+                                                      "led_001":  {
+                                                                      "id":  "led_001",
+                                                                      "userId":  "usr_client_1",
+                                                                      "type":  "promo",
+                                                                      "code":  "PROMO10",
+                                                                      "amount":  10,
+                                                                      "sourceId":  "promo_001",
+                                                                      "at":  "2026-02-13T09:30:00.000Z",
+                                                                      "note":  "Benvenuto"
+                                                                  }
+                                                  }
+                             },
+                  "redeems":  {
+                                  "usr_client_1":  {
+                                                       "promo_promo_001":  {
+                                                                               "kind":  "promo",
+                                                                               "code":  "PROMO10",
+                                                                               "amount":  10,
+                                                                               "sourceId":  "promo_001",
+                                                                               "at":  "2026-02-13T09:30:00.000Z"
+                                                                           }
+                                                   }
+                              }
+              },
+    "conversations":  {
+                          "conv_001":  {
+                                           "id":  "conv_001",
+                                           "summary":  "Chat con studio",
+                                           "status":  "open",
+                                           "createdAt":  "2026-02-13T09:00:00.000Z",
+                                           "updatedAt":  "2026-02-13T09:05:00.000Z",
+                                           "createdBy":  "usr_client_1",
+                                           "participants":  {
+                                                                "usr_client_1":  "client",
+                                                                "admin_1":  "admin",
+                                                                "stf_sara":  "staff"
+                                                            },
+                                           "lastMessageText":  "Ti propongo sabato alle 10:00",
+                                           "lastMessageAt":  "2026-02-13T09:05:00.000Z",
+                                           "lastMessageBy":  "stf_sara",
+                                           "unreadBy":  {
+                                                            "usr_client_1":  1,
+                                                            "admin_1":  0,
+                                                            "stf_sara":  0
+                                                        }
+                                       }
+                      },
+    "conversationMessages":  {
+                                 "conv_001":  {
+                                                  "msg_001":  {
+                                                                  "id":  "msg_001",
+                                                                  "conversationId":  "conv_001",
+                                                                  "senderId":  "usr_client_1",
+                                                                  "senderRole":  "client",
+                                                                  "text":  "Ciao, vorrei una consulenza",
+                                                                  "kind":  "text",
+                                                                  "createdAt":  "2026-02-13T09:00:00.000Z"
+                                                              },
+                                                  "msg_002":  {
+                                                                  "id":  "msg_002",
+                                                                  "conversationId":  "conv_001",
+                                                                  "senderId":  "stf_sara",
+                                                                  "senderRole":  "staff",
+                                                                  "text":  "Ti propongo sabato alle 10:00",
+                                                                  "kind":  "text",
+                                                                  "createdAt":  "2026-02-13T09:05:00.000Z"
+                                                              }
+                                              }
+                             },
+    "userConversations":  {
+                              "usr_client_1":  {
+                                                   "conv_001":  "2026-02-13T09:05:00.000Z"
+                                               },
+                              "admin_1":  {
+                                              "conv_001":  "2026-02-13T09:05:00.000Z"
+                                          },
+                              "stf_sara":  {
+                                               "conv_001":  "2026-02-13T09:05:00.000Z"
+                                           }
+                          },
+    "chats":  {
+                  "chat_001":  {
+                                   "id":  "chat_001",
+                                   "email":  "mario.rossi@example.com",
+                                   "createAt":  "2026-02-12T08:00:00.000Z",
+                                   "status":  "aperto",
+                                   "messages":  {
+                                                    "cmsg_001":  {
+                                                                     "id":  "cmsg_001",
+                                                                     "from":  "user",
+                                                                     "text":  "Avete disponibilita sabato?",
+                                                                     "timestamp":  "2026-02-12T08:00:00.000Z",
+                                                                     "chips":  null
+                                                                 }
+                                                }
+                               }
+              },
+    "chatsByEmail":  {
+                         "mario_rossi_example_com":  {
+                                                         "chatId":  "chat_001"
+                                                     }
+                     },
+    "studioProfile":  {
+                          "public":  {
+                                         "studioName":  "Rebis Tattoo",
+                                         "tagline":  "Studio di tatuaggi a Sassari",
+                                         "mission":  "Consulenza, progetto e follow-up",
+                                         "teamIntro":  "Guest periodici e tatuatori specializzati",
+                                         "ownerName":  "Sara Pushi",
+                                         "ownerRoleLabel":  "Tatuatrice - Titolare",
+                                         "ownerBio":  "Approccio su misura",
+                                         "ownerPhotoUrl":  "/personale/1.jpg",
+                                         "address":  "Via al Carmine 1A, Sassari",
+                                         "phoneDisplay":  "+39 340 099 8312",
+                                         "email":  "sarapushi@rebistattoo.info",
+                                         "instagramUrl":  "https://www.instagram.com/rebis_tattoo/",
+                                         "instagramHandle":  "rebis_tattoo"
+                                     }
+                      },
+    "staffProfiles":  {
+                          "stf_sara":  {
+                                           "id":  "stf_sara",
+                                           "userId":  "stf_sara",
+                                           "name":  "Sara Pushi",
+                                           "role":  "tatuatore",
+                                           "bio":  "Blackwork e fine line",
+                                           "photoUrl":  "/personale/1.jpg",
+                                           "isActive":  true,
+                                           "deletedAt":  null,
+                                           "email":  null,
+                                           "phone":  null
+                                       },
+                          "stf_matteo":  {
+                                             "id":  "stf_matteo",
+                                             "userId":  "stf_matteo",
+                                             "name":  "Matteo Serra",
+                                             "role":  "tatuatore",
+                                             "bio":  "Realism e cover-up",
+                                             "photoUrl":  "/personale/2.jpg",
+                                             "isActive":  true,
+                                             "deletedAt":  null,
+                                             "email":  null,
+                                             "phone":  null
+                                         },
+                          "stf_luca":  {
+                                           "id":  "stf_luca",
+                                           "userId":  "stf_luca",
+                                           "name":  "Luca Neri",
+                                           "role":  "piercer",
+                                           "bio":  "Piercing professionali",
+                                           "photoUrl":  "/personale/3.jpg",
+                                           "isActive":  true,
+                                           "deletedAt":  null,
+                                           "email":  null,
+                                           "phone":  null
+                                       }
+                      }
+}

@@ -1,0 +1,121 @@
+{
+    "users":  [
+                  {
+                      "id":  "admin_1",
+                      "uid":  "admin_1",
+                      "email":  "valhallawebapp@gmail.com",
+                      "name":  "Valhalla Admin",
+                      "role":  "admin",
+                      "isActive":  true,
+                      "isVisible":  true,
+                      "phone":  "+39 340 000 0001",
+                      "createdAt":  "2026-01-01T09:00:00.000Z",
+                      "updatedAt":  "2026-02-14T09:00:00.000Z",
+                      "urlAvatar":  "/personale/admin.jpg"
+                  },
+                  {
+                      "id":  "stf_sara",
+                      "uid":  "stf_sara",
+                      "email":  "sara@rebistattoo.it",
+                      "name":  "Sara Pushi",
+                      "role":  "staff",
+                      "isActive":  true,
+                      "isVisible":  true,
+                      "phone":  "+39 340 099 8312",
+                      "createdAt":  "2026-01-02T09:00:00.000Z",
+                      "updatedAt":  "2026-02-14T09:00:00.000Z",
+                      "urlAvatar":  "/personale/1.jpg"
+                  },
+                  {
+                      "id":  "stf_matteo",
+                      "uid":  "stf_matteo",
+                      "email":  "matteo@rebistattoo.it",
+                      "name":  "Matteo Serra",
+                      "role":  "staff",
+                      "isActive":  true,
+                      "isVisible":  true,
+                      "phone":  "+39 340 000 0002",
+                      "createdAt":  "2026-01-03T09:00:00.000Z",
+                      "updatedAt":  "2026-02-14T09:00:00.000Z",
+                      "urlAvatar":  "/personale/2.jpg"
+                  },
+                  {
+                      "id":  "stf_luca",
+                      "uid":  "stf_luca",
+                      "email":  "luca.neri@rebistattoo.it",
+                      "name":  "Luca Neri",
+                      "role":  "staff",
+                      "isActive":  true,
+                      "isVisible":  true,
+                      "phone":  "+39 340 000 0003",
+                      "createdAt":  "2026-01-09T09:00:00.000Z",
+                      "updatedAt":  "2026-02-14T09:00:00.000Z",
+                      "urlAvatar":  "/personale/3.jpg"
+                  },
+                  {
+                      "id":  "usr_client_1",
+                      "uid":  "usr_client_1",
+                      "email":  "mario.rossi@example.com",
+                      "name":  "Mario Rossi",
+                      "role":  "client",
+                      "isActive":  true,
+                      "isVisible":  true,
+                      "phone":  "+39 333 111 1111",
+                      "createdAt":  "2026-01-04T09:00:00.000Z",
+                      "updatedAt":  "2026-02-14T09:00:00.000Z",
+                      "urlAvatar":  "/personale/client1.jpg"
+                  },
+                  {
+                      "id":  "usr_client_2",
+                      "uid":  "usr_client_2",
+                      "email":  "giulia.bianchi@example.com",
+                      "name":  "Giulia Bianchi",
+                      "role":  "client",
+                      "isActive":  true,
+                      "isVisible":  true,
+                      "phone":  "+39 333 222 2222",
+                      "createdAt":  "2026-01-05T09:00:00.000Z",
+                      "updatedAt":  "2026-02-14T09:00:00.000Z",
+                      "urlAvatar":  "/personale/client2.jpg"
+                  },
+                  {
+                      "id":  "usr_client_3",
+                      "uid":  "usr_client_3",
+                      "email":  "luca.pinna@example.com",
+                      "name":  "Luca Pinna",
+                      "role":  "client",
+                      "isActive":  true,
+                      "isVisible":  true,
+                      "phone":  "+39 333 333 3333",
+                      "createdAt":  "2026-01-06T09:00:00.000Z",
+                      "updatedAt":  "2026-02-14T09:00:00.000Z",
+                      "urlAvatar":  "/personale/client3.jpg"
+                  },
+                  {
+                      "id":  "usr_client_4",
+                      "uid":  "usr_client_4",
+                      "email":  "elisa.mura@example.com",
+                      "name":  "Elisa Mura",
+                      "role":  "client",
+                      "isActive":  true,
+                      "isVisible":  true,
+                      "phone":  "+39 333 444 4444",
+                      "createdAt":  "2026-01-07T09:00:00.000Z",
+                      "updatedAt":  "2026-02-14T09:00:00.000Z",
+                      "urlAvatar":  "/personale/client4.jpg"
+                  },
+                  {
+                      "id":  "usr_client_5",
+                      "uid":  "usr_client_5",
+                      "email":  "federica.sanna@example.com",
+                      "name":  "Federica Sanna",
+                      "role":  "client",
+                      "isActive":  true,
+                      "isVisible":  true,
+                      "phone":  "+39 333 555 5555",
+                      "createdAt":  "2026-01-08T09:00:00.000Z",
+                      "updatedAt":  "2026-02-14T09:00:00.000Z",
+                      "urlAvatar":  "/personale/client5.jpg"
+                  }
+              ]
+}

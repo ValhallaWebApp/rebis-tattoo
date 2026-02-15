@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+﻿import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -22,9 +22,6 @@ export class BookingDialogComponent implements OnInit {
   staff: StaffMember[] = [];
   availableSlots: string[] = [];
   disabledDates = new Set<string>();
-  processing = false;
-
-  private readonly paymentLink = 'https://buy.stripe.com/00w28rdJU7PK9C72Pw5ZC00';
 
   constructor(
     private fb: FormBuilder,
@@ -45,7 +42,7 @@ export class BookingDialogComponent implements OnInit {
       artist: [''],
       date: [null, Validators.required],
       slot: [null, Validators.required],
-      confirmPayment: [false, Validators.requiredTrue],
+      confirmProceed: [false, Validators.requiredTrue],
       start: [this.data?.start || '', Validators.required],
       end: ['', Validators.required]
     });
@@ -113,8 +110,8 @@ export class BookingDialogComponent implements OnInit {
     return [
       {
         type: 'checkbox',
-        name: 'confirmPayment',
-        label: 'Confermo di aver effettuato il pagamento dell’acconto richiesto',
+        name: 'confirmProceed',
+        label: 'Confermo i dati inseriti e desidero procedere al riepilogo',
         required: true
       }
     ];
@@ -131,7 +128,7 @@ export class BookingDialogComponent implements OnInit {
         return this.bookingForm.get('date')!.valid &&
                this.bookingForm.get('slot')!.valid;
       case 2:
-        return this.bookingForm.get('confirmPayment')!.value === true;
+        return this.bookingForm.get('confirmProceed')!.value === true;
       default:
         return true;
     }
@@ -141,7 +138,7 @@ export class BookingDialogComponent implements OnInit {
     if (!this.isStepValid()) return;
 
     if (this.stepIndex === 2) {
-      this.goToPayment();
+      this.goToSummary();
     } else {
       this.stepIndex++;
     }
@@ -151,10 +148,12 @@ export class BookingDialogComponent implements OnInit {
     if (this.stepIndex > 0) this.stepIndex--;
   }
 
-  goToPayment(): void {
-    this.processing = true;
-    window.open(this.paymentLink, '_blank');
-    this.processing = false;
+  goToSummary(): void {
+    this.snackbar.open(
+      'Step pagamento esterno rimosso: prosegui con il riepilogo.',
+      'OK',
+      { duration: 2500 }
+    );
     this.stepIndex++;
   }
 
@@ -162,7 +161,7 @@ async onSubmit(): Promise<void> {
   if (!this.bookingForm.valid) return;
 
   const v = this.bookingForm.value;
-  const user = this.authService.getUser(); // ✅ sostituito getCurrentUser
+  const user = this.authService.getUser(); // âœ… sostituito getCurrentUser
 
   if (!user?.uid) {
     this.snackbar.open('Utente non autenticato. Impossibile completare la prenotazione.', 'OK', { duration: 3000 });
@@ -170,7 +169,7 @@ async onSubmit(): Promise<void> {
   }
 
   const booking: Omit<Booking, 'id' | 'status'> = {
-    title: `${v.start.split('T')[1]?.slice(0, 5)} ${v.description} – ${v.clientName}`,
+    title: `${v.start.split('T')[1]?.slice(0, 5)} ${v.description} â€“ ${v.clientName}`,
     start: v.start,
     end: v.end,
     idClient: user.uid,
@@ -248,7 +247,7 @@ async onSubmit(): Promise<void> {
   }
 
 private prefillFromUserOrLocal(): void {
-  const user = this.authService.getUser(); // ✅ sincrono
+  const user = this.authService.getUser(); // âœ… sincrono
 
   const local = localStorage.getItem('pendingBooking');
   const parsed = local ? safeParse(local) : {};
@@ -283,3 +282,4 @@ private prefillFromUserOrLocal(): void {
     this.dialogRef.close(false);
   }
 }
+

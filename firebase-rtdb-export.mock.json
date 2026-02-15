@@ -1,0 +1,536 @@
+﻿{
+  "staff": {
+    "stf_sara": {
+      "id": "stf_sara",
+      "name": "Sara Pushi",
+      "role": "tatuatore",
+      "bio": "Specializzata in blackwork e fine line.",
+      "photoUrl": "/personale/1.jpg",
+      "isActive": true
+    },
+    "stf_luca": {
+      "id": "stf_luca",
+      "name": "Luca Neri",
+      "role": "piercer",
+      "bio": "Piercing professionali e consulenza materiali.",
+      "photoUrl": "/personale/2.jpg",
+      "isActive": true
+    },
+    "stf_guest_anna": {
+      "id": "stf_guest_anna",
+      "name": "Anna Guest",
+      "role": "guest",
+      "bio": "Guest artist realism.",
+      "photoUrl": "/personale/3.jpg",
+      "isActive": false
+    }
+  },
+  "services": {
+    "svc_consultation": {
+      "id": "svc_consultation",
+      "name": "Consulenza Tattoo",
+      "description": "Analisi progetto, zona e stile.",
+      "categoria": "Consultazione",
+      "prezzo": 49,
+      "durata": 60,
+      "visibile": true,
+      "prezzoDaConcordare": false,
+      "durataDaConcordare": false,
+      "icon": "/home/icon-01-80x80.png",
+      "createdAt": 1739361600000,
+      "updatedAt": 1739361600000,
+      "creatoreId": "admin_1"
+    },
+    "svc_small_tattoo": {
+      "id": "svc_small_tattoo",
+      "name": "Tattoo Small",
+      "description": "Tatuaggio piccolo su progetto approvato.",
+      "categoria": "Tattoo",
+      "prezzo": 120,
+      "durata": 90,
+      "visibile": true,
+      "prezzoDaConcordare": false,
+      "durataDaConcordare": false,
+      "icon": "/home/icon-07-80x80.png",
+      "createdAt": 1739448000000,
+      "updatedAt": 1739448000000,
+      "creatoreId": "admin_1"
+    }
+  },
+  "bookings": {
+    "bk_001": {
+      "id": "bk_001",
+      "clientId": "usr_client_1",
+      "artistId": "stf_sara",
+      "projectId": "prj_001",
+      "type": "session",
+      "source": "fast-booking",
+      "title": "Mario Rossi - Prenotazione",
+      "start": "2026-02-20T10:00:00",
+      "end": "2026-02-20T11:00:00",
+      "notes": "Prima sessione avambraccio",
+      "status": "confirmed",
+      "price": 250,
+      "depositRequired": 80,
+      "paidAmount": 80,
+      "createdAt": "2026-02-10T09:15:00",
+      "updatedAt": "2026-02-12T11:20:00",
+      "idClient": "usr_client_1",
+      "idArtist": "stf_sara",
+      "description": "Prima sessione avambraccio",
+      "createAt": "2026-02-10T09:15:00",
+      "updateAt": "2026-02-12T11:20:00"
+    },
+    "bk_002": {
+      "id": "bk_002",
+      "clientId": "usr_client_2",
+      "artistId": "stf_sara",
+      "type": "consultation",
+      "source": "chat-bot",
+      "title": "Giulia Bianchi - Consulenza",
+      "start": "2026-02-21T15:00:00",
+      "end": "2026-02-21T15:30:00",
+      "notes": "Info cover up",
+      "status": "pending",
+      "price": 0,
+      "depositRequired": 0,
+      "paidAmount": 0,
+      "createdAt": "2026-02-13T12:00:00",
+      "updatedAt": "2026-02-13T12:00:00",
+      "idClient": "usr_client_2",
+      "idArtist": "stf_sara",
+      "description": "Info cover up",
+      "createAt": "2026-02-13T12:00:00",
+      "updateAt": "2026-02-13T12:00:00"
+    },
+    "bk_003": {
+      "id": "bk_003",
+      "clientId": "usr_client_1",
+      "artistId": "stf_sara",
+      "projectId": "prj_002",
+      "type": "session",
+      "source": "manual",
+      "title": "Mario Rossi - Sessione completata",
+      "start": "2026-02-10T09:00:00",
+      "end": "2026-02-10T10:30:00",
+      "notes": "Sessione completata",
+      "status": "completed",
+      "price": 300,
+      "depositRequired": 100,
+      "paidAmount": 300,
+      "createdAt": "2026-02-01T09:00:00",
+      "updatedAt": "2026-02-10T10:35:00",
+      "idClient": "usr_client_1",
+      "idArtist": "stf_sara",
+      "description": "Sessione completata",
+      "createAt": "2026-02-01T09:00:00",
+      "updateAt": "2026-02-10T10:35:00"
+    }
+  },
+  "projects": {
+    "prj_001": {
+      "id": "prj_001",
+      "title": "Blackwork Geometrico",
+      "artistId": "stf_sara",
+      "clientId": "usr_client_1",
+      "bookingId": "bk_001",
+      "sessionIds": ["ses_001"],
+      "zone": "Avambraccio",
+      "placement": "Destro",
+      "notes": "Linee nette + ombreggiatura leggera",
+      "status": "scheduled",
+      "createdAt": "2026-02-09T14:00:00",
+      "updatedAt": "2026-02-12T11:20:00",
+      "isPublic": true,
+      "style": "Blackwork",
+      "subject": "Geometrico",
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1542727365-19732a80dcfd?auto=format&fit=crop&w=900&q=80"
+      ],
+      "genere": "Blackwork",
+      "copertine": []
+    },
+    "prj_002": {
+      "id": "prj_002",
+      "title": "Floreale Fine Line",
+      "artistId": "stf_sara",
+      "clientId": "usr_client_1",
+      "bookingId": "bk_003",
+      "sessionIds": ["ses_002"],
+      "zone": "Spalla",
+      "placement": "Sinistra",
+      "notes": "Progetto concluso",
+      "status": "completed",
+      "createdAt": "2026-01-15T16:30:00",
+      "updatedAt": "2026-02-10T10:35:00",
+      "isPublic": true,
+      "style": "Fine Line",
+      "subject": "Floreale",
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1590246815117-62c3f783eec0?auto=format&fit=crop&w=900&q=80"
+      ],
+      "genere": "Fine Line",
+      "copertine": []
+    }
+  },
+  "sessions": {
+    "ses_001": {
+      "id": "ses_001",
+      "idArtist": "stf_sara",
+      "idClient": "usr_client_1",
+      "start": "2026-02-20T10:00:00",
+      "end": "2026-02-20T11:00:00",
+      "projectId": "prj_001",
+      "bookingId": "bk_001",
+      "sessionNumber": 1,
+      "notesByAdmin": "Portare bozza stampata",
+      "price": 250,
+      "paidAmount": 80,
+      "painLevel": 0,
+      "healingNotes": "",
+      "photoUrlList": [],
+      "status": "planned",
+      "createdAt": "2026-02-12T11:20:00",
+      "updatedAt": "2026-02-12T11:20:00"
+    },
+    "ses_002": {
+      "id": "ses_002",
+      "idArtist": "stf_sara",
+      "idClient": "usr_client_1",
+      "start": "2026-02-10T09:00:00",
+      "end": "2026-02-10T10:30:00",
+      "projectId": "prj_002",
+      "bookingId": "bk_003",
+      "sessionNumber": 2,
+      "notesByAdmin": "Sessione chiusa",
+      "price": 300,
+      "paidAmount": 300,
+      "painLevel": 4,
+      "healingNotes": "Usare crema 2 volte al giorno",
+      "photoUrlList": [
+        "https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?auto=format&fit=crop&w=900&q=80"
+      ],
+      "status": "completed",
+      "createdAt": "2026-02-10T10:30:00",
+      "updatedAt": "2026-02-10T10:35:00"
+    }
+  },
+  "invoices": {
+    "inv_001": {
+      "id": "inv_001",
+      "bookingId": "bk_003",
+      "clientId": "usr_client_1",
+      "clientName": "Mario Rossi",
+      "date": "2026-02-10T10:40:00.000Z",
+      "amount": 300,
+      "status": "paid",
+      "items": [
+        {
+          "description": "Sessione tattoo",
+          "quantity": 1,
+          "price": 300
+        }
+      ],
+      "notes": "Saldo completato",
+      "createdAt": "2026-02-10T10:40:00.000Z",
+      "updatedAt": "2026-02-10T10:40:00.000Z"
+    },
+    "inv_002": {
+      "id": "inv_002",
+      "bookingId": "bk_001",
+      "clientId": "usr_client_1",
+      "clientName": "Mario Rossi",
+      "date": "2026-02-12T12:00:00.000Z",
+      "amount": 80,
+      "status": "pending",
+      "items": [
+        {
+          "description": "Acconto",
+          "quantity": 1,
+          "price": 80
+        }
+      ],
+      "notes": "Da confermare",
+      "createdAt": "2026-02-12T12:00:00.000Z",
+      "updatedAt": "2026-02-12T12:00:00.000Z"
+    }
+  },
+  "reviews": {
+    "rev_001": {
+      "id": "rev_001",
+      "userId": "usr_client_1",
+      "tattooId": "prj_002",
+      "tattooTitle": "Floreale Fine Line",
+      "comment": "Ottimo risultato e assistenza.",
+      "rating": 5,
+      "status": "approved",
+      "date": 1739184000000,
+      "bookingId": "bk_003",
+      "artistId": "stf_sara"
+    },
+    "rev_002": {
+      "id": "rev_002",
+      "userId": "usr_client_2",
+      "tattooId": "prj_001",
+      "tattooTitle": "Blackwork Geometrico",
+      "comment": "In attesa di approvazione",
+      "rating": 4,
+      "status": "pending",
+      "date": 1739270400000,
+      "bookingId": "bk_001",
+      "artistId": "stf_sara"
+    }
+  },
+  "notifications": {
+    "usr_client_1": {
+      "ntf_001": {
+        "id": "ntf_001",
+        "userId": "usr_client_1",
+        "type": "booking",
+        "title": "Prenotazione aggiornata",
+        "message": "La tua prenotazione e confermata.",
+        "link": "/dashboard/booking-history",
+        "priority": "normal",
+        "createdAt": "2026-02-12T11:20:00.000Z",
+        "readAt": null,
+        "meta": {
+          "bookingId": "bk_001"
+        }
+      }
+    },
+    "stf_sara": {
+      "ntf_002": {
+        "id": "ntf_002",
+        "userId": "stf_sara",
+        "type": "chat",
+        "title": "Nuovo messaggio",
+        "message": "Ciao, vorrei una consulenza",
+        "link": "/admin/messaging",
+        "priority": "normal",
+        "createdAt": "2026-02-13T09:00:00.000Z",
+        "readAt": null,
+        "meta": {
+          "conversationId": "conv_001"
+        }
+      }
+    },
+    "admin_1": {
+      "ntf_003": {
+        "id": "ntf_003",
+        "userId": "admin_1",
+        "type": "bonus",
+        "title": "Promo usata",
+        "message": "PROMO10 applicato da Mario Rossi",
+        "link": "/admin/bonus",
+        "priority": "high",
+        "createdAt": "2026-02-13T09:30:00.000Z",
+        "readAt": null,
+        "meta": {
+          "code": "PROMO10"
+        }
+      }
+    }
+  },
+  "auditLogs": {
+    "aud_001": {
+      "id": "aud_001",
+      "at": "2026-02-12T11:20:00.000Z",
+      "action": "booking.update",
+      "resource": "booking",
+      "resourceId": "bk_001",
+      "status": "success",
+      "actorId": "admin_1",
+      "actorRole": "admin",
+      "targetUserId": "usr_client_1",
+      "message": "",
+      "meta": {
+        "changedKeys": ["status", "updatedAt"]
+      }
+    }
+  },
+  "bonus": {
+    "promoCodes": {
+      "promo_001": {
+        "id": "promo_001",
+        "code": "PROMO10",
+        "creditAmount": 10,
+        "description": "Benvenuto",
+        "active": true,
+        "maxUses": 100,
+        "usedCount": 1,
+        "expiresAt": "2026-12-31T23:59:59.000Z",
+        "createdAt": "2026-01-01T10:00:00.000Z",
+        "updatedAt": "2026-02-13T09:30:00.000Z",
+        "createdBy": "admin_1"
+      }
+    },
+    "giftCards": {
+      "gift_001": {
+        "id": "gift_001",
+        "code": "GIFT-ABCD12",
+        "initialAmount": 50,
+        "balance": 0,
+        "note": "Regalo compleanno",
+        "active": false,
+        "redeemedBy": "usr_client_1",
+        "redeemedAt": "2026-02-01T12:00:00.000Z",
+        "usesCount": 1,
+        "expiresAt": "2026-12-31T23:59:59.000Z",
+        "createdAt": "2026-01-10T08:00:00.000Z",
+        "updatedAt": "2026-02-01T12:00:00.000Z",
+        "createdBy": "admin_1"
+      }
+    },
+    "wallets": {
+      "usr_client_1": {
+        "userId": "usr_client_1",
+        "balance": 60,
+        "updatedAt": "2026-02-13T09:30:00.000Z"
+      }
+    },
+    "ledger": {
+      "usr_client_1": {
+        "led_001": {
+          "id": "led_001",
+          "userId": "usr_client_1",
+          "type": "promo",
+          "code": "PROMO10",
+          "amount": 10,
+          "sourceId": "promo_001",
+          "at": "2026-02-13T09:30:00.000Z",
+          "note": "Benvenuto"
+        },
+        "led_002": {
+          "id": "led_002",
+          "userId": "usr_client_1",
+          "type": "gift_card",
+          "code": "GIFT-ABCD12",
+          "amount": 50,
+          "sourceId": "gift_001",
+          "at": "2026-02-01T12:00:00.000Z",
+          "note": "Regalo compleanno"
+        }
+      }
+    },
+    "redeems": {
+      "usr_client_1": {
+        "promo_promo_001": {
+          "kind": "promo",
+          "code": "PROMO10",
+          "amount": 10,
+          "sourceId": "promo_001",
+          "at": "2026-02-13T09:30:00.000Z"
+        },
+        "gift_gift_001": {
+          "kind": "gift_card",
+          "code": "GIFT-ABCD12",
+          "amount": 50,
+          "sourceId": "gift_001",
+          "at": "2026-02-01T12:00:00.000Z"
+        }
+      }
+    }
+  },
+  "conversations": {
+    "conv_001": {
+      "id": "conv_001",
+      "summary": "Chat con studio",
+      "status": "open",
+      "createdAt": "2026-02-13T09:00:00.000Z",
+      "updatedAt": "2026-02-13T09:05:00.000Z",
+      "createdBy": "usr_client_1",
+      "participants": {
+        "usr_client_1": "client",
+        "admin_1": "admin",
+        "stf_sara": "staff"
+      },
+      "lastMessageText": "Ti propongo sabato alle 10:00",
+      "lastMessageAt": "2026-02-13T09:05:00.000Z",
+      "lastMessageBy": "stf_sara",
+      "unreadBy": {
+        "usr_client_1": 1,
+        "admin_1": 0,
+        "stf_sara": 0
+      }
+    }
+  },
+  "conversationMessages": {
+    "conv_001": {
+      "msg_001": {
+        "id": "msg_001",
+        "conversationId": "conv_001",
+        "senderId": "usr_client_1",
+        "senderRole": "client",
+        "text": "Ciao, vorrei una consulenza per un tattoo blackwork.",
+        "kind": "text",
+        "createdAt": "2026-02-13T09:00:00.000Z"
+      },
+      "msg_002": {
+        "id": "msg_002",
+        "conversationId": "conv_001",
+        "senderId": "stf_sara",
+        "senderRole": "staff",
+        "text": "Ti propongo sabato alle 10:00",
+        "kind": "text",
+        "createdAt": "2026-02-13T09:05:00.000Z"
+      }
+    }
+  },
+  "userConversations": {
+    "usr_client_1": {
+      "conv_001": "2026-02-13T09:05:00.000Z"
+    },
+    "admin_1": {
+      "conv_001": "2026-02-13T09:05:00.000Z"
+    },
+    "stf_sara": {
+      "conv_001": "2026-02-13T09:05:00.000Z"
+    }
+  },
+  "chats": {
+    "chat_001": {
+      "id": "chat_001",
+      "email": "mario.rossi@example.com",
+      "createAt": "2026-02-12T08:00:00.000Z",
+      "status": "aperto",
+      "messages": {
+        "cmsg_001": {
+          "id": "cmsg_001",
+          "from": "user",
+          "text": "Ciao, avete disponibilita sabato?",
+          "timestamp": "2026-02-12T08:00:00.000Z",
+          "chips": null
+        },
+        "cmsg_002": {
+          "id": "cmsg_002",
+          "from": "bot",
+          "text": "Certo, posso proporti alcune fasce orarie.",
+          "timestamp": "2026-02-12T08:00:05.000Z",
+          "chips": ["Sara Pushi", "Prossima settimana", "Parla con operatore"]
+        }
+      }
+    }
+  },
+  "chatsByEmail": {
+    "mario_rossi@example_com": {
+      "chatId": "chat_001"
+    }
+  },
+  "studioProfile": {
+    "public": {
+      "studioName": "Rebis Tattoo",
+      "tagline": "Studio di tatuaggi a Sassari",
+      "mission": "Ogni tatuaggio nasce da consulenza, progetto e follow-up reale.",
+      "teamIntro": "Lo studio ospita guest periodici e collabora con tatuatori specializzati.",
+      "ownerName": "Sara Pushi",
+      "ownerRoleLabel": "Tatuatrice - Titolare",
+      "ownerBio": "Approccio su misura con attenzione alla durata nel tempo.",
+      "ownerPhotoUrl": "/personale/1.jpg",
+      "address": "Via al Carmine 1A, 07100 Sassari (SS)",
+      "phoneDisplay": "+39 340 099 8312",
+      "email": "sarapushi@rebistattoo.info",
+      "instagramUrl": "https://www.instagram.com/rebis_tattoo/",
+      "instagramHandle": "@rebis_tattoo"
+    }
+  }
+}
