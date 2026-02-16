@@ -4,7 +4,7 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { Router, RouterModule } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { AuthService } from './core/services/auth/authservice';
-import { MenuItem, MenuService } from './core/services/menu/menu.service';
+import { MenuItem, MenuService, MenuUserContext } from './core/services/menu/menu.service';
 import { MaterialModule } from './core/modules/material.module';
 import { AppNotification } from './core/models/notification.model';
 import { NotificationService } from './core/services/notifications/notification.service';
@@ -41,23 +41,24 @@ export class AppComponent implements OnInit {
     this.isLoggedIn = !!user;
 
     if (user) {
-      this.loadMenu(this.toMenuRole(user.role));
+      this.loadMenuForUser(user);
       this.bindNotifications(user.uid);
       return;
     }
 
-    this.loadMenu('public');
+    this.loadMenuForUser(null);
     this.notifications$ = of([]);
     this.unreadCount$ = of(0);
   });
 
   ngOnInit(): void {
-    this.loadMenu('public');
+    this.loadMenuForUser(null);
   }
 
-  loadMenu(role: 'public' | 'client' | 'staff' | 'admin'): void {
+  loadMenuForUser(user: MenuUserContext | null): void {
+    const role = this.toMenuRole(user?.role);
     this.userRole = role;
-    this.navItem$ = this.menuService.getMenuByRole(role);
+    this.navItem$ = this.menuService.getMenuByUser(user);
   }
 
   private toMenuRole(role: string | undefined): 'public' | 'client' | 'staff' | 'admin' {

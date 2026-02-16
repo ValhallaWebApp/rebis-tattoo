@@ -1,9 +1,9 @@
 import {
-  NG_VALUE_ACCESSOR
-} from "./chunk-TYFAIG7Z.js";
-import {
   SelectionModel
 } from "./chunk-YILWSCUT.js";
+import {
+  NG_VALUE_ACCESSOR
+} from "./chunk-TYFAIG7Z.js";
 import {
   DOWN_ARROW,
   Directionality,

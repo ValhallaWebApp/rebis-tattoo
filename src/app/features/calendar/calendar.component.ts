@@ -48,6 +48,11 @@ export class CalendarComponent {
               name: s.name,
               photoUrl: s.photoUrl,
               isActive: s.isActive !== false,
+              calendarEnabled: (s.calendar?.enabled !== false),
+              workdayStart: s.calendar?.workdayStart ?? '08:00',
+              workdayEnd: s.calendar?.workdayEnd ?? '20:00',
+              stepMinutes: Number(s.calendar?.stepMinutes ?? 30),
+              color: s.calendar?.color ?? '#be9045',
             }))
         )
       )
@@ -158,6 +163,7 @@ export class CalendarComponent {
           start,
           end,
           durationMinutes: duration,
+          sessionNumber: s.sessionNumber != null ? Number(s.sessionNumber) : undefined,
           clientId: s.clientId ? String(s.clientId) : undefined,
           projectId: s.projectId ? String(s.projectId) : undefined,
           bookingId: s.bookingId ? String(s.bookingId) : undefined,
@@ -195,7 +201,8 @@ export class CalendarComponent {
     if (!draft) return;
 
     try {
-      if (this.hasConflict(draft.artistId, draft.start, draft.end)) {
+      const deferBookingConflictCheck = draft.type === 'booking' && String(draft.projectId ?? '').trim().length > 0;
+      if (!deferBookingConflictCheck && this.hasConflict(draft.artistId, draft.start, draft.end)) {
         console.warn('[CAL-ADMIN-V2] create blocked: slot not available', {
           artistId: draft.artistId,
           start: draft.start,
@@ -206,31 +213,52 @@ export class CalendarComponent {
       }
 
       if (draft.type === 'booking') {
+        const projectId = String(draft.projectId ?? '').trim();
+        let resolvedArtistId = String(draft.artistId ?? '').trim();
+        let resolvedClientId = String(draft.clientId ?? '').trim();
+
+        if (projectId) {
+          const project = await this.projectService.getProjectById(projectId);
+          if (project) {
+            const raw: any = project as any;
+            const legacyArtistIds = Array.isArray(raw?.artistIds)
+              ? raw.artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
+              : [];
+            const projectArtistId = String(raw?.artistId ?? raw?.idArtist ?? legacyArtistIds[0] ?? '').trim();
+            const projectClientId = String(raw?.clientId ?? raw?.idClient ?? '').trim();
+            if (projectArtistId) resolvedArtistId = projectArtistId;
+            if (projectClientId) resolvedClientId = projectClientId;
+          }
+        }
+
+        if (this.hasConflict(resolvedArtistId, draft.start, draft.end)) {
+          console.warn('[CAL-ADMIN-V2] create blocked: slot not available', {
+            artistId: resolvedArtistId,
+            start: draft.start,
+            end: draft.end
+          });
+          this.showConflictMessage();
+          return;
+        }
+
         // ⚠️ adatta al tuo BookingService
         const payload = {
-          artistId: draft.artistId,
+          artistId: resolvedArtistId,
+          clientId: resolvedClientId,
+          title: 'Prenotazione',
           start: draft.start,
           end: draft.end,
-          durationMinutes: draft.durationMinutes,
-          clientId: draft.clientId ?? null,
-          projectId: draft.projectId ?? null,
-          notes: draft.notes ?? '',
-          status: draft.status ?? 'confirmed',
-          type: 'booking',
-          updatedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
+          projectId: projectId || undefined,
+          notes: draft.notes ?? undefined,
+          status: (draft.status as any) ?? 'confirmed',
+          type: 'session',
         };
 
         const fn = (this.bookingService as any).createBooking ?? (this.bookingService as any).addBooking ?? (this.bookingService as any).create;
         if (!fn) throw new Error('BookingService.createBooking non trovato');
-        const created = await fn.call(this.bookingService, payload);
-        const bookingId =
-          typeof created === 'string' ? created :
-          created?.id ? String(created.id) : null;
+        await fn.call(this.bookingService, payload);
 
-        if (bookingId && draft.projectId) {
-          await this.projectService.updateProject(draft.projectId, { bookingId });
-        }
+        // BookingService already syncs project.bookingId when projectId is provided.
       }
 
       if (draft.type === 'session') {
@@ -252,21 +280,22 @@ export class CalendarComponent {
         }
 
         // ⚠️ adatta al tuo SessionService
+        const rawStatus = String(draft.status ?? '').trim();
+        const sessionStatus =
+          rawStatus === 'planned' || rawStatus === 'completed' || rawStatus === 'cancelled'
+            ? (rawStatus as any)
+            : 'planned';
+
         const payload = {
           artistId: draft.artistId,
-          date: draft.start,
           start: draft.start,
           end: draft.end,
-          durationMinutes: draft.durationMinutes,
-          clientId: draft.clientId ?? null,
-          projectId: draft.projectId ?? null,
-          bookingId: (draft as any).bookingId ?? null,
-          notesByAdmin: (draft as any).notesByAdmin ?? (draft.notes ?? ''),
-          paidAmount: (draft as any).paidAmount ?? null,
-          status: draft.status ?? 'confirmed',
-          type: 'session',
-          updatedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
+          clientId: draft.clientId ?? undefined,
+          projectId: draft.projectId ?? undefined,
+          bookingId: (draft as any).bookingId ?? undefined,
+          notesByAdmin: (draft as any).notesByAdmin ?? (draft.notes ?? undefined),
+          paidAmount: (draft as any).paidAmount ?? undefined,
+          status: sessionStatus,
         };
 
         const fn = (this.sessionService as any).createSession ?? (this.sessionService as any).addSession ?? (this.sessionService as any).create;
@@ -275,6 +304,7 @@ export class CalendarComponent {
       }
     } catch (e) {
       console.error('[CAL-ADMIN-V2] create failed', e);
+      this.showOpError(e, 'Errore creazione evento.');
     }
   }
 
@@ -283,11 +313,20 @@ export class CalendarComponent {
 
     try {
       const current = this.findEventById(upd.id);
-      const nextStart = String(upd.patch.start ?? '');
-      const nextEnd = String(upd.patch.end ?? '');
-      if (nextStart && nextEnd) {
-        const artistId = (upd.patch as any)?.artistId ?? current?.artistId ?? '';
-        if (this.hasConflict(artistId, nextStart, nextEnd, upd.id)) {
+      const nextStart = String((upd.patch as any)?.start ?? '');
+      const nextEnd = String((upd.patch as any)?.end ?? '');
+      const nextArtistId = String((upd.patch as any)?.artistId ?? current?.artistId ?? '');
+      const currentStart = String((current as any)?.start ?? '');
+      const currentEnd = String((current as any)?.end ?? '');
+      const currentArtistId = String((current as any)?.artistId ?? '');
+
+      const scheduleChanged =
+        this.changedAtMinutePrecision(nextStart, currentStart) ||
+        this.changedAtMinutePrecision(nextEnd, currentEnd) ||
+        String(nextArtistId) !== String(currentArtistId);
+
+      if (scheduleChanged && nextStart && nextEnd) {
+        if (this.hasConflict(nextArtistId, nextStart, nextEnd, upd.id)) {
           console.warn('[CAL-ADMIN-V2] update blocked: slot not available', {
             id: upd.id,
             start: nextStart,
@@ -330,17 +369,30 @@ export class CalendarComponent {
 
       if (upd.type === 'session') {
         const patchAny = upd.patch as any;
-        const needsSequenceCheck =
-          patchAny?.start != null ||
-          patchAny?.end != null ||
-          patchAny?.sessionNumber != null ||
-          patchAny?.projectId != null;
+        const currentAny = current as any;
+        const currentProjectId = String(currentAny?.projectId ?? '').trim();
+        const nextProjectId = String(patchAny?.projectId ?? currentAny?.projectId ?? '').trim();
+        const projectChanged = nextProjectId !== currentProjectId;
+        const startChanged = this.changedAtMinutePrecision(
+          String(patchAny?.start ?? currentAny?.start ?? ''),
+          String(currentAny?.start ?? '')
+        );
+        const currentSessionNumber =
+          currentAny?.sessionNumber == null ? null : Number(currentAny?.sessionNumber);
+        const nextSessionNumber =
+          patchAny?.sessionNumber == null ? currentSessionNumber : Number(patchAny?.sessionNumber);
+        const sessionNumberChanged =
+          nextSessionNumber != null &&
+          currentSessionNumber != null &&
+          nextSessionNumber !== currentSessionNumber;
+
+        const needsSequenceCheck = projectChanged || startChanged || sessionNumberChanged;
 
         if (needsSequenceCheck) {
-          const projectId = String(patchAny?.projectId ?? (current as any)?.projectId ?? '').trim();
+          const projectId = String(nextProjectId ?? '').trim();
           if (projectId) {
-            const start = String(patchAny?.start ?? (current as any)?.start ?? '');
-            const sessionNumber = patchAny?.sessionNumber ?? (current as any)?.sessionNumber;
+            const start = String(patchAny?.start ?? currentAny?.start ?? '');
+            const sessionNumber = nextSessionNumber ?? undefined;
             const guard = this.validateSessionSequence({
               projectId,
               start,
@@ -364,7 +416,34 @@ export class CalendarComponent {
       }
     } catch (e) {
       console.error('[CAL-ADMIN-V2] update failed', e);
+      this.showOpError(e, 'Errore aggiornamento evento.');
     }
+  }
+
+  private showOpError(err: any, fallback: string): void {
+    const raw = String(err?.message ?? '').trim();
+    let msg = fallback;
+
+    if (raw.startsWith('PERMISSION_DENIED:')) {
+      msg = 'Permesso mancante per eseguire questa operazione.';
+    } else if (raw.startsWith('PROJECT_BOOKING_CONFLICT:')) {
+      msg = 'Il progetto selezionato ha già una prenotazione collegata.';
+    } else if (raw.startsWith('PROJECT_ARTIST_MISMATCH:')) {
+      msg = 'Artista non coerente col progetto selezionato.';
+    } else if (raw.startsWith('PROJECT_CLIENT_MISMATCH:')) {
+      msg = 'Cliente non coerente col progetto selezionato.';
+    } else if (raw.startsWith('PROJECT_NOT_FOUND:')) {
+      msg = 'Progetto non trovato.';
+    } else if (raw) {
+      // fallback to message if it's readable (avoid dumping big objects)
+      msg = raw.length > 160 ? fallback : raw;
+    }
+
+    this.snackBar.open(msg, 'OK', {
+      duration: 3200,
+      horizontalPosition: 'right',
+      verticalPosition: 'bottom'
+    });
   }
 
   private stripUndef<T extends Record<string, any>>(obj: T): T {
@@ -394,6 +473,18 @@ export class CalendarComponent {
 
   private findEventById(id: string): UiCalendarEvent | undefined {
     return this.events().find(e => e.id === id);
+  }
+
+  private changedAtMinutePrecision(nextISO: string, currentISO: string): boolean {
+    if (!nextISO || !currentISO) return nextISO !== currentISO;
+    const next = new Date(nextISO);
+    const current = new Date(currentISO);
+
+    if (!Number.isNaN(next.getTime()) && !Number.isNaN(current.getTime())) {
+      return Math.floor(next.getTime() / 60000) !== Math.floor(current.getTime() / 60000);
+    }
+
+    return String(nextISO).slice(0, 16) !== String(currentISO).slice(0, 16);
   }
 
   private showConflictMessage(): void {

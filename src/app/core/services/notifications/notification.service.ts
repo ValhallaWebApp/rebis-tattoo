@@ -141,25 +141,37 @@ export class NotificationService {
   }
 
   getDefaultLinkByTypeAndRole(type: NotificationType, role: AppRole): string {
-    const isAdminLike = role === 'admin' || role === 'staff';
+    const isAdmin = role === 'admin';
+    const isStaff = role === 'staff';
+    const backofficeBase = isAdmin ? '/admin' : isStaff ? '/staff' : '';
+    const isBackoffice = isAdmin || isStaff;
+    const staffSafeBase = '/staff';
 
     if (type === 'booking') {
-      return isAdminLike ? '/admin/calendar' : '/dashboard/booking-history';
+      if (isAdmin) return `${backofficeBase}/calendar`;
+      if (isStaff) return staffSafeBase;
+      return '/dashboard/booking-history';
     }
 
     if (type === 'chat') {
-      return isAdminLike ? '/admin/messaging' : '/dashboard/chat';
+      if (isAdmin) return `${backofficeBase}/messaging`;
+      if (isStaff) return staffSafeBase;
+      return '/dashboard/chat';
     }
 
     if (type === 'payment') {
-      return isAdminLike ? '/admin/billing' : '/dashboard/invoices';
+      if (isAdmin) return `${backofficeBase}/billing`;
+      if (isStaff) return staffSafeBase;
+      return '/dashboard/invoices';
     }
 
     if (type === 'bonus') {
-      return isAdminLike ? '/admin/bonus' : '/dashboard/buoni';
+      if (isAdmin) return `${backofficeBase}/bonus`;
+      if (isStaff) return staffSafeBase;
+      return '/dashboard/buoni';
     }
 
-    return isAdminLike ? '/admin' : '/dashboard';
+    return isBackoffice ? backofficeBase : '/dashboard';
   }
 
   private toNotification(

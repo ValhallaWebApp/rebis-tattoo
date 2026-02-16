@@ -6,6 +6,11 @@ export interface UiArtist {
   name: string;
   photoUrl?: string;
   isActive?: boolean;
+  calendarEnabled?: boolean;
+  workdayStart?: string; // "08:00"
+  workdayEnd?: string;   // "20:00"
+  stepMinutes?: number;  // 15/30
+  color?: string;        // "#RRGGBB"
 }
 
 export interface UiCalendarEvent {
@@ -21,6 +26,7 @@ export interface UiCalendarEvent {
   clientId?: string;
   projectId?: string;
   bookingId?: string;
+  sessionNumber?: number;
   status?: string;
   notes?: string;
 

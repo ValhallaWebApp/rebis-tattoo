@@ -59,6 +59,9 @@
             <span class="status" [attr.data-status]="row.project.status">
               {{ statusLabel(row.project.status) }}
             </span>
+            <span class="pill is-settled" *ngIf="isSettledProject(row)">
+              Saldo
+            </span>
             <span class="pill" [class.is-hidden]="row.project.isPublic === false">
               {{ row.project.isPublic === false ? 'Nascosto' : 'Pubblico' }}
             </span>
@@ -126,6 +129,15 @@
             <a mat-stroked-button [routerLink]="openProject(row.project)">
               <mat-icon>open_in_new</mat-icon>
               Scheda
+            </a>
+
+            <a
+              mat-stroked-button
+              *ngIf="row.project?.clientId"
+              [routerLink]="openClientsLink()"
+              [queryParams]="clientFilterParams(row.project.clientId)">
+              <mat-icon>person</mat-icon>
+              Cliente
             </a>
 
             <button mat-stroked-button type="button" (click)="messageClient(row)" [disabled]="!row.client?.phone && !row.client?.email">
@@ -329,6 +341,10 @@
               <div class="m" *ngIf="row.remaining != null">
                 <span>Residuo</span>
                 <strong [class.warn]="row.remaining > 0">{{ money(row.remaining) }}</strong>
+              </div>
+              <div class="m m--ok" *ngIf="isSettledProject(row)">
+                <span>Saldo</span>
+                <strong>Pagato del tutto</strong>
               </div>
               <div class="m" *ngIf="row.invoices.length">
                 <span>Totale fatture (RTDB)</span>

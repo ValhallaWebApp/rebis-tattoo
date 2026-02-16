@@ -15,40 +15,42 @@ import { ReviewListAdminComponent } from './components/review-list-admin/review-
 import { ServicesAdminComponent } from './components/services-admin/services-admin.component';
 import { StaffMembersAdminComponent } from './components/staff-members-admin/staff-members-admin.component';
 import { ProjectManagerComponent } from './components/project-manager/project-manager.component';
-import { SessionManagerComponent } from './components/session-manager/session-manager.component';
 import { AuditLogsComponent } from './components/audit-logs/audit-logs.component';
 import { Calendar } from '@fullcalendar/core/index.js';
 import { CalendarComponent } from '../calendar/calendar.component';
 import { ProjectDetailComponent } from '../public/projects/components/project-detail/project-detail.component';
 import { BonusAdminComponent } from './components/bonus-admin/bonus-admin.component';
 import { AdminOnlyGuard } from '../../core/guards/admin-only.guard';
+import { RoleManagementGuard } from '../../core/guards/role-management.guard';
+import { PermissionsAdminComponent } from './components/permissions-admin/permissions-admin.component';
+import { StaffPermissionGuard } from '../../core/guards/staff-permission.guard';
+import { StaffDetailAdminComponent } from './components/staff-detail-admin/staff-detail-admin.component';
 
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
-  { path: 'calendar', component: CalendarComponent },
-  { path: 'clients', component: ClientsListComponent },
+  { path: 'calendar', component: CalendarComponent, canActivate: [StaffPermissionGuard], data: { permission: 'canManageBookings' } },
+  { path: 'clients', component: ClientsListComponent, canActivate: [RoleManagementGuard] },
+  { path: 'permissions', component: PermissionsAdminComponent, canActivate: [AdminOnlyGuard] },
   // { path: 'clients/:id', component: ClientDetailComponent },
-  { path: 'billing', component: BillingComponent },
-  { path: 'documents', component: DocumentsComponent },
-  { path: 'waitlist', component: WaitlistComponent },
-  { path: 'messaging', component: MessagingDashboardComponent },
-  { path: 'ticket', component: MessagingDashboardComponent },
+  { path: 'billing', component: BillingComponent, canActivate: [AdminOnlyGuard] },
+  { path: 'documents', component: DocumentsComponent, canActivate: [AdminOnlyGuard] },
+  { path: 'waitlist', component: WaitlistComponent, canActivate: [AdminOnlyGuard] },
+  { path: 'messaging', component: MessagingDashboardComponent, canActivate: [AdminOnlyGuard] },
+  { path: 'ticket', component: MessagingDashboardComponent, canActivate: [AdminOnlyGuard] },
 
-  { path: 'portfolio', component: ProjectManagerComponent },
-  { path: 'portfolio/:projectId', component: ProjectTrackerComponent },
+  { path: 'portfolio', component: ProjectManagerComponent, canActivate: [StaffPermissionGuard], data: { permission: 'canManageProjects' } },
+  { path: 'portfolio/:projectId', component: ProjectTrackerComponent, canActivate: [StaffPermissionGuard], data: { permission: 'canManageProjects' } },
 
-  { path: 'session', component: SessionManagerComponent },
-  { path: 'session/:projectId', component: SessionManagerComponent },
-
-  { path: 'servizi', component: ServicesAdminComponent },
+  { path: 'servizi', component: ServicesAdminComponent, canActivate: [AdminOnlyGuard] },
 
   { path: 'staff', component: StaffMembersAdminComponent, canActivate: [AdminOnlyGuard] },
-  { path: 'bonus', component: BonusAdminComponent },
+  { path: 'staff/:id', component: StaffDetailAdminComponent, canActivate: [AdminOnlyGuard] },
+  { path: 'bonus', component: BonusAdminComponent, canActivate: [AdminOnlyGuard] },
 
-  { path: 'analytics', component: AnalyticsComponent },
-  { path: 'audit-logs', component: AuditLogsComponent },
-  { path: 'settings', component: StudioSettingsComponent },
-  { path: 'review-list', component: ReviewListAdminComponent }
+  { path: 'analytics', component: AnalyticsComponent, canActivate: [AdminOnlyGuard] },
+  { path: 'audit-logs', component: AuditLogsComponent, canActivate: [AdminOnlyGuard] },
+  { path: 'settings', component: StudioSettingsComponent, canActivate: [AdminOnlyGuard] },
+  { path: 'review-list', component: ReviewListAdminComponent, canActivate: [AdminOnlyGuard] }
 ];
 
 @NgModule({

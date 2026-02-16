@@ -1,0 +1,55 @@
+{
+  "credentials": {
+    "adminOwner": {
+      "email": "valhallawebapp@gmail.com",
+      "password": "131099"
+    },
+    "staffOperator": {
+      "email": "staff.test@rebistattoo.it",
+      "password": "131099"
+    },
+    "clientDemo": {
+      "email": "cliente.alfa@rebistattoo.it",
+      "password": "131099"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "scenario_01_fast_booking",
+      "title": "Fast Booking da cliente",
+      "actorUserId": "cli_03",
+      "targetBookingId": "bk_002",
+      "targetProjectId": "prj_003"
+    },
+    {
+      "id": "scenario_02_staff_booking",
+      "title": "Creazione booking da staff operator",
+      "actorUserId": "stf_test_01",
+      "targetBookingId": "bk_003",
+      "targetProjectId": "prj_004"
+    },
+    {
+      "id": "scenario_03_chat_booking",
+      "title": "Lead chat-bot convertito in booking",
+      "actorUserId": "cli_01",
+      "targetBookingId": "bk_004",
+      "targetProjectId": "prj_005"
+    },
+    {
+      "id": "scenario_04_admin_booking",
+      "title": "Booking creato da admin",
+      "actorUserId": "adm_admin_02",
+      "targetBookingId": "bk_005",
+      "targetProjectId": "prj_006"
+    },
+    {
+      "id": "scenario_05_project_without_booking",
+      "title": "Progetto con sessione ma senza booking",
+      "actorUserId": "Nhmp6AN2ehPksUbP4mlCskNirA83",
+      "targetProjectId": "prj_002",
+      "targetSessionIds": [
+        "ses_004"
+      ]
+    }
+  ]
+}

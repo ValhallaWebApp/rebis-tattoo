@@ -5,6 +5,7 @@ export const dataIt = {
       headlineLine2: 'PEGGIO.',
       subtext: '(la frase piu detta dai nostri clienti appena finito il tatuaggio)',
       description: 'Paura del dolore? Ce l hanno tutti. Poi entrano da Rebis e capiscono che...',
+      cta: 'Prenota ora',
       ctaLine1: 'PRENOTA ORA',
       ctaLine2: 'IL TUO TATUAGGIO'
     },

@@ -27,6 +27,7 @@ import { NotificationService } from '../notifications/notification.service';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuditLogService } from '../audit/audit-log.service';
 import { AuthService } from '../auth/authservice';
+import { ProjectsService } from '../projects/projects.service';
 
 /** Stati booking (nuovi + realistici) */
 export type BookingStatus =
@@ -155,8 +156,20 @@ export class BookingService {
     private notificationService: NotificationService,
     private ui: UiFeedbackService,
     private auth: AuthService,
-    private audit: AuditLogService
+    private audit: AuditLogService,
+    private projects: ProjectsService
   ) {}
+
+  private ensureStaffPermission(permissionKey: string, missingMessage: string): void {
+    const user = this.auth.userSig();
+    if (!user) return;
+    if (user.role === 'admin') return;
+    if (user.role !== 'staff') return;
+    if (user.permissions?.[permissionKey] === true) return;
+
+    this.ui.warn(missingMessage);
+    throw new Error(`PERMISSION_DENIED:${permissionKey}`);
+  }
 
   // ---------------------------------------------------------------------------
   // COMPAT: mappa dati DB (vecchi/nuovi) -> Booking canonico
@@ -220,6 +233,24 @@ export class BookingService {
     if (out.end) out.end = this.normalizeLocalDateTime(out.end);
 
     return out;
+  }
+
+  private normalizeIdCandidate(value: any): string {
+    if (Array.isArray(value)) {
+      const first = value.find(v => typeof v === 'string' && v.trim().length > 0);
+      return String(first ?? '').trim();
+    }
+    return String(value ?? '').trim();
+  }
+
+  private getProjectPartyIds(project: any): { artistId: string; clientId: string } {
+    const artistId = this.normalizeIdCandidate(
+      (project as any)?.artistId ?? (project as any)?.idArtist ?? (project as any)?.artistIds
+    );
+    const clientId = this.normalizeIdCandidate(
+      (project as any)?.clientId ?? (project as any)?.idClient
+    );
+    return { artistId, clientId };
   }
 
   private snapshotToList(snapshot: DataSnapshot): Booking[] {
@@ -419,14 +450,49 @@ export class BookingService {
   async createBooking(
     data: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> & { status?: BookingStatus }
   ): Promise<Booking> {
+    this.ensureStaffPermission(
+      'canManageBookings',
+      'Permesso mancante: gestione prenotazioni.'
+    );
     const actor = this.auth.userSig();
     try {
       const node = push(ref(this.db, this.path));
       const id = node.key!;
       const now = new Date().toISOString();
 
+      // Pre-check project linkage if provided to avoid creating inconsistent data.
+      const requestedProjectId = String((data as any)?.projectId ?? '').trim();
+      let resolvedArtistId = this.normalizeIdCandidate(
+        (data as any)?.artistId ?? (data as any)?.idArtist ?? (data as any)?.artistIds
+      );
+      let resolvedClientId = this.normalizeIdCandidate(
+        (data as any)?.clientId ?? (data as any)?.idClient
+      );
+      if (requestedProjectId) {
+        const project = await this.projects.getProjectById(requestedProjectId);
+        if (project) {
+          const existing = String((project as any).bookingId ?? '').trim();
+          if (existing && existing !== id) {
+            this.ui.warn(`Il progetto ${requestedProjectId} ha già una prenotazione collegata (${existing}).`);
+            throw new Error(`PROJECT_BOOKING_CONFLICT:${requestedProjectId}:${existing}`);
+          }
+
+          const { artistId: pArtistId, clientId: pClientId } = this.getProjectPartyIds(project);
+          if (pArtistId && (!resolvedArtistId || pArtistId !== resolvedArtistId)) {
+            this.ui.info('Artista booking allineato automaticamente al progetto.');
+            resolvedArtistId = pArtistId;
+          }
+          if (pClientId && (!resolvedClientId || pClientId !== resolvedClientId)) {
+            this.ui.info('Cliente booking allineato automaticamente al progetto.');
+            resolvedClientId = pClientId;
+          }
+        }
+      }
+
       const payload: Booking = this.toCanonical({
         ...data,
+        artistId: resolvedArtistId,
+        clientId: resolvedClientId,
         id,
         status: data.status ?? data.status ?? 'draft',
         createdAt: now,
@@ -434,6 +500,22 @@ export class BookingService {
       });
 
       await set(node, this.toDbPatch(payload));
+
+      // Keep project <-> booking linkage consistent.
+      // Invariant: a project can have at most 1 bookingId.
+      const projectId = String((payload as any).projectId ?? '').trim();
+      if (projectId) {
+        const project = await this.projects.getProjectById(projectId);
+        if (project) {
+          const existing = String((project as any).bookingId ?? '').trim();
+          if (existing && existing !== id) {
+            this.ui.warn(`Il progetto ${projectId} ha già una prenotazione collegata (${existing}).`);
+            throw new Error(`PROJECT_BOOKING_CONFLICT:${projectId}:${existing}`);
+          }
+          await this.projects.attachBooking(projectId, id);
+        }
+      }
+
       void this.audit.log({
         action: 'booking.create',
         resource: 'booking',
@@ -461,11 +543,52 @@ export class BookingService {
   }
 
   async updateBooking(id: string, changes: Partial<Booking>): Promise<void> {
+    this.ensureStaffPermission(
+      'canManageBookings',
+      'Permesso mancante: gestione prenotazioni.'
+    );
     const actor = this.auth.userSig();
+    const normalizedChanges: Partial<Booking> = { ...changes };
     try {
       const current = await this.getBookingById(id);
+      const oldProjectId = String((current as any)?.projectId ?? '').trim();
+      const nextProjectId =
+        Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'projectId')
+          ? String((normalizedChanges as any).projectId ?? '').trim()
+          : oldProjectId;
+
+      // Pre-check project linkage if requested, before writing.
+      if (nextProjectId) {
+        const project = await this.projects.getProjectById(nextProjectId);
+        if (project) {
+          const existing = String((project as any).bookingId ?? '').trim();
+          if (existing && existing !== id) {
+            this.ui.warn(`Il progetto ${nextProjectId} ha già una prenotazione collegata (${existing}).`);
+            throw new Error(`PROJECT_BOOKING_CONFLICT:${nextProjectId}:${existing}`);
+          }
+
+          const { artistId: pArtistId, clientId: pClientId } = this.getProjectPartyIds(project);
+          let bArtistId = Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'artistId')
+            ? this.normalizeIdCandidate((normalizedChanges as any).artistId)
+            : this.normalizeIdCandidate((current as any)?.artistId ?? (current as any)?.idArtist);
+          let bClientId = Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'clientId')
+            ? this.normalizeIdCandidate((normalizedChanges as any).clientId)
+            : this.normalizeIdCandidate((current as any)?.clientId ?? (current as any)?.idClient);
+          if (pArtistId && (!bArtistId || pArtistId !== bArtistId)) {
+            this.ui.info('Artista booking allineato automaticamente al progetto.');
+            bArtistId = pArtistId;
+          }
+          if (pClientId && (!bClientId || pClientId !== bClientId)) {
+            this.ui.info('Cliente booking allineato automaticamente al progetto.');
+            bClientId = pClientId;
+          }
+          if (bArtistId) (normalizedChanges as any).artistId = bArtistId;
+          if (bClientId) (normalizedChanges as any).clientId = bClientId;
+        }
+      }
+
       const patch = this.toDbPatch({
-        ...changes,
+        ...normalizedChanges,
         updatedAt: new Date().toISOString()
       });
 
@@ -475,6 +598,25 @@ export class BookingService {
 
       console.log('[BookingService] updateBooking ->', { id, patch });
       await update(ref(this.db, `${this.path}/${id}`), patch);
+
+      // Sync linkage if projectId changed (or removed).
+      // We use "current" as source of truth for the old value.
+      if (oldProjectId && oldProjectId !== nextProjectId) {
+        await this.projects.detachBookingIfMatch(oldProjectId, id);
+      }
+
+      if (nextProjectId) {
+        const project = await this.projects.getProjectById(nextProjectId);
+        if (project) {
+          const existing = String((project as any).bookingId ?? '').trim();
+          if (existing && existing !== id) {
+            this.ui.warn(`Il progetto ${nextProjectId} ha già una prenotazione collegata (${existing}).`);
+            throw new Error(`PROJECT_BOOKING_CONFLICT:${nextProjectId}:${existing}`);
+          }
+          await this.projects.attachBooking(nextProjectId, id);
+        }
+      }
+
       void this.audit.log({
         action: 'booking.update',
         resource: 'booking',
@@ -483,11 +625,11 @@ export class BookingService {
         actorId: actor?.uid,
         actorRole: actor?.role,
         targetUserId: current?.clientId,
-        meta: { changedKeys: Object.keys(changes ?? {}) }
+        meta: { changedKeys: Object.keys(normalizedChanges ?? {}) }
       });
 
       if (current) {
-        const next = this.toCanonical({ ...current, ...changes, id });
+        const next = this.toCanonical({ ...current, ...normalizedChanges, id });
         void this.notifyBookingUpdated(current, next);
       }
 
@@ -500,7 +642,7 @@ export class BookingService {
         status: 'error',
         actorId: actor?.uid,
         actorRole: actor?.role,
-        meta: { changedKeys: Object.keys(changes ?? {}) }
+        meta: { changedKeys: Object.keys(normalizedChanges ?? {}) }
       });
       this.ui.error('Errore aggiornamento prenotazione');
       throw error;
@@ -508,6 +650,10 @@ export class BookingService {
   }
 
   async deleteBooking(id: string): Promise<void> {
+    this.ensureStaffPermission(
+      'canManageBookings',
+      'Permesso mancante: gestione prenotazioni.'
+    );
     const actor = this.auth.userSig();
     try {
       const existing = await this.getBookingById(id);
@@ -591,6 +737,10 @@ export class BookingService {
     newEnd: string,
     updater: 'admin' | 'client'
   ): Promise<void> {
+    this.ensureStaffPermission(
+      'canManageBookings',
+      'Permesso mancante: gestione prenotazioni.'
+    );
     const booking = await this.getBookingById(id);
     if (!booking) throw new Error('Prenotazione non trovata');
 
@@ -789,14 +939,12 @@ export class BookingService {
 
     await this.notifyUsers([booking.artistId], {
       title: 'Nuova prenotazione',
-      message: `Nuovo booking assegnato per ${startText}.`,
-      link: '/admin/calendar'
+      message: `Nuovo booking assegnato per ${startText}.`
     });
 
     await this.notifyUsers(adminIds, {
       title: 'Nuova prenotazione',
-      message: `Creato nuovo booking per ${startText}.`,
-      link: '/admin/calendar'
+      message: `Creato nuovo booking per ${startText}.`
     });
   }
 
@@ -819,8 +967,7 @@ export class BookingService {
 
     await this.notifyUsers([next.artistId, ...adminIds], {
       title: 'Prenotazione aggiornata',
-      message,
-      link: '/admin/calendar'
+      message
     });
   }
 
@@ -837,7 +984,6 @@ export class BookingService {
     void this.notifyUsers([booking.artistId, ...adminIds], {
       title: 'Prenotazione cancellata',
       message: `La prenotazione del ${startText} e stata cancellata.`,
-      link: '/admin/calendar',
       priority: 'high'
     });
   }

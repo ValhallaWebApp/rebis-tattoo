@@ -66,7 +66,12 @@ export class DayViewComponent implements OnChanges {
   // UI STATE (richiesto dal template)
   // ===========================================================================
   readonly q = signal('');
-  readonly viewMode = signal<'agenda' | 'board' | 'list'>('agenda');
+  readonly viewMode = signal<'agenda' | 'board' | 'list' | 'table'>('agenda');
+  readonly folder = signal<'none' | 'summary' | 'filters' | 'legend'>('none');
+
+  readonly tableColumns: string[] = ['time', 'type', 'title', 'status', 'actions'];
+  private readonly pageSize = 10;
+  readonly pageIndex = signal(0);
 
   readonly artistIds = signal<string[]>([]); // vuoto => tutti
   readonly statuses = signal<string[]>([]);  // vuoto => tutte
@@ -95,12 +100,14 @@ export class DayViewComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['date'] && changes['date'].currentValue) {
       this.dateSig.set(changes['date'].currentValue);
+      this.resetPagination();
     }
     if (changes['artists']) {
       this.artistsSig.set(changes['artists'].currentValue ?? []);
     }
     if (changes['events']) {
       this.eventsSig.set(changes['events'].currentValue ?? []);
+      this.resetPagination();
     }
   }
 
@@ -131,24 +138,28 @@ export class DayViewComponent implements OnChanges {
 
   setQ(v: string): void {
     this.q.set(v ?? '');
+    this.resetPagination();
   }
 
   setViewMode(v: any): void {
     const vv = String(v || 'agenda') as any;
-    if (vv === 'agenda' || vv === 'board' || vv === 'list') this.viewMode.set(vv);
+    if (vv === 'agenda' || vv === 'board' || vv === 'list' || vv === 'table') this.viewMode.set(vv);
     else this.viewMode.set('agenda');
   }
 
   setArtistIds(ids: any): void {
     this.artistIds.set((Array.isArray(ids) ? ids : []).map(String));
+    this.resetPagination();
   }
 
   setStatuses(st: any): void {
     this.statuses.set((Array.isArray(st) ? st : []).map(String));
+    this.resetPagination();
   }
 
   setTypes(tp: any): void {
     this.types.set((Array.isArray(tp) ? tp : []).map(String));
+    this.resetPagination();
   }
 
   toggleArtist(artistId: string): void {
@@ -294,6 +305,33 @@ export class DayViewComponent implements OnChanges {
     if ((this.q() || '').trim()) count += 1;
     return count;
   });
+
+  resetFilters(): void {
+    this.artistIds.set([]);
+    this.types.set([]);
+    this.statuses.set([]);
+    this.q.set('');
+    this.resetPagination();
+  }
+
+  toggleFolder(next: 'summary' | 'filters' | 'legend'): void {
+    this.folder.set(this.folder() === next ? 'none' : next);
+  }
+
+  onPage(ev: any): void {
+    const idx = Number(ev?.pageIndex ?? 0);
+    this.pageIndex.set(Number.isFinite(idx) ? idx : 0);
+  }
+
+  readonly pagedItems = computed(() => {
+    const items = this.dayItems();
+    const start = this.pageIndex() * this.pageSize;
+    return items.slice(start, start + this.pageSize);
+  });
+
+  private resetPagination(): void {
+    this.pageIndex.set(0);
+  }
 
   trackByArtist = (_: number, b: AgendaBlock) => b.artistId;
   trackById = (_: number, it: AgendaItem) => it.id;

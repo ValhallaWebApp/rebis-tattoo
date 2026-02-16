@@ -1,247 +1,44 @@
 .staff-management {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 2rem;
-  color: #f2f2f2;
-  background-color: #121212;
+  gap: 1.25rem;
+  padding: 1.5rem 2rem;
+  color: whitesmoke;
+  background-color: white;
 }
 
-/* HEADER */
 .section-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 1.4rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin: 0;
 
   .title-left {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-
-    mat-icon {
-      font-size: 1.6rem;
-    }
   }
 }
 
-/* DRAWER LAYOUT */
-.drawer-container {
-  width: 100%;
-  min-height: 80vh;
- color: whitesmoke;
-}
-
-.staff-drawer {
-  width: fit-content;
-  padding: 1.5rem;
-  background-color: #121212;
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.drawer-content {
-    background-color: #121212;
-  min-height: fit-content;
-}
-
-/* FORM NEL DRAWER */
-.form-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  padding-bottom: 1rem;
-}
-
-.staff-form {
-    background-color: #121212;
-
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-
-  mat-form-field {
-    width: 100%;
-    color: whiteSmoke;
-  }
-
-  .form-actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-}
-
-/* ===========================
-   🔥 DRAWER MODERNO / PREMIUM
-   =========================== */
-
-/* HEADER DEL DRAWER */
-.drawer-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  margin-bottom: 1rem;
-
-  h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: whitesmoke;
-  }
-
-  .subtitle {
-    margin: 0.2rem 0 0;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.55);
-  }
-
-  button mat-icon {
-    color: whitesmoke;
-  }
-}
-
-/* AREA SCORREVOLE INTERNA */
-.drawer-scroll {
-  overflow-y: auto;
-  height: calc(100vh - 160px);
-  padding-right: 0.5rem;
-}
-
-/* CARD PREVIEW MIGLIORATA */
-.preview-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.9rem 1rem;
-  margin-bottom: 1.25rem;
-  background: #1b1b1b;
-  border: 1px solid rgba(255,255,255,0.05);
-
-  .preview-main {
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-  }
-
-  .avatar {
-    max-width: 48px;
-    max-height: 48px;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-    border: 2px solid rgba(190, 144, 69, 0.55);
-  }
-
-  h4 {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: whitesmoke;
-  }
-
-  .role {
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.6);
-  }
-
-  .status-pill {
-    padding: 0.2rem 0.8rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 500;
-
-    &.active {
-      background: rgba(190, 144, 69, 0.18);
-      color: #be9045;
-      border: 1px solid #be9045;
-    }
-
-    &.inactive {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.25);
-      color: rgba(255,255,255,0.65);
-    }
-  }
-}
-
-/* GRUPPO DEI CAMPI: nome + ruolo */
-.field-group {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* CAMPI FORM */
-mat-form-field {
-  .mat-mdc-input-element,
-  .mat-mdc-select-value-text {
-    color: whitesmoke !important;
-  }
-
-  .mat-mdc-floating-label {
-    color: rgba(255,255,255,0.65) !important;
-  }
-
-  .mat-mdc-form-field-outline {
-    border-color: rgba(255,255,255,0.2) !important;
-  }
-}
-
-/* AZIONI STICKY IN FONDO (come app moderne) */
-.form-actions {
-  position: sticky;
-  bottom: 0;
-  background: linear-gradient(
-    to top,
-    #121212 80%,
-    rgba(18,18,18,0.7),
-    transparent
-  );
-  padding-top: 1rem;
-  padding-bottom: 0.5rem;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-
-  button {
-    font-weight: 500;
-  }
-}
-
-
-/* FILTRI */
 .filters {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.75rem;
-  margin-bottom: 1rem;
-  background-color: #121212;
-
-  mat-form-field {
-    width: 100%;
-  }
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* LISTA STAFF */
 .staff-cards {
   display: flex;
-  flex-direction: column;
+
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 0.75rem;
-  background-color: #121212;
-  min-height: 100%;
+  justify-content: space-between;
   .empty {
     opacity: 0.7;
     font-size: 0.9rem;
@@ -253,12 +50,13 @@ mat-form-field {
   display: flex;
   justify-content: space-between;
   align-items: stretch;
-  padding: 0.75rem 1rem;
+  padding: 0.65rem 0.9rem;
   border-radius: 18px;
   background: #151515;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
   gap: 1rem;
-
+  max-width: 300px;
+  min-width: 300px;
   &.inactive {
     opacity: 0.6;
   }
@@ -268,36 +66,41 @@ mat-form-field {
     align-items: center;
     gap: 0.75rem;
     flex: 1;
+    min-width: 0;
   }
 
   img {
-    max-width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     border: 2px solid rgba(255, 255, 255, 0.08);
+    object-fit: cover;
   }
 
   .staff-text {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    color: whitesmoke;
+    min-width: 0;
+
     h3 {
       margin: 0;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 0.98rem;
+      font-weight: 650;
     }
 
     .role {
+      margin: 0;
       font-size: 0.85rem;
       text-transform: capitalize;
       opacity: 0.9;
     }
 
     .bio {
-      font-size: 0.8rem;
+      margin: 0;
+      font-size: 0.78rem;
       opacity: 0.75;
-      max-width: 260px;
+      max-width: 520px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -313,13 +116,15 @@ mat-form-field {
     margin-top: 0.15rem;
 
     &.active {
-      background: rgba(190, 144, 69, 0.18); /* gold soft */
+      background: rgba(190, 144, 69, 0.18);
       border: 1px solid #be9045;
+      color: #be9045;
     }
 
     &.inactive {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.16);
+      color: rgba(255, 255, 255, 0.8);
     }
   }
 
@@ -331,6 +136,12 @@ mat-form-field {
 
     button {
       margin: 0;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    button:hover {
+      color: whitesmoke;
+      background: rgba(255, 255, 255, 0.06);
     }
   }
 
@@ -342,4 +153,36 @@ mat-form-field {
       align-self: flex-end;
     }
   }
+}
+
+/* Material theming hardening (component-scoped) */
+:host ::ng-deep .filters .mat-mdc-text-field-wrapper {
+  background: #1b1b1b !important;
+  border-radius: 12px;
+}
+
+:host ::ng-deep .filters .mdc-notched-outline__leading,
+:host ::ng-deep .filters .mdc-notched-outline__notch,
+:host ::ng-deep .filters .mdc-notched-outline__trailing {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+:host ::ng-deep .filters .mdc-text-field--focused .mdc-notched-outline__leading,
+:host ::ng-deep .filters .mdc-text-field--focused .mdc-notched-outline__notch,
+:host ::ng-deep .filters .mdc-text-field--focused .mdc-notched-outline__trailing {
+  border-color: rgba(190, 144, 69, 0.7) !important;
+}
+
+:host ::ng-deep .filters .mat-mdc-input-element,
+:host ::ng-deep .filters .mat-mdc-select-value-text,
+:host ::ng-deep .filters .mat-mdc-select-arrow {
+  color: whitesmoke !important;
+}
+
+:host ::ng-deep .filters .mat-mdc-select-placeholder {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+:host ::ng-deep .filters .mat-mdc-floating-label {
+  color: rgba(255, 255, 255, 0.72) !important;
 }

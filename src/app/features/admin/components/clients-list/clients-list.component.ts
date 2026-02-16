@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { UserService, User, UserRole } from '../../../../core/services/users/user.service';
 import { MatDialog } from '@angular/material/dialog';
@@ -19,27 +20,38 @@ export class ClientsListComponent implements OnInit {
   filterForm!: FormGroup;
   allUsers: User[] = [];
   filteredUsers: User[] = [];
-  roles: UserRole[] = ['admin', 'user', 'staff'];
-  roleOptions: Array<'admin' | 'user' | 'staff'> = ['admin', 'user', 'staff'];
+  roles: UserRole[] = ['user', 'client'];
+  pageSizeOptions: number[] = [5, 15, 20];
+  pageSize = 15;
+  currentPage = 1;
   updatingRoleByUserId: Record<string, boolean> = {};
   updatingRolePermissionByUserId: Record<string, boolean> = {};
   updatingStatusByUserId: Record<string, boolean> = {};
 
   constructor(
     private fb: FormBuilder,
-    private userService: UserService,
-    private dialog: MatDialog
+    public userService: UserService,
+    private dialog: MatDialog,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.filterForm = this.fb.group({
       name: [''],
       email: [''],
-      role: ['']
+      role: [''],
+      userId: [''],
+      q: ['']
     });
 
+    this.applyRouteFilters();
+    this.route.queryParamMap.subscribe(() => this.applyRouteFilters());
+
     this.userService.getManageableUsers().subscribe(users => {
-      this.allUsers = users;
+      this.allUsers = users.filter(user => {
+        const normalizedRole = this.displayRole(user);
+        return normalizedRole === 'user';
+      });
       this.applyFilters();
     });
 
@@ -47,16 +59,66 @@ export class ClientsListComponent implements OnInit {
   }
 
   applyFilters(): void {
-    const { name, email, role } = this.filterForm.value;
+    const { name, email, role, userId, q } = this.filterForm.value;
+    const idFilter = String(userId ?? '').trim().toLowerCase();
+    const generic = String(q ?? '').trim().toLowerCase();
 
     this.filteredUsers = this.allUsers.filter(user => {
       const normalizedRole = user.role === 'client' ? 'user' : user.role;
+      const userName = String(user.name ?? '').toLowerCase();
+      const userEmail = String(user.email ?? '').toLowerCase();
+      const userIdVal = String(user.id ?? '').toLowerCase();
+      const userPhone = String((user as any).phone ?? '').toLowerCase();
+      const genericHay = `${userIdVal} ${userName} ${userEmail} ${userPhone}`;
+
       return (
-        (!name || user.name.toLowerCase().includes(name.toLowerCase())) &&
-        (!email || user.email.toLowerCase().includes(email.toLowerCase())) &&
+        (!name || userName.includes(String(name).toLowerCase())) &&
+        (!email || userEmail.includes(String(email).toLowerCase())) &&
         (!role || normalizedRole === role)
+        && (!idFilter || userIdVal === idFilter)
+        && (!generic || genericHay.includes(generic))
       );
     });
+    this.currentPage = 1;
+  }
+
+  private applyRouteFilters(): void {
+    const qpm = this.route.snapshot.queryParamMap;
+    const userId = String(qpm.get('userId') ?? qpm.get('uid') ?? '').trim();
+    const q = String(qpm.get('q') ?? '').trim();
+    this.filterForm.patchValue(
+      {
+        userId,
+        q
+      },
+      { emitEvent: false }
+    );
+    this.applyFilters();
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredUsers.length / this.pageSize));
+  }
+
+  get pagedUsers(): User[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredUsers.slice(start, start + this.pageSize);
+  }
+
+  onPageSizeChange(size: number): void {
+    if (!this.pageSizeOptions.includes(size)) return;
+    this.pageSize = size;
+    this.currentPage = 1;
+  }
+
+  previousPage(): void {
+    if (this.currentPage <= 1) return;
+    this.currentPage -= 1;
+  }
+
+  nextPage(): void {
+    if (this.currentPage >= this.totalPages) return;
+    this.currentPage += 1;
   }
 
   getAvatarUrl(user: User): string {
@@ -128,7 +190,7 @@ export class ClientsListComponent implements OnInit {
   roleOptionsFor(user: User): Array<'admin' | 'user' | 'staff'> {
     const currentRole = this.userService.getCurrentUserRole();
     if (currentRole === 'staff') return ['user', 'staff'];
-    return this.roleOptions;
+    return ['admin', 'user', 'staff'];
   }
 
   canGrantRolePermissionToggle(user: User): boolean {
@@ -187,25 +249,11 @@ export class ClientsListComponent implements OnInit {
     }
   }
 
-  async hideUser(user: User): Promise<void> {
-    if (this.isStatusUpdating(user.id)) return;
-    const ok = confirm(`Confermi di nascondere l'utente ${user.name}?`);
-    if (!ok) return;
-
-    this.updatingStatusByUserId[user.id] = true;
-    try {
-      await this.userService.deleteUser(user.id);
-      this.allUsers = this.allUsers.filter(item => item.id !== user.id);
-      this.applyFilters();
-    } finally {
-      this.updatingStatusByUserId[user.id] = false;
-    }
-  }
-
   async editUser(user: User): Promise<void> {
+    if (!this.userService.isCurrentUserAdmin()) return;
     const dialogRef = this.dialog.open(UserEditDialogComponent, {
       width: '560px',
-      data: { user }
+      data: { user, isAdmin: true }
     });
 
     const patch = await firstValueFrom(dialogRef.afterClosed());
@@ -216,15 +264,5 @@ export class ClientsListComponent implements OnInit {
       item.id === user.id ? { ...item, ...patch } : item
     );
     this.applyFilters();
-  }
-
-  viewAppointments(user: User): void {
-    console.log('Visualizza appuntamenti per:', user.id);
-    // TODO: Navigazione
-  }
-
-  contactUser(user: User): void {
-    console.log('Contatta utente:', user.email);
-    // TODO: Messaging
   }
 }

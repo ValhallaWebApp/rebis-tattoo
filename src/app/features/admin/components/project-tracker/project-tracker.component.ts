@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { combineLatest, from, map, of, startWith, switchMap } from 'rxjs';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Observable, combineLatest, from, map, of, startWith, switchMap } from 'rxjs';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,9 +12,9 @@ import { BookingService } from '../../../../core/services/bookings/booking.servi
 import { SessionService, Session } from '../../../../core/services/session/session.service';
 import { StaffService, StaffMember } from '../../../../core/services/staff/staff.service';
 import { ClientService, Client } from '../../../../core/services/clients/client.service';
+import { AuthService } from '../../../../core/services/auth/authservice';
+import { Database, onValue, ref } from '@angular/fire/database';
 
-import { ProjectTrackerSessionDialogComponent } from './project-tracker-session-dialog/project-tracker-session-dialog.component';
-import { ProjectTrackerBookingDialogComponent } from './project-tracker-booking-dialog/project-tracker-booking-dialog.component';
 import { ProjectTrackerProjectDialogComponent } from './project-tracker-project-dialog/project-tracker-project-dialog.component';
 
 type BookingRow = any;
@@ -28,13 +28,21 @@ type UiSession = Session & {
   _zoneLabel?: string;
 };
 
+type PaymentRow = {
+  id: string;
+  amount?: number;
+  status?: string;
+  projectId?: string;
+  bookingId?: string;
+};
+
 type Vm = {
   project?: TattooProject;
   booking?: BookingRow;
   sessions: UiSession[];
-  paidTotal: number;      // placeholder (se poi agganci payments)
-  expectedTotal?: number; // placeholder (se poi agganci prezzo stimato)
-  remaining?: number;     // placeholder
+  paidTotal: number;
+  expectedTotal?: number;
+  remaining?: number;
   loading: boolean;
   notFound: boolean;
 
@@ -51,6 +59,7 @@ type Vm = {
 })
 export class ProjectTrackerComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(UiFeedbackService);
 
@@ -59,6 +68,8 @@ export class ProjectTrackerComponent {
   private readonly sessionService = inject(SessionService);
   private readonly staffService = inject(StaffService);
   private readonly clientService = inject(ClientService);
+  private readonly auth = inject(AuthService);
+  private readonly db = inject(Database);
 
   // ---------- lookups ----------
   readonly staffMap$ = this.staffService.getAllStaff().pipe(
@@ -84,15 +95,41 @@ export class ProjectTrackerComponent {
     startWith(String(this.route.snapshot.paramMap.get('projectId') ?? this.route.snapshot.paramMap.get('id') ?? '').trim())
   );
 
+  private payments$() {
+    return new Observable<PaymentRow[]>(obs => {
+      const paymentsRef = ref(this.db, 'payments');
+      const unsub = onValue(
+        paymentsRef,
+        snap => {
+          const val = snap.val();
+          const list: PaymentRow[] = val
+            ? Object.entries<any>(val).map(([id, v]) => ({ id, ...(v ?? {}) }))
+            : [];
+          obs.next(list);
+        },
+        err => {
+          const code = String((err as any)?.code ?? '').toLowerCase();
+          if (code.includes('permission_denied')) {
+            obs.next([]);
+            return;
+          }
+          obs.error(err);
+        }
+      );
+      return () => unsub();
+    });
+  }
+
   // ---------- VM ----------
   readonly vm$ = combineLatest([
     this.projectId$,
     this.staffMap$,
     this.clientMap$,
     this.bookingService.getAllBookings(),
-    this.sessionService.getAll({ onlyOnce: false })
+    this.sessionService.getAll({ onlyOnce: false }),
+    this.payments$()
   ]).pipe(
-    switchMap(([projectId, staffMap, clientMap, bookings, sessions]) => {
+    switchMap(([projectId, staffMap, clientMap, bookings, sessions, payments]) => {
       if (!projectId) {
         return of<Vm>({
           project: undefined,
@@ -153,9 +190,37 @@ export class ProjectTrackerComponent {
           const expectedTotal =
             this.num((project as any).estimatedPrice) ??
             this.num((project as any).price) ??
-            (booking ? this.num((booking as any).price) : undefined);
+            (booking ? this.num((booking as any).price) : undefined) ??
+            this.sumSessionsPrice(projectSessions);
 
-          const paidTotal = 0; // se poi agganci payments node, qui lo sommi
+          const payList =
+            (pid
+              ? (payments ?? []).filter((x: any) => String((x as any)?.projectId ?? '').trim() === pid)
+              : []
+            ).concat(
+              booking
+                ? (payments ?? []).filter((x: any) =>
+                    String((x as any)?.bookingId ?? '').trim() === String((booking as any)?.id ?? '').trim()
+                  )
+                : []
+            );
+
+          const seenPay = new Set<string>();
+          const paymentsUniq = payList.filter((x: any) => {
+            const id = String((x as any)?.id ?? '').trim();
+            if (!id) return false;
+            if (seenPay.has(id)) return false;
+            seenPay.add(id);
+            return true;
+          });
+
+          const paidTotal = paymentsUniq
+            .filter((x: any) => {
+              const s = String((x as any)?.status ?? '').toLowerCase();
+              return s === 'succeeded' || s === 'paid';
+            })
+            .reduce((sum: number, x: any) => sum + (Number((x as any)?.amount ?? 0) || 0), 0);
+
           const remaining = expectedTotal != null ? Math.max(0, expectedTotal - paidTotal) : undefined;
 
           return {
@@ -221,22 +286,98 @@ export class ProjectTrackerComponent {
   trackBySession = (index: number, s: UiSession) => String((s as any)?.id ?? index);
 
   openProjectManagerLink(): any[] {
-    return ['/admin', 'project-manager'];
+    return [this.getBackofficeBase(), 'project-manager'];
   }
 
-  editBooking(b: any) {
-    this.openBookingDialog(b);
+  openClientsLink(): any[] {
+    return [this.getBackofficeBase(), 'clients'];
   }
 
-  addSession() {
-    this.openSessionDialog();
+  clientFilterParams(clientId: string | undefined | null): Record<string, string> {
+    const id = String(clientId ?? '').trim();
+    if (!id) return {};
+    return { userId: id, q: id };
+  }
+
+  async editBooking(b: any) {
+    if (!this.hasStaffPermission('canManageBookings')) {
+      this.snackBar.open('Permesso mancante: gestione prenotazioni.', 'OK', { duration: 2200 });
+      return;
+    }
+    const bookingId = String(b?.id ?? '').trim();
+    if (bookingId) {
+      void this.openCalendarDrawer({
+        open: 'edit-booking',
+        bookingId
+      });
+      return;
+    }
+
+    const project = await this.getCurrentProjectForCalendarSeed();
+    if (!project) return;
+
+    const title = String((project as any)?.title ?? '').trim();
+    const zone = String((project as any)?.zone ?? '').trim();
+    const notes = String((project as any)?.notes ?? '').trim();
+    const legacyArtistIds = Array.isArray((project as any)?.artistIds)
+      ? (project as any).artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
+      : [];
+    const artistId = String((project as any)?.artistId ?? (project as any)?.idArtist ?? legacyArtistIds[0] ?? '').trim();
+    const clientId = String((project as any)?.clientId ?? (project as any)?.idClient ?? '').trim();
+    const notesSeed = [title ? `Progetto: ${title}` : '', zone ? `Zona: ${zone}` : '', notes]
+      .filter(Boolean)
+      .join(' | ');
+
+    void this.openCalendarDrawer({
+      open: 'create-booking',
+      projectId: String((project as any).id ?? '').trim(),
+      artistId: artistId || undefined,
+      clientId: clientId || undefined,
+      zone: zone || undefined,
+      notes: notesSeed || undefined
+    });
+  }
+
+  async addSession() {
+    if (!this.hasStaffPermission('canManageSessions')) {
+      this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
+      return;
+    }
+    const project = await this.getCurrentProjectForCalendarSeed();
+    if (!project) return;
+
+    const legacyArtistIds = Array.isArray((project as any)?.artistIds)
+      ? (project as any).artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
+      : [];
+    const artistId = String((project as any)?.artistId ?? (project as any)?.idArtist ?? legacyArtistIds[0] ?? '').trim();
+    const clientId = String((project as any)?.clientId ?? (project as any)?.idClient ?? '').trim();
+
+    void this.openCalendarDrawer({
+      open: 'create-session',
+      projectId: String((project as any).id ?? '').trim(),
+      artistId: artistId || undefined,
+      clientId: clientId || undefined
+    });
   }
 
   editSession(s: UiSession) {
-    this.openSessionDialog(s);
+    if (!this.hasStaffPermission('canManageSessions')) {
+      this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
+      return;
+    }
+    const sessionId = String((s as any)?.id ?? '').trim();
+    if (!sessionId) return;
+    void this.openCalendarDrawer({
+      open: 'edit-session',
+      sessionId
+    });
   }
 
   async editProject(project: TattooProject) {
+    if (!this.hasStaffPermission('canManageProjects')) {
+      this.snackBar.open('Permesso mancante: gestione progetti.', 'OK', { duration: 2200 });
+      return;
+    }
     const ref = this.dialog.open(ProjectTrackerProjectDialogComponent, {
       width: '520px',
       maxWidth: '92vw',
@@ -254,6 +395,10 @@ export class ProjectTrackerComponent {
 
   async setProjectStatus(project: TattooProject, status: ProjectStatus) {
     if (!project) return;
+    if (!this.hasStaffPermission('canManageProjects')) {
+      this.snackBar.open('Permesso mancante: gestione progetti.', 'OK', { duration: 2200 });
+      return;
+    }
     try {
       await this.projectsService.updateProject(String((project as any).id), { status });
       this.snackBar.open('Stato progetto aggiornato', 'OK', { duration: 2200 });
@@ -280,6 +425,17 @@ export class ProjectTrackerComponent {
   private num(v: any): number | undefined {
     const x = Number(v);
     return isFinite(x) ? x : undefined;
+  }
+
+  private sumSessionsPrice(sessions: UiSession[]): number | undefined {
+    if (!sessions?.length) return undefined;
+    let sum = 0;
+    let has = false;
+    for (const s of sessions) {
+      const p = this.num((s as any).price);
+      if (p != null) { sum += p; has = true; }
+    }
+    return has ? sum : undefined;
   }
 
   private normalizeSessionForUi(s: Session & any): UiSession {
@@ -338,70 +494,41 @@ export class ProjectTrackerComponent {
     return Number.isNaN(d.getTime()) ? 0 : d.getTime();
   }
 
-  private async openSessionDialog(session?: UiSession) {
+  private async getCurrentProjectForCalendarSeed(): Promise<TattooProject | null> {
     const projectId = String((this.route.snapshot.paramMap.get('projectId') ?? this.route.snapshot.paramMap.get('id') ?? '')).trim();
-    if (!projectId) return;
-
-    const project = await this.projectsService.getProjectById(projectId);
-    if (!project) return;
-
-    const ref = this.dialog.open(ProjectTrackerSessionDialogComponent, {
-      width: '520px',
-      maxWidth: '92vw',
-      data: { project, session }
-    });
-
-    const res = await ref.afterClosed().toPromise();
-    if (!res) return;
-
-    try {
-      if (session?.id) {
-        const patch = { ...res };
-        delete (patch as any).createdAt;
-        await this.sessionService.update(session.id, patch);
-        this.snackBar.open('Sessione aggiornata', 'OK', { duration: 2200 });
-      } else {
-        await this.sessionService.create(res);
-        this.snackBar.open('Sessione creata', 'OK', { duration: 2200 });
-      }
-    } catch {
-      this.snackBar.open('Errore salvataggio sessione', 'OK', { duration: 2500 });
+    if (!projectId) {
+      this.snackBar.open('ID progetto non valido.', 'OK', { duration: 2200 });
+      return null;
     }
+    const project = await this.projectsService.getProjectById(projectId);
+    if (!project) {
+      this.snackBar.open('Progetto non trovato.', 'OK', { duration: 2200 });
+      return null;
+    }
+    return project;
   }
 
-  private async openBookingDialog(booking?: any) {
-    const projectId = String((this.route.snapshot.paramMap.get('projectId') ?? this.route.snapshot.paramMap.get('id') ?? '')).trim();
-    if (!projectId) return;
-    const project = await this.projectsService.getProjectById(projectId);
-    if (!project) return;
-
-    const ref = this.dialog.open(ProjectTrackerBookingDialogComponent, {
-      width: '520px',
-      maxWidth: '92vw',
-      data: { project, booking }
-    });
-    const res = await ref.afterClosed().toPromise();
-    if (!res) return;
-
-    try {
-      if (booking?.id) {
-        const patch = { ...res };
-        delete (patch as any).createdAt;
-        await this.bookingService.updateBooking(booking.id, patch);
-      } else {
-        const created = await this.bookingService.createBooking(res);
-        if (created?.id) {
-          await this.projectsService.updateProject(projectId, { bookingId: created.id });
-        }
-      }
-      this.snackBar.open('Booking salvata', 'OK', { duration: 2200 });
-    } catch {
-      this.snackBar.open('Errore salvataggio booking', 'OK', { duration: 2500 });
-    }
+  private openCalendarDrawer(queryParams: Record<string, string | undefined>) {
+    const cleaned = Object.fromEntries(
+      Object.entries(queryParams).filter(([, value]) => String(value ?? '').trim().length > 0)
+    );
+    return this.router.navigate([`${this.getBackofficeBase()}/calendar`], { queryParams: cleaned });
   }
 
   private toLocalDateTime(d: Date) {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+  }
+
+  private getBackofficeBase(): '/admin' | '/staff' {
+    return this.auth.userSig()?.role === 'staff' ? '/staff' : '/admin';
+  }
+
+  private hasStaffPermission(key: string): boolean {
+    const user = this.auth.userSig();
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    if (user.role !== 'staff') return false;
+    return user.permissions?.[key] === true;
   }
 }

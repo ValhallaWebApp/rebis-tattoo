@@ -10,7 +10,7 @@ export class AdminGuard implements CanActivate {
     const user = await this.auth.resolveCurrentUser();
 
     if (!user) {
-      localStorage.setItem('pre-log', state.url || '/admin');
+      localStorage.setItem('pre-log', state.url || '/staff');
       return this.router.createUrlTree(['/login']);
     }
 

@@ -1,0 +1,32 @@
+{
+  "users": [
+    {
+      "localId": "cli_01",
+      "email": "cliente.alfa@rebistattoo.it",
+      "emailVerified": true,
+      "disabled": false,
+      "passwordHash": "nQJtCZC+VWaszEtB4/51LT1kdGOU8MxYtIpPwv6TpTE="
+    },
+    {
+      "localId": "cli_02",
+      "email": "cliente.beta@rebistattoo.it",
+      "emailVerified": true,
+      "disabled": false,
+      "passwordHash": "nQJtCZC+VWaszEtB4/51LT1kdGOU8MxYtIpPwv6TpTE="
+    },
+    {
+      "localId": "cli_03",
+      "email": "cliente.gamma@rebistattoo.it",
+      "emailVerified": true,
+      "disabled": false,
+      "passwordHash": "nQJtCZC+VWaszEtB4/51LT1kdGOU8MxYtIpPwv6TpTE="
+    },
+    {
+      "localId": "cli_04",
+      "email": "cliente.delta@rebistattoo.it",
+      "emailVerified": true,
+      "disabled": false,
+      "passwordHash": "nQJtCZC+VWaszEtB4/51LT1kdGOU8MxYtIpPwv6TpTE="
+    }
+  ]
+}

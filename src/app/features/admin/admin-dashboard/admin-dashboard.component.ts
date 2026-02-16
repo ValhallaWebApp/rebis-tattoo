@@ -5,6 +5,17 @@ import { MaterialModule } from '../../../core/modules/material.module';
 import { BookingService } from '../../../core/services/bookings/booking.service';
 import { ReviewsService } from '../../../core/services/reviews/rewies.service';
 import { ClientService } from '../../../core/services/clients/client.service';
+import { AuthService } from '../../../core/services/auth/authservice';
+
+type QuickLink = {
+  title: string;
+  description: string;
+  icon: string;
+  route: string;
+  showForStaff?: boolean;
+  requiresRoleManagement?: boolean;
+  requiredPermission?: 'canManageBookings' | 'canManageProjects' | 'canManageSessions';
+};
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -18,82 +29,76 @@ export class AdminDashboardComponent implements OnInit {
   latestReviews: any[] = [];
   totalClients = 0;
   totalRevenue = 0;
-quickLinks = [
-  {
-    title: 'Calendario',
-    description: 'Gestione appuntamenti e disponibilità',
-    icon: 'calendar_today',
-    route: '/admin/calendar'
-  },
-  {
-    title: 'Clienti',
-    description: 'Lista completa dei clienti registrati',
-    icon: 'groups',
-    route: '/admin/clients'
-  },
-  {
-    title: 'Fatturazione',
-    description: 'Pagamenti, ricevute e gestione entrate',
-    icon: 'receipt_long',
-    route: '/admin/billing'
-  },
-  {
-    title: 'Documenti',
-    description: 'File allegati, moduli e privacy',
-    icon: 'description',
-    route: '/admin/documents'
-  },
-  {
-    title: 'Ticket',
-    description: 'Ticket e richieste clienti',
-    icon: 'chat',
-    route: '/admin/ticket'
-  },
-  {
-    title: 'Portfolio',
-    description: 'Progetti e tatuaggi completati',
-    icon: 'palette',
-    route: '/admin/portfolio'
-  },
-  {
-    title: 'Servizi',
-    description: 'Gestione dei servizi offerti',
-    icon: 'design_services',
-    route: '/admin/servizi'
-  },
-  {
-    title: 'Staff',
-    description: 'Gestione membri del team e ruoli',
-    icon: 'people',
-    route: '/admin/staff'
-  },
-  {
-    title: 'Bonus',
-    description: 'Codici promo e gift card',
-    icon: 'redeem',
-    route: '/admin/bonus'
-  },
-  {
-    title: 'Recensioni',
-    description: 'Valutazioni e feedback clienti',
-    icon: 'star',
-    route: '/admin/review-list'
-  },
-  {
-    title: 'Statistiche',
-    description: 'Report su entrate, clienti e attività',
-    icon: 'insights',
-    route: '/admin/analytics'
-  }
-];
+  quickLinks: QuickLink[] = [];
+
+  private readonly allQuickLinks: QuickLink[] = [
+    {
+      title: 'Calendario',
+      description: 'Gestione appuntamenti e disponibilita',
+      icon: 'calendar_today',
+      route: 'calendar',
+      showForStaff: true,
+      requiredPermission: 'canManageBookings'
+    },
+    {
+      title: 'Clienti',
+      description: 'Lista completa dei clienti registrati',
+      icon: 'groups',
+      route: 'clients',
+      showForStaff: true,
+      requiresRoleManagement: true
+    },
+    {
+      title: 'Permessi',
+      description: 'Gestione permessi e deleghe staff',
+      icon: 'admin_panel_settings',
+      route: 'permissions'
+    },
+    {
+      title: 'Portfolio',
+      description: 'Progetti e tatuaggi completati',
+      icon: 'palette',
+      route: 'portfolio',
+      showForStaff: true,
+      requiredPermission: 'canManageProjects'
+    },
+    {
+      title: 'Staff',
+      description: 'Gestione membri del team e ruoli',
+      icon: 'people',
+      route: 'staff'
+    }
+  ];
 
   constructor(
     private bookingService: BookingService,
     private reviewsService: ReviewsService,
-    private clientService: ClientService
+    private clientService: ClientService,
+    private auth: AuthService
   ) {}
 
   ngOnInit(): void {
+    const user = this.auth.userSig();
+    const isStaff = user?.role === 'staff';
+    const canManageRoles = this.auth.canManageRoles(user);
+    const canManageBookings = user?.permissions?.canManageBookings === true;
+    const canManageProjects = user?.permissions?.canManageProjects === true;
+    const canManageSessions = user?.permissions?.canManageSessions === true;
+    const basePath = isStaff ? '/staff' : '/admin';
+
+    this.quickLinks = this.allQuickLinks
+      .filter(link => !isStaff || link.showForStaff === true)
+      .filter(link => !link.requiresRoleManagement || canManageRoles)
+      .filter(link => {
+        if (!isStaff) return true;
+        if (!link.requiredPermission) return true;
+        if (link.requiredPermission === 'canManageBookings') return canManageBookings;
+        if (link.requiredPermission === 'canManageProjects') return canManageProjects;
+        if (link.requiredPermission === 'canManageSessions') return canManageSessions;
+        return true;
+      })
+      .map(link => ({ ...link, route: `${basePath}/${link.route}` }));
+
     const today = new Date();
     this.bookingService.getBookingsByDate(today).subscribe(bookings => {
       this.todayAppointments = bookings || [];

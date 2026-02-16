@@ -28,6 +28,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatDividerModule } from '@angular/material/divider';
 
 @NgModule({
   imports: [
@@ -59,7 +61,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatChipsModule,
     MatProgressBarModule,
     MatAutocompleteModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatTabsModule,
+    MatDividerModule
   ],
   exports: [
     MatToolbarModule,
@@ -89,7 +93,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatChipsModule,
     MatProgressSpinnerModule,
     MatAutocompleteModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatTabsModule,
+    MatDividerModule
   ],
 })
 export class MaterialModule {}

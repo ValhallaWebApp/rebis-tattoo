@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { BehaviorSubject, Observable, combineLatest, map, startWith } from 'rxjs';
 import { CreateDraft, UpdatePatch, UiCalendarEvent } from '../../models';
+import { UiArtist } from '../../models';
 
 /**
  * Tipi evento gestiti dal drawer
@@ -114,7 +115,7 @@ export class EventDrawerComponent implements OnInit, OnChanges {
   @Input() mode: 'create' | 'edit' = 'create';
 
   /** lista artisti (id + name) */
-  @Input() artists: Array<{ id: string; name: string }> = [];
+  @Input() artists: UiArtist[] = [];
 
   /** ✅ PRELOAD: clienti */
   @Input() clients: ClientLite[] = [];
@@ -317,6 +318,11 @@ export class EventDrawerComponent implements OnInit, OnChanges {
   // ---------------------------------------------
   isBooking() { return this.form.controls.type.value === 'booking'; }
   isSession() { return this.form.controls.type.value === 'session'; }
+  shouldShowSelectedArtistFallback(): boolean {
+    const selectedArtistId = String(this.form.controls.artistId.value ?? '').trim();
+    if (!selectedArtistId) return false;
+    return !(this.artists ?? []).some(a => String(a.id) === selectedArtistId);
+  }
   private isSessionEdit(): boolean {
     return this.isSession() && this.mode === 'edit';
   }
@@ -335,6 +341,32 @@ export class EventDrawerComponent implements OnInit, OnChanges {
 
   isBookingAssignmentLocked(): boolean {
     return this.mode === 'edit' && this.isBooking();
+  }
+
+  private recomputeDisabledState(): void {
+    const lockSchedule = this.isScheduleLocked() || this.isBookingScheduleLocked();
+    const lockAssignment = this.isAssignmentLocked() || this.isBookingAssignmentLocked();
+
+    const artistId = String(this.form.controls.artistId.value ?? '').trim();
+    const lockTime = lockSchedule || !artistId;
+
+    this.setDisabled(this.form.controls.artistId, lockAssignment);
+    this.setDisabled(this.form.controls.day, lockSchedule);
+    this.setDisabled(this.form.controls.time, lockTime);
+    this.setDisabled(this.form.controls.durationMinutes, lockSchedule);
+
+    // Autocomplete inputs: prefer disabling the FormControl (avoid [disabled] on reactive directives).
+    this.setDisabled(this.form.controls.projectQuery, lockAssignment);
+    this.setDisabled(this.form.controls.bookingQuery, lockAssignment);
+    this.setDisabled(this.form.controls.sessionNumber, this.isAssignmentLocked());
+  }
+
+  private setDisabled(ctrl: { disable: (opts?: any) => void; enable: (opts?: any) => void; disabled: boolean }, disabled: boolean): void {
+    if (disabled) {
+      if (!ctrl.disabled) ctrl.disable({ emitEvent: false });
+      return;
+    }
+    if (ctrl.disabled) ctrl.enable({ emitEvent: false });
   }
 
   ngOnInit(): void {
@@ -370,10 +402,16 @@ export class EventDrawerComponent implements OnInit, OnChanges {
     }
 
     this.recomputeAvailableTimes();
+    this.recomputeDisabledState();
 
     this.form.controls.artistId.valueChanges.subscribe(() => this.recomputeAvailableTimes());
     this.form.controls.day.valueChanges.subscribe(() => this.recomputeAvailableTimes());
     this.form.controls.durationMinutes.valueChanges.subscribe(() => this.recomputeAvailableTimes());
+
+    // disabled state driven by business rules
+    this.form.controls.artistId.valueChanges.subscribe(() => this.recomputeDisabledState());
+    this.form.controls.type.valueChanges.subscribe(() => this.recomputeDisabledState());
+    this.form.controls.status.valueChanges.subscribe(() => this.recomputeDisabledState());
 
     // progetto -> sessionNumber auto + client auto (opzionale)
     this.form.controls.projectId.valueChanges.subscribe(pid => {
@@ -430,6 +468,7 @@ export class EventDrawerComponent implements OnInit, OnChanges {
 
     if (changes['events'] || changes['editingEventId']) {
       this.recomputeAvailableTimes();
+      this.recomputeDisabledState();
     }
   }
 
@@ -664,8 +703,14 @@ export class EventDrawerComponent implements OnInit, OnChanges {
     const day = this.form.controls.day.value;
     const durationMinutes = Number(this.form.controls.durationMinutes.value ?? 0);
 
+    const artist = (this.artists ?? []).find(a => String(a.id) === String(artistId));
+    const workdayStart = String((artist as any)?.workdayStart ?? '08:00');
+    const workdayEnd = String((artist as any)?.workdayEnd ?? '19:00');
+    const step = Number((artist as any)?.stepMinutes ?? 30) || 30;
+    const timeOptions = this.buildTimes(workdayStart, workdayEnd, step);
+
     if (!artistId || !day || !durationMinutes) {
-      this.availableTimeOptions = [...this.timeOptions];
+      this.availableTimeOptions = [...timeOptions];
       return;
     }
 
@@ -679,7 +724,7 @@ export class EventDrawerComponent implements OnInit, OnChanges {
     const busyFiltered = busy.filter(e => !nonBlocking.has(String((e as any).status ?? '').toLowerCase()));
 
     const free: string[] = [];
-    for (const t of this.timeOptions) {
+    for (const t of timeOptions) {
       const slotStart = new Date(`${dayKey}T${t}:00`);
       const slotEnd = new Date(slotStart.getTime() + durationMinutes * 60000);
 
@@ -746,6 +791,17 @@ export class EventDrawerComponent implements OnInit, OnChanges {
     return clientName.includes(q) || time.includes(q) || id.includes(q);
   }
 
+  private matchesAnyId(entity: any, expected: string): boolean {
+    const want = String(expected ?? '').trim();
+    if (!want) return false;
+    const candidates = [
+      String(entity?.id ?? '').trim(),
+      String(entity?.uid ?? '').trim(),
+      String(entity?.userId ?? '').trim()
+    ].filter(Boolean);
+    return candidates.includes(want);
+  }
+
   // ---------------------------------------------
   // Patch initial (seed/edit)
   // ---------------------------------------------
@@ -786,20 +842,28 @@ export class EventDrawerComponent implements OnInit, OnChanges {
     if (v.type === 'session' && (v.sessionNumber == null || Number.isNaN(Number(v.sessionNumber)))) {
       this.form.controls.sessionNumber.setValue(1, { emitEvent: false });
     }
+    if (v.type === 'session' && v.sessionNumber != null && !Number.isNaN(Number(v.sessionNumber))) {
+      this.form.controls.sessionNumber.setValue(Number(v.sessionNumber), { emitEvent: false });
+    }
 
     // popola la UI con oggetti (nome/titolo)
     if (v.clientId) {
-      const c = this.clients.find(x => x.id === v.clientId);
+      const c = this.clients.find(x => this.matchesAnyId(x, String(v.clientId)));
       if (c) this.form.controls.clientQuery.setValue(c, { emitEvent: false });
+      else this.form.controls.clientQuery.setValue(String(v.clientId), { emitEvent: false });
     }
     if (v.projectId) {
-      const p = this.projects.find(x => x.id === v.projectId);
+      const p = this.projects.find(x => this.matchesAnyId(x, String(v.projectId)));
       if (p) this.form.controls.projectQuery.setValue(p, { emitEvent: false });
+      else this.form.controls.projectQuery.setValue(String(v.projectId), { emitEvent: false });
     }
     if (v.bookingId) {
-      const b = this.bookings.find(x => x.id === v.bookingId);
+      const b = this.bookings.find(x => this.matchesAnyId(x, String(v.bookingId)));
       if (b) this.form.controls.bookingQuery.setValue(b, { emitEvent: false });
+      else this.form.controls.bookingQuery.setValue(String(v.bookingId), { emitEvent: false });
     }
+
+    this.recomputeDisabledState();
   }
 
   private hydrateClientQueryFromId(): void {
@@ -807,8 +871,9 @@ export class EventDrawerComponent implements OnInit, OnChanges {
     if (!clientId) return;
     const current = this.form.controls.clientQuery.value;
     if (current && typeof current !== 'string') return;
-    const c = (this.clients ?? []).find(x => x.id === clientId);
+    const c = (this.clients ?? []).find(x => this.matchesAnyId(x, clientId));
     if (c) this.form.controls.clientQuery.setValue(c, { emitEvent: false });
+    else this.form.controls.clientQuery.setValue(String(clientId), { emitEvent: false });
   }
 
   private hydrateProjectQueryFromId(): void {
@@ -816,8 +881,9 @@ export class EventDrawerComponent implements OnInit, OnChanges {
     if (!projectId) return;
     const current = this.form.controls.projectQuery.value;
     if (current && typeof current !== 'string') return;
-    const p = (this.projects ?? []).find(x => x.id === projectId);
+    const p = (this.projects ?? []).find(x => this.matchesAnyId(x, projectId));
     if (p) this.form.controls.projectQuery.setValue(p, { emitEvent: false });
+    else this.form.controls.projectQuery.setValue(String(projectId), { emitEvent: false });
     this.syncSessionNumberFromProject(projectId);
   }
 
@@ -826,8 +892,9 @@ export class EventDrawerComponent implements OnInit, OnChanges {
     if (!bookingId) return;
     const current = this.form.controls.bookingQuery.value;
     if (current && typeof current !== 'string') return;
-    const b = (this.bookings ?? []).find(x => x.id === bookingId);
+    const b = (this.bookings ?? []).find(x => this.matchesAnyId(x, bookingId));
     if (b) this.form.controls.bookingQuery.setValue(b, { emitEvent: false });
+    else this.form.controls.bookingQuery.setValue(String(bookingId), { emitEvent: false });
   }
 
   private syncSessionNumberFromProject(projectId?: string): void {

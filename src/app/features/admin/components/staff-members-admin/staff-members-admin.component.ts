@@ -1,136 +1,75 @@
-﻿import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { firstValueFrom } from 'rxjs';
+
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { StaffMember, StaffService } from '../../../../core/services/staff/staff.service';
-import { StaffDialogAdminComponent } from '../../../../shared/components/dialogs/staff-dialog-admin/staff-dialog-admin.component';
-import { MatDrawer } from '@angular/material/sidenav';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
+import { ConfirmDialogComponent } from '../../../../shared/components/dialogs/confirm-dialog/confirm-dialog.component';
+import {
+  StaffUpsertDialogComponent,
+  StaffUpsertDialogResult,
+  StaffCandidateLite,
+} from './staff-upsert-dialog.component';
 
 @Component({
   selector: 'app-staff-members-admin',
   standalone: true,
   imports: [CommonModule, MaterialModule, MatTooltipModule, ReactiveFormsModule],
   templateUrl: './staff-members-admin.component.html',
-  styleUrl: './staff-members-admin.component.scss'
+  styleUrl: './staff-members-admin.component.scss',
 })
 export class StaffMembersAdminComponent implements OnInit {
   staff: StaffMember[] = [];
   filteredStaff: StaffMember[] = [];
-  staffCandidates: Array<{ id: string; name: string; email?: string; phone?: string }> = [];
+  staffCandidates: StaffCandidateLite[] = [];
 
-  staffForm!: FormGroup;
   filterForm!: FormGroup;
 
-  editingId: string | null = null;
-  imagePreview: any = '';
-
-  @ViewChild('drawer') drawer!: MatDrawer;
-
   constructor(
-    private fb: FormBuilder,
-    private staffService: StaffService,
-    private dialog: MatDialog,
-    private snackBar: UiFeedbackService
+    private readonly fb: FormBuilder,
+    private readonly staffService: StaffService,
+    private readonly dialog: MatDialog,
+    private readonly snackBar: UiFeedbackService,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
-    this.initForm();
     this.initFilterForm();
     this.loadStaff();
-  }
-
-  toggleDrawer(): void {
-    if (this.drawer?.opened) {
-      this.drawer.close();
-      this.resetForm();
-      this.editingId = null;
-      return;
-    }
-    this.drawer.open();
-  }
-
-  edit(member: StaffMember): void {
-    this.drawer.open();
-    this.editingId = member.id!;
-    this.staffForm.patchValue({
-      userId: member.userId ?? member.id ?? '',
-      name: member.name,
-      role: member.role,
-      bio: member.bio ?? '',
-      photoUrl: member.photoUrl ?? '',
-      isActive: member.isActive ?? true,
-      email: member.email ?? '',
-      phone: member.phone ?? ''
-    });
-    this.imagePreview = member.photoUrl;
-  }
-
-  initForm(): void {
-    this.staffForm = this.fb.group({
-      userId: [''],
-      name: ['', Validators.required],
-      role: ['tatuatore', Validators.required],
-      bio: [''],
-      photoUrl: [''],
-      isActive: [true],
-      email: [''],
-      phone: ['']
-    });
-
-    this.staffForm.get('photoUrl')?.valueChanges.subscribe(value => {
-      this.imagePreview = value;
-    });
-
-    this.staffForm.get('userId')?.valueChanges.subscribe((uid) => {
-      if (this.editingId) return;
-      const selected = this.staffCandidates.find(c => c.id === uid);
-      if (!selected) return;
-      this.staffForm.patchValue(
-        {
-          name: selected.name || '',
-          email: selected.email || '',
-          phone: selected.phone || ''
-        },
-        { emitEvent: false }
-      );
-    });
   }
 
   initFilterForm(): void {
     this.filterForm = this.fb.group({
       name: [''],
       role: [''],
-      status: ['']
+      status: [''],
     });
 
     this.filterForm.valueChanges.subscribe(() => this.applyFilters());
   }
 
   loadStaff(): void {
-    this.staffService.getAllStaff().subscribe(staff => {
-      this.staff = staff;
+    this.staffService.getAllStaff().subscribe((staff) => {
+      this.staff = staff ?? [];
       this.applyFilters();
     });
 
-    this.staffService.getStaffCandidates().subscribe(candidates => {
-      this.staffCandidates = candidates ?? [];
+    this.staffService.getStaffCandidates().subscribe((candidates) => {
+      this.staffCandidates = (candidates ?? []) as any;
     });
   }
 
   applyFilters(): void {
     const { name, role, status } = this.filterForm.value;
 
-    this.filteredStaff = this.staff.filter(member => {
-      const matchesName =
-        !name ||
-        member.name.toLowerCase().includes(name.toLowerCase());
-
-      const matchesRole =
-        !role || member.role === role;
-
+    this.filteredStaff = (this.staff ?? []).filter((member) => {
+      const matchesName = !name || member.name.toLowerCase().includes(String(name).toLowerCase());
+      const matchesRole = !role || member.role === role;
       const matchesStatus =
         !status ||
         (status === 'active' && member.isActive) ||
@@ -140,109 +79,110 @@ export class StaffMembersAdminComponent implements OnInit {
     });
   }
 
-  submit(): void {
-    if (this.staffForm.invalid) {
-      this.staffForm.markAllAsTouched();
-      this.showSnack('Compila i campi obbligatori');
-      return;
-    }
+  async openCreate(): Promise<void> {
+    const res = await this.openUpsertDialog('create');
+    if (!res) return;
 
-    const data: StaffMember = this.staffForm.value;
-    if (!this.editingId && !String(data.userId ?? '').trim()) {
-      this.showSnack('Seleziona un utente da promuovere a staff');
-      return;
-    }
+    const ok = await this.confirm({
+      title: 'Confermi la promozione?',
+      message: 'Questo utente verra promosso a staff.',
+    });
+    if (!ok) return;
 
-    if (this.editingId) {
-      this.staffService.updateStaff(this.editingId, data)
-        .then(() => this.cancel())
-        .catch((err) => {
-          console.error(err);
-          this.showSnack('Errore durante l\'aggiornamento');
-        });
-    } else {
-      this.staffService.addStaff(data)
-        .then(() => this.resetForm())
-        .catch((err) => {
-          console.error(err);
-          this.showSnack('Errore durante la creazione');
-        });
-    }
-  }
-
-  create(): void {
-    this.openStaffDialog('create');
-  }
-
-  delete(id: string): void {
-    if (!id) return;
-
-    const conferma = confirm('Confermi la disattivazione di questo membro?');
-    if (!conferma) return;
-
-    this.staffService.deleteStaff(id)
-      .then(() => {
-        this.showSnack('Membro disattivato');
-      })
+    this.staffService
+      .addStaff(res.staff)
+      .then(() => this.showSnack('Staff creato'))
       .catch((err) => {
         console.error(err);
-        this.showSnack('Errore durante l\'eliminazione');
+        this.showSnack('Errore durante la creazione');
       });
   }
 
-  cancel(): void {
-    this.editingId = null;
-    this.resetForm();
+  async openEdit(member: StaffMember): Promise<void> {
+    const res = await this.openUpsertDialog('edit', member);
+    if (!res) return;
+
+    const ok = await this.confirm({
+      title: "Confermi l'aggiornamento?",
+      message: 'Stai per aggiornare i dati del membro staff selezionato.',
+    });
+    if (!ok) return;
+
+    const id = String(member.userId ?? member.id ?? '').trim();
+    this.staffService
+      .updateStaff(id, res.staff)
+      .then(() => this.showSnack('Staff aggiornato'))
+      .catch((err) => {
+        console.error(err);
+        this.showSnack("Errore durante l'aggiornamento");
+      });
   }
 
-  openStaffDialog(mode: 'create' | 'edit', member?: StaffMember): void {
-    const dialogRef = this.dialog.open(StaffDialogAdminComponent, {
-      data: {
-        mode,
-        staff: member
-      },
-      width: '400px'
-    });
+  openDetail(member: StaffMember): void {
+    const id = String(member.userId ?? member.id ?? '').trim();
+    if (!id) return;
+    this.router.navigate(['/admin/staff', id]);
+  }
 
-    dialogRef.afterClosed().subscribe((result: StaffMember | undefined) => {
-      if (result) {
-        if (mode === 'create') {
-          this.staffService.addStaff(result);
-        } else if (mode === 'edit' && member?.id) {
-          this.staffService.updateStaff(member.id, result);
-        }
+  async revoke(id: string): Promise<void> {
+    if (!id) return;
+
+    const ok = await this.confirm({
+      title: 'Confermi la revoca?',
+      message: 'Questo utente non sara piu staff e tornera cliente.',
+    });
+    if (!ok) return;
+
+    this.staffService
+      .revokeStaff(id)
+      .then(() => this.showSnack('Staff revocato'))
+      .catch((err) => {
+        console.error(err);
+        this.showSnack('Errore durante la revoca');
+      });
+  }
+
+  private async openUpsertDialog(
+    mode: 'create' | 'edit',
+    member?: StaffMember
+  ): Promise<StaffUpsertDialogResult | null> {
+    const alreadyStaffIds = (this.staff ?? [])
+      .map((s) => String(s.userId ?? s.id ?? '').trim())
+      .filter(Boolean);
+
+    const dialogRef = this.dialog.open<StaffUpsertDialogComponent, any, StaffUpsertDialogResult>(
+      StaffUpsertDialogComponent,
+      {
+        width: '640px',
+        maxWidth: '92vw',
+        maxHeight: '80vh',
+        data: {
+          mode,
+          staff: member,
+          candidates: this.staffCandidates ?? [],
+          alreadyStaffIds,
+        },
       }
+    );
+
+    const res = await firstValueFrom(dialogRef.afterClosed());
+    return res ?? null;
+  }
+
+  private async confirm(data: { title: string; message: string; confirmText?: string; cancelText?: string }): Promise<boolean> {
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data,
+      width: '420px',
+      maxWidth: '92vw',
     });
-  }
-
-  resetForm(): void {
-    this.staffForm.reset({
-      userId: '',
-      name: '',
-      role: 'tatuatore',
-      bio: '',
-      photoUrl: '',
-      isActive: true,
-      email: '',
-      phone: ''
-    });
-    this.editingId = null;
-    this.imagePreview = '';
-  }
-
-  openAgenda(member: StaffMember): void {
-    console.log('Apri agenda per', member);
-  }
-
-  contactStaff(member: StaffMember): void {
-    console.log('Apri chat con', member);
+    return (await firstValueFrom(ref.afterClosed())) === true;
   }
 
   private showSnack(message: string): void {
     this.snackBar.open(message, 'OK', {
       duration: 2500,
       horizontalPosition: 'right',
-      verticalPosition: 'bottom'
+      verticalPosition: 'bottom',
     });
   }
 }

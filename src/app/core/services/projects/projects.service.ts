@@ -14,6 +14,7 @@ import {
 } from '@angular/fire/database';
 import { map, Observable } from 'rxjs';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
+import { AuthService } from '../auth/authservice';
 
 export type ProjectStatus = 'draft' | 'scheduled' | 'active' | 'healing' | 'completed' | 'cancelled';
 
@@ -65,6 +66,18 @@ export class ProjectsService {
   private readonly db = inject(Database);
   private readonly zone = inject(NgZone);
   private readonly ui = inject(UiFeedbackService);
+  private readonly auth = inject(AuthService);
+
+  private ensureStaffPermission(permissionKey: string, missingMessage: string): void {
+    const user = this.auth.userSig();
+    if (!user) return;
+    if (user.role === 'admin') return;
+    if (user.role !== 'staff') return;
+    if (user.permissions?.[permissionKey] === true) return;
+
+    this.ui.warn(missingMessage);
+    throw new Error(`PERMISSION_DENIED:${permissionKey}`);
+  }
 
   // -----------------------------
   // Read
@@ -97,13 +110,19 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
     map(list =>
       (list ?? [])
         .filter(p => !!p.id)
-        .map(p => ({
-          id: String(p.id),
-          title: p.title,
-          clientId: p.clientId,
-          artistId: p.artistId,
-          sessionIds: Array.isArray(p.sessionIds) ? p.sessionIds : [],
-        }))
+        .map(p => {
+          const raw: any = p as any;
+          const legacyArtistIds = Array.isArray(raw?.artistIds)
+            ? raw.artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
+            : [];
+          return {
+            id: String(p.id),
+            title: p.title,
+            clientId: String(raw?.clientId ?? raw?.idClient ?? '').trim() || undefined,
+            artistId: String(raw?.artistId ?? raw?.idArtist ?? legacyArtistIds[0] ?? '').trim() || undefined,
+            sessionIds: Array.isArray(p.sessionIds) ? p.sessionIds : [],
+          };
+        })
     )
   );
 }
@@ -137,6 +156,10 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
   // Write
   // -----------------------------
   async createProject(data: Omit<TattooProject, 'id' | 'createdAt' | 'updatedAt'> & Partial<Pick<TattooProject,'createdAt'|'updatedAt'>>): Promise<string> {
+    this.ensureStaffPermission(
+      'canManageProjects',
+      'Permesso mancante: gestione progetti.'
+    );
     const node = push(ref(this.db, this.path));
     const now = this.formatLocal(new Date());
 
@@ -155,6 +178,22 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
   }
 
   async updateProject(id: string, changes: Partial<TattooProject>): Promise<void> {
+    this.ensureStaffPermission(
+      'canManageProjects',
+      'Permesso mancante: gestione progetti.'
+    );
+    if (Object.prototype.hasOwnProperty.call(changes ?? {}, 'artistId')) {
+      this.ensureStaffPermission(
+        'canReassignProjectArtist',
+        'Permesso mancante: cambio artista progetto.'
+      );
+    }
+    if (Object.prototype.hasOwnProperty.call(changes ?? {}, 'clientId')) {
+      this.ensureStaffPermission(
+        'canReassignProjectClient',
+        'Permesso mancante: cambio cliente progetto.'
+      );
+    }
     const patch = this.stripUndef({
       ...changes,
       updatedAt: this.formatLocal(new Date())
@@ -164,6 +203,10 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
   }
 
   async deleteProject(id: string): Promise<void> {
+    this.ensureStaffPermission(
+      'canManageProjects',
+      'Permesso mancante: gestione progetti.'
+    );
     await remove(ref(this.db, `${this.path}/${id}`));
     this.toast('Progetto eliminato');
   }
@@ -175,6 +218,16 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
   /** ✅ collega bookingId (0..1) */
   async attachBooking(projectId: string, bookingId: string): Promise<void> {
     await this.updateProject(projectId, { bookingId, status: 'scheduled' });
+  }
+
+  /** ✅ rimuove bookingId se combacia (evita di cancellare link di altri booking) */
+  async detachBookingIfMatch(projectId: string, bookingId: string): Promise<void> {
+    const p = await this.getProjectById(projectId);
+    if (!p) return;
+    const current = String((p as any).bookingId ?? '').trim();
+    if (!current) return;
+    if (current !== String(bookingId ?? '').trim()) return;
+    await this.updateProject(projectId, { bookingId: undefined });
   }
 
   /** ✅ aggiunge sessionId in array (no duplicati) */
@@ -191,6 +244,18 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
         ? 'active'
         : p.status;
     await this.updateProject(projectId, { sessionIds: next, status: nextStatus });
+  }
+
+  /** ✅ rimuove sessionId da array (se presente) */
+  async removeSession(projectId: string, sessionId: string): Promise<void> {
+    const p = await this.getProjectById(projectId);
+    if (!p) return;
+
+    const prev = Array.isArray(p.sessionIds) ? p.sessionIds : [];
+    const next = prev.filter(id => String(id) !== String(sessionId));
+    if (next.length === prev.length) return;
+
+    await this.updateProject(projectId, { sessionIds: next });
   }
 
   // -----------------------------

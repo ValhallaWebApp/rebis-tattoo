@@ -1,0 +1,115 @@
+<section class="permissions-admin">
+  <header class="permissions-admin__header">
+    <h2>Permessi Staff</h2>
+    <p>Sezione admin per assegnare deleghe operative ai membri staff.</p>
+  </header>
+
+  <mat-card class="permissions-admin__legend">
+    <mat-card-content>
+      <div class="legend-row">
+        <mat-icon>admin_panel_settings</mat-icon>
+        <div>
+          <strong>Matrice Permessi Staff</strong>
+          <p>Permessi operativi per prenotazioni, progetti, sessioni e riassegnazioni. Livelli staff con preset.</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card *ngIf="loading" class="permissions-admin__state">
+    <mat-card-content>Caricamento permessi staff...</mat-card-content>
+  </mat-card>
+
+  <mat-card *ngIf="!loading && !staffUsers.length" class="permissions-admin__state">
+    <mat-card-content>Nessun utente staff trovato.</mat-card-content>
+  </mat-card>
+
+  <div class="permissions-admin__list" *ngIf="!loading && staffUsers.length">
+    <mat-card class="user-selector">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>groups</mat-icon>
+        <mat-card-title>Seleziona Staff</mat-card-title>
+        <mat-card-subtitle>Mostra {{ pageSize }} utenti per pagina</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="selector-toolbar">
+          <mat-form-field appearance="outline" class="page-size-field">
+            <mat-label>Elementi</mat-label>
+            <mat-select [value]="pageSize" (selectionChange)="changePageSize($event.value)">
+              <mat-option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="pager">
+            <button mat-stroked-button type="button" (click)="prevPage()" [disabled]="pageIndex === 0">Prev</button>
+            <span>{{ pageLabel() }}</span>
+            <button mat-stroked-button type="button" (click)="nextPage()" [disabled]="pageIndex >= totalPages() - 1">Next</button>
+          </div>
+        </div>
+
+        <div class="user-pills">
+          <button
+            mat-stroked-button
+            type="button"
+            *ngFor="let user of pagedUsers()"
+            class="user-pill"
+            [class.user-pill--active]="isSelected(user.id)"
+            (click)="selectUser(user.id)"
+          >
+            <span class="pill-name">{{ user.name || user.email || user.id }}</span>
+            <span class="pill-meta">{{ user.email }}</span>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="permission-user" *ngIf="selectedUser() as user">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>person</mat-icon>
+        <mat-card-title>{{ user.name || user.email || user.id }}</mat-card-title>
+        <mat-card-subtitle>{{ user.email }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="meta-row">
+          <span class="chip">{{ displayRole(user) }}</span>
+          <span class="chip" [class.chip--off]="user.isActive === false">
+            {{ user.isActive === false ? 'disattivo' : 'attivo' }}
+          </span>
+        </div>
+
+        <mat-form-field appearance="outline" class="level-field">
+          <mat-label>Livello staff</mat-label>
+          <mat-select
+            [value]="currentStaffLevel(user)"
+            [disabled]="isUpdating(user.id)"
+            (selectionChange)="changeStaffLevel(user, $event.value)"
+          >
+            <mat-option value="junior">Junior</mat-option>
+            <mat-option value="operator">Operator</mat-option>
+            <mat-option value="senior">Senior</mat-option>
+            <mat-option value="manager">Manager</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="perm-grid">
+          <div class="perm-row" *ngFor="let perm of permissionDefinitions">
+            <div class="perm-copy">
+              <div class="perm-title">
+                <strong>{{ perm.label }}</strong>
+              </div>
+              <p>{{ perm.description }}</p>
+            </div>
+
+            <mat-slide-toggle
+              [checked]="hasPermission(user, perm.key)"
+              [disabled]="isUpdating(user.id)"
+              (change)="togglePermission(user, perm.key, $event.checked)"
+            />
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</section>

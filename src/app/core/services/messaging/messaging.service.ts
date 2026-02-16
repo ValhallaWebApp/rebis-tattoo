@@ -244,9 +244,11 @@ export class MessagingService {
     const recipients = participants.filter(uid => uid !== senderId);
     await Promise.allSettled(recipients.map(uid => {
       const recipientRole = conv.participants?.[uid];
-      const link = recipientRole === 'admin' || recipientRole === 'staff'
+      const link = recipientRole === 'admin'
         ? '/admin/messaging'
-        : '/dashboard/chat';
+        : recipientRole === 'staff'
+          ? '/staff'
+          : '/dashboard/chat';
       return this.notifications.createForUser(uid, {
         type: 'chat',
         title: 'Nuovo messaggio',
@@ -348,9 +350,22 @@ export class MessagingService {
   }
 
   private async touchParticipants(conversationId: string, userIds: string[], now: string): Promise<void> {
-    await Promise.all(
+    const results = await Promise.allSettled(
       userIds.map(uid => set(ref(this.db, `${this.userConversationsPath}/${uid}/${conversationId}`), now))
     );
+
+    const denied = results.filter(
+      (r): r is PromiseRejectedResult =>
+        r.status === 'rejected' && String((r.reason as any)?.code ?? '').includes('PERMISSION_DENIED')
+    ).length;
+
+    if (denied > 0) {
+      console.warn('[MessagingService] touchParticipants partial deny on userConversations', {
+        conversationId,
+        denied,
+        total: userIds.length
+      });
+    }
   }
 
   private async getAdminLikeUsers(): Promise<Array<{ id: string; role: ParticipantRole }>> {

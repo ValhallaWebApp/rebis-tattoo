@@ -1,11 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { MatChipListboxChange } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
 
 import { CalendarViewMode, CreateDraft, UiArtist, UiCalendarEvent, UpdatePatch } from '../models';
 import { addDays } from '../utils';
@@ -13,16 +12,6 @@ import { addDays } from '../utils';
 import { AdminActionPayload, DayViewComponent } from '../views/day-view/day-view.component';
 import { WeekResourceComponent } from '../views/week-resource/week-resource/week-resource.component';
 import { MonthViewComponent } from '../views/month-view/month-view.component';
-
-import {
-  NewEventDialogComponent,
-  NewEventDialogResult
-} from '../dialogs/new-event-dialog/new-event-dialog/new-event-dialog.component';
-
-import {
-  AvailabilitySheetComponent,
-  AvailabilitySheetResult
-} from '../dialogs/availability-sheet/availability-sheet/availability-sheet.component';
 
 import { BookingLite, EventDrawerComponent, EventDrawerResult } from '../drawer/event-drawer/event-drawer.component';
 import { MaterialModule } from '../../../core/modules/material.module';
@@ -39,6 +28,31 @@ import { CreateProjectTriggerPayload } from '../drawer/event-drawer/event-drawer
 import { ClientLite, ProjectLite } from '../drawer/event-drawer/event-drawer.component';
 import { ClientService } from '../../../core/services/clients/client.service';
 import { ProjectsService } from '../../../core/services/projects/projects.service';
+import { AuthService } from '../../../core/services/auth/authservice';
+
+type DrawerRouteAction =
+  | {
+      action: 'create-booking';
+      projectId: string;
+      artistId?: string;
+      clientId?: string;
+      zone?: string;
+      notes?: string;
+    }
+  | {
+      action: 'create-session';
+      projectId: string;
+      artistId?: string;
+      clientId?: string;
+    }
+  | {
+      action: 'edit-booking';
+      bookingId: string;
+    }
+  | {
+      action: 'edit-session';
+      sessionId: string;
+    };
 
 @Component({
   selector: 'app-calendar-shell',
@@ -60,11 +74,12 @@ export class CalendarShellComponent implements OnChanges {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(UiFeedbackService);
   private readonly router = inject(Router);
-  private readonly sheet = inject(MatBottomSheet);
+  private readonly route = inject(ActivatedRoute);
 
   // ✅ preload services
   private readonly clientService = inject(ClientService);
   private readonly projectService = inject(ProjectsService);
+  private readonly auth = inject(AuthService);
 
   @Input({ required: true }) artists: UiArtist[] = [];
   @Input({ required: true }) events: UiCalendarEvent[] = [];
@@ -98,6 +113,7 @@ export class CalendarShellComponent implements OnChanges {
       const list = changes['events'].currentValue ?? [];
       this.eventsSig.set(list);
       this.rebuildBookingsLite(list);
+      this.consumePendingDrawerRouteAction();
     }
   }
 
@@ -123,9 +139,16 @@ export class CalendarShellComponent implements OnChanges {
   readonly selectedArtists = computed(() => {
     const sel = this.selectedArtistIds();
     const list = this.artistsSig();
-    if (!sel.length) return list.filter(a => a.isActive !== false);
+    if (!sel.length) return list.filter(a => a.isActive !== false).filter(a => a.calendarEnabled !== false);
     return list.filter(a => sel.includes(a.id));
   });
+
+  /** In Day view we manage filters inside DayView: pass all eligible artists. */
+  readonly dayArtists = computed(() =>
+    this.artistsSig()
+      .filter(a => a.isActive !== false)
+      .filter(a => a.calendarEnabled !== false)
+  );
 
   readonly eventsForSelectedArtists = computed(() => {
     const sel = new Set(this.selectedArtists().map(a => a.id));
@@ -143,16 +166,120 @@ export class CalendarShellComponent implements OnChanges {
 
   /** ✅ evento in edit */
   drawerEditingEvent: UiCalendarEvent | null = null;
+  private pendingDrawerRouteAction: DrawerRouteAction | null = null;
 
   ngOnInit() {
     // init selection = all active
     queueMicrotask(() => {
-      const all = this.artistsSig().filter(a => a.isActive !== false).map(a => a.id);
+      const all = this.artistsSig().filter(a => a.isActive !== false).filter(a => a.calendarEnabled !== false).map(a => a.id);
       this.selectedArtistIds.set(all);
     });
 
     // preload lite lists
     this.preloadDrawerLists();
+    this.bindDrawerRouteActions();
+  }
+
+  private bindDrawerRouteActions(): void {
+    this.route.queryParamMap.subscribe(params => {
+      const action = String(params.get('open') ?? '').trim();
+      if (!action) return;
+
+      if (action === 'create-booking') {
+        const projectId = String(params.get('projectId') ?? '').trim();
+        if (!projectId) return;
+        this.pendingDrawerRouteAction = {
+          action,
+          projectId,
+          artistId: String(params.get('artistId') ?? '').trim() || undefined,
+          clientId: String(params.get('clientId') ?? '').trim() || undefined,
+          zone: String(params.get('zone') ?? '').trim() || undefined,
+          notes: String(params.get('notes') ?? '').trim() || undefined
+        };
+      } else if (action === 'create-session') {
+        const projectId = String(params.get('projectId') ?? '').trim();
+        if (!projectId) return;
+        this.pendingDrawerRouteAction = {
+          action,
+          projectId,
+          artistId: String(params.get('artistId') ?? '').trim() || undefined,
+          clientId: String(params.get('clientId') ?? '').trim() || undefined
+        };
+      } else if (action === 'edit-booking') {
+        const bookingId = String(params.get('bookingId') ?? '').trim();
+        if (!bookingId) return;
+        this.pendingDrawerRouteAction = { action, bookingId };
+      } else if (action === 'edit-session') {
+        const sessionId = String(params.get('sessionId') ?? '').trim();
+        if (!sessionId) return;
+        this.pendingDrawerRouteAction = { action, sessionId };
+      } else {
+        return;
+      }
+
+      this.consumePendingDrawerRouteAction();
+    });
+  }
+
+  private consumePendingDrawerRouteAction(): void {
+    const pending = this.pendingDrawerRouteAction;
+    if (!pending) return;
+
+    if (pending.action === 'create-booking') {
+      this.openCreateBookingFromProject(pending);
+      this.pendingDrawerRouteAction = null;
+      this.clearDrawerRouteParams();
+      return;
+    }
+
+    if (pending.action === 'create-session') {
+      const projectId = String(pending.projectId ?? '').trim();
+      const artistId = String(pending.artistId ?? '').trim();
+      if (!projectId || !artistId) return;
+      this.openCreateSessionFromProject({
+        projectId,
+        artistId,
+        clientId: pending.clientId
+      });
+      this.pendingDrawerRouteAction = null;
+      this.clearDrawerRouteParams();
+      return;
+    }
+
+    if (pending.action === 'edit-booking') {
+      const ev = (this.eventsSig() ?? []).find(x => x.type === 'booking' && String(x.id) === String(pending.bookingId));
+      if (!ev) return;
+      this.openEditEvent(ev);
+      this.pendingDrawerRouteAction = null;
+      this.clearDrawerRouteParams();
+      return;
+    }
+
+    if (pending.action === 'edit-session') {
+      const ev = (this.eventsSig() ?? []).find(x => x.type === 'session' && String(x.id) === String(pending.sessionId));
+      if (!ev) return;
+      this.openEditEvent(ev);
+      this.pendingDrawerRouteAction = null;
+      this.clearDrawerRouteParams();
+    }
+  }
+
+  private clearDrawerRouteParams(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        open: null,
+        projectId: null,
+        artistId: null,
+        clientId: null,
+        notes: null,
+        zone: null,
+        bookingId: null,
+        sessionId: null
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
   }
 
   // ---------------------------------------------
@@ -209,43 +336,28 @@ export class CalendarShellComponent implements OnChanges {
   // ---------------------------------------------
   // Toolbar: nuovo evento
   // ---------------------------------------------
-  async onToolbarNew() {
-    const dialogRef = this.dialog.open<NewEventDialogComponent, any, NewEventDialogResult>(
-      NewEventDialogComponent,
-      {
-        width: '520px',
-        maxWidth: '92vw',
-        data: {
-          artists: this.artists.filter(a => a.isActive !== false),
-        },
-      }
-    );
+  onToolbarNew() {
+    // No modals: open the drawer directly and let the user pick date/time inside.
+    const eligible = (this.artistsSig() ?? [])
+      .filter(a => a.isActive !== false)
+      .filter(a => a.calendarEnabled !== false);
+    const selected = this.selectedArtistIds() ?? [];
+    const preferredId = selected.find(id => eligible.some(a => a.id === id)) ?? eligible[0]?.id ?? '';
 
-    const res = await dialogRef.afterClosed().toPromise();
-    if (!res?.seed) return;
-
-    const sheetRef = this.sheet.open<AvailabilitySheetComponent, any, AvailabilitySheetResult>(
-      AvailabilitySheetComponent,
-      {
-        data: {
-          seed: res.seed,
-          artists: this.artists,
-          events: this.events,
-        },
-      }
-    );
-
-    const slot = await sheetRef.afterDismissed().toPromise();
-    if (!slot?.startISO || !slot?.endISO) return;
+    const start = new Date(this.anchorDate());
+    start.setHours(10, 0, 0, 0);
+    const end = new Date(start);
+    end.setMinutes(end.getMinutes() + 60);
 
     this.drawerMode = 'create';
     this.drawerSeed = {
-      type: res.seed.type,
-      artistId: res.seed.artistId,
-      durationMinutes: res.seed.durationMinutes,
-      start: slot.startISO,
-      end: slot.endISO,
-    };
+      type: 'booking',
+      artistId: String(preferredId ?? ''),
+      durationMinutes: 60,
+      start: this.toLocalDateTime(start),
+      end: this.toLocalDateTime(end),
+      status: 'draft',
+    } as any;
     this.drawerEditingEvent = null;
     this.drawerOpen = true;
   }
@@ -264,7 +376,7 @@ export class CalendarShellComponent implements OnChanges {
     this.anchorDate.set(new Date(`${payload.dateKey}T00:00:00`));
   }
 
-openCreateFromDay(payload: { artistId: string; startISO: string; endISO: string; durationMinutes: number }) {
+  openCreateFromDay(payload: { artistId: string; startISO: string; endISO: string; durationMinutes: number }) {
   this.drawerMode = 'create';
   this.drawerSeed = {
     type: 'booking',
@@ -276,6 +388,50 @@ openCreateFromDay(payload: { artistId: string; startISO: string; endISO: string;
   this.drawerEditingEvent = null;
   this.drawerOpen = true;
 }
+
+  private openCreateBookingFromProject(payload: {
+    projectId: string;
+    artistId?: string;
+    clientId?: string;
+    zone?: string;
+    notes?: string;
+  }): void {
+    const projectLite = (this.projectsLite ?? []).find(p => String(p.id ?? '').trim() === String(payload.projectId ?? '').trim());
+    const resolvedClientId = String(payload.clientId ?? projectLite?.clientId ?? '').trim() || undefined;
+    const resolvedArtistId = String(payload.artistId ?? projectLite?.artistId ?? '').trim() || undefined;
+
+    const eligible = (this.artistsSig() ?? [])
+      .filter(a => a.isActive !== false)
+      .filter(a => a.calendarEnabled !== false);
+
+    const selected = this.selectedArtistIds() ?? [];
+    const preferredArtistId =
+      resolvedArtistId ||
+      selected.find(id => eligible.some(a => a.id === id)) ||
+      eligible[0]?.id ||
+      '';
+
+    const start = new Date(this.anchorDate());
+    start.setHours(10, 0, 0, 0);
+    const end = new Date(start);
+    end.setMinutes(end.getMinutes() + 60);
+
+    this.drawerMode = 'create';
+    this.drawerSeed = {
+      type: 'booking',
+      artistId: String(preferredArtistId ?? ''),
+      clientId: resolvedClientId,
+      projectId: payload.projectId,
+      zone: payload.zone ?? undefined,
+      notes: payload.notes ?? undefined,
+      durationMinutes: 60,
+      start: this.toLocalDateTime(start),
+      end: this.toLocalDateTime(end),
+      status: 'draft',
+    } as any;
+    this.drawerEditingEvent = null;
+    this.drawerOpen = true;
+  }
 
 
   openEditEvent(ev: UiCalendarEvent) {
@@ -480,8 +636,12 @@ openCreateFromDay(payload: { artistId: string; startISO: string; endISO: string;
 
     if (payload.type === 'complete' && ev.type === 'booking' && ev.projectId) {
       const go = await this.confirmOpenProject(ev.projectId);
-      if (go) this.router.navigate(['/admin/portfolio', ev.projectId]);
+      if (go) this.router.navigate([`${this.getBackofficeBase()}/portfolio`, ev.projectId]);
     }
+  }
+
+  private getBackofficeBase(): '/admin' | '/staff' {
+    return this.auth.userSig()?.role === 'staff' ? '/staff' : '/admin';
   }
 
   private async askCompleteSessionDecision(ev: UiCalendarEvent): Promise<CompleteSessionDecision> {
@@ -545,6 +705,7 @@ openCreateFromDay(payload: { artistId: string; startISO: string; endISO: string;
       clientId: ev.clientId,
       projectId: ev.projectId,
       bookingId: (ev as any).bookingId,
+      sessionNumber: (ev as any).sessionNumber,
       notes: ev.notes,
       status: (ev as any).status ?? undefined,
     } as any;

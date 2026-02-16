@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../../core/modules/material.module';
 import { TattooProject } from '../../../../../core/services/projects/projects.service';
@@ -19,6 +19,16 @@ export interface ProjectTrackerProjectDialogData {
 export class ProjectTrackerProjectDialogComponent {
   readonly form;
   readonly imageUrlsControlName = 'imageUrls';
+  private readonly imageUrlsValidator = (control: AbstractControl): ValidationErrors | null => {
+    const raw = String(control.value ?? '').trim();
+    if (!raw) return null;
+    const urls = raw
+      .split(/[\n,]+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    const invalid = urls.filter(u => !this.isValidUrl(u));
+    return invalid.length ? { invalidUrls: invalid } : null;
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -70,17 +80,6 @@ export class ProjectTrackerProjectDialogComponent {
       subject: v.subject || undefined,
       imageUrls: imageUrls.length ? imageUrls : undefined
     });
-  }
-
-  private imageUrlsValidator(control: { value: any }) {
-    const raw = String(control.value ?? '').trim();
-    if (!raw) return null;
-    const urls = raw
-      .split(/[\n,]+/)
-      .map(s => s.trim())
-      .filter(Boolean);
-    const invalid = urls.filter(u => !this.isValidUrl(u));
-    return invalid.length ? { invalidUrls: invalid } : null;
   }
 
   private isValidUrl(value: string): boolean {

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { combineLatest, map, startWith, Observable } from 'rxjs';
 
@@ -14,6 +14,7 @@ import { BookingService, Booking } from '../../../../core/services/bookings/book
 import { SessionService, Session } from '../../../../core/services/session/session.service';
 import { InvoicesService, Invoice } from '../../../../core/services/invoices/invoices.service';
 import { ClientService, Client } from '../../../../core/services/clients/client.service';
+import { AuthService } from '../../../../core/services/auth/authservice';
 
 import { Database, onValue, ref } from '@angular/fire/database';
 
@@ -74,6 +75,8 @@ export class ProjectManagerComponent {
   private readonly sessionService = inject(SessionService);
   private readonly invoicesService = inject(InvoicesService);
   private readonly clientService = inject(ClientService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly snackBar = inject(UiFeedbackService);
 
   private readonly db = inject(Database);
@@ -104,7 +107,14 @@ export class ProjectManagerComponent {
             : [];
           obs.next(list);
         },
-        err => obs.error(err)
+        err => {
+          const code = String((err as any)?.code ?? '').toLowerCase();
+          if (code.includes('permission_denied')) {
+            obs.next([]);
+            return;
+          }
+          obs.error(err);
+        }
       );
       return () => unsub();
     });
@@ -358,6 +368,10 @@ export class ProjectManagerComponent {
   }
 
   async editProject(p: TattooProject): Promise<void> {
+    if (!this.hasStaffPermission('canManageProjects')) {
+      this.snackBar.open('Permesso mancante: gestione progetti.', 'OK', { duration: 2200 });
+      return;
+    }
     const ref = this.dialog.open(ProjectTrackerProjectDialogComponent, {
       width: '560px',
       maxWidth: '92vw',
@@ -390,12 +404,53 @@ export class ProjectManagerComponent {
   // Actions (agganci reali dopo)
   // -----------------------------
   openProject(p: TattooProject) {
-    // metti il route che vuoi (admin/public)
-    return ['/admin/portfolio', (p as any).id];
+    return [`${this.getBackofficeBase()}/portfolio`, (p as any).id];
+  }
+
+  openClientsLink(): any[] {
+    return [this.getBackofficeBase(), 'clients'];
+  }
+
+  clientFilterParams(clientId: string | undefined | null): Record<string, string> {
+    const id = String(clientId ?? '').trim();
+    if (!id) return {};
+    return { userId: id, q: id };
   }
 
   createBookingForProject(p: TattooProject) {
-    // TODO: apri EventDrawer in modalità booking con projectId precompilato
+    if (!this.hasStaffPermission('canManageBookings')) {
+      this.snackBar.open('Permesso mancante: gestione prenotazioni.', 'OK', { duration: 2200 });
+      return;
+    }
+    const projectId = String((p as any)?.id ?? '').trim();
+    if (!projectId) {
+      this.snackBar.open('ID progetto non valido.', 'OK', { duration: 2200 });
+      return;
+    }
+
+    const legacyArtistIds = Array.isArray((p as any)?.artistIds)
+      ? (p as any).artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
+      : [];
+    const artistId = String((p as any)?.artistId ?? (p as any)?.idArtist ?? legacyArtistIds[0] ?? '').trim();
+    const clientId = String((p as any)?.clientId ?? (p as any)?.idClient ?? '').trim();
+    const zone = String((p as any)?.zone ?? '').trim();
+    const title = String((p as any)?.title ?? '').trim();
+    const notes = String((p as any)?.notes ?? '').trim();
+
+    const notesSeed = [title ? `Progetto: ${title}` : '', zone ? `Zona: ${zone}` : '', notes]
+      .filter(Boolean)
+      .join(' | ');
+
+    void this.router.navigate([`${this.getBackofficeBase()}/calendar`], {
+      queryParams: {
+        open: 'create-booking',
+        projectId,
+        artistId: artistId || null,
+        clientId: clientId || null,
+        zone: zone || null,
+        notes: notesSeed || null
+      }
+    });
   }
 
   editBooking(b: Booking) {
@@ -403,11 +458,48 @@ export class ProjectManagerComponent {
   }
 
   addSessionToProject(p: TattooProject) {
-    // TODO: apri EventDrawer in modalità session con projectId precompilato
+    if (!this.hasStaffPermission('canManageSessions')) {
+      this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
+      return;
+    }
+    const projectId = String((p as any)?.id ?? '').trim();
+    if (!projectId) {
+      this.snackBar.open('ID progetto non valido.', 'OK', { duration: 2200 });
+      return;
+    }
+
+    const legacyArtistIds = Array.isArray((p as any)?.artistIds)
+      ? (p as any).artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
+      : [];
+    const artistId = String((p as any)?.artistId ?? (p as any)?.idArtist ?? legacyArtistIds[0] ?? '').trim();
+    const clientId = String((p as any)?.clientId ?? (p as any)?.idClient ?? '').trim();
+
+    void this.router.navigate([this.getBackofficeBase() + '/calendar'], {
+      queryParams: {
+        open: 'create-session',
+        projectId,
+        artistId: artistId || null,
+        clientId: clientId || null
+      }
+    });
   }
 
   editSession(s: Session) {
-    void s;
+    if (!this.hasStaffPermission('canManageSessions')) {
+      this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
+      return;
+    }
+    const sessionId = String((s as any)?.id ?? '').trim();
+    if (!sessionId) {
+      this.snackBar.open('Sessione non valida.', 'OK', { duration: 2200 });
+      return;
+    }
+    void this.router.navigate([this.getBackofficeBase() + '/calendar'], {
+      queryParams: {
+        open: 'edit-session',
+        sessionId
+      }
+    });
   }
 
   // ✅ “Messaggia cliente” (WhatsApp se phone, altrimenti email)
@@ -530,6 +622,21 @@ export class ProjectManagerComponent {
     return all.length ? Array.from(new Set(all)) : [];
   }
 
+  isSettledProject(row: VmRow): boolean {
+    const status = String((row?.project as any)?.status ?? '').trim().toLowerCase();
+    if (status !== 'completed') return false;
+    if (row.expectedTotal == null) return false;
+
+    const expected = Number(row.expectedTotal);
+    const paid = Number(row.paidTotal ?? 0);
+    const remaining = Number(row.remaining ?? Math.max(0, expected - paid));
+
+    if (!isFinite(expected) || expected <= 0) return false;
+    if (!isFinite(paid) || !isFinite(remaining)) return false;
+
+    return paid >= expected && remaining <= 0;
+  }
+
   // -----------------------------
   // internals
   // -----------------------------
@@ -615,4 +722,17 @@ export class ProjectManagerComponent {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
   }
+
+  private getBackofficeBase(): '/admin' | '/staff' {
+    return this.auth.userSig()?.role === 'staff' ? '/staff' : '/admin';
+  }
+
+  private hasStaffPermission(key: string): boolean {
+    const user = this.auth.userSig();
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    if (user.role !== 'staff') return false;
+    return user.permissions?.[key] === true;
+  }
 }
+

@@ -1,0 +1,77 @@
+{"users": [
+{
+  "localId": "Nhmp6AN2ehPksUbP4mlCskNirA83",
+  "email": "valhallawebapp@gmail.com",
+  "emailVerified": false,
+  "passwordHash": "M111sCV+JoJBR8lnDY+/pW0HoJt+h+JU7dmUFwewtP0aXR5/oxp4Sd8iZjvgjLkSAUEwEanrk/xCfnRcotpNuw==",
+  "salt": "ZX6fmPYr+VehfA==",
+  "lastSignedInAt": "1771186704834",
+  "createdAt": "1771113545889",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "cli_01",
+  "email": "cliente.alfa@rebistattoo.it",
+  "emailVerified": true,
+  "createdAt": "1771189236558",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "cli_02",
+  "email": "cliente.beta@rebistattoo.it",
+  "emailVerified": true,
+  "createdAt": "1771189236558",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "cli_03",
+  "email": "cliente.gamma@rebistattoo.it",
+  "emailVerified": true,
+  "createdAt": "1771189236558",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "cli_04",
+  "email": "cliente.delta@rebistattoo.it",
+  "emailVerified": true,
+  "createdAt": "1771189236558",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "cli_test_01",
+  "email": "cliente.test@rebistattoo.it",
+  "emailVerified": false,
+  "passwordHash": "RJZcxfPcJyXao1LvMbVhW9IblGcgXhRS8ZbKLafnK/zWq59gX98oDtGC2JEB76zqKPKMWOZ13rN+uQPUJZcn1A==",
+  "salt": "0AYBoEnTJUX9iQ==",
+  "lastSignedInAt": "1771180791939",
+  "createdAt": "1771172470616",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "dv1wrtU2G7Orv5LCzCETWga6Dpq1",
+  "email": "luca.neri@rebistattoo.it",
+  "emailVerified": false,
+  "passwordHash": "WVjd5EabcpXYQwM0HHjWXFJEZGnABy6Z4w4zige9AjP26n9ksqSGKklo8aLT6JjqCEsidjrXBtlrw8E+s04r/w==",
+  "salt": "MhcGXgQr74ioRQ==",
+  "lastSignedInAt": "1771119113199",
+  "createdAt": "1771116036893",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "stf_test_01",
+  "email": "staff.test@rebistattoo.it",
+  "emailVerified": false,
+  "passwordHash": "QmOTqv6kBMiOuMR07Rh6j8sCE9V3a+cnjYvPC3TcApKI1k8weS7xFv2cC45wtfH2GihPwH4CZWrRtjA08Huk8A==",
+  "salt": "NiVNvGrVLiHrDQ==",
+  "lastSignedInAt": "1771184195822",
+  "createdAt": "1771172470616",
+  "disabled": false,
+  "providerUserInfo": []
+}]}

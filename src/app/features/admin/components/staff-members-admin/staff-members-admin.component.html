@@ -1,175 +1,80 @@
 <section class="staff-management">
-  <!-- HEADER -->
   <h2 class="section-title">
     <div class="title-left">
       <mat-icon>badge</mat-icon>
       <span>Gestione Staff</span>
     </div>
 
-    <button mat-mini-fab color="primary" (click)="toggleDrawer()"
-      matTooltip="{{ drawer?.opened ? 'Chiudi pannello' : 'Nuovo membro' }}">
-      <mat-icon>{{ drawer?.opened ? 'close' : 'person_add' }}</mat-icon>
+    <button
+      mat-mini-fab
+      color="primary"
+      (click)="openCreate()"
+      matTooltip="Nuovo membro">
+      <mat-icon>person_add</mat-icon>
     </button>
   </h2>
 
-  <mat-drawer-container class="drawer-container">
-    <!-- DRAWER LATERALE: CREATE / EDIT -->
-    <mat-drawer #drawer mode="side" position="end" class="staff-drawer">
-       <!-- HEADER DRAWER -->
-  <div class="drawer-header">
-    <div>
-      <h3>{{ editingId ? 'Modifica membro' : 'Nuovo membro' }}</h3>
-      <p class="subtitle">
-        Gestisci nome, ruolo, biografia e visibilità del membro dello staff.
-      </p>
-    </div>
+  <form [formGroup]="filterForm" class="filters">
+    <mat-form-field appearance="outline">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" placeholder="Filtra per nome" />
+    </mat-form-field>
 
-    <button mat-icon-button (click)="toggleDrawer()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Ruolo</mat-label>
+      <mat-select formControlName="role">
+        <mat-option value="">Tutti</mat-option>
+        <mat-option value="tatuatore">Tatuatore</mat-option>
+        <mat-option value="piercer">Piercer</mat-option>
+        <mat-option value="guest">Guest</mat-option>
+        <mat-option value="altro">Altro</mat-option>
+      </mat-select>
+    </mat-form-field>
 
-      <!-- Anteprima card stile lista -->
-      <mat-card class="preview-card">
-        <div class="staff-info">
-          <img [src]="imagePreview || '/assets/avatar-placeholder.png'" width="48px" alt="avatar" />
-          <div class="staff-text">
-            <h3>{{ staffForm.value.name || 'Nome cognome' }}</h3>
-            <p class="role">
-              {{ staffForm.value.role || 'Ruolo' | titlecase }}
-            </p>
-            <span class="status-chip" [class.active]="staffForm.value.isActive"
-              [class.inactive]="!staffForm.value.isActive">
-              {{ staffForm.value.isActive ? 'Attivo' : 'Non attivo' }}
-            </span>
-          </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Stato</mat-label>
+      <mat-select formControlName="status">
+        <mat-option value="">Tutti</mat-option>
+        <mat-option value="active">Solo attivi</mat-option>
+        <mat-option value="inactive">Solo non attivi</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </form>
+
+  <div class="staff-cards">
+    <mat-card *ngFor="let member of filteredStaff" class="staff-card" [class.inactive]="!member.isActive">
+      <div class="staff-info">
+        <img [src]="member.photoUrl || '/assets/avatar-placeholder.png'" alt="avatar" />
+        <div class="staff-text">
+          <h3>{{ member.name }}</h3>
+          <p class="role">{{ member.role | titlecase }}</p>
+
+          <p class="bio" *ngIf="member.bio">
+            {{ member.bio }}
+          </p>
+
+          <span class="status-chip" [class.active]="member.isActive" [class.inactive]="!member.isActive">
+            {{ member.isActive ? 'Attivo' : 'Non attivo' }}
+          </span>
         </div>
-      </mat-card>
-
-      <!-- FORM STAFF -->
-      <form [formGroup]="staffForm" (ngSubmit)="submit()" class="staff-form">
-        <mat-form-field appearance="outline" *ngIf="!editingId">
-          <mat-label>Utente Staff</mat-label>
-          <mat-select formControlName="userId">
-            <mat-option value="">Seleziona utente</mat-option>
-            <mat-option *ngFor="let u of staffCandidates" [value]="u.id">
-              {{ u.name }} <span *ngIf="u.email">({{ u.email }})</span>
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Nome</mat-label>
-          <input matInput formControlName="name" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Ruolo</mat-label>
-          <mat-select formControlName="role">
-            <mat-option value="tatuatore">Tatuatore</mat-option>
-            <mat-option value="piercer">Piercer</mat-option>
-            <mat-option value="guest">Guest</mat-option>
-            <mat-option value="altro">Altro</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Biografia</mat-label>
-          <textarea matInput formControlName="bio" rows="4"></textarea>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>URL Immagine</mat-label>
-          <input matInput formControlName="photoUrl" />
-        </mat-form-field>
-
-        <mat-slide-toggle formControlName="isActive">
-          Attivo
-        </mat-slide-toggle>
-
-        <div class="form-actions">
-          <button mat-flat-button color="primary" type="submit">
-            {{ editingId ? 'Aggiorna' : 'Aggiungi' }}
-          </button>
-          <button mat-button type="button" (click)="resetForm()">
-            Reset
-          </button>
-        </div>
-      </form>
-    </mat-drawer>
-
-    <!-- CONTENUTO PRINCIPALE -->
-    <mat-drawer-content class="drawer-content">
-      <!-- FILTRI -->
-      <form [formGroup]="filterForm" class="filters">
-        <mat-form-field>
-          <mat-label>Nome</mat-label>
-          <input matInput formControlName="name" placeholder="Filtra per nome" />
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Ruolo</mat-label>
-          <mat-select formControlName="role">
-            <mat-option value="">Tutti</mat-option>
-            <mat-option value="tatuatore">Tatuatore</mat-option>
-            <mat-option value="piercer">Piercer</mat-option>
-            <mat-option value="guest">Guest</mat-option>
-            <mat-option value="altro">Altro</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Stato</mat-label>
-          <mat-select formControlName="status">
-            <mat-option value="">Tutti</mat-option>
-            <mat-option value="active">Solo attivi</mat-option>
-            <mat-option value="inactive">Solo non attivi</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </form>
-
-      <!-- LISTA STAFF (stile clients-list) -->
-      <div class="staff-cards">
-        <mat-card *ngFor="let member of filteredStaff" class="staff-card" [class.inactive]="!member.isActive">
-          <div class="staff-info">
-            <img [src]="member.photoUrl || '/assets/avatar-placeholder.png'" alt="avatar" />
-            <div class="staff-text">
-              <h3>{{ member.name }}</h3>
-              <p class="role">{{ member.role | titlecase }}</p>
-
-              <p class="bio" *ngIf="member.bio">
-                {{ member.bio }}
-              </p>
-
-              <span class="status-chip" [class.active]="member.isActive" [class.inactive]="!member.isActive">
-                {{ member.isActive ? 'Attivo' : 'Non attivo' }}
-              </span>
-            </div>
-          </div>
-
-          <div class="staff-actions">
-            <button mat-icon-button matTooltip="Visualizza agenda" (click)="openAgenda(member)">
-              <mat-icon>event</mat-icon>
-            </button>
-
-            <button mat-icon-button matTooltip="Chat con membro" (click)="contactStaff(member)">
-              <mat-icon>chat</mat-icon>
-            </button>
-
-            <button mat-icon-button matTooltip="Modifica" (click)="edit(member)">
-              <mat-icon>edit</mat-icon>
-            </button>
-
-            <button mat-icon-button color="warn" matTooltip="Elimina" (click)="delete(member.id!)">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-        </mat-card>
-
-        <p class="empty" *ngIf="filteredStaff.length === 0">
-          Nessun membro trovato con i filtri correnti.
-        </p>
       </div>
-    </mat-drawer-content>
-  </mat-drawer-container>
+
+      <div class="staff-actions">
+        <button mat-icon-button matTooltip="Dettaglio (orari e calendario)" (click)="openDetail(member)">
+          <mat-icon>event</mat-icon>
+        </button>
+        <button mat-icon-button matTooltip="Modifica" (click)="openEdit(member)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" matTooltip="Revoca staff" (click)="revoke(member.id!)">
+          <mat-icon>person_remove</mat-icon>
+        </button>
+      </div>
+    </mat-card>
+
+    <p class="empty" *ngIf="filteredStaff.length === 0">
+      Nessun membro trovato con i filtri correnti.
+    </p>
+  </div>
 </section>
+

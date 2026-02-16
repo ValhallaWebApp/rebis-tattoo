@@ -1,6 +1,6 @@
 <section class="user-management">
   <h2 class="section-title">
-    <mat-icon>groups</mat-icon> Gestione Utenti
+    <mat-icon>groups</mat-icon> Gestione Clienti
   </h2>
 
   <!-- 🔍 Filtri -->
@@ -15,18 +15,37 @@
       <input matInput formControlName="email" placeholder="mario@email.com" />
     </mat-form-field>
 
-    <mat-form-field>
-      <mat-label>Ruolo</mat-label>
-      <mat-select formControlName="role">
-        <mat-option value="">Tutti</mat-option>
-        <mat-option *ngFor="let r of roles" [value]="r">{{ r }}</mat-option>
+      <mat-form-field>
+        <mat-label>Ruolo</mat-label>
+        <mat-select formControlName="role">
+          <mat-option value="">Tutti</mat-option>
+          <mat-option *ngFor="let r of roles" [value]="r">{{ r }}</mat-option>
       </mat-select>
     </mat-form-field>
   </form>
 
   <!-- 👥 Lista utenti -->
+  <div class="pager-row" *ngIf="filteredUsers.length > 0">
+    <mat-form-field appearance="outline" class="page-size-field">
+      <mat-label>Per pagina</mat-label>
+      <mat-select [value]="pageSize" (selectionChange)="onPageSizeChange($event.value)">
+        <mat-option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div class="pager-actions">
+      <button mat-stroked-button type="button" (click)="previousPage()" [disabled]="currentPage <= 1">
+        Prev
+      </button>
+      <span class="page-indicator">{{ currentPage }} / {{ totalPages }}</span>
+      <button mat-stroked-button type="button" (click)="nextPage()" [disabled]="currentPage >= totalPages">
+        Next
+      </button>
+    </div>
+  </div>
+
   <div class="user-cards">
-    <mat-card *ngFor="let u of filteredUsers" class="user-card">
+    <mat-card *ngFor="let u of pagedUsers" class="user-card">
       <div class="user-info">
         <img [src]="getAvatarUrl(u)" (error)="onAvatarError($event)" alt="avatar" />
         <div>
@@ -37,27 +56,6 @@
             <span class="role active-flag" [class.off]="u.isActive === false">
               {{ u.isActive === false ? 'inactive' : 'active' }}
             </span>
-            <mat-form-field *ngIf="canChangeRole(u)" appearance="outline" class="role-select">
-              <mat-label>Grado</mat-label>
-              <mat-select
-                [value]="displayRole(u)"
-                [disabled]="isRoleUpdating(u.id) || isStatusUpdating(u.id) || isRolePermissionUpdating(u.id)"
-                (selectionChange)="changeUserRole(u, $event.value)"
-              >
-                <mat-option *ngFor="let option of roleOptionsFor(u)" [value]="option">
-                  {{ option }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-slide-toggle
-              *ngIf="canGrantRolePermissionToggle(u)"
-              class="role-permission-toggle"
-              [checked]="hasRoleManagementPermission(u)"
-              [disabled]="isRolePermissionUpdating(u.id) || isStatusUpdating(u.id) || isRoleUpdating(u.id)"
-              (change)="toggleRolePermission(u, $event.checked)"
-            >
-              Gestione ruoli
-            </mat-slide-toggle>
           </div>
         </div>
       </div>
@@ -67,28 +65,18 @@
           [matTooltip]="u.isActive === false ? 'Attiva account' : 'Disattiva account'"
           [disabled]="isSelf(u) || isStatusUpdating(u.id)"
           (click)="toggleUserActive(u)"
+          [color]="u.isActive === false ? 'primary' : 'warn'"
         >
-          <mat-icon>{{ u.isActive === false ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+          <mat-icon>{{ u.isActive === false ? 'person' : 'person_off' }}</mat-icon>
         </button>
-        <button
-          mat-icon-button
-          color="warn"
-          matTooltip="Nascondi utente"
-          [disabled]="isSelf(u) || isStatusUpdating(u.id)"
-          (click)="hideUser(u)"
-        >
-          <mat-icon>visibility_off</mat-icon>
-        </button>
-        <button mat-icon-button color="primary" matTooltip="Visualizza appuntamenti" (click)="viewAppointments(u)">
-          <mat-icon>event</mat-icon>
-        </button>
-        <button mat-icon-button matTooltip="Contatta utente" (click)="contactUser(u)">
-          <mat-icon>chat</mat-icon>
-        </button>
-        <button mat-icon-button matTooltip="Modifica profilo" (click)="editUser(u)">
+        <button mat-icon-button matTooltip="Modifica profilo" *ngIf="userService.isCurrentUserAdmin()" (click)="editUser(u)">
           <mat-icon>edit</mat-icon>
         </button>
       </div>
     </mat-card>
   </div>
+
+  <p class="empty-state" *ngIf="filteredUsers.length === 0">
+    Nessun cliente trovato con i filtri correnti.
+  </p>
 </section>

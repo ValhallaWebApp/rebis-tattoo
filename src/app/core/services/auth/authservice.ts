@@ -16,7 +16,7 @@ import {
   updateDoc,
   DocumentData
 } from '@angular/fire/firestore';
-import { Database, get as getDb, ref as dbRef } from '@angular/fire/database';
+import { Database, get as getDb, ref as dbRef, update as updateDb } from '@angular/fire/database';
 import { of, switchMap, catchError, firstValueFrom } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
@@ -29,6 +29,18 @@ export interface AppUser {
   role: 'admin' | 'client' | 'staff' | 'public' | 'guest';
   permissions?: {
     canManageRoles?: boolean;
+    canManageBookings?: boolean;
+    canManageProjects?: boolean;
+    canManageSessions?: boolean;
+    canReassignProjectArtist?: boolean;
+    canReassignProjectClient?: boolean;
+    canViewFinancials?: boolean;
+    canManageMessages?: boolean;
+    canManageServices?: boolean;
+    canManageBonus?: boolean;
+    canViewAnalytics?: boolean;
+    canViewAuditLogs?: boolean;
+    [key: string]: boolean | undefined;
   };
   isActive?: boolean;
 
@@ -48,50 +60,199 @@ export class AuthService {
   readonly userSig = this._userSig;
   readonly isLoggedInSig = computed(() => !!this._userSig());
   readonly roleSig = computed(() => this._userSig()?.role || 'public');
+  readonly canManageRolesSig = computed(() => this.canManageRoles(this._userSig()));
+  readonly isAdminSig = computed(() => this._userSig()?.role === 'admin');
+  readonly isStaffSig = computed(() => this._userSig()?.role === 'staff');
 
-  private normalizeUser(data: DocumentData | AppUser): AppUser {
-    const uid = String((data as any).uid ?? (data as any).id ?? '');
-    const role = String((data as any).role ?? 'public');
+  private normalizeAppRole(rawRole: unknown): AppUser['role'] {
+    const role = String(rawRole ?? 'public').trim().toLowerCase();
+    if (role === 'user') return 'client';
+    if (role === 'admin' || role === 'client' || role === 'staff' || role === 'public' || role === 'guest') {
+      return role;
+    }
+    return 'public';
+  }
+
+  private normalizePermissions(input: any): AppUser['permissions'] {
+    const source = (input && typeof input === 'object') ? input as Record<string, any> : {};
+    const normalized: Record<string, boolean> = {};
+    for (const [key, value] of Object.entries(source)) {
+      normalized[key] = value === true;
+    }
+    if (normalized['canManageRoles'] === undefined) normalized['canManageRoles'] = false;
+    return normalized;
+  }
+
+  private adminPermissions(): AppUser['permissions'] {
     return {
-      ...(data as any),
-      uid,
-      role: (role as AppUser['role']) || 'public',
-      permissions: {
-        canManageRoles: (data as any)?.permissions?.canManageRoles === true
-      }
+      canManageRoles: true,
+      canManageBookings: true,
+      canManageProjects: true,
+      canManageSessions: true,
+      canReassignProjectArtist: true,
+      canReassignProjectClient: true,
+      canViewFinancials: true,
+      canManageMessages: true,
+      canManageServices: true,
+      canManageBonus: true,
+      canViewAnalytics: true,
+      canViewAuditLogs: true
     };
   }
 
-  private async inferRoleFromRtdb(uid: string): Promise<AppUser['role']> {
+  private normalizeUser(data: DocumentData | AppUser): AppUser {
+    const uid = String((data as any).uid ?? (data as any).id ?? '');
+    const role = this.normalizeAppRole((data as any).role);
+    const normalizedPermissions = this.normalizePermissions((data as any)?.permissions);
+    return {
+      ...(data as any),
+      uid,
+      role,
+      permissions: role === 'admin'
+        ? { ...this.adminPermissions(), ...normalizedPermissions }
+        : normalizedPermissions
+    };
+  }
+
+  private rolePriority(role: AppUser['role'] | string | undefined): number {
+    switch (role) {
+      case 'admin':
+        return 3;
+      case 'staff':
+        return 2;
+      case 'client':
+        return 1;
+      default:
+        return 0;
+    }
+  }
+
+  private stripUndefined<T extends Record<string, any>>(input: T): T {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(input)) {
+      if (v !== undefined) out[k] = v;
+    }
+    return out as T;
+  }
+
+  private toRtdbUserPatch(uid: string, data: Partial<AppUser>): Record<string, any> {
+    return this.stripUndefined({
+      id: uid,
+      uid,
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
+      avatar: data.avatar,
+      urlAvatar: data.avatar,
+      dateOfBirth: data.dateOfBirth,
+      address: data.address,
+      city: data.city,
+      postalCode: data.postalCode,
+      country: data.country,
+      isActive: data.isActive,
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  private async syncUserToRtdb(uid: string, data: Partial<AppUser>): Promise<void> {
+    const patch = this.toRtdbUserPatch(uid, data);
+    if (Object.keys(patch).length <= 3) return; // only id/uid/updatedAt would be low-value noise
+    try {
+      await updateDb(dbRef(this.db, `users/${uid}`), patch);
+    } catch {
+      // Best-effort sync; auth flow must not break on RTDB permission mismatch.
+    }
+  }
+
+  private async inferProfileFromRtdb(uid: string): Promise<Pick<AppUser, 'role' | 'permissions'>> {
+    let inferredRole: AppUser['role'] = 'client';
+    let inferredPermissions: AppUser['permissions'] = { canManageRoles: false };
+
     try {
       const adminSnap = await getDb(dbRef(this.db, `adminUids/${uid}`));
-      if (adminSnap.exists() && adminSnap.val() === true) return 'admin';
+      if (adminSnap.exists() && adminSnap.val() === true) {
+        inferredRole = 'admin';
+      }
+    } catch {
+      // Staff users cannot read /adminUids by rules: keep probing other nodes.
+    }
 
-      const staffSnap = await getDb(dbRef(this.db, `staffProfiles/${uid}`));
-      if (staffSnap.exists() && staffSnap.child('isActive').val() !== false) return 'staff';
+    try {
+      const userSnap = await getDb(dbRef(this.db, `users/${uid}`));
+      if (userSnap.exists()) {
+        const roleFromUser = this.normalizeAppRole(userSnap.child('role').val());
+        if (this.rolePriority(roleFromUser) > this.rolePriority(inferredRole)) {
+          inferredRole = roleFromUser;
+        }
+        inferredPermissions = this.normalizePermissions(userSnap.child('permissions').val());
+      }
     } catch {
       // ignore and fallback
     }
-    return 'client';
+
+    try {
+      const staffSnap = await getDb(dbRef(this.db, `staffProfiles/${uid}`));
+      if (staffSnap.exists() && staffSnap.child('isActive').val() !== false && inferredRole !== 'admin') {
+        inferredRole = 'staff';
+      }
+    } catch {
+      // ignore and fallback
+    }
+
+    if (inferredRole === 'admin') {
+      inferredPermissions = { ...this.adminPermissions(), ...inferredPermissions };
+    }
+
+    return { role: inferredRole, permissions: inferredPermissions };
   }
 
   private async ensureUserProfile(firebaseUser: User): Promise<AppUser | null> {
     const userRef = doc(this.firestore, 'users', firebaseUser.uid);
     const snap = await getDoc(userRef);
     if (snap.exists()) {
-      return this.normalizeUser({ id: firebaseUser.uid, uid: firebaseUser.uid, ...snap.data() });
+      const current = this.normalizeUser({ id: firebaseUser.uid, uid: firebaseUser.uid, ...snap.data() });
+      const inferred = await this.inferProfileFromRtdb(firebaseUser.uid);
+
+      const roleNeedsUpgrade = this.rolePriority(inferred.role) > this.rolePriority(current.role);
+      const permissionNeedsUpgrade =
+        inferred.permissions?.canManageRoles === true &&
+        current.permissions?.canManageRoles !== true;
+
+      if (roleNeedsUpgrade || permissionNeedsUpgrade) {
+        const patch: Partial<AppUser> = {};
+        if (roleNeedsUpgrade) patch.role = inferred.role;
+        if (permissionNeedsUpgrade) patch.permissions = inferred.permissions;
+        try {
+          await updateDoc(userRef, patch as any);
+        } catch {
+          // Keep runtime role aligned even if Firestore rules block profile role updates.
+        }
+        return {
+          ...current,
+          ...patch
+        };
+      }
+
+      await this.syncUserToRtdb(firebaseUser.uid, current);
+      return current;
     }
 
-    const role = await this.inferRoleFromRtdb(firebaseUser.uid);
+    const inferred = await this.inferProfileFromRtdb(firebaseUser.uid);
     const profile: AppUser = {
       uid: firebaseUser.uid,
       email: firebaseUser.email ?? '',
       name: firebaseUser.displayName ?? '',
-      role,
+      role: inferred.role,
+      permissions: inferred.permissions,
       isActive: true
     };
 
-    await setDoc(userRef, { id: firebaseUser.uid, ...profile }, { merge: true });
+    try {
+      await setDoc(userRef, { id: firebaseUser.uid, ...profile }, { merge: true });
+    } catch {
+      // Keep login usable even if profile bootstrap write is denied by rules.
+    }
+    await this.syncUserToRtdb(firebaseUser.uid, profile);
     return profile;
   }
 
@@ -130,32 +291,20 @@ export class AuthService {
   async login(email: string, password: string) {
     try {
       const cred = await signInWithEmailAndPassword(this.auth, email, password);
-      const ref = doc(this.firestore, 'users', cred.user.uid);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const user = this.normalizeUser({ id: cred.user.uid, uid: cred.user.uid, ...snap.data() });
-        this._userSig.set(user);
-        void this.audit.log({
-          action: 'auth.login',
-          resource: 'auth',
-          status: 'success',
-          actorId: user.uid,
-          actorRole: user.role,
-          meta: { email }
-        });
-      } else {
-        const profile = await this.ensureUserProfile(cred.user);
-        this._userSig.set(profile);
-        void this.audit.log({
-          action: 'auth.login.bootstrap_profile',
-          resource: 'user',
-          status: 'success',
-          actorId: cred.user.uid,
-          actorRole: profile?.role,
-          targetUserId: cred.user.uid,
-          meta: { email, reason: 'profile_not_found' }
-        });
-      }
+      // Resolve profile through the same normalization/upgrade path used by authState,
+      // avoiding role races between Firestore snapshot and RTDB-derived role.
+      const profile = await this.ensureUserProfile(cred.user);
+      this._userSig.set(profile);
+
+      void this.audit.log({
+        action: 'auth.login',
+        resource: 'auth',
+        status: 'success',
+        actorId: profile?.uid ?? cred.user.uid,
+        actorRole: profile?.role,
+        targetUserId: cred.user.uid,
+        meta: { email }
+      });
     } catch (error: any) {
       void this.audit.log({
         action: 'auth.login',
@@ -179,6 +328,7 @@ export class AuthService {
         isActive: true
       };
       await setDoc(doc(this.firestore, 'users', cred.user.uid), { id: cred.user.uid, ...profile });
+      await this.syncUserToRtdb(cred.user.uid, profile);
       this._userSig.set(profile);
       void this.audit.log({
         action: 'auth.register',
@@ -220,6 +370,12 @@ export class AuthService {
     return this._userSig();
   }
 
+  canManageRoles(user: AppUser | null | undefined = this._userSig()): boolean {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    return user.permissions?.canManageRoles === true;
+  }
+
   async resolveCurrentUser(): Promise<AppUser | null> {
     const current = this._userSig();
     if (current) return current;
@@ -230,17 +386,9 @@ export class AuthService {
       return null;
     }
 
-    const ref = doc(this.firestore, 'users', firebaseUser.uid);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      const profile = await this.ensureUserProfile(firebaseUser);
-      this._userSig.set(profile);
-      return profile;
-    }
-
-    const user = this.normalizeUser({ id: firebaseUser.uid, uid: firebaseUser.uid, ...snap.data() });
-    this._userSig.set(user);
-    return user;
+    const profile = await this.ensureUserProfile(firebaseUser);
+    this._userSig.set(profile);
+    return profile;
   }
 
   async updateCurrentUserProfile(data: Partial<AppUser>): Promise<void> {
@@ -250,6 +398,7 @@ export class AuthService {
     try {
       const ref = doc(this.firestore, 'users', current.uid);
       await updateDoc(ref, data);
+      await this.syncUserToRtdb(current.uid, { ...current, ...data });
       this._userSig.set({ ...current, ...data });
       void this.audit.log({
         action: 'user.profile.update',

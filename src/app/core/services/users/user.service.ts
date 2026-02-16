@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Database, onValue, ref } from '@angular/fire/database';
 import { Firestore, collection, collectionData, doc, docData, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from '@angular/fire/firestore';
-import { catchError, combineLatest, map, Observable, of } from 'rxjs';
+import { catchError, combineLatest, map, Observable, of, startWith } from 'rxjs';
 import { AuthService } from '../auth/authservice';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuditLogService } from '../audit/audit-log.service';
@@ -10,7 +10,21 @@ export type UserRole = 'admin' | 'staff' | 'client' | 'user' | 'guest' | 'public
 
 export interface UserPermissions {
   canManageRoles?: boolean;
+  canManageBookings?: boolean;
+  canManageProjects?: boolean;
+  canManageSessions?: boolean;
+  canReassignProjectArtist?: boolean;
+  canReassignProjectClient?: boolean;
+  canViewFinancials?: boolean;
+  canManageMessages?: boolean;
+  canManageServices?: boolean;
+  canManageBonus?: boolean;
+  canViewAnalytics?: boolean;
+  canViewAuditLogs?: boolean;
+  [key: string]: boolean | undefined;
 }
+
+export type StaffLevel = 'junior' | 'operator' | 'senior' | 'manager';
 
 export interface User {
   id: string;
@@ -19,6 +33,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  staffLevel?: StaffLevel;
   permissions?: UserPermissions;
   phone?: string;
   isActive?: boolean;
@@ -38,6 +53,16 @@ export class UserService {
   private ui = inject(UiFeedbackService);
   private audit = inject(AuditLogService);
 
+  private normalizePermissions(input: any): UserPermissions {
+    const source = (input && typeof input === 'object') ? input as Record<string, any> : {};
+    const normalized: UserPermissions = {};
+    for (const [key, value] of Object.entries(source)) {
+      normalized[key] = value === true;
+    }
+    if (normalized.canManageRoles === undefined) normalized.canManageRoles = false;
+    return normalized;
+  }
+
   constructor() {}
 
   private normalizeUser(input: any): User {
@@ -51,9 +76,8 @@ export class UserService {
       name: String(raw['name'] ?? ''),
       email: String(raw['email'] ?? ''),
       role: (String(raw['role'] ?? 'guest') as UserRole),
-      permissions: {
-        canManageRoles: raw['permissions']?.['canManageRoles'] === true
-      },
+      staffLevel: (raw['staffLevel'] as StaffLevel | undefined),
+      permissions: this.normalizePermissions(raw['permissions']),
       phone: raw['phone'] ? String(raw['phone']) : undefined,
       isActive: raw['isActive'] !== undefined ? Boolean(raw['isActive']) : undefined,
       isVisible: raw['isVisible'] !== undefined ? Boolean(raw['isVisible']) : undefined,
@@ -187,10 +211,12 @@ export class UserService {
     const usersQuery = query(usersRef, where('role', 'in', ['user', 'client', 'staff', 'admin']));
     const firestore$ = (collectionData(usersQuery, { idField: 'id' }) as Observable<any[]>).pipe(
       map(users => this.normalizeUsers(users)),
-      catchError(() => of([]))
+      catchError(() => of([])),
+      startWith([] as User[])
     );
     const rtdb$ = this.streamRtdbUsers().pipe(
-      map(users => users.filter(u => ['user', 'client', 'staff', 'admin'].includes(u.role)))
+      map(users => users.filter(u => ['user', 'client', 'staff', 'admin'].includes(u.role))),
+      startWith([] as User[])
     );
     return combineLatest([firestore$, rtdb$]).pipe(
       map(([fsUsers, rtdbUsers]) => this.mergeUsers(fsUsers, rtdbUsers)),

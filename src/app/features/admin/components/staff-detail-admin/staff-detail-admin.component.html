@@ -1,0 +1,112 @@
+<section class="page">
+  <header class="hdr">
+    <button mat-stroked-button type="button" (click)="back()">
+      <mat-icon>arrow_back</mat-icon>
+      Staff
+    </button>
+
+    <div class="title">
+      <div class="name">{{ member?.name || staffId }}</div>
+      <div class="meta">
+        <span class="pill" [class.on]="member?.isActive !== false">{{ member?.isActive !== false ? 'Attivo' : 'Non attivo' }}</span>
+        <span class="role">{{ member?.role | titlecase }}</span>
+      </div>
+    </div>
+
+    <div class="actions"></div>
+  </header>
+
+  <mat-divider class="sep"></mat-divider>
+
+  <mat-tab-group class="tabs" animationDuration="0ms">
+    <mat-tab label="Calendario">
+      <div class="panel">
+        <h3>Selezionabile nel calendario</h3>
+        <p class="hint">Se disattivo, lo staff non sara selezionabile per nuovi eventi nel calendario.</p>
+
+        <mat-divider class="sep soft"></mat-divider>
+
+        <form [formGroup]="calendarForm" class="form">
+          <mat-slide-toggle formControlName="enabled">Abilitato</mat-slide-toggle>
+
+          <div class="grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Colore</mat-label>
+              <input matInput type="color" formControlName="color" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Inizio giornata</mat-label>
+              <input matInput type="time" formControlName="workdayStart" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Fine giornata</mat-label>
+              <input matInput type="time" formControlName="workdayEnd" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Step (min)</mat-label>
+              <input matInput type="number" formControlName="stepMinutes" />
+            </mat-form-field>
+          </div>
+
+          <div class="btnrow">
+            <button mat-flat-button color="primary" type="button" (click)="saveCalendar()">
+              Salva calendario
+            </button>
+          </div>
+        </form>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Orari">
+      <div class="panel">
+        <h3>Disponibilita settimanale</h3>
+        <p class="hint">Definisci fasce orarie per ogni giorno. (Usato per suggerire slot disponibili)</p>
+
+        <mat-divider class="sep soft"></mat-divider>
+
+        <div class="week">
+          <div class="day" *ngFor="let d of days">
+            <div class="dayhdr">
+              <div class="dayname">{{ d.label }}</div>
+              <button mat-stroked-button type="button" (click)="addSlot(d.key)">
+                <mat-icon>add</mat-icon>
+                Fascia
+              </button>
+            </div>
+
+            <div class="slots" *ngIf="availability.week[d.key]?.length; else emptySlots">
+              <div class="slot" *ngFor="let s of availability.week[d.key]; let i = index">
+                <mat-form-field appearance="outline">
+                  <mat-label>Da</mat-label>
+                  <input matInput type="time" [value]="s.start" (input)="patchSlot(d.key, i, { start: ($any($event.target).value) })" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>A</mat-label>
+                  <input matInput type="time" [value]="s.end" (input)="patchSlot(d.key, i, { end: ($any($event.target).value) })" />
+                </mat-form-field>
+
+                <button mat-icon-button color="warn" type="button" (click)="removeSlot(d.key, i)" aria-label="Rimuovi fascia">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <ng-template #emptySlots>
+              <div class="empty">Nessuna fascia impostata.</div>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="btnrow">
+          <button mat-flat-button color="primary" type="button" (click)="saveAvailability()">
+            Salva orari
+          </button>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</section>

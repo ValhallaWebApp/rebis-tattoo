@@ -14,6 +14,9 @@ import {
 } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
+import { AuthService } from '../auth/authservice';
+import { ProjectsService } from '../projects/projects.service';
+import { BookingService } from '../bookings/booking.service';
 
 /** ✅ CANONICO APP (NUOVO) */
 export interface Session {
@@ -60,6 +63,20 @@ export class SessionService {
   private readonly db = inject(Database);
   private readonly ui = inject(UiFeedbackService);
   private readonly zone = inject(NgZone);
+  private readonly auth = inject(AuthService);
+  private readonly projects = inject(ProjectsService);
+  private readonly bookings = inject(BookingService);
+
+  private ensureStaffPermission(permissionKey: string, missingMessage: string): void {
+    const user = this.auth.userSig();
+    if (!user) return;
+    if (user.role === 'admin') return;
+    if (user.role !== 'staff') return;
+    if (user.permissions?.[permissionKey] === true) return;
+
+    this.showMessage(missingMessage, true);
+    throw new Error(`PERMISSION_DENIED:${permissionKey}`);
+  }
 
   // -----------------------------
   // PUBLIC API (NUOVO)
@@ -88,19 +105,64 @@ export class SessionService {
   }
 
   async create(session: Omit<Session, 'id' | 'createdAt' | 'updatedAt'> & Partial<Pick<Session, 'createdAt' | 'updatedAt'>>): Promise<string> {
+    this.ensureStaffPermission(
+      'canManageSessions',
+      'Permesso mancante: gestione sessioni.'
+    );
     try {
+      let projectId = String((session as any)?.projectId ?? '').trim();
+      let resolvedArtistId = this.normalizeIdCandidate(
+        (session as any)?.artistId ?? (session as any)?.idArtist ?? (session as any)?.artistIds
+      );
+      let resolvedClientId = this.normalizeIdCandidate(
+        (session as any)?.clientId ?? (session as any)?.idClient
+      );
+      if (!projectId) {
+        const bookingId = String((session as any)?.bookingId ?? '').trim();
+        if (bookingId) {
+          const b = await this.bookings.getBookingById(bookingId);
+          const inferred = String((b as any)?.projectId ?? '').trim();
+          if (inferred) projectId = inferred;
+        }
+      }
+
+      if (projectId) {
+        const project = await this.projects.getProjectById(projectId);
+        if (!project) {
+          this.showMessage('Progetto non trovato: impossibile creare la sessione.', true);
+          throw new Error(`PROJECT_NOT_FOUND:${projectId}`);
+        }
+        const { artistId: pArtistId, clientId: pClientId } = this.getProjectPartyIds(project);
+        if (pArtistId && (!resolvedArtistId || pArtistId !== resolvedArtistId)) {
+          this.showMessage('Artista sessione allineato automaticamente al progetto.');
+          resolvedArtistId = pArtistId;
+        }
+        if (pClientId && (!resolvedClientId || pClientId !== resolvedClientId)) {
+          this.showMessage('Cliente sessione allineato automaticamente al progetto.');
+          resolvedClientId = pClientId;
+        }
+      }
+
       const node = push(ref(this.db, this.path));
       const now = this.formatLocal(new Date());
 
       const payloadApp: Session = {
         ...(session as any),
+        artistId: resolvedArtistId,
+        clientId: resolvedClientId || undefined,
         id: node.key!,
+        projectId: projectId || (session as any).projectId || undefined,
         createdAt: session.createdAt ?? now,
         updatedAt: session.updatedAt ?? now,
         status: (session as any).status ?? 'planned'
       };
 
       await set(node, this.toDb(payloadApp));
+
+      if (projectId) {
+        await this.projects.addSession(projectId, node.key!);
+      }
+
       this.showMessage('Seduta creata con successo');
       return node.key!;
     } catch (error) {
@@ -111,13 +173,61 @@ export class SessionService {
   }
 
   async update(id: string, changes: Partial<Session>): Promise<void> {
+    this.ensureStaffPermission(
+      'canManageSessions',
+      'Permesso mancante: gestione sessioni.'
+    );
+    const normalizedChanges: Partial<Session> = { ...changes };
     try {
+      const current = await this.getSessionById(id);
+      const oldProjectId = String((current as any)?.projectId ?? '').trim();
+      const nextProjectId =
+        Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'projectId')
+          ? String((normalizedChanges as any).projectId ?? '').trim()
+          : oldProjectId;
+
+      // Validate against project if linked.
+      if (nextProjectId) {
+        const project = await this.projects.getProjectById(nextProjectId);
+        if (!project) {
+          this.showMessage('Progetto non trovato: impossibile aggiornare la sessione.', true);
+          throw new Error(`PROJECT_NOT_FOUND:${nextProjectId}`);
+        }
+        const { artistId: pArtistId, clientId: pClientId } = this.getProjectPartyIds(project);
+        let sArtistId = Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'artistId')
+          ? this.normalizeIdCandidate((normalizedChanges as any).artistId)
+          : this.normalizeIdCandidate((current as any)?.artistId ?? (current as any)?.idArtist);
+        let sClientId = Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'clientId')
+          ? this.normalizeIdCandidate((normalizedChanges as any).clientId)
+          : this.normalizeIdCandidate((current as any)?.clientId ?? (current as any)?.idClient);
+
+        if (pArtistId && (!sArtistId || pArtistId !== sArtistId)) {
+          this.showMessage('Artista sessione allineato automaticamente al progetto.');
+          sArtistId = pArtistId;
+        }
+        if (pClientId && (!sClientId || pClientId !== sClientId)) {
+          this.showMessage('Cliente sessione allineato automaticamente al progetto.');
+          sClientId = pClientId;
+        }
+        if (sArtistId) (normalizedChanges as any).artistId = sArtistId;
+        if (sClientId) (normalizedChanges as any).clientId = sClientId;
+      }
+
       const patchDb = this.toDbPatch({
-        ...changes,
+        ...normalizedChanges,
         updatedAt: this.formatLocal(new Date())
       });
 
       await update(ref(this.db, `${this.path}/${id}`), patchDb);
+
+      // Sync project.sessionIds if projectId changed (or removed).
+      if (oldProjectId && oldProjectId !== nextProjectId) {
+        await this.projects.removeSession(oldProjectId, id);
+      }
+      if (nextProjectId) {
+        await this.projects.addSession(nextProjectId, id);
+      }
+
       this.showMessage('Seduta aggiornata con successo');
     } catch (error) {
       console.error('Errore aggiornamento seduta:', error);
@@ -127,6 +237,10 @@ export class SessionService {
   }
 
   async delete(id: string): Promise<void> {
+    this.ensureStaffPermission(
+      'canManageSessions',
+      'Permesso mancante: gestione sessioni.'
+    );
     try {
       await remove(ref(this.db, `${this.path}/${id}`));
       this.showMessage('Seduta eliminata con successo');
@@ -252,6 +366,24 @@ export class SessionService {
     if (out.updatedAt) out.updatedAt = this.normalizeLocalDateTime(out.updatedAt);
 
     return this.stripUndef(out);
+  }
+
+  private normalizeIdCandidate(value: any): string {
+    if (Array.isArray(value)) {
+      const first = value.find(v => typeof v === 'string' && v.trim().length > 0);
+      return String(first ?? '').trim();
+    }
+    return String(value ?? '').trim();
+  }
+
+  private getProjectPartyIds(project: any): { artistId: string; clientId: string } {
+    const artistId = this.normalizeIdCandidate(
+      (project as any)?.artistId ?? (project as any)?.idArtist ?? (project as any)?.artistIds
+    );
+    const clientId = this.normalizeIdCandidate(
+      (project as any)?.clientId ?? (project as any)?.idClient
+    );
+    return { artistId, clientId };
   }
 
   // -----------------------------

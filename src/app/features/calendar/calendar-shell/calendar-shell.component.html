@@ -36,14 +36,14 @@
     </div>
   </div>
 
-  <div class="filters">
+  <div class="filters" *ngIf="view() !== 'day'">
     <div class="filters-title">
       <mat-icon>groups</mat-icon>
       Artisti in vista
     </div>
 
     <mat-chip-listbox multiple [value]="selectedArtistIds()" (change)="onArtistsChipChange($event)">
-      <mat-chip-option *ngFor="let a of artists" [value]="a.id" [disabled]="a.isActive === false">
+      <mat-chip-option *ngFor="let a of artists" [value]="a.id" [disabled]="a.isActive === false || a.calendarEnabled === false">
         {{ a.name }}
       </mat-chip-option>
     </mat-chip-listbox>
@@ -85,8 +85,8 @@
           <app-day-view
             *ngIf="view()==='day'"
             [date]="anchorDate()"
-            [artists]="selectedArtists()"
-            [events]="eventsForSelectedArtists()"
+            [artists]="dayArtists()"
+            [events]="events"
             (createFromSlot)="openCreateFromDay($event)"
             (editEvent)="openEditEvent($event)"
             (action)="onDayAction($event)"

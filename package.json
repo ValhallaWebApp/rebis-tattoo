@@ -9,8 +9,10 @@
     "build:stage": "ng build --configuration stage",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "db:generate:mock": "node scripts/generate-rich-mock-dataset.js",
     "db:export": "powershell -ExecutionPolicy Bypass -File scripts/firebase-rtdb-export.ps1",
     "db:import:mock": "powershell -ExecutionPolicy Bypass -File scripts/firebase-rtdb-import.ps1 -InputFile firebase-rtdb-export.mock.safe.json",
+    "db:import:firestore-users": "powershell -ExecutionPolicy Bypass -File scripts/firestore-users-import.ps1 -InputFile firestore-users.mock.json",
     "db:import:live": "powershell -ExecutionPolicy Bypass -File scripts/firebase-rtdb-import.ps1",
     "functions:install": "npm --prefix functions install",
     "firebase:deploy": "firebase.cmd deploy --only functions,database --project rebis-tattoo-55816"

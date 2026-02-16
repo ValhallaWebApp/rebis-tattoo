@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { Invoice, InvoicesService } from '../../../../core/services/invoices/invoices.service';
+import { AuthService } from '../../../../core/services/auth/authservice';
 
 @Component({
   selector: 'app-billing',
@@ -17,7 +18,11 @@ export class BillingComponent implements OnInit {
   allInvoices: Invoice[] = []
   filteredPayments: Invoice[] = [];
 
-  constructor(private invoiceService: InvoicesService, private router: Router) {}
+  constructor(
+    private invoiceService: InvoicesService,
+    private router: Router,
+    private auth: AuthService
+  ) {}
   generateInvoicesFromBookings(): void {
   this.allInvoices.forEach(invoice => {
       this.invoiceService.addInvoice(invoice).then(() => {
@@ -66,7 +71,8 @@ getStatusColor(status: string): string {
 
   goToBooking(invoiceId: string) {
     // opzionale: naviga alla prenotazione o dettaglio fattura
-    this.router.navigate(['/admin/invoices', invoiceId]);
+    const base = this.auth.userSig()?.role === 'staff' ? '/staff' : '/admin';
+    this.router.navigate([`${base}/invoices`, invoiceId]);
   }
 
   onStatusChange() {

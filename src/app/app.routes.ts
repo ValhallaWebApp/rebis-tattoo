@@ -5,6 +5,7 @@ import { ChiSiamoComponent } from './features/public/chi-siamo/chi-siamo.compone
 import { ContattiComponent } from './features/public/contatti/contatti.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { AdminGuard } from './core/guards/admin.guard';
+import { AdminOnlyGuard } from './core/guards/admin-only.guard';
 import { FastBookingPageComponent } from './features/public/fast-booking/pages/fast-booking-page/fast-booking-page.component';
 
 export const routes: Routes = [
@@ -45,7 +46,8 @@ export const routes: Routes = [
   { path: 'contatti', component: ContattiComponent },
 
   { path: 'dashboard', loadChildren: () => import('./features/clients/clients.module').then(m => m.ClientsModule), canActivate: [AuthGuard] },
-  { path: 'admin', loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule), canActivate: [AdminGuard] },
+  { path: 'staff', loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule), canActivate: [AdminGuard] },
+  { path: 'admin', loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule), canActivate: [AdminOnlyGuard] },
 
   { path: '**', redirectTo: '/home' }
 ];

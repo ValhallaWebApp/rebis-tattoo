@@ -1,0 +1,62 @@
+{
+  "aud_boot_001": {
+    "id": "aud_boot_001",
+    "action": "auth.login",
+    "resource": "auth",
+    "resourceId": "cli_01",
+    "status": "success",
+    "actorId": "cli_01",
+    "actorRole": "client",
+    "targetUserId": "cli_01",
+    "at": "2026-02-15T21:10:00.000Z",
+    "meta": {
+      "email": "cliente.alfa@rebistattoo.it",
+      "source": "bootstrap"
+    }
+  },
+  "aud_boot_002": {
+    "id": "aud_boot_002",
+    "action": "auth.login",
+    "resource": "auth",
+    "resourceId": "cli_02",
+    "status": "success",
+    "actorId": "cli_02",
+    "actorRole": "client",
+    "targetUserId": "cli_02",
+    "at": "2026-02-15T21:11:00.000Z",
+    "meta": {
+      "email": "cliente.beta@rebistattoo.it",
+      "source": "bootstrap"
+    }
+  },
+  "aud_boot_003": {
+    "id": "aud_boot_003",
+    "action": "auth.login",
+    "resource": "auth",
+    "resourceId": "cli_03",
+    "status": "success",
+    "actorId": "cli_03",
+    "actorRole": "client",
+    "targetUserId": "cli_03",
+    "at": "2026-02-15T21:12:00.000Z",
+    "meta": {
+      "email": "cliente.gamma@rebistattoo.it",
+      "source": "bootstrap"
+    }
+  },
+  "aud_boot_004": {
+    "id": "aud_boot_004",
+    "action": "auth.login",
+    "resource": "auth",
+    "resourceId": "cli_04",
+    "status": "success",
+    "actorId": "cli_04",
+    "actorRole": "client",
+    "targetUserId": "cli_04",
+    "at": "2026-02-15T21:13:00.000Z",
+    "meta": {
+      "email": "cliente.delta@rebistattoo.it",
+      "source": "bootstrap"
+    }
+  }
+}

@@ -32,8 +32,15 @@
     <!-- ARTIST -->
     <mat-form-field appearance="outline">
       <mat-label>Artista *</mat-label>
-      <mat-select formControlName="artistId" [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()">
-        <mat-option *ngFor="let a of artists" [value]="a.id">{{ a.name }}</mat-option>
+      <mat-select formControlName="artistId">
+        <mat-option
+          *ngIf="shouldShowSelectedArtistFallback()"
+          [value]="form.controls.artistId.value">
+          {{ form.controls.artistId.value }}
+        </mat-option>
+        <mat-option *ngFor="let a of artists" [value]="a.id" [disabled]="a.isActive === false || a.calendarEnabled === false">
+          {{ a.name }}
+        </mat-option>
       </mat-select>
       <mat-error *ngIf="form.controls.artistId.touched && form.controls.artistId.hasError('required')">
         Seleziona un artista
@@ -44,7 +51,7 @@
     <div class="row2">
       <mat-form-field appearance="outline">
         <mat-label>Data *</mat-label>
-        <input matInput [matDatepicker]="picker" formControlName="day" [disabled]="isScheduleLocked() || isBookingScheduleLocked()" />
+        <input matInput [matDatepicker]="picker" formControlName="day" />
         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-datepicker #picker></mat-datepicker>
         <mat-error *ngIf="form.controls.day.touched && form.controls.day.hasError('required')">
@@ -54,7 +61,7 @@
 
     <mat-form-field appearance="outline">
       <mat-label>Ora *</mat-label>
-      <mat-select formControlName="time" [disabled]="!form.controls.artistId.value || isScheduleLocked() || isBookingScheduleLocked()">
+      <mat-select formControlName="time">
         <mat-option *ngFor="let t of availableTimeOptions" [value]="t">{{ t }}</mat-option>
       </mat-select>
       <mat-error *ngIf="form.controls.time.touched && form.controls.time.hasError('required')">
@@ -66,7 +73,7 @@
     <!-- DURATION -->
     <mat-form-field appearance="outline">
       <mat-label>Durata (min) *</mat-label>
-      <mat-select formControlName="durationMinutes" [disabled]="isScheduleLocked() || isBookingScheduleLocked()">
+      <mat-select formControlName="durationMinutes">
         <mat-option *ngFor="let d of durationOptions" [value]="d">{{ d }}</mat-option>
       </mat-select>
       <mat-error *ngIf="form.controls.durationMinutes.touched && form.controls.durationMinutes.hasError('min')">
@@ -143,15 +150,14 @@
     <mat-form-field appearance="outline">
       <mat-label>{{ isSession() ? 'Progetto *' : 'Progetto (opzionale)' }}</mat-label>
 
-      <input
-        matInput
-        type="text"
-        formControlName="projectQuery"
-        [matAutocomplete]="projectAuto"
-        placeholder="Scrivi titolo progetto"
-        (blur)="onProjectBlur()"
-        [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()"
-      />
+        <input
+          matInput
+          type="text"
+          formControlName="projectQuery"
+          [matAutocomplete]="projectAuto"
+          placeholder="Scrivi titolo progetto"
+          (blur)="onProjectBlur()"
+        />
 
       <button
         mat-icon-button
@@ -200,15 +206,14 @@
     <mat-form-field appearance="outline" *ngIf="isSession()">
       <mat-label>Booking di riferimento (opzionale)</mat-label>
 
-      <input
-        matInput
-        type="text"
-        formControlName="bookingQuery"
-        [matAutocomplete]="bookingAuto"
-        placeholder="Cerca booking"
-        (blur)="onBookingBlur()"
-        [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()"
-      />
+        <input
+          matInput
+          type="text"
+          formControlName="bookingQuery"
+          [matAutocomplete]="bookingAuto"
+          placeholder="Cerca booking"
+          (blur)="onBookingBlur()"
+        />
 
       <button
         mat-icon-button
@@ -254,7 +259,7 @@
       <div class="row2">
         <mat-form-field appearance="outline">
           <mat-label>N° Sessione</mat-label>
-          <input matInput type="number" formControlName="sessionNumber" [disabled]="isAssignmentLocked()" />
+          <input matInput type="number" formControlName="sessionNumber" />
           <mat-hint>Auto: in base al progetto selezionato</mat-hint>
         </mat-form-field>
 

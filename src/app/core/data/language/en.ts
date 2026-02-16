@@ -5,6 +5,7 @@ export const dataEn = {
       headlineLine2: 'WORSE.',
       subtext: '(the sentence we hear most right after a tattoo)',
       description: 'Afraid of pain? Everyone is. Then they walk into Rebis and realize...',
+      cta: 'Book now',
       ctaLine1: 'BOOK NOW',
       ctaLine2: 'YOUR TATTOO'
     },

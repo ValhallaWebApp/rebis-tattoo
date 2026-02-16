@@ -105,7 +105,7 @@
         <div class="hero__kpi">
           <div class="kpi">
             <div class="k">Booking</div>
-            <div class="v">{{ vm.booking.status || '-' }}</div>
+            <div class="v">{{ vm.booking?.status || '-' }}</div>
           </div>
           <div class="kpi">
             <div class="k">Sessioni</div>
@@ -122,7 +122,7 @@
         </div>
 
         <div class="hero__actions">
-          <button mat-stroked-button type="button" *ngIf="p.clientId" [routerLink]="['/admin/clients']" [queryParams]="{ q: p.clientId }">
+          <button mat-stroked-button type="button" *ngIf="p.clientId" [routerLink]="openClientsLink()" [queryParams]="clientFilterParams(p.clientId)">
             <mat-icon>person</mat-icon>
             Cliente
           </button>

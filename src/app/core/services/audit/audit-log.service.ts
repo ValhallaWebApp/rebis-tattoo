@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Database, get, onValue, push, ref, remove, set } from '@angular/fire/database';
+import { Auth } from '@angular/fire/auth';
 import { Observable } from 'rxjs';
 
 export type AuditStatus = 'success' | 'error';
@@ -25,9 +26,12 @@ export interface AuditLogRecord extends AuditLogEvent {
 export class AuditLogService {
   private readonly path = 'auditLogs';
 
-  constructor(private db: Database) {}
+  constructor(private db: Database, private auth: Auth) {}
 
   async log(event: AuditLogEvent): Promise<void> {
+    // Avoid noisy permission errors for public/anonymous context.
+    if (!this.auth.currentUser) return;
+
     const now = new Date().toISOString();
     const node = push(ref(this.db, this.path));
     const id = node.key ?? `${Date.now()}`;
@@ -39,8 +43,8 @@ export class AuditLogService {
       resource: event.resource,
       resourceId: event.resourceId,
       status: event.status ?? 'success',
-      actorId: event.actorId ?? 'system',
-      actorRole: event.actorRole ?? 'system',
+      actorId: event.actorId ?? this.auth.currentUser.uid,
+      actorRole: event.actorRole ?? 'authenticated',
       targetUserId: event.targetUserId,
       message: event.message,
       meta: event.meta
