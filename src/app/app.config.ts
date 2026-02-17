@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideZoneChangeDetection, LOCALE_ID } from '@angular/core';
 import { provideRouter, withHashLocation } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
@@ -16,6 +16,7 @@ import {
   MAT_NATIVE_DATE_FORMATS,
 } from '@angular/material/core';
 import { environment } from '../environment';
+import { authHttpInterceptor } from './core/interceptors/auth-http.interceptor';
 
 import { routes } from './app.routes';
 
@@ -25,7 +26,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
 
     // 🌐 HTTP
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authHttpInterceptor])),
 
     // 🌍 Router
     provideRouter(routes, withHashLocation()),

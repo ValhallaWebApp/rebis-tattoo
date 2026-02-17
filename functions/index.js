@@ -3,7 +3,12 @@ const cors = require('cors');
 const Stripe = require('stripe');
 const { onRequest } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
+const { initializeApp, getApps } = require('firebase-admin/app');
 require('dotenv').config();
+
+if (getApps().length === 0) {
+  initializeApp();
+}
 
 const defaultOrigins = [
   'http://localhost:4200',

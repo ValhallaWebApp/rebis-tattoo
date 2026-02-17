@@ -70,6 +70,7 @@ export class MenuService {
       { label: 'Calendario', route: '/admin/calendar' },
       { label: 'Clienti', route: '/admin/clients' },
       { label: 'Permessi', route: '/admin/permissions' },
+      { label: 'Servizi', route: '/admin/servizi' },
       { label: 'Portfolio', route: '/admin/portfolio' },
       { label: 'Staff', route: '/admin/staff' }
     ]

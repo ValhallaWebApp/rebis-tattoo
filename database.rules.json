@@ -15,7 +15,8 @@
       ".read": "auth != null && root.child('adminUids/' + auth.uid).val() === true",
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || root.child('adminUids/' + auth.uid).val() === true)",
-        ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || (auth.uid === $uid && (!newData.exists() || ((!newData.child('role').exists() || newData.child('role').val() === data.child('role').val()) && (!newData.child('permissions').exists() || newData.child('permissions').val() === data.child('permissions').val())))))"
+        ".write": "auth != null && (auth.uid === $uid || root.child('adminUids/' + auth.uid).val() === true)",
+        ".validate": "!newData.exists() || (newData.child('role').isString() && (newData.child('role').val() === 'admin' || newData.child('role').val() === 'staff' || newData.child('role').val() === 'client' || newData.child('role').val() === 'public' || newData.child('role').val() === 'guest'))"
       }
     },
 

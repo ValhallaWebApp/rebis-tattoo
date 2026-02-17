@@ -33,6 +33,12 @@ export class NotificationService {
     private ui: UiFeedbackService
   ) {}
 
+  private isPermissionDenied(error: unknown): boolean {
+    const code = String((error as any)?.code ?? '').toLowerCase();
+    const message = String((error as any)?.message ?? '').toLowerCase();
+    return code.includes('permission-denied') || message.includes('permission_denied') || message.includes('permission denied');
+  }
+
   getUserNotifications(userId: string): Observable<AppNotification[]> {
     if (!userId) return of([]);
 
@@ -53,7 +59,13 @@ export class NotificationService {
 
           observer.next(notifications);
         },
-        error => observer.error(error)
+        error => {
+          if (this.isPermissionDenied(error)) {
+            observer.next([]);
+            return;
+          }
+          observer.error(error);
+        }
       );
 
       return () => unsubscribe();
@@ -84,8 +96,13 @@ export class NotificationService {
       meta: payload.meta
     };
 
-    await set(node, this.stripUndef(notification));
-    return id;
+    try {
+      await set(node, this.stripUndef(notification));
+      return id;
+    } catch (error) {
+      if (this.isPermissionDenied(error)) return id;
+      throw error;
+    }
   }
 
   async markAsRead(userId: string, notificationId: string): Promise<void> {
@@ -93,6 +110,7 @@ export class NotificationService {
       const notificationRef = ref(this.db, `${this.path}/${userId}/${notificationId}`);
       await update(notificationRef, { readAt: new Date().toISOString() });
     } catch (error) {
+      if (this.isPermissionDenied(error)) return;
       this.ui.error('Errore aggiornamento notifica');
       throw error;
     }
@@ -119,6 +137,7 @@ export class NotificationService {
       await update(userRef, updates);
       this.ui.info('Notifiche segnate come lette');
     } catch (error) {
+      if (this.isPermissionDenied(error)) return;
       this.ui.error('Errore aggiornamento notifiche');
       throw error;
     }
@@ -129,6 +148,7 @@ export class NotificationService {
       await remove(ref(this.db, `${this.path}/${userId}/${notificationId}`));
       this.ui.info('Notifica eliminata');
     } catch (error) {
+      if (this.isPermissionDenied(error)) return;
       this.ui.error('Errore eliminazione notifica');
       throw error;
     }
