@@ -175,7 +175,7 @@ export class NotificationService {
 
     if (type === 'chat') {
       if (isAdmin) return `${backofficeBase}/messaging`;
-      if (isStaff) return staffSafeBase;
+      if (isStaff) return `${staffSafeBase}/messaging`;
       return '/dashboard/chat';
     }
 

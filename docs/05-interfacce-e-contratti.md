@@ -1,17 +1,13 @@
-﻿# 05 - Interfacce e Contratti
+# 05 - Interfacce e Contratti
 
 ## Interfacce dominio (core/models)
 - `Booking`, `BookingChatDraft`, `BookingStatus`
-- `CalendarEvent`
-- `ChatMessage`, `ChatThread`
-- `Client`
-- `Invoice`
-- `Conversation`, `ConversationMessage`
-- `AppNotification`, `NotificationType`, `NotificationPriority`
-- `Project`
-- `TattooService`
+- `Conversation`, `ConversationMessage`, `ParticipantRole`
+- `Project`, `ProjectStatus`
+- `AppUser`, `UserRole`, `UserPermissions`
 - `StaffMember`
-- `AppUser`, `UserRole`
+- `Invoice`
+- `AppNotification`, `NotificationType`, `NotificationPriority`
 
 ## Interfacce servizi (core/services)
 - Auth:
@@ -25,6 +21,32 @@
   - `PromoCode`, `GiftCard`, `UserWallet`, `WalletLedgerEntry`
 - Messaging:
   - `ConversationStatus`, `MessageKind`, `ParticipantRole`
+
+## Contratto RTDB allineato al dataset attuale
+Root nodes principali:
+- `auditLogs`
+- `bookings`
+- `conversations`
+- `projects`
+- `services`
+- `sessions`
+- `staffProfiles`
+- `userConversations`
+- `users`
+
+Pattern dati attuali:
+- Booking:
+  - canonico: `clientId`, `artistId`, `createdAt`, `updatedAt`, `notes`, `projectId`
+  - i campi legacy `idClient`, `idArtist`, `createAt`, `updateAt`, `description` sono bloccati in scrittura dal service
+- Session:
+  - canonico: `artistId`, `clientId`, `projectId`, `bookingId` (opzionale), `start`, `end`
+- Project:
+  - prevale `artistId`/`clientId` con `bookingId`, `sessionIds[]`
+- User:
+  - campi completi profilo (`id`, `uid`, `role`, `permissions`, `isActive`, `isVisible`, `urlAvatar`, ecc.)
+- Conversation:
+  - `participants: Record<uid, role>`
+  - `unreadBy: Record<uid, number>`
 
 ## Contratto Payment API usato dal frontend
 Request `POST /create`:
@@ -51,11 +73,8 @@ Response:
   - `appId`
   - `measurementId?`
 
-## Compatibilita legacy note
-Persistono campi duplicati in alcuni modelli/servizi:
-- `clientId` / `idClient`
-- `artistId` / `idArtist`
-- `createdAt` / `createAt`
-- `updatedAt` / `updateAt`
-
-Il codice include bridge di compatibilita in `BookingService`.
+## Note compatibilita
+Il codice mantiene bridge attivi per alias legacy, in particolare su:
+- `BookingService`
+- `SessionService`
+- `ProjectsService` (read/write misti su dataset eterogenei)

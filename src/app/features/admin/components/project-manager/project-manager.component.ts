@@ -428,11 +428,8 @@ export class ProjectManagerComponent {
       return;
     }
 
-    const legacyArtistIds = Array.isArray((p as any)?.artistIds)
-      ? (p as any).artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
-      : [];
-    const artistId = String((p as any)?.artistId ?? (p as any)?.idArtist ?? legacyArtistIds[0] ?? '').trim();
-    const clientId = String((p as any)?.clientId ?? (p as any)?.idClient ?? '').trim();
+    const artistId = String((p as any)?.artistId ?? '').trim();
+    const clientId = String((p as any)?.clientId ?? '').trim();
     const zone = String((p as any)?.zone ?? '').trim();
     const title = String((p as any)?.title ?? '').trim();
     const notes = String((p as any)?.notes ?? '').trim();
@@ -468,11 +465,8 @@ export class ProjectManagerComponent {
       return;
     }
 
-    const legacyArtistIds = Array.isArray((p as any)?.artistIds)
-      ? (p as any).artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
-      : [];
-    const artistId = String((p as any)?.artistId ?? (p as any)?.idArtist ?? legacyArtistIds[0] ?? '').trim();
-    const clientId = String((p as any)?.clientId ?? (p as any)?.idClient ?? '').trim();
+    const artistId = String((p as any)?.artistId ?? '').trim();
+    const clientId = String((p as any)?.clientId ?? '').trim();
 
     void this.router.navigate([this.getBackofficeBase() + '/calendar'], {
       queryParams: {
@@ -601,7 +595,7 @@ export class ProjectManagerComponent {
   }
 
   updatedAtOf(p: TattooProject): string {
-    return String((p as any).updatedAt ?? (p as any).updateAt ?? '').trim();
+    return String((p as any).updatedAt ?? '').trim();
   }
 
   styleLabel(p: TattooProject): string {

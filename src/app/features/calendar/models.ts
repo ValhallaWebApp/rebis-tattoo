@@ -29,6 +29,12 @@ export interface UiCalendarEvent {
   sessionNumber?: number;
   status?: string;
   notes?: string;
+  notesByAdmin?: string;
+  healingNotes?: string;
+  painLevel?: number;
+  paidAmount?: number;
+  zone?: string;
+  createdById?: string;
 
   // UI-only helpers (optional)
   title?: string; // es: "Booking - Mario"
@@ -45,14 +51,20 @@ export interface CreateDraft {
   clientId?: string;
   projectId?: string;
   bookingId?: string;
+  zone?: string;
   notes?: string;
+  notesByAdmin?: string;
+  healingNotes?: string;
+  painLevel?: number;
+  paidAmount?: number;
+  sessionNumber?: number;
   status?: string;
 }
 
 export interface UpdatePatch {
   id: string;
   type: UiEventType;
-  patch: Partial<Pick<UiCalendarEvent, 'start' | 'end' | 'durationMinutes' | 'notes' | 'status' | 'clientId' | 'projectId' | 'bookingId' | 'artistId'>>;
+  patch: Partial<Pick<UiCalendarEvent, 'start' | 'end' | 'durationMinutes' | 'notes' | 'notesByAdmin' | 'healingNotes' | 'painLevel' | 'paidAmount' | 'status' | 'clientId' | 'projectId' | 'bookingId' | 'artistId' | 'zone' | 'sessionNumber'>>;
 }
 
 export interface AvailabilitySlot {

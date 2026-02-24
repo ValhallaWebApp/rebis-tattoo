@@ -1,7 +1,7 @@
 .booking-history {
   padding: 2rem;
-  background: #121212;
-  color: #eee;
+  background: var(--app-main-bg);
+  color: var(--app-main-text);
   min-height: 100%;
 
   /* ---------- top header ---------- */
@@ -36,8 +36,9 @@
     flex-wrap: wrap;
 
     .soft-btn {
-      border-color: rgba(255, 255, 255, 0.14);
-      color: rgba(255, 255, 255, 0.82);
+      border-color: var(--glass-border);
+      color: var(--app-main-text);
+      background: var(--glass-bg);
       backdrop-filter: blur(6px);
     }
   }
@@ -76,7 +77,7 @@
       align-items: center;
       gap: 0.4rem;
       font-size: 0.85rem;
-      color: rgba(255, 255, 255, 0.72);
+      color: var(--text-muted);
       margin-bottom: 0.6rem;
 
       mat-icon {
@@ -98,7 +99,7 @@
     appearance: none;
     border: 0;
     background: transparent;
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--text-muted);
     padding: 0.4rem 0.1rem;
     font-weight: 600;
     cursor: pointer;
@@ -108,14 +109,14 @@
       margin-left: 0.35rem;
       padding: 0.1rem 0.5rem;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.9);
+      background: var(--glass-bg);
+      color: var(--app-main-text);
       font-size: 0.8rem;
     }
 
     &.active {
-      color: #fff;
-      border-bottom-color: rgba(255, 255, 255, 0.9);
+      color: var(--app-main-text);
+      border-bottom-color: var(--accent);
     }
   }
 
@@ -133,18 +134,18 @@
   .empty {
     grid-column: 1 / -1;
     text-align: center;
-    color: rgba(255, 255, 255, 0.55);
+    color: var(--text-muted);
     font-style: italic;
     padding: 2rem 0;
   }
 
   /* ---------- booking card (premium) ---------- */
   .booking-card {
-    background: #fff;
-    color: #111;
+    background: var(--glass-bg);
+    color: var(--app-main-text);
     border-radius: 16px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-soft);
     overflow: hidden;
 
     display: grid;
@@ -156,12 +157,12 @@
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+      box-shadow: var(--shadow-hard);
     }
 
     &.featured {
-      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.42);
-      border-color: rgba(0, 0, 0, 0.12);
+      box-shadow: var(--shadow-hard);
+      border-color: var(--glass-border);
     }
 
     &.active {
@@ -186,7 +187,7 @@
       height: 56px;
       border-radius: 14px;
       object-fit: cover;
-      border: 2px solid rgba(0, 0, 0, 0.08);
+      border: 2px solid var(--glass-border);
     }
 
     .card-body {
@@ -229,12 +230,12 @@
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
-      color: rgba(0, 0, 0, 0.72);
+      color: var(--text-muted);
       font-size: 0.88rem;
 
       mat-icon {
         font-size: 16px;
-        color: rgba(0, 0, 0, 0.55);
+        color: var(--text-muted);
       }
     }
 
@@ -242,7 +243,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem 0.75rem;
-      color: rgba(0, 0, 0, 0.62);
+      color: var(--text-muted);
       font-size: 0.84rem;
     }
 
@@ -253,7 +254,7 @@
 
       mat-icon {
         font-size: 16px;
-        color: rgba(0, 0, 0, 0.5);
+        color: var(--text-muted);
       }
     }
 
@@ -265,8 +266,8 @@
     }
 
     .primary {
-      background: #111 !important;
-      color: #fff !important;
+      background: var(--accent) !important;
+      color: var(--accent-ink) !important;
       border-radius: 12px;
       padding: 0.35rem 0.8rem;
       box-shadow: none !important;
@@ -274,18 +275,20 @@
 
     .assist {
       border-radius: 12px;
-      border-color: rgba(0, 0, 0, 0.14);
-      color: rgba(0, 0, 0, 0.8);
+      border-color: var(--glass-border);
+      color: var(--app-main-text);
+      background: var(--glass-bg);
     }
 
     .ghost {
       border-radius: 12px;
-      border-color: rgba(0, 0, 0, 0.14);
-      color: rgba(0, 0, 0, 0.78);
+      border-color: var(--glass-border);
+      color: var(--app-main-text);
+      background: transparent;
     }
 
     .more mat-icon {
-      color: rgba(0, 0, 0, 0.6);
+      color: var(--text-muted);
     }
   }
 
@@ -302,9 +305,9 @@
     letter-spacing: 0.02em;
     white-space: nowrap;
 
-    background: rgba(0, 0, 0, 0.06);
-    color: rgba(0, 0, 0, 0.75);
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: var(--glass-bg);
+    color: var(--app-main-text);
+    border: 1px solid var(--glass-border);
 
     &.pending {
       background: rgba(255, 152, 0, 0.12);
@@ -340,9 +343,9 @@
 
   /* ---------- sidebar ---------- */
   .side-card {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.86);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--app-main-text);
     border-radius: 16px;
     padding: 1rem;
     margin-bottom: 1rem;
@@ -362,7 +365,7 @@
 
     .side-text {
       margin: 0 0 0.8rem 0;
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--text-muted);
       line-height: 1.5;
       font-size: 0.92rem;
     }
@@ -378,21 +381,21 @@
     }
 
     .primary {
-      background: #fff !important;
-      color: #111 !important;
+      background: var(--accent) !important;
+      color: var(--accent-ink) !important;
       border-radius: 12px;
       box-shadow: none !important;
     }
 
     .ghost {
-      border-color: rgba(255, 255, 255, 0.16);
-      color: rgba(255, 255, 255, 0.86);
+      border-color: var(--glass-border);
+      color: var(--app-main-text);
       border-radius: 12px;
     }
 
     .side-list {
       margin: 0.2rem 0 0 1rem;
-      color: rgba(255, 255, 255, 0.72);
+      color: var(--text-muted);
 
       li {
         margin: 0.35rem 0;

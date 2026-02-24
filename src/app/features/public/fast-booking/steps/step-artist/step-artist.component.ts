@@ -17,6 +17,7 @@ export class StepArtistComponent {
 
   readonly artists = this.store.artists;
   readonly loading = this.store.loadingArtists;
+  readonly error = this.store.error;
 
   readonly selectedId = computed(() => this.store.draft().artistId);
 

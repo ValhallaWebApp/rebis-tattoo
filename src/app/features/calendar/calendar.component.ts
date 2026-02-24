@@ -130,6 +130,7 @@ export class CalendarComponent {
         const end = this.formatLocal(new Date(b.end));
         const durationMinutes = this.diffMinutes(start, end);
         const a = staffMap.get(String(b.artistId));
+        const createdById = String(b.createdById ?? b.createdBy ?? b.creatorId ?? b.creator ?? '').trim() || undefined;
         return {
           id: String(b.id),
           type: 'booking',
@@ -141,6 +142,8 @@ export class CalendarComponent {
           projectId: b.projectId ? String(b.projectId) : undefined,
           status: b.status ? String(b.status) : undefined,
           notes: b.notes ? String(b.notes) : undefined,
+          zone: String((b as any).zone ?? '').trim() || undefined,
+          createdById,
           title: 'Booking',
           subtitle: a?.name,
         } satisfies UiCalendarEvent;
@@ -168,7 +171,12 @@ export class CalendarComponent {
           projectId: s.projectId ? String(s.projectId) : undefined,
           bookingId: s.bookingId ? String(s.bookingId) : undefined,
           status: s.status ? String(s.status) : undefined,
-          notes: s.notesByAdmin ? String(s.notesByAdmin) : (s.notes ? String(s.notes) : undefined),
+          notes: s.notes ? String(s.notes) : (s.notesByAdmin ? String(s.notesByAdmin) : undefined),
+          notesByAdmin: s.notesByAdmin ? String(s.notesByAdmin) : (s.notes ? String(s.notes) : undefined),
+          healingNotes: s.healingNotes ? String(s.healingNotes) : undefined,
+          painLevel: s.painLevel != null ? Number(s.painLevel) : undefined,
+          paidAmount: s.paidAmount != null ? Number(s.paidAmount) : undefined,
+          zone: s.zone ? String(s.zone).trim() || undefined : undefined,
           title: 'Session',
           subtitle: a?.name,
         } satisfies UiCalendarEvent;
@@ -221,11 +229,8 @@ export class CalendarComponent {
           const project = await this.projectService.getProjectById(projectId);
           if (project) {
             const raw: any = project as any;
-            const legacyArtistIds = Array.isArray(raw?.artistIds)
-              ? raw.artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
-              : [];
-            const projectArtistId = String(raw?.artistId ?? raw?.idArtist ?? legacyArtistIds[0] ?? '').trim();
-            const projectClientId = String(raw?.clientId ?? raw?.idClient ?? '').trim();
+            const projectArtistId = String(raw?.artistId ?? '').trim();
+            const projectClientId = String(raw?.clientId ?? '').trim();
             if (projectArtistId) resolvedArtistId = projectArtistId;
             if (projectClientId) resolvedClientId = projectClientId;
           }
@@ -293,6 +298,10 @@ export class CalendarComponent {
           clientId: draft.clientId ?? undefined,
           projectId: draft.projectId ?? undefined,
           bookingId: (draft as any).bookingId ?? undefined,
+          sessionNumber: (draft as any).sessionNumber ?? undefined,
+          painLevel: (draft as any).painLevel ?? undefined,
+          healingNotes: (draft as any).healingNotes ?? undefined,
+          zone: (draft as any).zone ?? undefined,
           notesByAdmin: (draft as any).notesByAdmin ?? (draft.notes ?? undefined),
           paidAmount: (draft as any).paidAmount ?? undefined,
           status: sessionStatus,
@@ -340,8 +349,11 @@ export class CalendarComponent {
       const patch = this.stripUndef({ ...upd.patch, updatedAt: new Date().toISOString() });
 
       if (upd.type === 'booking') {
-        const nextStatus = (patch as any)?.status;
-        const hasStatusChange = typeof nextStatus === 'string' && nextStatus.trim().length > 0;
+        const nextStatusRaw = (patch as any)?.status;
+        const nextStatus =
+          typeof nextStatusRaw === 'string' ? nextStatusRaw.trim() : '';
+        const currentStatus = String((current as any)?.status ?? '').trim();
+        const hasStatusChange = nextStatus.length > 0 && nextStatus !== currentStatus;
 
         if (hasStatusChange) {
           const extra = this.stripUndef({ ...patch });
@@ -434,6 +446,17 @@ export class CalendarComponent {
       msg = 'Cliente non coerente col progetto selezionato.';
     } else if (raw.startsWith('PROJECT_NOT_FOUND:')) {
       msg = 'Progetto non trovato.';
+    } else if (raw.startsWith('SESSION_BOOKING_REQUIRED:')) {
+      msg = 'Prima di creare una sessione devi collegare una booking di consulenza al progetto.';
+    } else if (raw.startsWith('SESSION_BOOKING_NOT_FOUND:')) {
+      msg = 'Booking collegata al progetto non trovata.';
+    } else if (raw.startsWith('SESSION_BOOKING_END_INVALID:')) {
+      msg = 'Data fine booking non valida: impossibile pianificare la sessione.';
+    } else if (raw.startsWith('SESSION_BEFORE_BOOKING_END:')) {
+      const endIso = raw.split(':').slice(1).join(':').trim();
+      const endDate = new Date(endIso);
+      const when = Number.isNaN(endDate.getTime()) ? endIso : this.formatLocal(endDate);
+      msg = `La sessione non puo iniziare prima della fine consulenza (${when}).`;
     } else if (raw) {
       // fallback to message if it's readable (avoid dumping big objects)
       msg = raw.length > 160 ? fallback : raw;
@@ -527,6 +550,28 @@ export class CalendarComponent {
       return {
         ok: false,
         message: `La sessione deve iniziare dopo l’ultima (${this.formatLocal(lastEnd)}).`
+      };
+    }
+
+    const bookingForProject = this.events()
+      .filter(e => e.type === 'booking' && e.projectId === projectId)
+      .filter(e => !excludeId || e.id !== excludeId)
+      .map(e => new Date(e.end))
+      .filter(d => !Number.isNaN(d.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime())
+      .pop();
+
+    if (!bookingForProject) {
+      return {
+        ok: false,
+        message: 'Collega prima una booking di consulenza al progetto.'
+      };
+    }
+
+    if (!Number.isNaN(nextStart.getTime()) && nextStart.getTime() < bookingForProject.getTime()) {
+      return {
+        ok: false,
+        message: `La sessione deve iniziare dalla fine consulenza (${this.formatLocal(bookingForProject)}).`
       };
     }
 

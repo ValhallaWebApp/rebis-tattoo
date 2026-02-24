@@ -1,7 +1,7 @@
-﻿:host {
+:host {
   display: block;
-  background: #000;
-  color: #fff;
+  background: var(--app-main-bg);
+  color: var(--app-main-text);
   font-family: 'Barlow Semi Condensed', sans-serif;
 }
 
@@ -23,10 +23,10 @@
   width: 100%;
   max-width: 460px;
   display: block;
-  border: 2px solid #1f1f1f;
+  border: 1px solid var(--glass-border);
   padding: 10px;
-  background: #000;
-  box-shadow: 0 0 20px rgba(31, 31, 30, 0.18);
+  background: var(--app-main-bg);
+  box-shadow: var(--shadow-soft);
 }
 
 .about-text {
@@ -35,7 +35,7 @@
 
 .eyebrow {
   margin: 0 0 0.6rem;
-  color: #8f8f8f;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-size: 0.78rem;
@@ -50,7 +50,7 @@
 .about-text p {
   margin: 0 0 0.95rem;
   line-height: 1.65;
-  color: #a8a8a8;
+  color: var(--text-muted);
 }
 
 .meta {
@@ -62,17 +62,17 @@
 }
 
 .meta a {
-  color: #fff;
+  color: var(--app-main-text);
   text-decoration: none;
-  border-bottom: 1px solid #2d2d2d;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .approach-box {
   margin-top: 0.75rem;
   padding: 0.8rem 0.9rem;
-  border: 1px solid #2b2b2b;
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
-  background: #0e0e0e;
+  background: var(--glass-bg);
 }
 
 .approach-box h3 {
@@ -82,12 +82,12 @@
 
 .approach-box p {
   margin: 0.25rem 0 0.4rem;
-  color: #c5c5c5;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
 .approach-box span {
-  color: #a8a8a8;
+  color: var(--text-muted);
   font-size: 0.88rem;
   line-height: 1.45;
 }
@@ -114,15 +114,15 @@
 }
 
 .ghost-btn {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #fff;
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  color: var(--app-main-text);
+  background: var(--glass-bg);
 }
 
 .primary-btn {
   border: none;
-  color: #fff;
-  background: linear-gradient(135deg, #f56040, #e1306c, #5851db);
+  color: var(--app-main-text);
+  background: var(--accent);
 }
 
 .team-head h2 {
@@ -134,7 +134,7 @@
 
 .team-head p {
   margin: 0.6rem 0 0;
-  color: #a8a8a8;
+  color: var(--text-muted);
   line-height: 1.6;
 }
 
@@ -151,8 +151,8 @@
   font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
 }
 
 .team-grid {
@@ -164,15 +164,15 @@
 
 .artist-card {
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
   overflow: hidden;
-  color: #fff;
+  color: var(--app-main-text);
 }
 
 .thumb {
   aspect-ratio: 4 / 5;
-  background: #050505;
+  background: var(--glass-bg-strong);
 }
 
 .thumb img {
@@ -193,13 +193,13 @@
 
 .artist-meta .role {
   margin: 0.2rem 0 0.45rem;
-  color: #c7c7c7;
+  color: var(--text-muted);
   font-size: 0.88rem;
 }
 
 .artist-meta .bio {
   margin: 0;
-  color: #a8a8a8;
+  color: var(--text-muted);
   font-size: 0.88rem;
   line-height: 1.45;
 }
@@ -211,7 +211,7 @@
 
 .empty {
   margin-top: 1rem;
-  color: #9a9a9a;
+  color: var(--text-muted);
 }
 
 @media (max-width: 980px) {

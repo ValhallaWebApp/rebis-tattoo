@@ -127,8 +127,8 @@ export class LoginComponent implements OnInit {
             canViewAuditLogs: false
           },
           phone: '-',
-          isActive: false,
-          isVisible: false,
+          isActive: true,
+          isVisible: true,
           deletedAt: null,
           createdAt: '-',
           updatedAt: '-',

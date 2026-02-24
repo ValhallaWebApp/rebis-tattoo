@@ -17,15 +17,22 @@ export interface UserPermissions {
 }
 
 export interface AppUser {
+  id: string;
   uid: string;
   email: string;
   name: string;
   role: UserRole;
-  permissions?: UserPermissions;
-  isActive?: boolean;
+  staffLevel?: string;
+  permissions: UserPermissions;
+  isActive: boolean;
+  isVisible: boolean;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
   phone?: string;
+  urlAvatar?: string;
   avatar?: string;
-  dateOfBirth?: unknown;
+  dateOfBirth?: string;
   address?: string;
   city?: string;
   postalCode?: string;

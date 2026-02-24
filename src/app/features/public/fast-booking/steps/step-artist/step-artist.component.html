@@ -10,7 +10,7 @@
       </mat-chip>
       <mat-chip>
         <mat-icon matChipAvatar>payments</mat-icon>
-        Caparra €50
+        Caparra EUR 50
       </mat-chip>
     </mat-chip-set>
   </header>
@@ -20,6 +20,19 @@
       <mat-spinner diameter="32"></mat-spinner>
     </div>
   } @else {
+    @if (error()) {
+      <div class="error">
+        <mat-icon>error</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    @if (artists().length === 0) {
+      <div class="empty">
+        Nessun artista disponibile in questo momento.
+      </div>
+    }
+
     <div class="list">
       @for (a of artists(); track a.id) {
         <mat-card
@@ -42,14 +55,14 @@
               <div class="name">{{ a.name }}</div>
 
               <div class="meta">
-                <span class="styles">Realismo / Fine line / Blackwork</span>
+                <span class="styles">{{ (a.role || 'staff') | titlecase }}</span>
               </div>
 
               <div class="submeta">
                 <span class="dot"></span>
                 <span class="avail">Disponibile oggi</span>
-                <span class="sep">•</span>
-                <span class="rate">★ 4.8</span>
+                <span class="sep">|</span>
+                <span class="rate">Rating 4.8</span>
                 <span class="muted">(120 recensioni)</span>
               </div>
             </div>

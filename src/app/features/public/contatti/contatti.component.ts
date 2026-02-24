@@ -1,34 +1,29 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-// import { ChatBotUiService } from '../../../shared/services/chat-bot-ui.service';
+import { Subscription } from 'rxjs';
+
+import {
+  DEFAULT_STUDIO_PROFILE,
+  StudioProfile,
+  StudioProfileService
+} from '../../../core/services/studio/studio-profile.service';
 
 @Component({
   selector: 'app-contatti',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './contatti.component.html',
-  styleUrls: ['./contatti.component.scss'] // ✅ usa styleUrls
+  styleUrls: ['./contatti.component.scss']
 })
-export class ContattiComponent implements OnInit {
+export class ContattiComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
-  // private readonly chatUi = inject(ChatBotUiService);
+  private readonly studioProfileService = inject(StudioProfileService);
+  private profileSub?: Subscription;
 
   contactForm!: FormGroup;
-
-  // ✅ metti una foto reale in assets (vedi nota sotto)
-  readonly heroImageUrl = '/personale/1.jpg';
-
-  // ✅ numero in formato wa.me (senza + e spazi)
-  readonly whatsappNumber = '393400998312';
-
-  // ✅ dati Rebis
-  readonly address = 'Via al Carmine 1A, 07100 Sassari (SS)';
-  readonly phoneDisplay = '+39 340 099 8312';
-  readonly email = 'sarapushi@rebistattoo.info';
-  readonly instagramUrl = 'https://www.instagram.com/rebis_tattoo/';
-  readonly instagramHandle = '@rebis_tattoo';
+  profile: StudioProfile = DEFAULT_STUDIO_PROFILE;
 
   ngOnInit(): void {
     this.contactForm = this.fb.group({
@@ -36,10 +31,25 @@ export class ContattiComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       message: ['', [Validators.required, Validators.minLength(10)]]
     });
+
+    this.profileSub = this.studioProfileService.getProfile().subscribe((profile) => {
+      this.profile = profile;
+    });
   }
 
-  openChat(): void {
+  ngOnDestroy(): void {
+    this.profileSub?.unsubscribe();
   }
+
+  get heroImageUrl(): string {
+    return this.profile.ownerPhotoUrl || '/personale/1.jpg';
+  }
+
+  get whatsappNumber(): string {
+    return this.normalizePhoneForWhatsApp(this.profile.phoneDisplay);
+  }
+
+  openChat(): void {}
 
   onSubmit(): void {
     if (this.contactForm.invalid) {
@@ -54,5 +64,9 @@ export class ContattiComponent implements OnInit {
 
   get f() {
     return this.contactForm.controls;
+  }
+
+  private normalizePhoneForWhatsApp(value: string): string {
+    return String(value ?? '').replace(/\D/g, '');
   }
 }

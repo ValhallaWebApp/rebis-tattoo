@@ -2,11 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { Service, ServicesService } from '../../../../core/services/services/services.service';
-import { ConfirmDialogComponent } from '../../../../shared/components/dialogs/confirm-dialog/confirm-dialog.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ServiceEditorDialogComponent, ServiceEditorDialogData } from './service-editor-dialog/service-editor-dialog.component';
 
@@ -29,8 +27,7 @@ export class ServicesAdminComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private serviceService: ServicesService,
-    private dialog: MatDialog,
-    private snackBar: UiFeedbackService
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -60,7 +57,6 @@ export class ServicesAdminComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.showSnack('Errore nel caricamento dei servizi');
       },
     });
   }
@@ -99,8 +95,7 @@ export class ServicesAdminComponent implements OnInit {
     ref.afterClosed().subscribe((result: Partial<Service> | null) => {
       if (!result) return;
       this.serviceService.addService(result as any)
-        .then(() => this.showSnack('Nuovo servizio creato'))
-        .catch(() => this.showSnack('Errore durante la creazione'));
+        .catch((err) => console.error(err));
     });
   }
 
@@ -115,8 +110,7 @@ export class ServicesAdminComponent implements OnInit {
     ref.afterClosed().subscribe((result: Partial<Service> | null) => {
       if (!result) return;
       this.serviceService.updateService(service.id, result)
-        .then(() => this.showSnack('Servizio aggiornato correttamente'))
-        .catch(() => this.showSnack('Errore durante l\'aggiornamento'));
+        .catch((err) => console.error(err));
     });
   }
 
@@ -125,34 +119,8 @@ export class ServicesAdminComponent implements OnInit {
      ============== */
 
   deleteService(serviceId: string): void {
-    const confirmRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: 'Conferma eliminazione',
-        message: 'Sei sicuro di voler eliminare questo servizio?',
-      },
-    });
-
-    confirmRef.afterClosed().subscribe((confirmed: boolean) => {
-      if (confirmed) {
-        this.serviceService
-          .deleteService(serviceId)
-          .then(() => this.showSnack('Servizio eliminato'))
-          .catch((err) => {
-            console.error(err);
-            this.showSnack('Errore durante l\'eliminazione');
-          });
-      }
-    });
-  }
-
-  /* ==============
-     SNACKBAR
-     ============== */
-  private showSnack(message: string): void {
-    this.snackBar.open(message, 'OK', {
-      duration: 2500,
-      horizontalPosition: 'right',
-      verticalPosition: 'bottom',
-    });
+    this.serviceService
+      .deleteService(serviceId)
+      .catch((err) => console.error(err));
   }
 }

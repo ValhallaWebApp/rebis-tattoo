@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Database, get, onValue, ref, remove, set, update } from '@angular/fire/database';
-import { Firestore, collection, collectionData, doc, getDoc, updateDoc } from '@angular/fire/firestore';
-import { catchError, map, Observable, of } from 'rxjs';
+import { catchError, combineLatest, map, Observable, of } from 'rxjs';
+import { AuthService } from '../auth/authservice';
+import { ConfirmActionService } from '../ui/confirm-action.service';
+import { UiFeedbackService } from '../ui/ui-feedback.service';
 
 export interface StaffMember {
-  id?: string; // alias di userId per compat
-  userId?: string; // uid Firestore (source of truth)
+  id?: string;
+  userId?: string;
   name: string;
-  role: 'tatuatore' | 'piercer' | 'guest' | 'altro'; // ruolo professionale
+  role: 'tatuatore' | 'piercer' | 'guest' | 'altro';
   bio?: string;
   photoUrl?: string;
   isActive?: boolean;
@@ -19,16 +21,16 @@ export interface StaffMember {
 
 export interface StaffCalendarSettings {
   enabled?: boolean;
-  color?: string;         // "#RRGGBB"
-  workdayStart?: string;  // "08:00"
-  workdayEnd?: string;    // "20:00"
-  stepMinutes?: number;   // 15/30
+  color?: string;
+  workdayStart?: string;
+  workdayEnd?: string;
+  stepMinutes?: number;
 }
 
 export type WeekdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 export interface StaffTimeSlot {
-  start: string; // "HH:mm"
-  end: string;   // "HH:mm"
+  start: string;
+  end: string;
 }
 
 export interface StaffAvailability {
@@ -42,50 +44,105 @@ export interface StaffAvailability {
 export class StaffService {
   private readonly profilePath = 'staffProfiles';
   private readonly availabilityPath = 'staffAvailability';
+  private readonly publicPath = 'publicStaff';
 
   constructor(
     private db: Database,
-    private firestore: Firestore
+    private auth: AuthService,
+    private confirmAction: ConfirmActionService,
+    private ui: UiFeedbackService
   ) {}
 
-  getAllStaff(): Observable<StaffMember[]> {
-    const profiles$ = new Observable<Record<string, any>>(observer => {
-      const r = ref(this.db, this.profilePath);
+  private assertAdminAction(): void {
+    if (this.auth.userSig()?.role !== 'admin') {
+      throw new Error('Azione consentita solo ad admin');
+    }
+  }
+
+  private normalizeDeletedAt(value: unknown): string | null {
+    if (value === null || value === undefined) return null;
+    const s = String(value).trim();
+    if (!s || s === '-' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return null;
+    return s;
+  }
+
+  private normalizeBoolean(value: unknown, fallback = true): boolean {
+    if (value === true) return true;
+    if (value === false) return false;
+    const s = String(value ?? '').trim().toLowerCase();
+    if (s === 'true' || s === '1') return true;
+    if (s === 'false' || s === '0') return false;
+    return fallback;
+  }
+
+  private isPermissionDeniedError(err: unknown): boolean {
+    const code = String((err as any)?.code ?? '').toLowerCase();
+    const msg = String((err as any)?.message ?? '').toLowerCase();
+    return code.includes('permission-denied') || msg.includes('permission_denied') || msg.includes('permission denied');
+  }
+
+  private streamNode(path: string, opts?: { swallowPermissionDenied?: boolean }): Observable<Record<string, any>> {
+    return new Observable<Record<string, any>>((observer) => {
+      const r = ref(this.db, path);
       const unsub = onValue(
         r,
-        snap => observer.next((snap.exists() ? snap.val() : {}) as Record<string, any>),
-        err => observer.error(err)
+        (snap) => observer.next((snap.exists() ? snap.val() : {}) as Record<string, any>),
+        (err) => {
+          if (opts?.swallowPermissionDenied && this.isPermissionDeniedError(err)) {
+            observer.next({});
+            return;
+          }
+          observer.error(err);
+        }
       );
       return () => unsub();
     });
+  }
 
-    return profiles$.pipe(
-      map((profiles) => {
+  getAllStaff(): Observable<StaffMember[]> {
+    return combineLatest([
+      this.streamNode(this.profilePath),
+      this.streamNode('users', { swallowPermissionDenied: true }),
+      this.streamNode(this.publicPath, { swallowPermissionDenied: true }),
+    ]).pipe(
+      map(([profiles, users, publicStaff]) => {
         const ids = new Set<string>(Object.keys(profiles ?? {}));
+        for (const uid of Object.keys(publicStaff ?? {})) ids.add(uid);
+        for (const [uid, rawUser] of Object.entries(users ?? {})) {
+          if (String((rawUser as any)?.['role'] ?? '').toLowerCase() === 'staff') {
+            ids.add(uid);
+          }
+        }
 
         const out: StaffMember[] = [];
         for (const uid of ids) {
           const p = (profiles?.[uid] ?? {}) as Partial<StaffMember>;
-          const calendar = ((p as any).calendar ?? {}) as StaffCalendarSettings;
-          const deletedAt = (p.deletedAt as string | null | undefined) ?? null;
+          const pub = (publicStaff?.[uid] ?? {}) as Partial<StaffMember>;
+          const u = (users?.[uid] ?? {}) as Record<string, any>;
+          const userRole = String(u?.['role'] ?? '').toLowerCase();
+          const calendar = ((p as any).calendar ?? (pub as any).calendar ?? {}) as StaffCalendarSettings;
+          const deletedAt = this.normalizeDeletedAt(p.deletedAt ?? pub.deletedAt);
           if (deletedAt) continue;
+          if (Object.keys(u).length && userRole !== 'staff' && String((pub as any)?.role ?? '').toLowerCase() !== 'staff') continue;
+
+          const name = String(p.name ?? pub.name ?? u?.['name'] ?? u?.['email'] ?? uid).trim();
 
           out.push({
             id: uid,
             userId: uid,
-            name: String(p.name ?? uid).trim(),
-            role: (p.role as StaffMember['role']) ?? 'tatuatore',
-            bio: p.bio ? String(p.bio) : '',
-            photoUrl: String(p.photoUrl ?? '').trim(),
-            isActive: p.isActive ?? true,
+            name: name || uid,
+            role: (p.role as StaffMember['role']) ?? (pub.role as StaffMember['role']) ?? 'tatuatore',
+            bio: p.bio ? String(p.bio) : String(pub.bio ?? ''),
+            photoUrl: String(p.photoUrl ?? pub.photoUrl ?? u?.['urlAvatar'] ?? u?.['avatar'] ?? '').trim(),
+            isActive: this.normalizeBoolean(p.isActive, this.normalizeBoolean(pub.isActive, this.normalizeBoolean(u?.['isActive'], true))),
             deletedAt,
-            email: (p as any).email ? String((p as any).email) : undefined,
-            phone: (p as any).phone ? String((p as any).phone) : undefined,
+            email: (p as any).email ? String((p as any).email) : ((pub as any).email ? String((pub as any).email) : (u?.['email'] ? String(u['email']) : undefined)),
+            phone: (p as any).phone ? String((p as any).phone) : ((pub as any).phone ? String((pub as any).phone) : (u?.['phone'] ? String(u['phone']) : undefined)),
             calendar
           } as StaffMember);
         }
 
-        return out;
+        return out.sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }));
       })
     );
   }
@@ -113,10 +170,34 @@ export class StaffService {
     if (member.phone !== undefined) userPatch.phone = member.phone;
     if (profile.photoUrl) userPatch.urlAvatar = profile.photoUrl;
 
-    return Promise.all([
-      updateDoc(doc(this.firestore, 'users', uid), userPatch),
-      set(ref(this.db, `${this.profilePath}/${uid}`), profile)
-    ]).then(() => void 0);
+    return this.confirmAction.confirm({
+      title: 'Conferma promozione staff',
+      message: 'Vuoi promuovere questo utente a staff?',
+      confirmText: 'Conferma',
+      cancelText: 'Annulla',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      const publicPayload = {
+        id: uid,
+        userId: uid,
+        name: profile.name,
+        role: 'staff',
+        bio: profile.bio ?? '',
+        photoUrl: profile.photoUrl ?? '',
+        email: member.email ?? '',
+        phone: member.phone ?? '',
+        isActive: profile.isActive !== false,
+        deletedAt: null
+      } as any;
+
+      return Promise.all([
+      update(ref(this.db, `users/${uid}`), userPatch),
+      set(ref(this.db, `${this.profilePath}/${uid}`), profile),
+      set(ref(this.db, `${this.publicPath}/${uid}`), publicPayload)
+      ]).then(() => {
+        this.ui.success('Staff creato');
+      });
+    });
   }
 
   updateStaff(id: string, data: Partial<StaffMember>): Promise<void> {
@@ -138,10 +219,32 @@ export class StaffService {
     if (data.isActive !== undefined) userPatch.isActive = data.isActive;
     userPatch.role = 'staff';
 
-    return Promise.all([
+    return this.confirmAction.confirm({
+      title: 'Conferma aggiornamento staff',
+      message: 'Vuoi salvare le modifiche del membro staff?',
+      confirmText: 'Conferma',
+      cancelText: 'Annulla',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      const publicPatch: any = {
+        name: data.name,
+        role: 'staff',
+        bio: data.bio,
+        photoUrl: data.photoUrl,
+        isActive: data.isActive,
+        deletedAt: data.deletedAt ?? null
+      };
+      if (data.email !== undefined) publicPatch.email = data.email;
+      if (data.phone !== undefined) publicPatch.phone = data.phone;
+
+      return Promise.all([
       update(ref(this.db, `${this.profilePath}/${uid}`), this.stripUndef(profilePatch as any)),
-      updateDoc(doc(this.firestore, 'users', uid), userPatch)
-    ]).then(() => void 0);
+      update(ref(this.db, `users/${uid}`), userPatch),
+      update(ref(this.db, `${this.publicPath}/${uid}`), this.stripUndef(publicPatch))
+      ]).then(() => {
+        this.ui.success('Staff aggiornato');
+      });
+    });
   }
 
   deleteStaff(id: string): Promise<void> {
@@ -149,41 +252,74 @@ export class StaffService {
     if (!uid) return Promise.reject(new Error('id staff non valido'));
     const deletedAt = new Date().toISOString();
 
-    return Promise.all([
+    return this.confirmAction.confirm({
+      title: 'Conferma disattivazione staff',
+      message: 'Vuoi disattivare questo membro staff?',
+      confirmText: 'Conferma',
+      cancelText: 'Annulla',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      return Promise.all([
       update(ref(this.db, `${this.profilePath}/${uid}`), {
         isActive: false,
         deletedAt
       }),
-      updateDoc(doc(this.firestore, 'users', uid), {
+      update(ref(this.db, `users/${uid}`), {
         isActive: false
+      } as any),
+      update(ref(this.db, `${this.publicPath}/${uid}`), {
+        isActive: false,
+        deletedAt
       } as any)
-    ]).then(() => void 0);
+      ]).then(() => {
+        this.ui.warn('Staff disattivato');
+      });
+    });
   }
 
-  /**
-   * Revoca un membro dallo staff senza disabilitare l'account.
-   * - Firestore: role -> 'client'
-   * - RTDB: staffProfiles/<uid> -> { isActive:false, deletedAt: ISO }
-   */
   revokeStaff(id: string): Promise<void> {
     const uid = String(id ?? '').trim();
     if (!uid) return Promise.reject(new Error('id staff non valido'));
     const deletedAt = new Date().toISOString();
 
-    return Promise.all([
+    return this.confirmAction.confirm({
+      title: 'Conferma revoca staff',
+      message: 'Vuoi revocare il ruolo staff e riportare l utente a client?',
+      confirmText: 'Conferma',
+      cancelText: 'Annulla',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      return Promise.all([
       update(ref(this.db, `${this.profilePath}/${uid}`), {
         isActive: false,
         deletedAt
       }),
-      updateDoc(doc(this.firestore, 'users', uid), {
+      update(ref(this.db, `users/${uid}`), {
         role: 'client',
         isActive: true
-      } as any)
-    ]).then(() => void 0);
+      } as any),
+      remove(ref(this.db, `${this.publicPath}/${uid}`))
+      ]).then(() => {
+        this.ui.success('Staff revocato');
+      });
+    });
   }
 
   hardDeleteStaff(id: string): Promise<void> {
-    return remove(ref(this.db, `${this.profilePath}/${id}`));
+    return this.confirmAction.confirm({
+      title: 'Conferma eliminazione staff',
+      message: 'Vuoi eliminare definitivamente il profilo staff?',
+      confirmText: 'Elimina',
+      cancelText: 'Annulla',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      return Promise.all([
+        remove(ref(this.db, `${this.profilePath}/${id}`)),
+        remove(ref(this.db, `${this.publicPath}/${id}`))
+      ]).then(() => {
+        this.ui.warn('Profilo staff eliminato');
+      });
+    });
   }
 
   async getStaffById(id: string): Promise<StaffMember | null> {
@@ -191,12 +327,12 @@ export class StaffService {
     if (!uid) return null;
 
     const [uSnap, pSnap] = await Promise.all([
-      getDoc(doc(this.firestore, 'users', uid)),
+      get(ref(this.db, `users/${uid}`)),
       get(ref(this.db, `${this.profilePath}/${uid}`))
     ]);
 
     if (!uSnap.exists()) return null;
-    const u = uSnap.data() as any;
+    const u = uSnap.val() as any;
     if (String(u.role ?? '') !== 'staff') return null;
 
     const p = (pSnap.exists() ? pSnap.val() : {}) as Partial<StaffMember>;
@@ -217,8 +353,23 @@ export class StaffService {
   }
 
   getStaffCandidates(): Observable<Array<{ id: string; name: string; email?: string; phone?: string; role?: string; avatarUrl?: string; bio?: string }>> {
-    const usersRef = collection(this.firestore, 'users');
-    return (collectionData(usersRef, { idField: 'id' }) as Observable<any[]>).pipe(
+    return new Observable<any[]>((observer) => {
+      const usersRef = ref(this.db, 'users');
+      const unsub = onValue(
+        usersRef,
+        (snap) => {
+          if (!snap.exists()) {
+            observer.next([]);
+            return;
+          }
+          const raw = snap.val() as Record<string, any>;
+          const list = Object.entries(raw).map(([id, u]) => ({ id, ...(u as any) }));
+          observer.next(list);
+        },
+        (err) => observer.error(err)
+      );
+      return () => unsub();
+    }).pipe(
       map(list =>
         (list ?? [])
           .filter(u => u.isVisible !== false && !u.deletedAt)
@@ -263,7 +414,17 @@ export class StaffService {
   updateCalendarSettings(uid: string, patch: StaffCalendarSettings): Promise<void> {
     const id = String(uid ?? '').trim();
     if (!id) return Promise.reject(new Error('uid non valido'));
-    return update(ref(this.db, `${this.profilePath}/${id}/calendar`), this.stripUndef(patch as any)).then(() => void 0);
+    return this.confirmAction.confirm({
+      title: 'Conferma aggiornamento calendario',
+      message: 'Vuoi salvare le modifiche calendario staff?',
+      confirmText: 'Salva',
+      cancelText: 'Annulla',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      return update(ref(this.db, `${this.profilePath}/${id}/calendar`), this.stripUndef(patch as any)).then(() => {
+        this.ui.success('Calendario aggiornato');
+      });
+    });
   }
 
   getAvailability(uid: string): Observable<StaffAvailability> {
@@ -311,6 +472,55 @@ export class StaffService {
   setAvailability(uid: string, availability: StaffAvailability): Promise<void> {
     const id = String(uid ?? '').trim();
     if (!id) return Promise.reject(new Error('uid non valido'));
-    return set(ref(this.db, `${this.availabilityPath}/${id}`), availability as any).then(() => void 0);
+    return this.confirmAction.confirm({
+      title: 'Conferma aggiornamento disponibilita',
+      message: 'Vuoi salvare la disponibilita staff?',
+      confirmText: 'Salva',
+      cancelText: 'Annulla',
+    }).then((confirmed) => {
+      if (!confirmed) return;
+      return set(ref(this.db, `${this.availabilityPath}/${id}`), availability as any).then(() => {
+        this.ui.success('Disponibilita salvata');
+      });
+    });
+  }
+
+  async backfillPublicStaffFromCurrentData(): Promise<void> {
+    this.assertAdminAction();
+    const [profilesSnap, usersSnap] = await Promise.all([
+      get(ref(this.db, this.profilePath)),
+      get(ref(this.db, 'users'))
+    ]);
+
+    const profiles = (profilesSnap.exists() ? profilesSnap.val() : {}) as Record<string, any>;
+    const users = (usersSnap.exists() ? usersSnap.val() : {}) as Record<string, any>;
+    const ids = new Set<string>(Object.keys(profiles ?? {}));
+    for (const [uid, u] of Object.entries(users ?? {})) {
+      if (String((u as any)?.role ?? '').toLowerCase() === 'staff') ids.add(uid);
+    }
+
+    const writes: Array<Promise<void>> = [];
+    for (const uid of ids) {
+      const p = (profiles?.[uid] ?? {}) as Record<string, any>;
+      const u = (users?.[uid] ?? {}) as Record<string, any>;
+      const deletedAt = this.normalizeDeletedAt(p['deletedAt']);
+      if (deletedAt) continue;
+
+      const payload = {
+        id: uid,
+        userId: uid,
+        name: String(p['name'] ?? u?.['name'] ?? u?.['email'] ?? uid).trim() || uid,
+        role: 'staff',
+        bio: String(p['bio'] ?? ''),
+        photoUrl: String(p['photoUrl'] ?? u?.['urlAvatar'] ?? u?.['avatar'] ?? ''),
+        email: String(p['email'] ?? u?.['email'] ?? ''),
+        phone: String(p['phone'] ?? u?.['phone'] ?? ''),
+        isActive: this.normalizeBoolean(p['isActive'], this.normalizeBoolean(u?.['isActive'], true)),
+        deletedAt: null,
+      } as any;
+      writes.push(set(ref(this.db, `${this.publicPath}/${uid}`), payload));
+    }
+
+    await Promise.all(writes);
   }
 }

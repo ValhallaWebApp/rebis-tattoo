@@ -13,11 +13,13 @@
 - bootstrap profilo se assente
 
 ### Firestore
-- `users` come profilo utente e ruolo applicativo
-- query ruoli (admin/staff/client)
+- uso limitato/non centrale nel flusso corrente
+- il profilo utente operativo e gestito principalmente in RTDB
 
 ### RTDB
 Nodi principali gestiti dal FE:
+- `users`
+- `auditLogs`
 - `bookings`
 - `notifications`
 - `staffProfiles`
@@ -39,6 +41,7 @@ Nodi principali gestiti dal FE:
 ## Dati business principali
 - booking: slot, stato, importi, relazioni cliente/artista
 - progetto/sessione: pianificazione e avanzamento lavoro
+- utenti/ruoli/permessi: `users` (RTDB)
 - notifiche: feed utente con priorita e link
 - bonus: wallet, codici promo, gift card
 - messaging: conversazioni e messaggi multi-ruolo

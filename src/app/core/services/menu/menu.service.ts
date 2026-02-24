@@ -68,11 +68,12 @@ export class MenuService {
     children: [
       { label: 'Dashboard', route: '/admin' },
       { label: 'Calendario', route: '/admin/calendar' },
-      { label: 'Clienti', route: '/admin/clients' },
+      { label: 'Utenti', route: '/admin/users' },
       { label: 'Permessi', route: '/admin/permissions' },
+      { label: 'Impostazioni Studio', route: '/admin/settings' },
       { label: 'Servizi', route: '/admin/servizi' },
-      { label: 'Portfolio', route: '/admin/portfolio' },
-      { label: 'Staff', route: '/admin/staff' }
+      { label: 'Recensioni', route: '/admin/reviews' },
+      { label: 'Portfolio', route: '/admin/portfolio' }
     ]
   };
 
@@ -84,7 +85,8 @@ export class MenuService {
         return of(this.cloneMenu(this.buildStaffMenu({
           canManageRoles: false,
           canManageBookings: false,
-          canManageProjects: false
+          canManageProjects: false,
+          canManageMessages: false
         })));
       case 'admin':
         return of(this.cloneMenu(this.buildAdminMenu()));
@@ -108,7 +110,8 @@ export class MenuService {
     const canManageRoles = user.permissions?.canManageRoles === true;
     const canManageBookings = user.permissions?.canManageBookings === true;
     const canManageProjects = user.permissions?.canManageProjects === true;
-    return of(this.cloneMenu(this.buildStaffMenu({ canManageRoles, canManageBookings, canManageProjects })));
+    const canManageMessages = user.permissions?.['canManageMessages'] === true;
+    return of(this.cloneMenu(this.buildStaffMenu({ canManageRoles, canManageBookings, canManageProjects, canManageMessages })));
   }
 
   private buildPublicMenu(): MenuItem[] {
@@ -123,14 +126,14 @@ export class MenuService {
     return [...this.publicMenu, this.dashboardMenu, this.adminMenu];
   }
 
-  private buildStaffMenu(flags: { canManageRoles: boolean; canManageBookings: boolean; canManageProjects: boolean }): MenuItem[] {
+  private buildStaffMenu(flags: { canManageRoles: boolean; canManageBookings: boolean; canManageProjects: boolean; canManageMessages: boolean }): MenuItem[] {
     const staffAdminMenu = this.buildStaffAdminMenu(flags);
     return staffAdminMenu
       ? [...this.publicMenu, this.staffClientZoneMenu, staffAdminMenu]
       : [...this.publicMenu, this.staffClientZoneMenu];
   }
 
-  private buildStaffAdminMenu(flags: { canManageRoles: boolean; canManageBookings: boolean; canManageProjects: boolean }): MenuItem | null {
+  private buildStaffAdminMenu(flags: { canManageRoles: boolean; canManageBookings: boolean; canManageProjects: boolean; canManageMessages: boolean }): MenuItem | null {
     const children: MenuItem[] = [];
 
     if (flags.canManageBookings) {
@@ -139,6 +142,10 @@ export class MenuService {
 
     if (flags.canManageProjects) {
       children.push({ label: 'Progetti', route: '/staff/portfolio' });
+    }
+
+    if (flags.canManageMessages) {
+      children.push({ label: 'Chat', route: '/staff/messaging' });
     }
 
     if (flags.canManageRoles) {

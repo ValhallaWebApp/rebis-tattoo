@@ -1,13 +1,6 @@
 import { Injectable } from '@angular/core';
-import {
-  Firestore,
-  collection,
-  collectionData,
-  CollectionReference,
-  DocumentData,
-  getDocs
-} from '@angular/fire/firestore';
-import { from, map, Observable } from 'rxjs';
+import { Database, get, onValue, ref } from '@angular/fire/database';
+import { map, Observable } from 'rxjs';
 
 export type ClientRole = 'admin' | 'client' | 'guest';
 
@@ -44,53 +37,73 @@ export interface ClientLite {
 
 @Injectable({ providedIn: 'root' })
 export class ClientService {
-  private readonly usersCol: CollectionReference<DocumentData>;
+  constructor(private db: Database) {}
 
-  constructor(private firestore: Firestore) {
-    this.usersCol = collection(this.firestore, 'users');
-  }
-
-  /** ✅ Realtime: tutti gli utenti da Firestore */
+  // Realtime users from RTDB
   getClients(): Observable<Client[]> {
-    return collectionData(this.usersCol, { idField: 'id' }) as Observable<Client[]>;
+    return new Observable<Client[]>((observer) => {
+      const usersRef = ref(this.db, 'users');
+      const unsub = onValue(
+        usersRef,
+        (snap) => {
+          if (!snap.exists()) {
+            observer.next([]);
+            return;
+          }
+          const raw = snap.val() as Record<string, any>;
+          const list = Object.entries(raw).map(([id, value]) => ({ id, ...(value as any) } as Client));
+          observer.next(list);
+        },
+        (err) => observer.error(err)
+      );
+      return () => unsub();
+    });
   }
 
-  /** ✅ One-shot: lettura una volta sola (utile per search senza subscription lunga) */
+  // One-shot read from RTDB
   getAllUsersOnce(): Observable<Client[]> {
-    return from(getDocs(this.usersCol)).pipe(
-      map(snap => snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<Client, 'id'>) })))
-    );
-  }
-/** ✅ Lite list (one-shot) per autocomplete: TUTTI i clienti in memoria */
-getClientsLiteOnce(): Observable<ClientLite[]> {
-  return this.getAllUsersOnce().pipe(
-    map(users =>
-      users
-        // filtro permissivo come searchClients (solo client/user ecc)
-        .filter(u => {
-          const r = String(u.role ?? '').toLowerCase();
-          return r === '' || r === 'client' || r === 'user' || r === 'cliente';
+    return new Observable<Client[]>((observer) => {
+      get(ref(this.db, 'users'))
+        .then((snap) => {
+          if (!snap.exists()) {
+            observer.next([]);
+            observer.complete();
+            return;
+          }
+          const raw = snap.val() as Record<string, any>;
+          const list = Object.entries(raw).map(([id, value]) => ({ id, ...(value as any) } as Client));
+          observer.next(list);
+          observer.complete();
         })
-        .map(u => ({
-          id: String(u.id ?? ''),
-          fullName: this.buildFullName(u),
-          email: u.email,
-          phone: u.phone,
-        }))
-        .filter(x => !!x.id)
-    )
-  );
-}
+        .catch((err) => observer.error(err));
+    });
+  }
 
-  /** ✅ Autocomplete: max 15 (filtra su nome/cognome/email/telefono) */
-  searchClients(q: string): Observable<ClientLite[]> {
-    const queryLower = (q ?? '').trim().toLowerCase();
-
-    // NB: Firestore "contains" full-text non esiste nativo → fetch e filtro client-side
+  getClientsLiteOnce(): Observable<ClientLite[]> {
     return this.getAllUsersOnce().pipe(
       map(users =>
         users
-          // se vuoi filtrare solo "client", usa una logica permissiva:
+          .filter(u => {
+            const r = String(u.role ?? '').toLowerCase();
+            return r === '' || r === 'client' || r === 'user' || r === 'cliente';
+          })
+          .map(u => ({
+            id: String(u.id ?? ''),
+            fullName: this.buildFullName(u),
+            email: u.email,
+            phone: u.phone,
+          }))
+          .filter(x => !!x.id)
+      )
+    );
+  }
+
+  searchClients(q: string): Observable<ClientLite[]> {
+    const queryLower = (q ?? '').trim().toLowerCase();
+
+    return this.getAllUsersOnce().pipe(
+      map(users =>
+        users
           .filter(u => {
             const r = String(u.role ?? '').toLowerCase();
             return r === '' || r === 'client' || r === 'user' || r === 'cliente';

@@ -319,11 +319,8 @@ export class ProjectTrackerComponent {
     const title = String((project as any)?.title ?? '').trim();
     const zone = String((project as any)?.zone ?? '').trim();
     const notes = String((project as any)?.notes ?? '').trim();
-    const legacyArtistIds = Array.isArray((project as any)?.artistIds)
-      ? (project as any).artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
-      : [];
-    const artistId = String((project as any)?.artistId ?? (project as any)?.idArtist ?? legacyArtistIds[0] ?? '').trim();
-    const clientId = String((project as any)?.clientId ?? (project as any)?.idClient ?? '').trim();
+    const artistId = String((project as any)?.artistId ?? '').trim();
+    const clientId = String((project as any)?.clientId ?? '').trim();
     const notesSeed = [title ? `Progetto: ${title}` : '', zone ? `Zona: ${zone}` : '', notes]
       .filter(Boolean)
       .join(' | ');
@@ -346,11 +343,8 @@ export class ProjectTrackerComponent {
     const project = await this.getCurrentProjectForCalendarSeed();
     if (!project) return;
 
-    const legacyArtistIds = Array.isArray((project as any)?.artistIds)
-      ? (project as any).artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
-      : [];
-    const artistId = String((project as any)?.artistId ?? (project as any)?.idArtist ?? legacyArtistIds[0] ?? '').trim();
-    const clientId = String((project as any)?.clientId ?? (project as any)?.idClient ?? '').trim();
+    const artistId = String((project as any)?.artistId ?? '').trim();
+    const clientId = String((project as any)?.clientId ?? '').trim();
 
     void this.openCalendarDrawer({
       open: 'create-session',

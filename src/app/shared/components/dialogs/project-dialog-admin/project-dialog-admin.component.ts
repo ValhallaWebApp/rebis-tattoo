@@ -13,8 +13,8 @@ export interface Project {
   dataProgetto: string;
   name: string;
   copertine: string[];
-  createAt: Timestamp;
-  updateAt: Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
   genere: string;
   numeroSedute: number;
   show: boolean;
@@ -70,8 +70,8 @@ export class ProjectDialogAdminComponent {
         collaboratori: formValue.collaboratori
           ? formValue.collaboratori.split(',').map((s: string) => s.trim())
           : null,
-        createAt: this.data.project?.createAt || Timestamp.now(),
-        updateAt: Timestamp.now(),
+        createdAt: this.data.project?.createdAt || Timestamp.now(),
+        updatedAt: Timestamp.now(),
         utenteCreatore: this.data.project?.utenteCreatore || 'admin', // fallback hardcoded
       };
 

@@ -1,7 +1,15 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, FormControl, FormArray, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { MaterialModule } from '../../../../core/modules/material.module';
+import {
+  DEFAULT_STUDIO_PROFILE,
+  StudioProfile,
+  StudioProfileService
+} from '../../../../core/services/studio/studio-profile.service';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 
 @Component({
   selector: 'app-studio-settings',
@@ -11,57 +19,54 @@ import { MaterialModule } from '../../../../core/modules/material.module';
   styleUrls: ['./studio-settings.component.scss']
 })
 export class StudioSettingsComponent implements OnInit {
-  settingsForm!: FormGroup;
-  weekdays = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+  private readonly fb = inject(FormBuilder);
+  private readonly studioProfile = inject(StudioProfileService);
+  private readonly ui = inject(UiFeedbackService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  constructor(private fb: FormBuilder) {}
+  saving = false;
+
+  readonly settingsForm: FormGroup = this.fb.group({
+    studioName: [DEFAULT_STUDIO_PROFILE.studioName, [Validators.required, Validators.minLength(2)]],
+    tagline: [DEFAULT_STUDIO_PROFILE.tagline, [Validators.required]],
+    mission: [DEFAULT_STUDIO_PROFILE.mission, [Validators.required, Validators.minLength(10)]],
+    teamIntro: [DEFAULT_STUDIO_PROFILE.teamIntro, [Validators.required, Validators.minLength(10)]],
+
+    ownerName: [DEFAULT_STUDIO_PROFILE.ownerName, [Validators.required]],
+    ownerRoleLabel: [DEFAULT_STUDIO_PROFILE.ownerRoleLabel, [Validators.required]],
+    ownerBio: [DEFAULT_STUDIO_PROFILE.ownerBio, [Validators.required, Validators.minLength(10)]],
+    ownerPhotoUrl: [DEFAULT_STUDIO_PROFILE.ownerPhotoUrl, [Validators.required]],
+
+    address: [DEFAULT_STUDIO_PROFILE.address, [Validators.required]],
+    phoneDisplay: [DEFAULT_STUDIO_PROFILE.phoneDisplay, [Validators.required]],
+    email: [DEFAULT_STUDIO_PROFILE.email, [Validators.required, Validators.email]],
+    instagramUrl: [DEFAULT_STUDIO_PROFILE.instagramUrl, [Validators.required]],
+    instagramHandle: [DEFAULT_STUDIO_PROFILE.instagramHandle, [Validators.required]]
+  });
 
   ngOnInit(): void {
-    this.settingsForm = this.fb.group({
-      studioName: ['Rebis Tattoo'],
-      email: [''],
-      phone: [''],
-      notifyByEmail: [true],
-      notifyByWhatsApp: [false],
-      maintenanceMode: [false],
-
-      primaryColor: ['#000000'],
-      accentColor: ['#d4af37'],
-
-      socialLinks: this.fb.group({
-        instagram: [''],
-        facebook: [''],
-        whatsapp: ['']
-      }),
-
-      notificationText: ['Grazie per aver prenotato! Ti aspettiamo :)'],
-
-      visibility: this.fb.group({
-        portfolio: [true],
-        reviews: [true],
-        chatbot: [true]
-      }),
-
-      weeklyHours: this.fb.array(
-        this.weekdays.map(() =>
-          this.fb.group({
-            open: ['10:00'],
-            close: ['19:30'],
-            closed: [false]
-          })
-        )
-      )
-    });
+    this.studioProfile.getProfile()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((profile) => {
+        this.settingsForm.patchValue(profile, { emitEvent: false });
+      });
   }
 
-  get weeklyHours(): FormArray {
-    return this.settingsForm.get('weeklyHours') as FormArray;
-  }
+  async saveSettings(): Promise<void> {
+    if (this.settingsForm.invalid || this.saving) {
+      this.settingsForm.markAllAsTouched();
+      return;
+    }
 
-  saveSettings(): void {
-    if (this.settingsForm.valid) {
-      console.log('Impostazioni salvate:', this.settingsForm.value);
-      // salva via servizio
+    this.saving = true;
+    try {
+      await this.studioProfile.saveProfile(this.settingsForm.getRawValue() as Partial<StudioProfile>);
+      this.ui.success('Impostazioni studio salvate.');
+    } catch (err) {
+      console.error('[StudioSettings] save failed', err);
+      this.ui.error('Errore salvataggio impostazioni studio.');
+    } finally {
+      this.saving = false;
     }
   }
 }

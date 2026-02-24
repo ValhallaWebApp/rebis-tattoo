@@ -29,6 +29,7 @@ import { ClientLite, ProjectLite } from '../drawer/event-drawer/event-drawer.com
 import { ClientService } from '../../../core/services/clients/client.service';
 import { ProjectsService } from '../../../core/services/projects/projects.service';
 import { AuthService } from '../../../core/services/auth/authservice';
+import { SessionService } from '../../../core/services/session/session.service';
 
 type DrawerRouteAction =
   | {
@@ -79,6 +80,7 @@ export class CalendarShellComponent implements OnChanges {
   // ✅ preload services
   private readonly clientService = inject(ClientService);
   private readonly projectService = inject(ProjectsService);
+  private readonly sessionService = inject(SessionService);
   private readonly auth = inject(AuthService);
 
   @Input({ required: true }) artists: UiArtist[] = [];
@@ -98,6 +100,7 @@ export class CalendarShellComponent implements OnChanges {
 
   // opzionale: per evitare doppi load
   private preloadDone = false;
+  private preloadInFlight = false;
 
   // ---------------------------------------------
   // Input signals (per reattività)
@@ -113,7 +116,7 @@ export class CalendarShellComponent implements OnChanges {
       const list = changes['events'].currentValue ?? [];
       this.eventsSig.set(list);
       this.rebuildBookingsLite(list);
-      this.consumePendingDrawerRouteAction();
+      void this.consumePendingDrawerRouteAction();
     }
   }
 
@@ -217,11 +220,11 @@ export class CalendarShellComponent implements OnChanges {
         return;
       }
 
-      this.consumePendingDrawerRouteAction();
+      void this.consumePendingDrawerRouteAction();
     });
   }
 
-  private consumePendingDrawerRouteAction(): void {
+  private async consumePendingDrawerRouteAction(): Promise<void> {
     const pending = this.pendingDrawerRouteAction;
     if (!pending) return;
 
@@ -236,7 +239,7 @@ export class CalendarShellComponent implements OnChanges {
       const projectId = String(pending.projectId ?? '').trim();
       const artistId = String(pending.artistId ?? '').trim();
       if (!projectId || !artistId) return;
-      this.openCreateSessionFromProject({
+      await this.openCreateSessionFromProject({
         projectId,
         artistId,
         clientId: pending.clientId
@@ -286,8 +289,9 @@ export class CalendarShellComponent implements OnChanges {
   // ✅ PRELOAD per drawer autocomplete
   // ---------------------------------------------
   private preloadDrawerLists(): void {
-    if (this.preloadDone) return;
-    this.preloadDone = true;
+    if (this.preloadInFlight) return;
+    if (!this.preloadDone) this.preloadDone = true;
+    this.preloadInFlight = true;
 
     // ⚠️ Adatta ai metodi reali del tuo progetto
     this.clientService.getClientsLiteOnce().subscribe({
@@ -297,7 +301,13 @@ export class CalendarShellComponent implements OnChanges {
 
     this.projectService.getProjectsLiteOnce().subscribe({
       next: (list) => (this.projectsLite = list ?? []),
-      error: (err) => console.error('[CAL-SHELL] preload projectsLite error', err),
+      error: (err) => {
+        console.error('[CAL-SHELL] preload projectsLite error', err);
+        this.preloadInFlight = false;
+      },
+      complete: () => {
+        this.preloadInFlight = false;
+      }
     });
   }
 
@@ -337,6 +347,7 @@ export class CalendarShellComponent implements OnChanges {
   // Toolbar: nuovo evento
   // ---------------------------------------------
   onToolbarNew() {
+    this.preloadDrawerLists();
     // No modals: open the drawer directly and let the user pick date/time inside.
     const eligible = (this.artistsSig() ?? [])
       .filter(a => a.isActive !== false)
@@ -377,6 +388,7 @@ export class CalendarShellComponent implements OnChanges {
   }
 
   openCreateFromDay(payload: { artistId: string; startISO: string; endISO: string; durationMinutes: number }) {
+  this.preloadDrawerLists();
   this.drawerMode = 'create';
   this.drawerSeed = {
     type: 'booking',
@@ -396,6 +408,7 @@ export class CalendarShellComponent implements OnChanges {
     zone?: string;
     notes?: string;
   }): void {
+    this.preloadDrawerLists();
     const projectLite = (this.projectsLite ?? []).find(p => String(p.id ?? '').trim() === String(payload.projectId ?? '').trim());
     const resolvedClientId = String(payload.clientId ?? projectLite?.clientId ?? '').trim() || undefined;
     const resolvedArtistId = String(payload.artistId ?? projectLite?.artistId ?? '').trim() || undefined;
@@ -435,13 +448,60 @@ export class CalendarShellComponent implements OnChanges {
 
 
   openEditEvent(ev: UiCalendarEvent) {
+    this.preloadDrawerLists();
     this.drawerMode = 'edit';
     this.drawerEditingEvent = ev;
     this.drawerSeed = this.toSeedFromEvent(ev);
     this.drawerOpen = true;
+
+    if (ev.type !== 'session') return;
+
+    void this.sessionService.getSessionById(ev.id)
+      .then(session => {
+        if (!session) return;
+        if (this.drawerMode !== 'edit') return;
+        if (String(this.drawerEditingEvent?.id ?? '') !== String(ev.id)) return;
+
+        const startRaw = String((session as any).start ?? ev.start ?? '').trim();
+        const endRaw = String((session as any).end ?? ev.end ?? '').trim();
+        const start = this.normalizeSeedDateTime(startRaw, ev.start);
+        const end = this.normalizeSeedDateTime(endRaw, ev.end);
+        const durationMinutes = this.diffMinutes(start, end) || this.diffMinutes(ev.start, ev.end) || 60;
+        const notesByAdmin = String((session as any).notesByAdmin ?? (session as any).notes ?? (ev as any).notesByAdmin ?? ev.notes ?? '').trim();
+        const genericNotes = String((session as any).notes ?? (session as any).notesByAdmin ?? ev.notes ?? (ev as any).notesByAdmin ?? '').trim();
+        const healingNotes = String((session as any).healingNotes ?? (session as any).healingNote ?? (ev as any).healingNotes ?? '').trim();
+        const painLevelRaw = (session as any).painLevel ?? (session as any).pain ?? (ev as any).painLevel;
+        const painLevel = painLevelRaw == null ? undefined : Number(painLevelRaw);
+        const paidAmountRaw = (session as any).paidAmount ?? (ev as any).paidAmount;
+        const paidAmount = paidAmountRaw == null ? undefined : Number(paidAmountRaw);
+
+        this.drawerSeed = {
+          ...(this.drawerSeed as any),
+          type: 'session',
+          artistId: String((session as any).artistId ?? ev.artistId ?? '').trim() || ev.artistId,
+          start,
+          end,
+          durationMinutes,
+          clientId: String((session as any).clientId ?? ev.clientId ?? '').trim() || undefined,
+          projectId: String((session as any).projectId ?? ev.projectId ?? '').trim() || undefined,
+          bookingId: String((session as any).bookingId ?? ev.bookingId ?? '').trim() || undefined,
+          zone: String((session as any).zone ?? '').trim() || undefined,
+          status: String((session as any).status ?? ev.status ?? 'planned').trim() || 'planned',
+          notes: genericNotes || undefined,
+          notesByAdmin: notesByAdmin || undefined,
+          healingNotes: healingNotes || undefined,
+          painLevel: Number.isNaN(painLevel as number) ? undefined : painLevel,
+          paidAmount: Number.isNaN(paidAmount as number) ? undefined : paidAmount,
+          sessionNumber: (session as any).sessionNumber ?? undefined,
+        } as any;
+      })
+      .catch(err => {
+        console.error('[CAL-SHELL] openEditEvent: hydrate session failed', err);
+      });
   }
 
   private openCreateSessionFromBooking(ev: UiCalendarEvent): void {
+    this.preloadDrawerLists();
     const durationMinutes = this.diffMinutes(ev.start, ev.end) || 60;
     const next = this.computeNextSessionSeed(ev.projectId, ev.end, durationMinutes);
     this.drawerMode = 'create';
@@ -453,7 +513,6 @@ export class CalendarShellComponent implements OnChanges {
       durationMinutes,
       clientId: ev.clientId,
       projectId: ev.projectId,
-      bookingId: ev.id,
       status: 'planned',
       sessionNumber: next.sessionNumber
     } as any;
@@ -461,9 +520,46 @@ export class CalendarShellComponent implements OnChanges {
     this.drawerOpen = true;
   }
 
-  private openCreateSessionFromProject(payload: { projectId: string; artistId: string; clientId?: string }): void {
+  private async openCreateSessionFromProject(payload: {
+    projectId: string;
+    artistId: string;
+    clientId?: string;
+    zone?: string;
+  }): Promise<void> {
+    this.preloadDrawerLists();
     const durationMinutes = 60;
-    const next = this.computeNextSessionSeed(payload.projectId, undefined, durationMinutes);
+    let bookingEndFallback: string | undefined;
+    let zone = payload.zone ?? undefined;
+    try {
+      const project = await this.projectService.getProjectById(payload.projectId);
+      if (project) {
+        if (!zone) {
+          zone = String(project.zone ?? '').trim() || undefined;
+        }
+        const bookingId = String((project as any)?.bookingId ?? '').trim();
+        if (bookingId) {
+          const bookingById = (this.eventsSig() ?? [])
+            .find(e => e.type === 'booking' && String(e.id) === bookingId);
+          if (bookingById?.end) {
+            bookingEndFallback = String(bookingById.end);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[CAL-SHELL] openCreateSessionFromProject: fetch project failed', err);
+    }
+
+    if (!bookingEndFallback) {
+      const bookingByProject = (this.eventsSig() ?? [])
+        .filter(e => e.type === 'booking' && String(e.projectId) === String(payload.projectId))
+        .sort((a, b) => String(a.end ?? '').localeCompare(String(b.end ?? '')))
+        .pop();
+      if (bookingByProject?.end) {
+        bookingEndFallback = String(bookingByProject.end);
+      }
+    }
+
+    const next = this.computeNextSessionSeed(payload.projectId, bookingEndFallback, durationMinutes);
     this.drawerMode = 'create';
     this.drawerSeed = {
       type: 'session',
@@ -474,7 +570,8 @@ export class CalendarShellComponent implements OnChanges {
       clientId: payload.clientId,
       projectId: payload.projectId,
       status: 'planned',
-      sessionNumber: next.sessionNumber
+      sessionNumber: next.sessionNumber,
+      zone
     } as any;
     this.drawerEditingEvent = null;
     this.drawerOpen = true;
@@ -525,7 +622,7 @@ export class CalendarShellComponent implements OnChanges {
           type: 'session'
         } as UiCalendarEvent);
         if (decision === 'cancel') return;
-        this.applyCompleteSessionDecision(decision, {
+        await this.applyCompleteSessionDecision(decision, {
           ...(result.draft as any),
           id: 'draft',
           type: 'session'
@@ -549,7 +646,7 @@ export class CalendarShellComponent implements OnChanges {
           type: 'session'
         } as UiCalendarEvent);
         if (decision === 'cancel') return;
-        this.applyCompleteSessionDecision(decision, {
+        await this.applyCompleteSessionDecision(decision, {
           ...(this.drawerEditingEvent as any),
           ...(result.update.patch as any),
           id: result.update.id,
@@ -613,7 +710,7 @@ export class CalendarShellComponent implements OnChanges {
     if (payload.type === 'complete' && ev.type === 'session') {
       const decision = await this.askCompleteSessionDecision(ev);
       if (decision === 'cancel') return;
-      this.applyCompleteSessionDecision(decision, ev);
+      await this.applyCompleteSessionDecision(decision, ev);
     }
 
     if (payload.type === 'confirm' && ev.type === 'booking' && !ev.projectId) {
@@ -657,7 +754,7 @@ export class CalendarShellComponent implements OnChanges {
     return (res ?? 'cancel') as CompleteSessionDecision;
   }
 
-  private applyCompleteSessionDecision(decision: CompleteSessionDecision, ev: UiCalendarEvent): void {
+  private async applyCompleteSessionDecision(decision: CompleteSessionDecision, ev: UiCalendarEvent): Promise<void> {
     const projectId = String(ev.projectId ?? '').trim();
     if (!projectId) {
       this.snackBar.open('Collega un progetto prima di chiudere o creare nuove sessioni.', 'OK', {
@@ -680,11 +777,13 @@ export class CalendarShellComponent implements OnChanges {
     }
 
     if (decision === 'new_session') {
-      this.openCreateSessionFromProject({
+      await this.openCreateSessionFromProject({
         projectId,
         artistId: ev.artistId,
-        clientId: ev.clientId
+        clientId: ev.clientId,
+        zone: (ev as any).zone ?? undefined
       });
+      return;
     }
   }
 
@@ -704,10 +803,16 @@ export class CalendarShellComponent implements OnChanges {
       durationMinutes,
       clientId: ev.clientId,
       projectId: ev.projectId,
-      bookingId: (ev as any).bookingId,
+      bookingId: (ev as any).bookingId ?? undefined,
       sessionNumber: (ev as any).sessionNumber,
-      notes: ev.notes,
+      notes: ev.notes ?? (ev as any).notesByAdmin ?? undefined,
+      notesByAdmin: (ev as any).notesByAdmin ?? ev.notes ?? undefined,
+      healingNotes: (ev as any).healingNotes ?? undefined,
+      painLevel: (ev as any).painLevel ?? undefined,
+      paidAmount: (ev as any).paidAmount ?? undefined,
+      zone: (ev as any).zone ?? undefined,
       status: (ev as any).status ?? undefined,
+      createdById: (ev as any).createdById ?? undefined,
     } as any;
   }
 
@@ -800,6 +905,17 @@ export class CalendarShellComponent implements OnChanges {
       return;
     }
 
+    const canCreate =
+      this.userCanManageProjects() || this.canStaffCreateProjectForBooking(payload.bookingId);
+    if (!canCreate) {
+      this.snackBar.open('Permesso mancante: crea progetti solo da admin o dal booking assegnato a te.', 'OK', {
+        duration: 2500,
+        horizontalPosition: 'right',
+        verticalPosition: 'bottom'
+      });
+      return;
+    }
+
     const res = await this.openCreateProjectDialog({
       clientId: payload.clientId,
       artistId: payload.artistId,
@@ -807,14 +923,28 @@ export class CalendarShellComponent implements OnChanges {
     });
     if (!res?.title) return;
 
-    const projectId = await this.projectService.createProject({
-      title: res.title,
-      clientId: payload.clientId,
-      artistId: payload.artistId,
-      zone: res.zone ?? undefined,
-      notes: res.notes ?? undefined,
-      status: 'scheduled'
-    } as any);
+    let projectId: string;
+    try {
+      projectId = await this.projectService.createProject({
+        title: res.title,
+        clientId: payload.clientId,
+        artistId: payload.artistId,
+        zone: res.zone ?? undefined,
+        notes: res.notes ?? undefined,
+        status: 'scheduled',
+        bookingId: payload.bookingId ?? undefined
+      } as any);
+    } catch (err: any) {
+      if (String(err?.message ?? '').startsWith('PERMISSION_DENIED:')) {
+        this.snackBar.open('Permesso mancante: gestione progetti.', 'OK', {
+          duration: 2500,
+          horizontalPosition: 'right',
+          verticalPosition: 'bottom'
+        });
+        return;
+      }
+      throw err;
+    }
 
     const lite: ProjectLite = {
       id: projectId,
@@ -834,6 +964,33 @@ export class CalendarShellComponent implements OnChanges {
     if (this.drawerSeed) {
       this.drawerSeed = { ...this.drawerSeed, projectId } as any;
     }
+  }
+
+  userCanManageProjects(): boolean {
+    const user = this.auth.userSig();
+    if (!user) return false;
+    return user.role === 'admin' || user.permissions?.canManageProjects === true;
+  }
+
+  canCreateProjectForAssignedBookingFromDrawer(): boolean {
+    const seedBookingId = String(this.drawerSeed?.bookingId ?? '').trim();
+    if (seedBookingId) {
+      return this.canStaffCreateProjectForBooking(seedBookingId);
+    }
+    const editingBookingId = String(((this.drawerEditingEvent as any)?.bookingId ?? '')).trim();
+    if (editingBookingId) {
+      return this.canStaffCreateProjectForBooking(editingBookingId);
+    }
+    return false;
+  }
+
+  private canStaffCreateProjectForBooking(bookingId?: string): boolean {
+    if (!bookingId) return false;
+    const user = this.auth.userSig();
+    if (!user || user.role !== 'staff') return false;
+    return (this.bookingsLite ?? []).some(
+      b => String(b.id) === String(bookingId) && String(b.artistId) === String(user.uid)
+    );
   }
 
   private async confirmProjectOverride(projectId: string, bookingId?: string): Promise<boolean> {
@@ -879,6 +1036,18 @@ export class CalendarShellComponent implements OnChanges {
       return false;
     }
 
+    const canCreate =
+      this.userCanManageProjects() || this.canStaffCreateProjectForBooking(ev.type === 'booking' ? ev.id : undefined);
+    if (!canCreate) {
+      this.snackBar.open('Permesso mancante: crea progetti solo da admin o dal booking assegnato a te.', 'OK', {
+        duration: 2500,
+        horizontalPosition: 'right',
+        verticalPosition: 'bottom'
+      });
+      this.openEditEvent(ev);
+      return false;
+    }
+
     const res = await this.openCreateProjectDialog({
       clientId: ev.clientId,
       artistId: ev.artistId,
@@ -886,14 +1055,31 @@ export class CalendarShellComponent implements OnChanges {
     });
     if (!res?.title) return false;
 
-    const projectId = await this.projectService.createProject({
-      title: res.title,
-      clientId: ev.clientId,
-      artistId: ev.artistId,
-      zone: res.zone ?? undefined,
-      notes: res.notes ?? undefined,
-      status: 'scheduled'
-    } as any);
+    let projectId: string | undefined;
+    try {
+      projectId = await this.projectService.createProject({
+        title: res.title,
+        clientId: ev.clientId,
+        artistId: ev.artistId,
+        zone: res.zone ?? undefined,
+        notes: res.notes ?? undefined,
+        status: 'scheduled',
+        bookingId: ev.type === 'booking' ? ev.id : undefined
+      } as any);
+    } catch (err: any) {
+      if (String(err?.message ?? '').startsWith('PERMISSION_DENIED:')) {
+        this.snackBar.open('Permesso mancante: gestione progetti.', 'OK', {
+          duration: 2500,
+          horizontalPosition: 'right',
+          verticalPosition: 'bottom'
+        });
+        this.openEditEvent(ev);
+        return false;
+      }
+      throw err;
+    }
+
+    if (!projectId) return false;
 
     const patch: any = {
       projectId,
@@ -921,5 +1107,13 @@ export class CalendarShellComponent implements OnChanges {
   private toLocalDateTime(d: Date): string {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  private normalizeSeedDateTime(value: string, fallback: string): string {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return this.toLocalDateTime(parsed);
+    const fb = new Date(fallback);
+    if (!Number.isNaN(fb.getTime())) return this.toLocalDateTime(fb);
+    return fallback;
   }
 }

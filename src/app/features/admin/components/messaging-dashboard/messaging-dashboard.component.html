@@ -7,7 +7,7 @@
       (click)="selectThread(thread)"
       [class.unread]="(thread.unreadBy?.[actorId] ?? 0) > 0"
     >
-      <span style="color: whitesmoke;">
+      <span class="thread-label">
         {{ thread.summary || ('Conversazione #' + (thread.id | slice:-6)) }} ({{ labelStatus(thread.status) }})
       </span>
     </mat-list-item>

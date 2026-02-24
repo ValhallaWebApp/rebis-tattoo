@@ -1,36 +1,16 @@
-/* ===========================
-   Variabili base (light/dark)
-   =========================== */
-:root {
-  --bg:            #0b0c10;
-  --surface:       #111217;
-  --elev:          #151823;
-  --border:        rgba(255,255,255,0.08);
-  --muted:         rgba(255,255,255,0.6);
-  --text:          #e9ecf1;
-  --primary:       #7c5cff;
-  --primary-weak:  rgba(124,92,255,.12);
-  --danger:        #ff5c7c;
-  --success:       #3ddc97;
-  --warning:       #ffb020;
-}
-
-[data-theme="light"] {
-  --bg:            #f6f7fb;
-  --surface:       #ffffff;
-  --elev:          #ffffff;
-  --border:        rgba(0,0,0,0.08);
-  --muted:         rgba(0,0,0,0.6);
-  --text:          #1b1f2a;
-  --primary:       #6a5dff;
-  --primary-weak:  rgba(106,93,255,.1);
-  --danger:        #e84c6a;
-  --success:       #13b87c;
-  --warning:       #f29f05;
-}
-
 /* Reset minimi */
 :host {
+  --bg: var(--app-main-bg);
+  --surface: var(--glass-bg-strong);
+  --elev: var(--glass-bg);
+  --border: var(--glass-border);
+  --muted: var(--text-muted);
+  --text: var(--app-main-text);
+  --primary: var(--accent);
+  --primary-weak: rgba(255, 255, 255, 0.08);
+  --danger: #fca5a5;
+  --success: #86efac;
+  --warning: #fbbf24;
   display: block;
   background: var(--bg);
   color: var(--text);
@@ -119,17 +99,17 @@
 
       &:hover {
         background: var(--primary-weak);
-        border-color: transparent;
+        border-color: var(--border);
       }
       &.active {
-        border-color: var(--primary);
-        background: linear-gradient(0deg, var(--primary-weak), var(--primary-weak));
+        border-color: var(--border);
+        background: rgba(255,255,255,.1);
       }
 
       .state {
         width: 8px; height: 8px; border-radius: 999px;
-        &.aperto  { background: var(--success); }
-        &.chiuso  { background: var(--danger);  }
+        &.aperto  { background: var(--accent); }
+        &.chiuso  { background: var(--text-muted);  }
       }
 
       .info {
@@ -173,8 +153,7 @@
 .chat {
   display: grid;
   grid-template-rows: auto 1fr auto;
-  background: radial-gradient(1200px 800px at 100% -20%, rgba(124,92,255,.08), transparent 50%),
-              radial-gradient(900px 650px at -20% 120%, rgba(61,220,151,.06), transparent 45%);
+  background: var(--bg);
 
   .chat-header {
     display: flex;
@@ -203,14 +182,14 @@
         color: var(--muted);
 
         &.aperto {
-          border-color: rgba(61,220,151,.25);
-          color: var(--success);
-          background: rgba(61,220,151,.08);
+          border-color: var(--accent);
+          color: var(--app-main-text);
+          background: rgba(255,255,255,.08);
         }
         &.chiuso {
-          border-color: rgba(255,92,124,.25);
-          color: var(--danger);
-          background: rgba(255,92,124,.08);
+          border-color: var(--border);
+          color: var(--text-muted);
+          background: rgba(255,255,255,.08);
         }
       }
     }
@@ -248,8 +227,8 @@
     }
 
     &.user {
-      background: linear-gradient(0deg, var(--primary-weak), var(--primary-weak));
-      border-color: rgba(124,92,255,.28);
+      background: rgba(255,255,255,.08);
+      border-color: var(--border);
       align-self: flex-end;
       border-top-right-radius: 6px;
     }
@@ -358,7 +337,7 @@
       border-radius: 10px;
       overflow: hidden;
       border: 1px solid var(--border);
-      background: #000;
+      background: var(--page-bg-elevated);
 
       img {
         width: 100%; height: 100%; object-fit: cover; display: block;

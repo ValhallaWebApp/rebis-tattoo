@@ -1,10 +1,10 @@
 <h2 mat-dialog-title>Dettagli Prenotazione</h2>
 
 <mat-dialog-content>
-  <p><strong>ID Cliente:</strong> {{ data.idClient }}</p>
+  <p><strong>ID Cliente:</strong> {{ data.clientId || '-' }}</p>
   <p><strong>Data di nascita:</strong> {{ data.eta || '-' }}</p>
-  <p><strong>Descrizione:</strong> {{ data.description || '-' }}</p>
-  <p><strong>ID Artista:</strong> {{ data.idArtist || '-' }}</p>
+  <p><strong>Note:</strong> {{ data.notes || '-' }}</p>
+  <p><strong>ID Artista:</strong> {{ data.artistId || '-' }}</p>
   <p><strong>Inizio:</strong> {{ data.start | date: 'medium' }}</p>
   <p><strong>Fine:</strong> {{ data.end | date: 'medium' }}</p>
   <p><strong>Stato:</strong>

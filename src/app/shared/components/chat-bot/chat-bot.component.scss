@@ -87,3 +87,18 @@
   right: 16px;
   bottom: 86px;
 }
+
+.chat-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #ffffff;
+  z-index: 20;
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(1px);
+}

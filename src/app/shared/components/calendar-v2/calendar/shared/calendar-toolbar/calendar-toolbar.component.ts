@@ -7,16 +7,10 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-/* Angular Material */
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule }    from '@angular/material/icon';
-import { MatButtonModule }  from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-
 /* date-fns per formattare il titolo */
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { MaterialModule } from '../../../../core/modules/material.module';
+import { MaterialModule } from '../../../../../../core/modules/material.module';
 
 /** Tipi accettati */
 export type CalendarView = 'day' | 'week' | 'month';

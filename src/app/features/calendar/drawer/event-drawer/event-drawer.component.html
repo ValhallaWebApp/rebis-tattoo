@@ -159,16 +159,26 @@
           (blur)="onProjectBlur()"
         />
 
-      <button
-        mat-icon-button
-        matSuffix
-        type="button"
-        *ngIf="form.controls.projectId.value"
-        (click)="clearProject()"
-        [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()"
-        aria-label="Pulisci progetto">
-        <mat-icon>close</mat-icon>
-      </button>
+      <div matSuffix class="drawer__project-actions">
+        <button
+          mat-icon-button
+          type="button"
+          *ngIf="form.controls.projectId.value"
+          (click)="clearProject()"
+          [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()"
+          aria-label="Pulisci progetto">
+          <mat-icon>close</mat-icon>
+        </button>
+
+        <button
+          mat-icon-button
+          type="button"
+          (click)="createProjectFromDrawer()"
+          [disabled]="isAssignmentLocked() || isBookingAssignmentLocked() || !projectCreationEnabled"
+          aria-label="Crea progetto">
+          <mat-icon>add_circle</mat-icon>
+        </button>
+      </div>
 
       <mat-autocomplete
         #projectAuto="matAutocomplete"
@@ -190,6 +200,13 @@
 
       </mat-autocomplete>
 
+      <mat-hint align="end" *ngIf="projectCreationEnabled">
+        Crea un nuovo progetto con il + oppure selezionane uno esistente.
+      </mat-hint>
+      <mat-hint align="end" *ngIf="!projectCreationEnabled">
+        Solo admin o lo staff assegnato alla booking possono creare progetti da qui.
+      </mat-hint>
+
       <mat-hint *ngIf="isSession()">
         Selezionando un progetto, il numero sessione viene calcolato automaticamente.
       </mat-hint>
@@ -200,49 +217,6 @@
       <mat-error *ngIf="isSession() && form.controls.projectQuery.touched && form.controls.projectQuery.hasError('required')">
         Seleziona un progetto
       </mat-error>
-    </mat-form-field>
-
-    <!-- BOOKING (autocomplete - session only) -->
-    <mat-form-field appearance="outline" *ngIf="isSession()">
-      <mat-label>Booking di riferimento (opzionale)</mat-label>
-
-        <input
-          matInput
-          type="text"
-          formControlName="bookingQuery"
-          [matAutocomplete]="bookingAuto"
-          placeholder="Cerca booking"
-          (blur)="onBookingBlur()"
-        />
-
-      <button
-        mat-icon-button
-        matSuffix
-        type="button"
-        *ngIf="form.controls.bookingId.value"
-        (click)="clearBooking()"
-        [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()"
-        aria-label="Pulisci booking">
-        <mat-icon>close</mat-icon>
-      </button>
-
-      <mat-autocomplete
-        #bookingAuto="matAutocomplete"
-        [displayWith]="displayBooking"
-        (optionSelected)="onBookingSelected($event.option.value)">
-
-        <mat-option *ngFor="let b of (filteredBookings$ | async)" [value]="b">
-          <div class="opt">
-            <strong>{{ displayBooking(b) }}</strong>
-            <small>{{ b.projectId ? 'Con progetto' : 'Senza progetto' }}</small>
-          </div>
-        </mat-option>
-
-      </mat-autocomplete>
-
-      <mat-hint>
-        Se selezioni un booking, compiliamo automaticamente artista, cliente e progetto.
-      </mat-hint>
     </mat-form-field>
 
     <!-- ZONE -->

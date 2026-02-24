@@ -22,7 +22,7 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Artista</mat-label>
-        <mat-select formControlName="idArtist">
+        <mat-select formControlName="artistId">
           <mat-option *ngFor="let member of staff" [value]="member.id">
             {{ member.name }}
           </mat-option>

@@ -168,16 +168,17 @@ async onSubmit(): Promise<void> {
     return;
   }
 
+  const nowIso = new Date().toISOString();
   const booking: Omit<Booking, 'id' | 'status'> = {
     title: `${v.start.split('T')[1]?.slice(0, 5)} ${v.description} â€“ ${v.clientName}`,
     start: v.start,
     end: v.end,
-    idClient: user.uid,
-    description: v.description,
-    idArtist: v.artist || '',
+    clientId: user.uid,
+    artistId: v.artist || '',
+    notes: v.description,
     price: 5000,
-    createAt: new Date().toISOString(),
-    updateAt: new Date().toISOString()
+    createdAt: nowIso,
+    updatedAt: nowIso
   };
 
   try {

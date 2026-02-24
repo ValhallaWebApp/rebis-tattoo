@@ -3,8 +3,8 @@
   flex-direction: column;
   gap: 1.5rem;
   padding: 2rem;
-  color: #1a1a1a;
-  background: #f7f5f2;
+  color: var(--app-main-text);
+  background: var(--app-main-bg);
 }
 
 /* HEADER */
@@ -23,7 +23,7 @@
 
     mat-icon {
       font-size: 1.6rem;
-      color: #2a2a2a;
+      color: var(--accent);
     }
   }
 }
@@ -32,15 +32,15 @@
 .drawer-container {
   width: 100%;
   min-height: 80vh;
-  color: #1a1a1a;
+  color: var(--app-main-text);
   background: transparent;
 }
 
 .service-drawer {
   width: 420px;
   padding: 1.5rem;
-  background: #f7f5f2;
-  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--glass-bg-strong);
+  border-left: 1px solid var(--glass-border);
 }
 
 .drawer-content {
@@ -57,7 +57,7 @@
 
   mat-form-field {
     width: 100%;
-    color: #1a1a1a;
+    color: var(--app-main-text);
   }
 }
 
@@ -71,24 +71,24 @@
   align-items: flex-start;
   justify-content: space-between;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--glass-border);
   margin-bottom: 1rem;
 
   h3 {
     margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--app-main-text);
   }
 
   .subtitle {
     margin: 0.2rem 0 0;
     font-size: 0.85rem;
-    color: rgba(0, 0, 0, 0.55);
+    color: var(--text-muted);
   }
 
   button mat-icon {
-    color: #1a1a1a;
+    color: var(--app-main-text);
   }
 }
 
@@ -106,8 +106,8 @@
   justify-content: space-between;
   padding: 0.9rem 1rem;
   margin-bottom: 1.25rem;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: 16px;
 
   .preview-main {
@@ -120,13 +120,13 @@
     width: 42px;
     height: 42px;
     border-radius: 14px;
-    background: rgba(0, 0, 0, 0.06);
+    background: var(--glass-bg-strong);
     display: flex;
     align-items: center;
     justify-content: center;
 
     mat-icon {
-      color: #1f1f1f;
+      color: var(--app-main-text);
     }
 
     img {
@@ -140,17 +140,17 @@
     margin: 0;
     font-size: 1.05rem;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--app-main-text);
   }
 
   .role {
     font-size: 0.85rem;
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--text-muted);
   }
 
   .meta {
     font-size: 0.8rem;
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--text-muted);
   }
 
   .status-pill {
@@ -166,9 +166,9 @@
     }
 
     &.inactive {
-      background: rgba(0, 0, 0, 0.06);
-      border: 1px solid rgba(0, 0, 0, 0.16);
-      color: rgba(0, 0, 0, 0.65);
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted);
     }
   }
 }
@@ -188,11 +188,11 @@
 mat-form-field {
   .mat-mdc-input-element,
   .mat-mdc-select-value-text {
-    color: #1a1a1a !important;
+    color: var(--app-main-text) !important;
   }
 
   .mat-mdc-floating-label {
-    color: rgba(0, 0, 0, 0.6) !important;
+    color: var(--text-muted) !important;
   }
 }
 
@@ -200,15 +200,10 @@ mat-form-field {
 .form-actions {
   position: sticky;
   bottom: 0;
-  background: linear-gradient(
-    to top,
-    #f7f5f2 80%,
-    rgba(247, 245, 242, 0.7),
-    transparent
-  );
+  background: var(--glass-bg-strong);
   padding-top: 1rem;
   padding-bottom: 0.5rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--glass-border);
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
@@ -261,9 +256,9 @@ mat-form-field {
   align-items: stretch;
   padding: 0.9rem 1.1rem;
   border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--glass-bg);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--glass-border);
   gap: 1rem;
 
   &.inactive {
@@ -281,13 +276,13 @@ mat-form-field {
     width: 40px;
     height: 40px;
     border-radius: 14px;
-    background: rgba(0, 0, 0, 0.06);
+    background: var(--glass-bg-strong);
     display: flex;
     align-items: center;
     justify-content: center;
 
     mat-icon {
-      color: #1f1f1f;
+      color: var(--app-main-text);
     }
   }
 
@@ -295,7 +290,7 @@ mat-form-field {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    color: #1a1a1a;
+    color: var(--app-main-text);
 
     h3 {
       margin: 0;
@@ -325,7 +320,7 @@ mat-form-field {
       opacity: 0.85;
 
       .price {
-        color: #1a1a1a;
+        color: var(--app-main-text);
       }
     }
   }
@@ -344,8 +339,8 @@ mat-form-field {
     }
 
     &.inactive {
-      background: rgba(0, 0, 0, 0.06);
-      border: 1px solid rgba(0, 0, 0, 0.16);
+      background: var(--glass-bg-strong);
+      border: 1px solid var(--glass-border);
     }
   }
 

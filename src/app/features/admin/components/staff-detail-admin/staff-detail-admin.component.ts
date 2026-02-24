@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
@@ -14,8 +13,6 @@ import {
   WeekdayKey,
   StaffTimeSlot,
 } from '../../../../core/services/staff/staff.service';
-import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
-import { ConfirmDialogComponent } from '../../../../shared/components/dialogs/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-staff-detail-admin',
@@ -29,8 +26,6 @@ export class StaffDetailAdminComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly staffService = inject(StaffService);
   private readonly fb = inject(FormBuilder);
-  private readonly dialog = inject(MatDialog);
-  private readonly ui = inject(UiFeedbackService);
 
   private readonly sub = new Subscription();
 
@@ -131,18 +126,10 @@ export class StaffDetailAdminComponent implements OnInit, OnDestroy {
       stepMinutes: Number(v.stepMinutes ?? 30),
     };
 
-    const ok = await this.confirm({
-      title: 'Salvare impostazioni calendario?',
-      message: 'Queste impostazioni influenzano la selezione degli orari nel calendario.',
-    });
-    if (!ok) return;
-
     this.staffService
       .updateCalendarSettings(this.staffId, patch)
-      .then(() => this.snack('Calendario aggiornato'))
       .catch((e) => {
         console.error(e);
-        this.snack('Errore calendario');
       });
   }
 
@@ -165,31 +152,10 @@ export class StaffDetailAdminComponent implements OnInit, OnDestroy {
   async saveAvailability(): Promise<void> {
     if (!this.staffId) return;
 
-    const ok = await this.confirm({
-      title: 'Salvare orari?',
-      message: 'Salvi la disponibilita settimanale dello staff.',
-    });
-    if (!ok) return;
-
     this.staffService
       .setAvailability(this.staffId, this.availability)
-      .then(() => this.snack('Orari salvati'))
       .catch((e) => {
         console.error(e);
-        this.snack('Errore orari');
       });
-  }
-
-  private snack(message: string): void {
-    this.ui.open(message, 'OK', {
-      duration: 2500,
-      horizontalPosition: 'right',
-      verticalPosition: 'bottom',
-    });
-  }
-
-  private async confirm(data: { title: string; message: string; confirmText?: string; cancelText?: string }): Promise<boolean> {
-    const ref = this.dialog.open(ConfirmDialogComponent, { data, width: '420px', maxWidth: '92vw' });
-    return (await ref.afterClosed().toPromise()) === true;
   }
 }

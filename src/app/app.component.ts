@@ -1,8 +1,9 @@
-import { CommonModule } from '@angular/common';
-import { Component, effect, OnInit, ViewChild } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { Component, DestroyRef, effect, Inject, inject, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSidenav } from '@angular/material/sidenav';
-import { Router, RouterModule } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
+import { Observable, of, filter } from 'rxjs';
 import { AuthService } from './core/services/auth/authservice';
 import { MenuItem, MenuService, MenuUserContext } from './core/services/menu/menu.service';
 import { MaterialModule } from './core/modules/material.module';
@@ -19,9 +20,11 @@ import { ChatBotPopupComponent } from './shared/components/chat-bot/chat-bot-pop
 })
 export class AppComponent implements OnInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
+  private readonly destroyRef = inject(DestroyRef);
 
   modeSidenav: 'over' | 'side' = 'over';
   isMenuOpen = false;
+  activeTheme: 'public' | 'client' | 'admin' = 'public';
   userRole: 'public' | 'client' | 'staff' | 'admin' = 'public';
   navItem$!: Observable<MenuItem[]>;
   isLoggedIn = false;
@@ -33,7 +36,8 @@ export class AppComponent implements OnInit {
     private menuService: MenuService,
     private auth: AuthService,
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
+    @Inject(DOCUMENT) private document: Document
   ) {}
 
   private userEffect = effect(() => {
@@ -53,6 +57,16 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadMenuForUser(null);
+    this.applyThemeByUrl(this.router.url);
+
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(event => {
+        this.applyThemeByUrl(event.urlAfterRedirects || event.url);
+      });
   }
 
   loadMenuForUser(user: MenuUserContext | null): void {
@@ -69,6 +83,29 @@ export class AppComponent implements OnInit {
   private bindNotifications(userId: string): void {
     this.notifications$ = this.notificationService.getUserNotifications(userId);
     this.unreadCount$ = this.notificationService.getUnreadCount(userId);
+  }
+
+  private applyThemeByUrl(url: string): void {
+    const nextTheme = this.resolveThemeByUrl(url);
+    this.activeTheme = nextTheme;
+
+    const classList = this.document.body.classList;
+    classList.remove('theme-public', 'theme-client', 'theme-admin');
+    classList.add(`theme-${nextTheme}`);
+  }
+
+  private resolveThemeByUrl(url: string): 'public' | 'client' | 'admin' {
+    const normalizedUrl = (url || '').toLowerCase();
+
+    if (normalizedUrl.startsWith('/dashboard')) {
+      return 'client';
+    }
+
+    if (normalizedUrl.startsWith('/admin') || normalizedUrl.startsWith('/staff')) {
+      return 'admin';
+    }
+
+    return 'public';
   }
 
   toggleMenu(): void {

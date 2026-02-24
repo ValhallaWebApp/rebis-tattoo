@@ -135,7 +135,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
   }
 
   createdAtOf(): string {
-    return String((this.project as any)?.createdAt ?? (this.project as any)?.createAt ?? (this.project as any)?.dataProgetto ?? '').trim();
+    return String((this.project as any)?.createdAt ?? '').trim();
   }
 
   zoneLabel(): string {

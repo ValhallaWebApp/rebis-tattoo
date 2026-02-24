@@ -1,62 +1,55 @@
 <section class="rt-contacts">
-  <!-- top header dark (come mockup) -->
   <header class="rt-hero">
     <div class="rt-container">
       <h1 class="rt-title">CONTATTI</h1>
-      <p class="rt-subtitle">Rebis Tattoo · Studio di tatuaggi a Sassari</p>
+      <p class="rt-subtitle">{{ profile.studioName }} - {{ profile.tagline }}</p>
     </div>
   </header>
 
   <main class="rt-container">
-    <!-- split (desktop): left info on light paper + right image -->
     <div class="rt-split">
-      <!-- INFO (paper) -->
       <section class="rt-paper">
-        <h2 class="rt-brand">REBIS TATTOO</h2>
+        <h2 class="rt-brand">{{ profile.studioName }}</h2>
 
         <div class="rt-lines">
           <div class="rt-line">
-            <span class="rt-ico">📍</span>
-            <span class="rt-text">{{ address }}</span>
+            <span class="rt-ico">[ADDR]</span>
+            <span class="rt-text">{{ profile.address }}</span>
           </div>
 
           <div class="rt-line">
-            <span class="rt-ico">📞</span>
-            <a class="rt-link" [href]="'tel:' + phoneDisplay.replaceAll(' ', '')">
-              {{ phoneDisplay }}
+            <span class="rt-ico">[TEL]</span>
+            <a class="rt-link" [href]="'tel:' + profile.phoneDisplay.replaceAll(' ', '')">
+              {{ profile.phoneDisplay }}
             </a>
-            <span class="rt-dot">·</span>
+            <span class="rt-dot">-</span>
             <a class="rt-link" [href]="'https://wa.me/' + whatsappNumber" target="_blank" rel="noopener">
               WhatsApp
             </a>
           </div>
 
           <div class="rt-line">
-            <span class="rt-ico">✉️</span>
-            <a class="rt-link" [href]="'mailto:' + email">{{ email }}</a>
+            <span class="rt-ico">[MAIL]</span>
+            <a class="rt-link" [href]="'mailto:' + profile.email">{{ profile.email }}</a>
           </div>
 
           <div class="rt-line">
-            <span class="rt-ico">📷</span>
-            <a class="rt-link" [href]="instagramUrl" target="_blank" rel="noopener">{{ instagramHandle }}</a>
+            <span class="rt-ico">[IG]</span>
+            <a class="rt-link" [href]="profile.instagramUrl" target="_blank" rel="noopener">
+              {{ profile.instagramHandle }}
+            </a>
           </div>
         </div>
 
         <div class="rt-cta">
-          <a class="rt-btn rt-btn--primary" routerLink="/fast-booking">
-            PRENOTA UNA CONSULENZA
-          </a>
-
-          <button class="rt-btn rt-btn--accent" type="button" (click)="openChat()">
-            APRI LA CHAT
-          </button>
+          <a class="rt-btn rt-btn--primary" routerLink="/fast-booking">PRENOTA UNA CONSULENZA</a>
+          <button class="rt-btn rt-btn--accent" type="button" (click)="openChat()">APRI LA CHAT</button>
         </div>
 
         <div class="rt-mini">
-          Disponibilità: su appuntamento (scrivici per confermare)
+          Disponibilita: su appuntamento (scrivici per confermare)
         </div>
 
-        <!-- mini form (secondario, come mockup) -->
         <div class="rt-formBlock">
           <h3 class="rt-formTitle">Oppure scrivici</h3>
 
@@ -65,40 +58,31 @@
               <div class="rt-field">
                 <label>Nome</label>
                 <input type="text" formControlName="name" placeholder="Il tuo nome" />
-                <div class="rt-err" *ngIf="f['name'].touched && f['name'].invalid">
-                  Inserisci un nome valido
-                </div>
+                <div class="rt-err" *ngIf="f['name'].touched && f['name'].invalid">Inserisci un nome valido</div>
               </div>
 
               <div class="rt-field">
                 <label>Email</label>
                 <input type="email" formControlName="email" placeholder="nome@email.com" />
-                <div class="rt-err" *ngIf="f['email'].touched && f['email'].invalid">
-                  Inserisci un’email valida
-                </div>
+                <div class="rt-err" *ngIf="f['email'].touched && f['email'].invalid">Inserisci un'email valida</div>
               </div>
 
               <div class="rt-field rt-field--full">
                 <label>Messaggio</label>
                 <textarea rows="4" formControlName="message" placeholder="Zona, dimensioni, idea..."></textarea>
-                <div class="rt-err" *ngIf="f['message'].touched && f['message'].invalid">
-                  Scrivi almeno 10 caratteri
-                </div>
+                <div class="rt-err" *ngIf="f['message'].touched && f['message'].invalid">Scrivi almeno 10 caratteri</div>
               </div>
             </div>
 
             <div class="rt-actions">
-              <button class="rt-btn rt-btn--accent" type="submit" [disabled]="contactForm.invalid">
-                INVIA
-              </button>
+              <button class="rt-btn rt-btn--accent" type="submit" [disabled]="contactForm.invalid">INVIA</button>
             </div>
           </form>
         </div>
       </section>
 
-      <!-- IMAGE -->
       <aside class="rt-image" aria-hidden="true">
-        <img [src]="heroImageUrl" alt="Dettaglio tatuaggio Rebis Tattoo" />
+        <img [src]="heroImageUrl" [alt]="'Dettaglio tatuaggio ' + profile.studioName" />
       </aside>
     </div>
   </main>

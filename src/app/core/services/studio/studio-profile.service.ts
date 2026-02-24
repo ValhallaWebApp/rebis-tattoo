@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Database, onValue, ref } from '@angular/fire/database';
+import { Database, onValue, ref, update } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 
 export interface StudioProfile {
@@ -58,6 +58,12 @@ export class StudioProfileService {
     });
   }
 
+  async saveProfile(patch: Partial<StudioProfile>): Promise<void> {
+    const payload = this.sanitizePatch(patch);
+    if (Object.keys(payload).length === 0) return;
+    await update(ref(this.db, this.path), payload);
+  }
+
   private mergeWithDefault(raw: Partial<StudioProfile>): StudioProfile {
     const out: StudioProfile = { ...DEFAULT_STUDIO_PROFILE, ...(raw || {}) };
     for (const key of Object.keys(DEFAULT_STUDIO_PROFILE) as Array<keyof StudioProfile>) {
@@ -67,6 +73,19 @@ export class StudioProfileService {
       } else {
         out[key] = v.trim();
       }
+    }
+    return out;
+  }
+
+  private sanitizePatch(raw: Partial<StudioProfile>): Partial<StudioProfile> {
+    const out: Partial<StudioProfile> = {};
+    const keys = Object.keys(DEFAULT_STUDIO_PROFILE) as Array<keyof StudioProfile>;
+    for (const key of keys) {
+      if (!Object.prototype.hasOwnProperty.call(raw ?? {}, key)) continue;
+      const value = raw[key];
+      if (value === undefined || value === null) continue;
+      const clean = String(value).trim();
+      out[key] = clean || DEFAULT_STUDIO_PROFILE[key];
     }
     return out;
   }

@@ -201,7 +201,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   }
 
   createdAtOf(p: TattooProject): string {
-    return String((p as any).createdAt ?? (p as any).createAt ?? (p as any).dataProgetto ?? '').trim();
+    return String((p as any).createdAt ?? '').trim();
   }
 
   styleOf(p: TattooProject): string {
@@ -218,9 +218,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
 
   private artistIdsOf(p: TattooProject): string[] {
     const single = String((p as any).artistId ?? '').trim();
-    const arr = Array.isArray((p as any).artistIds) ? (p as any).artistIds : [];
-    const extra = arr.map((x: any) => String(x ?? '').trim()).filter(Boolean);
-    const all = [single, ...extra].filter(Boolean);
+    const all = [single].filter(Boolean);
     return all.length ? Array.from(new Set(all)) : [];
   }
 

@@ -11,6 +11,8 @@ Questa cartella contiene la documentazione tecnica rigenerata del frontend Angul
 - `06-librerie-e-configurazioni.md`
 - `07-firebase-uso-e-dati.md`
 - `08-stato-progetto-e-cosa-fatto.md`
+- `09-hld-chat-flow-ruoli-simulazioni.md`
+- `10-chatbot-frontend-ai-micro-modelli.md`
 - `tasks-simulazione/01-task-rebuild-completo.md`
 - `tasks-simulazione/02-task-roadmap-per-release.md`
 - `tasks-simulazione/03-task-qa-udo-e-accettazione.md`

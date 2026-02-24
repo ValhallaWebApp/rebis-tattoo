@@ -93,6 +93,7 @@ export interface CreateProjectTriggerPayload {
   clientId?: string;
   artistId?: string;
   titleHint?: string;
+  bookingId?: string;
 }
 
 @Component({
@@ -135,11 +136,21 @@ export class EventDrawerComponent implements OnInit, OnChanges {
   /** consenti session senza project? default NO */
   @Input() allowStandaloneSession = false;
 
+  /** consente la creazione progetto (admin) */
+  @Input() canCreateProjects = false;
+
+  /** consente la creazione progetto se lo staff sta lavorando sulla booking assegnata */
+  @Input() canCreateProjectForAssignedBooking = false;
+
   /** seed/patch (create o edit) */
   @Input() initialValue: Partial<DrawerDraft> | null = null;
 
   /** ✅ ID evento in edit (serve per UpdatePatch) */
   @Input() editingEventId: string | null = null;
+
+  get projectCreationEnabled(): boolean {
+    return this.canCreateProjects || this.canCreateProjectForAssignedBooking;
+  }
 
   @Output() close = new EventEmitter<void>();
 
@@ -156,6 +167,7 @@ export class EventDrawerComponent implements OnInit, OnChanges {
     { value: 'draft', label: 'Bozza' },
     { value: 'pending', label: 'In attesa' },
     { value: 'confirmed', label: 'Confermata' },
+    { value: 'paid', label: 'Pagata' },
     { value: 'in_progress', label: 'In corso' },
     { value: 'completed', label: 'Completata' },
     { value: 'cancelled', label: 'Annullata' },
@@ -543,11 +555,13 @@ export class EventDrawerComponent implements OnInit, OnChanges {
       typeof this.form.controls.projectQuery.value === 'string'
         ? String(this.form.controls.projectQuery.value).trim()
         : '';
+    const bookingId = String(this.form.controls.bookingId.value ?? '').trim();
 
     this.createProjectRequested.emit({
       clientId: this.form.controls.clientId.value || undefined,
       artistId: this.form.controls.artistId.value || undefined,
-      titleHint: titleHint || undefined
+      titleHint: titleHint || undefined,
+      bookingId: bookingId || undefined
     });
   }
 
@@ -830,12 +844,12 @@ export class EventDrawerComponent implements OnInit, OnChanges {
       bookingId: v.bookingId ?? '',
 
       zone: v.zone ?? '',
-      notes: v.notes ?? '',
+      notes: v.notes ?? v.notesByAdmin ?? '',
 
       sessionNumber: v.sessionNumber ?? null,
-      painLevel: v.painLevel ?? null,
-      notesByAdmin: v.notesByAdmin ?? '',
-      healingNotes: v.healingNotes ?? '',
+      painLevel: (v.painLevel ?? (v as any).pain) ?? null,
+      notesByAdmin: v.notesByAdmin ?? v.notes ?? '',
+      healingNotes: v.healingNotes ?? (v as any).healingNote ?? '',
       paidAmount: (v as any).paidAmount ?? null,
     });
 

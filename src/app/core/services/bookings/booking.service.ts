@@ -15,13 +15,6 @@ import {
   endAt,
   DataSnapshot
 } from '@angular/fire/database';
-import {
-  Firestore,
-  collection,
-  getDocs,
-  query as firestoreQuery,
-  where
-} from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { NotificationService } from '../notifications/notification.service';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
@@ -53,10 +46,7 @@ export interface BookingChatDraft {
   end?: string;
 }
 
-/**
- * Modello Booking salvato su RTDB
- * ✅ Nuovo schema + campi legacy opzionali per compat immediata
- */
+/** Modello Booking canonico applicativo. */
 export interface Booking {
   id: string;
 
@@ -71,6 +61,7 @@ export interface Booking {
   start: string; // "YYYY-MM-DDTHH:mm:ss" (locale)
   end: string;   // "YYYY-MM-DDTHH:mm:ss" (locale)
   notes?: string;
+  createdById?: string;
 
   status: BookingStatus;
 
@@ -86,12 +77,6 @@ export interface Booking {
   rescheduleCount?: number;
   lastRescheduledAt?: string;
 
-  // ✅ legacy (per non rompere UI/feature esistenti)
-  idClient?: string;
-  idArtist?: string;
-  description?: string;
-  createAt?: string;
-  updateAt?: string;
   eta?: string;
 }
 
@@ -149,10 +134,10 @@ export class BookingDraftService {
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly path = 'bookings';
+  private readonly legacyBookingKeys = ['idClient', 'idArtist', 'description', 'createAt', 'updateAt'] as const;
 
   constructor(
     private db: Database,
-    private firestore: Firestore,
     private notificationService: NotificationService,
     private ui: UiFeedbackService,
     private auth: AuthService,
@@ -171,32 +156,41 @@ export class BookingService {
     throw new Error(`PERMISSION_DENIED:${permissionKey}`);
   }
 
+  private isPermissionDeniedError(err: unknown): boolean {
+    const code = String((err as any)?.code ?? '').toLowerCase();
+    const msg = String((err as any)?.message ?? '').toLowerCase();
+    return code.includes('permission-denied') || msg.includes('permission_denied') || msg.includes('permission denied');
+  }
+
+  private assertNoLegacyBookingKeys(payload: Record<string, unknown>): void {
+    const present = this.legacyBookingKeys.filter((k) =>
+      Object.prototype.hasOwnProperty.call(payload ?? {}, k)
+    );
+    if (present.length === 0) return;
+    throw new Error(`BOOKING_LEGACY_FIELDS_NOT_ALLOWED:${present.join(',')}`);
+  }
+
   // ---------------------------------------------------------------------------
-  // COMPAT: mappa dati DB (vecchi/nuovi) -> Booking canonico
+  // Mappa dati DB -> Booking canonico
   // ---------------------------------------------------------------------------
   private toCanonical(raw: any): Booking {
-    const createdAt = raw.createdAt ?? raw.createAt ?? new Date().toISOString();
-    const updatedAt = raw.updatedAt ?? raw.updateAt ?? createdAt;
+    const createdAt = raw.createdAt ?? new Date().toISOString();
+    const updatedAt = raw.updatedAt ?? createdAt;
 
-    const clientId = raw.clientId ?? raw.idClient ?? '';
-    const artistId = raw.artistId ?? raw.idArtist ?? '';
+    const clientId = raw.clientId ?? '';
+    const artistId = raw.artistId ?? '';
 
-    const notes = raw.notes ?? raw.description ?? '';
+    const notes = raw.notes ?? '';
+    const createdById = String(raw.createdById ?? raw.createdBy ?? raw.creatorId ?? raw.creator ?? '').trim();
 
     const b: Booking = {
       ...raw,
       clientId,
       artistId,
       notes,
+      createdById: createdById || undefined,
       createdAt,
       updatedAt,
-
-      // legacy mirror per UI vecchie
-      idClient: raw.idClient ?? clientId,
-      idArtist: raw.idArtist ?? artistId,
-      description: raw.description ?? notes,
-      createAt: raw.createAt ?? createdAt,
-      updateAt: raw.updateAt ?? updatedAt,
     };
 
     b.start = this.normalizeLocalDateTime(b.start);
@@ -210,23 +204,11 @@ export class BookingService {
     return b;
   }
 
-  /** patch generico -> patch per DB coerente (scrive anche legacy per retrocompat) */
+  /** patch generico -> patch DB canonico */
   private toDbPatch(patch: Partial<Booking>): any {
     const out: any = { ...patch };
 
-    // legacy -> new
-    if (out.idClient && !out.clientId) out.clientId = out.idClient;
-    if (out.idArtist && !out.artistId) out.artistId = out.idArtist;
-    if (out.description && !out.notes) out.notes = out.description;
-    if (out.createAt && !out.createdAt) out.createdAt = out.createAt;
-    if (out.updateAt && !out.updatedAt) out.updatedAt = out.updateAt;
-
-    // new -> legacy
-    if (out.clientId && !out.idClient) out.idClient = out.clientId;
-    if (out.artistId && !out.idArtist) out.idArtist = out.artistId;
-    if (out.notes && !out.description) out.description = out.notes;
-    if (out.createdAt && !out.createAt) out.createAt = out.createdAt;
-    if (out.updatedAt && !out.updateAt) out.updateAt = out.updatedAt;
+    this.assertNoLegacyBookingKeys(out);
 
     // normalize times
     if (out.start) out.start = this.normalizeLocalDateTime(out.start);
@@ -244,12 +226,8 @@ export class BookingService {
   }
 
   private getProjectPartyIds(project: any): { artistId: string; clientId: string } {
-    const artistId = this.normalizeIdCandidate(
-      (project as any)?.artistId ?? (project as any)?.idArtist ?? (project as any)?.artistIds
-    );
-    const clientId = this.normalizeIdCandidate(
-      (project as any)?.clientId ?? (project as any)?.idClient
-    );
+    const artistId = this.normalizeIdCandidate((project as any)?.artistId);
+    const clientId = this.normalizeIdCandidate((project as any)?.clientId);
     return { artistId, clientId };
   }
 
@@ -311,7 +289,15 @@ export class BookingService {
       endAt(`${dayEndLocal}\uf8ff`)
     );
 
-    const snap = await get(qy);
+    let snap: DataSnapshot;
+    try {
+      snap = await get(qy);
+    } catch (err) {
+      if (this.isPermissionDeniedError(err)) {
+        return [];
+      }
+      throw err;
+    }
 
     const all: Booking[] = snap.exists()
       ? Object.values<any>(snap.val()).map(v => this.toCanonical(v))
@@ -321,7 +307,7 @@ export class BookingService {
     const nonBlocking = new Set<string>(['cancelled', 'annulled', 'no_show']);
 
     return all
-      .filter(b => (b.artistId || b.idArtist) === artistId)
+      .filter(b => b.artistId === artistId)
       .filter(b => !!b.start && !!b.end)
       .filter(b => !nonBlocking.has(String(b.status)))
       .sort((a, b) => a.start.localeCompare(b.start));
@@ -437,7 +423,7 @@ export class BookingService {
       ...draft,
       id,
       status: 'draft',
-      createdAt: draft.createdAt ?? draft.createAt ?? now,
+      createdAt: draft.createdAt ?? now,
       updatedAt: now
     } as any);
 
@@ -455,6 +441,7 @@ export class BookingService {
       'Permesso mancante: gestione prenotazioni.'
     );
     const actor = this.auth.userSig();
+    const actorId = String(actor?.uid ?? '').trim() || undefined;
     try {
       const node = push(ref(this.db, this.path));
       const id = node.key!;
@@ -462,12 +449,8 @@ export class BookingService {
 
       // Pre-check project linkage if provided to avoid creating inconsistent data.
       const requestedProjectId = String((data as any)?.projectId ?? '').trim();
-      let resolvedArtistId = this.normalizeIdCandidate(
-        (data as any)?.artistId ?? (data as any)?.idArtist ?? (data as any)?.artistIds
-      );
-      let resolvedClientId = this.normalizeIdCandidate(
-        (data as any)?.clientId ?? (data as any)?.idClient
-      );
+      let resolvedArtistId = this.normalizeIdCandidate((data as any)?.artistId);
+      let resolvedClientId = this.normalizeIdCandidate((data as any)?.clientId);
       if (requestedProjectId) {
         const project = await this.projects.getProjectById(requestedProjectId);
         if (project) {
@@ -495,6 +478,7 @@ export class BookingService {
         clientId: resolvedClientId,
         id,
         status: data.status ?? data.status ?? 'draft',
+        createdById: actorId,
         createdAt: now,
         updatedAt: now
       });
@@ -570,10 +554,10 @@ export class BookingService {
           const { artistId: pArtistId, clientId: pClientId } = this.getProjectPartyIds(project);
           let bArtistId = Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'artistId')
             ? this.normalizeIdCandidate((normalizedChanges as any).artistId)
-            : this.normalizeIdCandidate((current as any)?.artistId ?? (current as any)?.idArtist);
+            : this.normalizeIdCandidate((current as any)?.artistId);
           let bClientId = Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'clientId')
             ? this.normalizeIdCandidate((normalizedChanges as any).clientId)
-            : this.normalizeIdCandidate((current as any)?.clientId ?? (current as any)?.idClient);
+            : this.normalizeIdCandidate((current as any)?.clientId);
           if (pArtistId && (!bArtistId || pArtistId !== bArtistId)) {
             this.ui.info('Artista booking allineato automaticamente al progetto.');
             bArtistId = pArtistId;
@@ -594,7 +578,6 @@ export class BookingService {
 
       // non cambiare createdAt
       delete patch.createdAt;
-      delete patch.createAt;
 
       console.log('[BookingService] updateBooking ->', { id, patch });
       await update(ref(this.db, `${this.path}/${id}`), patch);
@@ -657,6 +640,10 @@ export class BookingService {
     const actor = this.auth.userSig();
     try {
       const existing = await this.getBookingById(id);
+      const projectId = String((existing as any)?.projectId ?? '').trim();
+      if (projectId) {
+        await this.projects.detachBookingIfMatch(projectId, id);
+      }
       console.log('[BookingService] deleteBooking ->', { id });
       await remove(ref(this.db, `${this.path}/${id}`));
       void this.audit.log({
@@ -700,6 +687,7 @@ export class BookingService {
       cancelled: [],
       no_show: []
     };
+    if (current === next) return true;
     return valid[current]?.includes(next) ?? false;
   }
 
@@ -792,6 +780,7 @@ export class BookingService {
     }
   ): Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> {
     const { clientId, clientName, type, source } = params;
+    const actorId = String(this.auth.userSig()?.uid ?? '').trim() || undefined;
 
     let start = draft.start ? this.normalizeLocalDateTime(draft.start) : '';
     let end = draft.end ? this.normalizeLocalDateTime(draft.end) : '';
@@ -820,24 +809,19 @@ export class BookingService {
       price: 0,
       depositRequired: 0,
       paidAmount: 0,
-
-      // legacy mirror utile se qualcuno usa description/idClient/idArtist
-      idClient: clientId,
-      idArtist: draft.artistId || '',
-      description: draft.note || '',
-    } as any;
+      createdById: actorId,
+    };
   }
 
   async addDraftFromChat(
     draft: BookingChatDraft,
     params: {
-      idClient?: string;
       clientId?: string;
       clientName?: string;
       source?: 'fast-booking' | 'chat-bot' | 'manual';
     }
   ): Promise<string> {
-    const clientId = params.clientId ?? params.idClient ?? '';
+    const clientId = params.clientId ?? '';
     if (!clientId) throw new Error('clientId mancante');
 
     const payload = this.buildDraftPayloadFromChat(draft, {
@@ -853,7 +837,6 @@ export class BookingService {
   async addDraftFromChatSafe(
     draft: BookingChatDraft,
     params: {
-      idClient?: string;
       clientId?: string;
       clientName?: string;
       source?: 'fast-booking' | 'chat-bot' | 'manual';
@@ -1060,14 +1043,38 @@ export class BookingService {
   }
 
   private async getAdminUserIds(): Promise<string[]> {
+    const actor = this.auth.userSig();
+    if (actor?.role !== 'admin') return [];
+
     try {
-      const usersRef = collection(this.firestore, 'users');
-      const q = firestoreQuery(usersRef, where('role', '==', 'admin'));
-      const snap = await getDocs(q);
-      return snap.docs.map(doc => doc.id);
+      const [usersSnap, adminUidsSnap] = await Promise.all([
+        get(ref(this.db, 'users')),
+        get(ref(this.db, 'adminUids'))
+      ]);
+
+      const ids = new Set<string>();
+      if (usersSnap.exists()) {
+        const users = usersSnap.val() as Record<string, any>;
+        for (const [uid, row] of Object.entries(users)) {
+          if (String((row as any)?.role ?? '').toLowerCase() === 'admin') {
+            ids.add(uid);
+          }
+        }
+      }
+
+      if (adminUidsSnap.exists()) {
+        const adminUids = adminUidsSnap.val() as Record<string, any>;
+        for (const [uid, flag] of Object.entries(adminUids)) {
+          if (flag === true) ids.add(uid);
+        }
+      }
+
+      return Array.from(ids);
     } catch (err) {
       console.error('[BookingService] getAdminUserIds error', err);
       return [];
     }
   }
 }
+
+

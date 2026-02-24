@@ -50,11 +50,6 @@ export interface Session {
   updatedAt: string;
 }
 
-/** ⚠️ SHAPE DB LEGACY (RTDB attuale) */
-type SessionDb = Omit<Session, 'artistId' | 'clientId'> & {
-  idArtist: string;
-  idClient?: string;
-};
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -111,19 +106,9 @@ export class SessionService {
     );
     try {
       let projectId = String((session as any)?.projectId ?? '').trim();
-      let resolvedArtistId = this.normalizeIdCandidate(
-        (session as any)?.artistId ?? (session as any)?.idArtist ?? (session as any)?.artistIds
-      );
-      let resolvedClientId = this.normalizeIdCandidate(
-        (session as any)?.clientId ?? (session as any)?.idClient
-      );
+      let resolvedArtistId = this.normalizeIdCandidate((session as any)?.artistId);
+      let resolvedClientId = this.normalizeIdCandidate((session as any)?.clientId);
       if (!projectId) {
-        const bookingId = String((session as any)?.bookingId ?? '').trim();
-        if (bookingId) {
-          const b = await this.bookings.getBookingById(bookingId);
-          const inferred = String((b as any)?.projectId ?? '').trim();
-          if (inferred) projectId = inferred;
-        }
       }
 
       if (projectId) {
@@ -141,6 +126,11 @@ export class SessionService {
           this.showMessage('Cliente sessione allineato automaticamente al progetto.');
           resolvedClientId = pClientId;
         }
+      }
+
+      if (projectId) {
+        const start = String((session as any)?.start ?? '').trim();
+        await this.ensureSessionStartsAfterProjectBooking(projectId, start);
       }
 
       const node = push(ref(this.db, this.path));
@@ -166,6 +156,9 @@ export class SessionService {
       this.showMessage('Seduta creata con successo');
       return node.key!;
     } catch (error) {
+      if (String((error as any)?.message ?? '').startsWith('SESSION_')) {
+        throw error;
+      }
       console.error('Errore creazione seduta:', error);
       this.showMessage('Errore durante la creazione della seduta', true);
       throw error;
@@ -196,10 +189,10 @@ export class SessionService {
         const { artistId: pArtistId, clientId: pClientId } = this.getProjectPartyIds(project);
         let sArtistId = Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'artistId')
           ? this.normalizeIdCandidate((normalizedChanges as any).artistId)
-          : this.normalizeIdCandidate((current as any)?.artistId ?? (current as any)?.idArtist);
+          : this.normalizeIdCandidate((current as any)?.artistId);
         let sClientId = Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'clientId')
           ? this.normalizeIdCandidate((normalizedChanges as any).clientId)
-          : this.normalizeIdCandidate((current as any)?.clientId ?? (current as any)?.idClient);
+          : this.normalizeIdCandidate((current as any)?.clientId);
 
         if (pArtistId && (!sArtistId || pArtistId !== sArtistId)) {
           this.showMessage('Artista sessione allineato automaticamente al progetto.');
@@ -211,6 +204,15 @@ export class SessionService {
         }
         if (sArtistId) (normalizedChanges as any).artistId = sArtistId;
         if (sClientId) (normalizedChanges as any).clientId = sClientId;
+      }
+
+      if (nextProjectId) {
+        const nextStart = String(
+          Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'start')
+            ? (normalizedChanges as any).start
+            : (current as any)?.start ?? ''
+        ).trim();
+        await this.ensureSessionStartsAfterProjectBooking(nextProjectId, nextStart);
       }
 
       const patchDb = this.toDbPatch({
@@ -230,6 +232,9 @@ export class SessionService {
 
       this.showMessage('Seduta aggiornata con successo');
     } catch (error) {
+      if (String((error as any)?.message ?? '').startsWith('SESSION_')) {
+        throw error;
+      }
       console.error('Errore aggiornamento seduta:', error);
       this.showMessage("Errore durante l'aggiornamento della seduta", true);
       throw error;
@@ -242,6 +247,11 @@ export class SessionService {
       'Permesso mancante: gestione sessioni.'
     );
     try {
+      const current = await this.getSessionById(id);
+      const projectId = String((current as any)?.projectId ?? '').trim();
+      if (projectId) {
+        await this.projects.removeSession(projectId, id);
+      }
       await remove(ref(this.db, `${this.path}/${id}`));
       this.showMessage('Seduta eliminata con successo');
     } catch (error) {
@@ -252,8 +262,7 @@ export class SessionService {
   }
 
   getSessionsByArtist(artistId: string): Observable<Session[]> {
-    // DB ha idArtist -> query su idArtist
-    const q = query(ref(this.db, this.path), orderByChild('idArtist'), equalTo(artistId));
+    const q = query(ref(this.db, this.path), orderByChild('artistId'), equalTo(artistId));
 
     return new Observable<Session[]>(obs => {
       const unsub = onValue(
@@ -304,8 +313,8 @@ export class SessionService {
   // -----------------------------
   private fromDb(dbRow: any): Session {
     // supporto robusto: se in futuro migri e trovi già artistId, lo uso.
-    const artistId = dbRow.artistId ?? dbRow.idArtist ?? '';
-    const clientId = dbRow.clientId ?? dbRow.idClient ?? undefined;
+    const artistId = dbRow.artistId ?? '';
+    const clientId = dbRow.clientId ?? undefined;
 
     return {
       id: dbRow.id,
@@ -315,12 +324,13 @@ export class SessionService {
       end: this.normalizeLocalDateTime(dbRow.end),
       projectId: dbRow.projectId,
       bookingId: dbRow.bookingId,
+      zone: dbRow.zone,
       sessionNumber: dbRow.sessionNumber,
-      notesByAdmin: dbRow.notesByAdmin,
+      notesByAdmin: dbRow.notesByAdmin ?? dbRow.notes,
       price: dbRow.price,
       paidAmount: dbRow.paidAmount,
-      painLevel: dbRow.painLevel,
-      healingNotes: dbRow.healingNotes,
+      painLevel: dbRow.painLevel ?? dbRow.pain,
+      healingNotes: dbRow.healingNotes ?? dbRow.healingNote,
       photoUrlList: Array.isArray(dbRow.photoUrlList) ? dbRow.photoUrlList : [],
       status: dbRow.status ?? 'planned',
       createdAt: this.normalizeLocalDateTime(dbRow.createdAt ?? ''),
@@ -328,17 +338,18 @@ export class SessionService {
     };
   }
 
-  private toDb(app: Session): SessionDb {
-    const out: SessionDb = {
+  private toDb(app: Session): Session {
+    const out: Session = {
       id: app.id,
-      idArtist: app.artistId,
-      idClient: app.clientId,
+      artistId: app.artistId,
+      clientId: app.clientId,
       start: this.normalizeLocalDateTime(app.start),
       end: this.normalizeLocalDateTime(app.end),
       projectId: app.projectId,
       bookingId: app.bookingId,
+      zone: app.zone,
       sessionNumber: app.sessionNumber,
-      notesByAdmin: app.notesByAdmin,
+      notesByAdmin: app.notesByAdmin ?? (app as any).notes,
       price: app.price,
       paidAmount: app.paidAmount,
       painLevel: app.painLevel,
@@ -352,12 +363,19 @@ export class SessionService {
   }
 
   /** patch: converto solo le chiavi presenti */
-  private toDbPatch(changes: Partial<Session>): Partial<SessionDb> {
+  private toDbPatch(changes: Partial<Session>): Partial<Session> {
     const out: any = { ...changes };
 
-    // rename keys if present
-    if ('artistId' in out) { out.idArtist = out.artistId; delete out.artistId; }
-    if ('clientId' in out) { out.idClient = out.clientId; delete out.clientId; }
+    // legacy/session form fallback: if only "notes" is provided, persist on canonical notesByAdmin
+    if (!Object.prototype.hasOwnProperty.call(out, 'notesByAdmin') && Object.prototype.hasOwnProperty.call(out, 'notes')) {
+      out.notesByAdmin = out.notes;
+    }
+    if (!Object.prototype.hasOwnProperty.call(out, 'painLevel') && Object.prototype.hasOwnProperty.call(out, 'pain')) {
+      out.painLevel = out.pain;
+    }
+    if (!Object.prototype.hasOwnProperty.call(out, 'healingNotes') && Object.prototype.hasOwnProperty.call(out, 'healingNote')) {
+      out.healingNotes = out.healingNote;
+    }
 
     // normalize datetime if present
     if (out.start) out.start = this.normalizeLocalDateTime(out.start);
@@ -377,13 +395,40 @@ export class SessionService {
   }
 
   private getProjectPartyIds(project: any): { artistId: string; clientId: string } {
-    const artistId = this.normalizeIdCandidate(
-      (project as any)?.artistId ?? (project as any)?.idArtist ?? (project as any)?.artistIds
-    );
-    const clientId = this.normalizeIdCandidate(
-      (project as any)?.clientId ?? (project as any)?.idClient
-    );
+    const artistId = this.normalizeIdCandidate((project as any)?.artistId);
+    const clientId = this.normalizeIdCandidate((project as any)?.clientId);
     return { artistId, clientId };
+  }
+
+  private async ensureSessionStartsAfterProjectBooking(projectId: string, startISO: string): Promise<void> {
+    const project = await this.projects.getProjectById(projectId);
+    if (!project) {
+      throw new Error(`PROJECT_NOT_FOUND:${projectId}`);
+    }
+
+    const bookingId = String((project as any)?.bookingId ?? '').trim();
+    if (!bookingId) {
+      throw new Error(`SESSION_BOOKING_REQUIRED:${projectId}`);
+    }
+
+    const booking = await this.bookings.getBookingById(bookingId);
+    if (!booking) {
+      throw new Error(`SESSION_BOOKING_NOT_FOUND:${bookingId}`);
+    }
+
+    const bookingEnd = this.normalizeLocalDateTime(String((booking as any)?.end ?? '').trim());
+    const sessionStart = this.normalizeLocalDateTime(String(startISO ?? '').trim());
+
+    const bookingEndDate = new Date(bookingEnd);
+    const sessionStartDate = new Date(sessionStart);
+
+    if (Number.isNaN(bookingEndDate.getTime()) || Number.isNaN(sessionStartDate.getTime())) {
+      throw new Error(`SESSION_BOOKING_END_INVALID:${bookingId}`);
+    }
+
+    if (sessionStartDate.getTime() < bookingEndDate.getTime()) {
+      throw new Error(`SESSION_BEFORE_BOOKING_END:${bookingEnd}`);
+    }
   }
 
   // -----------------------------
@@ -429,3 +474,5 @@ export class SessionService {
     return s;
   }
 }
+
+

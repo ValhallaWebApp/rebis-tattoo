@@ -26,6 +26,28 @@
   min-height: 240px;
 }
 
+.error,
+.empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.error {
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}
+
+.empty {
+  color: #334155;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+}
+
 .list {
   display: grid;
   gap: 12px;

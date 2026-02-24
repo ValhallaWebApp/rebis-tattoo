@@ -1,17 +1,91 @@
+# ---------------------------
+# Dependencies / package mgr
+# ---------------------------
+node_modules/
+**/node_modules/
+.npm/
+.npm-cache/
+.pnpm-store/
+.yarn/
 
-# --- API ---
-apps/api/node_modules/
+# ---------------------------
+# Build / cache artifacts
+# ---------------------------
+.angular/
+dist/
+**/dist/
+out-tsc/
+.cache/
+*.tsbuildinfo
+.eslintcache
+
+# ---------------------------
+# Test / QA artifacts
+# ---------------------------
+coverage/
+test-results/
+playwright-report/
+blob-report/
+storybook-static/
+.playwright-browsers*/
+sb-build.log
+
+# ---------------------------
+# Logs
+# ---------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---------------------------
+# Env / local secrets
+# ---------------------------
+.env
+.env.*
+!.env.example
+
+# API
 apps/api/.env
 apps/api/.env.*
 !apps/api/.env.example
 
-# logs/build
-apps/api/dist/
-apps/api/*.log
-
-# --- Firebase Functions ---
-functions/node_modules/
+# Firebase Functions
 functions/.env
 
-# frontend runtime config
+# ---------------------------
+# Runtime generated files
+# ---------------------------
 public/app-config.js
+
+# ---------------------------
+# Tooling local state
+# ---------------------------
+.firebase-cli-home/
+.wrangler/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# VS Code: keep shareable config only
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# ---------------------------
+# Local debug/temp assets
+# ---------------------------
+screen-*.jpg
+tmp-*.json
+firebase-rtdb-export.live.*.json
+
+# ---------------------------
+# API build/log local output
+# ---------------------------
+apps/api/dist/
+apps/api/*.log

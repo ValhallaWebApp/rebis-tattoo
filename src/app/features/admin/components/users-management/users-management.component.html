@@ -1,0 +1,116 @@
+<section class="user-management">
+  <h2 class="section-title">
+    <mat-icon>groups</mat-icon> {{ pageTitle }}
+  </h2>
+
+  <mat-button-toggle-group class="role-tabs" [value]="activeRoleTab" (change)="onRoleTabChange($event.value)">
+    <mat-button-toggle value="client">Clienti</mat-button-toggle>
+    <mat-button-toggle value="staff">Staff</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <form [formGroup]="filterForm" class="filters">
+    <mat-form-field>
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" placeholder="Mario Rossi" />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" placeholder="mario@email.com" />
+    </mat-form-field>
+  </form>
+
+  <div class="pager-row" *ngIf="filteredUsers.length > 0">
+    <mat-form-field appearance="outline" class="page-size-field">
+      <mat-label>Per pagina</mat-label>
+      <mat-select [value]="pageSize" (selectionChange)="onPageSizeChange($event.value)">
+        <mat-option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div class="pager-actions">
+      <button mat-stroked-button type="button" (click)="previousPage()" [disabled]="currentPage <= 1">
+        Prev
+      </button>
+      <span class="page-indicator">{{ currentPage }} / {{ totalPages }}</span>
+      <button mat-stroked-button type="button" (click)="nextPage()" [disabled]="currentPage >= totalPages">
+        Next
+      </button>
+    </div>
+  </div>
+
+  <div class="user-cards" *ngIf="activeRoleTab === 'client'">
+    <mat-card *ngFor="let u of pagedUsers" class="user-card">
+      <div class="user-info">
+        <img [src]="getAvatarUrl(u)" (error)="onAvatarError($event)" alt="avatar" />
+        <div class="user-main">
+          <div class="user-meta">
+            <h3>{{ u.name }}</h3>
+            <p>{{ u.email }}</p>
+          </div>
+          <div class="role-editor">
+            <span class="role">{{ displayRole(u) }}</span>
+            <span class="role active-flag" [class.off]="u.isActive === false">
+              {{ u.isActive === false ? 'inactive' : 'active' }}
+            </span>
+          </div>
+          <mat-form-field class="role-select" *ngIf="userService.isCurrentUserAdmin()" appearance="outline">
+            <mat-label>Ruolo</mat-label>
+            <mat-select
+              [value]="displayRole(u)"
+              [disabled]="isSelf(u) || isRoleUpdating(u.id)"
+              (selectionChange)="changeUserRole(u, $event.value)"
+            >
+              <mat-option *ngFor="let role of roleOptionsFor(u)" [value]="role">{{ role }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="user-actions">
+        <button
+          mat-icon-button
+          [matTooltip]="u.isActive === false ? 'Attiva account' : 'Disattiva account'"
+          [disabled]="isSelf(u) || isStatusUpdating(u.id)"
+          (click)="toggleUserActive(u)"
+          [color]="u.isActive === false ? 'primary' : 'warn'"
+        >
+          <mat-icon>{{ u.isActive === false ? 'person' : 'person_off' }}</mat-icon>
+        </button>
+        <button mat-icon-button matTooltip="Modifica profilo" *ngIf="userService.isCurrentUserAdmin()" (click)="editUser(u)">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </div>
+    </mat-card>
+  </div>
+
+  <div class="staff-cards" *ngIf="activeRoleTab === 'staff'">
+    <mat-card *ngFor="let u of pagedUsers" class="staff-card" [class.inactive]="u.isActive === false">
+      <div class="staff-info">
+        <img [src]="getStaffAvatarUrl(u)" (error)="onAvatarError($event)" alt="avatar" />
+        <div class="staff-text">
+          <h3>{{ u.name }}</h3>
+          <p class="role">{{ displayStaffRole(u) | titlecase }}</p>
+          <p class="bio" *ngIf="displayStaffBio(u)">{{ displayStaffBio(u) }}</p>
+          <span class="status-chip" [class.active]="u.isActive !== false" [class.inactive]="u.isActive === false">
+            {{ u.isActive === false ? 'Non attivo' : 'Attivo' }}
+          </span>
+        </div>
+      </div>
+      <div class="staff-actions">
+        <button mat-icon-button matTooltip="Dettaglio (orari e calendario)" (click)="openStaffDetail(u)">
+          <mat-icon>event</mat-icon>
+        </button>
+        <button mat-icon-button matTooltip="Modifica profilo" *ngIf="userService.isCurrentUserAdmin()" (click)="editUser(u)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" matTooltip="Revoca staff" *ngIf="userService.isCurrentUserAdmin()" (click)="changeUserRole(u, 'client')">
+          <mat-icon>person_remove</mat-icon>
+        </button>
+      </div>
+    </mat-card>
+  </div>
+
+  <p class="empty-state" *ngIf="filteredUsers.length === 0">
+    Nessun {{ activeRoleTab === 'staff' ? 'membro staff' : 'cliente' }} trovato con i filtri correnti.
+  </p>
+</section>

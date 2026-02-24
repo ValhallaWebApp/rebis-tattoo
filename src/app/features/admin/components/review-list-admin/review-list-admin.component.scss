@@ -1,177 +1,222 @@
-/* =============================
-   REBIS DARK PREMIUM LAYOUT
-   ============================= */
-
-.review-admin-container {
+.reviews-admin {
   padding: 2rem;
-  background-color: #121212;
-  min-height: 100vh;
-  color: #f2f2f2;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  color: var(--app-main-text);
+  background: var(--app-main-bg);
+  min-height: 100%;
 }
 
-/* TITLE */
-.section-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: .75rem;
-  margin: 0;
-  padding: 0;
-  color: #fff;
-}
-
-/* =============================
-   FILTRI
-   ============================= */
-
-.filters {
-  background: #1a1a1a;
-  border-radius: 16px;
-  padding: 1rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: .75rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-
-  mat-form-field {
-    width: 100%;
-
-    .mat-mdc-input-element {
-      color: #f2f2f2 !important;
-    }
-    .mat-mdc-floating-label {
-      color: rgba(255,255,255,0.65) !important;
-    }
-    .mat-mdc-form-field-outline {
-      border-color: rgba(255,255,255,0.25) !important;
-    }
-  }
-
-  .reset-btn {
-    height: 56px;
-    border-radius: 12px;
-  }
-}
-
-/* =============================
-   LISTA RECENSIONI
-   ============================= */
-
-.review-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 1rem;
-}
-
-/* CARD */
-.review-card {
-  background: #151515 !important;
-  border-radius: 18px !important;
-  padding: 1.25rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255,255,255,0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  color: #fff;
-}
-
-/* HEADER CARD */
-.header {
+.header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  background: var(--glass-bg);
+}
+
+.reset-btn {
+  justify-self: end;
+}
+
+.reviews-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.review-card {
+  background: var(--glass-bg);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--glass-border);
+  transition: transform 140ms ease, border-color 140ms ease;
+}
+
+.review-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 .avatar {
-  width: 50px;
-  height: 50px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  border: 2px solid rgba(190, 144, 69, 0.45);
   object-fit: cover;
+  flex: 0 0 auto;
 }
 
-.info {
-  flex: 1;
-  margin-left: .75rem;
-
-  h3 {
-    margin: 0;
-    font-size: 1.05rem;
-    color: #fff;
-  }
-  .date {
-    font-size: .8rem;
-    color: rgba(255,255,255,0.6);
-  }
+.who-text {
+  min-width: 0;
 }
 
-/* STATUS CHIP */
-.status-chip {
-  padding: .35rem .8rem;
-  font-size: .75rem;
+.artist {
+  display: block;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.date {
+  margin: 2px 0 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
   border-radius: 999px;
+  font-size: 0.78rem;
   font-weight: 600;
-  color: white;
-
-  &.approved {
-    background: rgba(76, 175, 80, 0.2);
-    border: 1px solid #4CAF50;
-  }
-
-  &.pending {
-    background: rgba(255, 193, 7, 0.2);
-    border: 1px solid #FFC107;
-  }
-
-  &.rejected {
-    background: rgba(244, 67, 54, 0.2);
-    border: 1px solid #F44336;
-  }
+  border: 1px solid var(--glass-border);
 }
 
-/* COMMENT */
-.comment {
-  font-style: italic;
-  font-size: .95rem;
-  color: rgba(255,255,255,0.85);
-  margin: .35rem 0;
+.badge mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
 }
 
-/* STARS */
-.stars mat-icon {
-  font-size: 22px;
-  color: #be9045; /* oro rebis */
+.badge.pending {
+  background: rgba(255, 152, 0, 0.12);
+  color: #ffb74d;
 }
 
-/* BOTTONI APPROVA/RIFIUTA */
-.actions {
+.badge.approved {
+  background: rgba(76, 175, 80, 0.12);
+  color: #81c784;
+}
+
+.badge.rejected {
+  background: rgba(244, 67, 54, 0.12);
+  color: #ef9a9a;
+}
+
+.rating {
   display: flex;
-  gap: .5rem;
+  gap: 2px;
+  margin: 6px 0 10px 0;
+}
+
+.rating mat-icon {
+  font-size: 20px;
+  color: #fbc02d;
+}
+
+.comment {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.meta {
+  margin: 8px 0 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.actions {
+  margin-top: 12px;
+  display: flex;
   justify-content: flex-end;
+  gap: 6px;
+}
 
-  button {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.05);
+.actions button {
+  background: var(--glass-bg-strong);
+  border-radius: 10px;
+}
 
-    &.approve-btn.active {
-      background: rgba(76, 175, 80, 0.25);
-      border: 1px solid #4CAF50;
-    }
+.actions button.active-approve {
+  background: rgba(76, 175, 80, 0.18);
+  border: 1px solid rgba(129, 199, 132, 0.6);
+}
 
-    &.reject-btn.active {
-      background: rgba(244, 67, 54, 0.25);
-      border: 1px solid #F44336;
-    }
+.actions button.active-reject {
+  background: rgba(244, 67, 54, 0.18);
+  border: 1px solid rgba(239, 154, 154, 0.6);
+}
 
-    mat-icon {
-      color: #fff;
-    }
+.empty {
+  margin-top: 28px;
+  padding: 28px;
+  border-radius: 16px;
+  border: 1px dashed var(--glass-border);
+  background: var(--glass-bg);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.empty mat-icon {
+  font-size: 40px;
+  height: 40px;
+  width: 40px;
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.empty h3 {
+  margin: 6px 0;
+  color: var(--app-main-text);
+}
+
+.empty p {
+  margin: 0;
+}
+
+@media (max-width: 1100px) {
+  .reviews-list {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .reviews-admin {
+    padding: 1.2rem;
+  }
+
+  .reviews-list {
+    grid-template-columns: 1fr;
   }
 }

@@ -64,8 +64,8 @@ export interface BookingDraftPayload {
   description: string;
 
   /** Collegamenti opzionali */
-  idClient?: string;
-  idProject?: string;
+  clientId?: string;
+  projectId?: string;
 
   price?: number;
   paidAmount?: number;

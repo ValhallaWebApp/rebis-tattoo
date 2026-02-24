@@ -1,51 +1,35 @@
-# Dataset Test Pulito (RTDB + Firestore)
+# Dataset Test RTDB (allineato snapshot operativo)
 
-## File aggiornati
-- `firebase-rtdb-export.mock.safe.json`
-- `firebase-rtdb-export.mock.json`
-- `firestore-users.mock.json`
-- `firebase-unified.mock.json`
+## Root presenti
+- `auditLogs`
+- `bookings`
+- `conversations`
+- `projects`
+- `services`
+- `sessions`
+- `staffProfiles`
+- `userConversations`
+- `users`
 
-## Utenti test
-- `admin`:
-  `uid=Nhmp6AN2ehPksUbP4mlCskNirA83`, `email=valhallawebapp@gmail.com`
-- `staff`:
-  `uid=stf_test_01`, `email=staff.test@rebistattoo.it`, `permissions.canManageRoles=true`
-- `client`:
-  `uid=cli_test_01`, `email=cliente.test@rebistattoo.it`
+## Utenti presenti nello snapshot
+- `1EoVwmdPbXWdjpD8MIQuVxQOFlv2` (`test.admin@gmail.com`)
+- `Ygu8JDe9fbPFsb2ZFQ0pSkOpkAV2` (`client.test@gmail.com`)
+- `v97oOiulG1M71jtiVYpSo8FN6Ap1` (`staff.test@gmail.com`)
 
-## Casistiche coperte
-- Booking status:
-  `draft`, `pending`, `confirmed`, `paid`, `in_progress`, `completed`, `cancelled`, `no_show`
-- Session status:
-  `planned`, `completed`, `cancelled`
-- Project status:
-  `scheduled`, `active`, `completed`, `cancelled`, `healing`
-- Invoices:
-  `pending`, `paid`, `cancelled`
-- Messaging:
-  conversazione cliente/staff/admin con messaggi
-- Bonus:
-  promo code, redeem, wallet, ledger
+## Stato schema reale (importante)
+- Booking mantiene campi doppi:
+  - canonici: `clientId`, `artistId`, `createdAt`, `updatedAt`, `notes`
+  - legacy: `idClient`, `idArtist`, `createAt`, `updateAt`, `description`
+- Session usa prevalentemente `idArtist`/`idClient`.
+- Project usa `artistId`/`clientId` e link `bookingId`, `sessionIds`.
+- Conversation usa `participants` e `unreadBy` per utente.
+- Services usa naming italiano (`categoria`, `prezzo`, `durata`, `visibile`).
 
-## Pulizia ridondanze applicata
-- Rimossi dai booking i duplicati legacy:
-  `idClient`, `idArtist`, `createAt`, `updateAt`, `description`
-- Mantenuti i campi canonici booking:
-  `clientId`, `artistId`, `createdAt`, `updatedAt`, `notes`
-- Progetti mantenuti senza alias legacy (`genere`, `copertine` rimossi).
+## Audit log osservato
+- Eventi `auth.register` con errori `PERMISSION_DENIED` e `auth/*`.
+- Eventi `user.update.staffSync` ripetuti in errore (sync staff profile).
+- Eventi `booking.update` e `messaging.conversation.create` coerenti con flussi admin.
 
-## Import RTDB
-Comando:
-
-```powershell
-npm run db:import:mock
-```
-
-Se fallisce per credenziali:
-
-```powershell
-firebase login --reauth
-```
-
-poi rieseguire l'import.
+## Nota operativa
+Questo dataset non e "pulito/normalizzato": rappresenta uno stato reale di esercizio.
+Il frontend deve quindi continuare a supportare sia campi canonici sia alias legacy.

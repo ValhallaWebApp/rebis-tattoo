@@ -1,5 +1,3 @@
-// booking.model.ts
-
 export type BookingStatus =
   | 'draft'
   | 'pending'
@@ -10,56 +8,46 @@ export type BookingStatus =
   | 'cancelled'
   | 'no_show';
 
-/** Draft leggero che può arrivare dal chatbot */
+/** Draft leggero che puo arrivare da chatbot/fast-booking. */
 export interface BookingChatDraft {
   artistId?: string;
-  date?: string;       // "YYYY-MM-DD"
-  time?: string;       // "HH:mm"
-  duration?: number;   // minuti (default 30)
+  date?: string; // "YYYY-MM-DD"
+  time?: string; // "HH:mm"
+  duration?: number; // minuti
   note?: string;
   start?: string;
   end?: string;
 }
 
-/** Modello Booking salvato su Firebase RTDB */
+/** Booking canonico applicativo. */
 export interface Booking {
   id: string;
-  title: string;
-  start: string;               // "YYYY-MM-DDTHH:mm:ss" (locale, no Z)
-  end: string;                 // "YYYY-MM-DDTHH:mm:ss"
-  idClient: string;
-  description: string;
-  idArtist: string;
-  status: BookingStatus;
-  price: number;
-  paidAmount?: number | null;
 
-  // Tracciamento temporale
-  createAt: string;
-  updateAt: string;
-  lastRescheduledAt?: string;
-  rescheduleCount?: number;
-
-  // Audit & tracking
-  createdBy?: string;
-  updatedBy?: string;
-
-  // Annullamento
-  cancelledBy?: string;
-  cancelReason?: string;
-
-  // Info UI (opzionali)
-  clientName?: string;
-  artistName?: string;
+  // canonico
+  clientId: string;
+  artistId: string;
+  projectId?: string;
+  type?: 'consultation' | 'session';
   source?: 'fast-booking' | 'chat-bot' | 'manual';
 
-  // Relazioni future (opzionali)
-  serviceId?: string;
-  sessionId?: string;
-  tags?: string[];
+  title: string;
+  start: string; // "YYYY-MM-DDTHH:mm:ss" locale
+  end: string;
+  notes?: string;
+  status: BookingStatus;
 
-  // Extra
-  timezone?: string;
-  isDeleted?: boolean;
-  isReschedulable?: boolean;
+  price?: number;
+  depositRequired?: number;
+  paidAmount?: number;
+
+  createdAt: string;
+  updatedAt: string;
+
+  // lifecycle
+  lastRescheduledAt?: string;
+  rescheduleCount?: number;
+  cancelledBy?: 'admin' | 'client';
+  cancelReason?: string;
+
+  createdById?: string;
 }

@@ -41,10 +41,10 @@ export class AdminDashboardComponent implements OnInit {
       requiredPermission: 'canManageBookings'
     },
     {
-      title: 'Clienti',
-      description: 'Lista completa dei clienti registrati',
+      title: 'Utenti',
+      description: 'Gestione unificata clienti e staff',
       icon: 'groups',
-      route: 'clients',
+      route: 'users',
       showForStaff: true,
       requiresRoleManagement: true
     },
@@ -55,6 +55,18 @@ export class AdminDashboardComponent implements OnInit {
       route: 'permissions'
     },
     {
+      title: 'Impostazioni Studio',
+      description: 'Contenuti pubblici e dati studio',
+      icon: 'settings',
+      route: 'settings'
+    },
+    {
+      title: 'Recensioni',
+      description: 'Moderazione recensioni utenti',
+      icon: 'rate_review',
+      route: 'reviews'
+    },
+    {
       title: 'Portfolio',
       description: 'Progetti e tatuaggi completati',
       icon: 'palette',
@@ -62,12 +74,7 @@ export class AdminDashboardComponent implements OnInit {
       showForStaff: true,
       requiredPermission: 'canManageProjects'
     },
-    {
-      title: 'Staff',
-      description: 'Gestione membri del team e ruoli',
-      icon: 'people',
-      route: 'staff'
-    }
+
   ];
 
   constructor(

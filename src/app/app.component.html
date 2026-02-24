@@ -1,4 +1,4 @@
-<main style="background-color: black;">
+<main class="app-shell">
   <mat-toolbar class="main-toolbar elevation-z4">
     <div class="toolbar-container">
       <button mat-icon-button (click)="toggleMenu()" class="burger-button">
@@ -109,9 +109,9 @@
                 <ng-container *ngFor="let child of item.children">
                   <a
                     mat-list-item
+                    class="mobile-nav-link"
                     [routerLink]="child.route"
                     (click)="closeMenu()"
-                    style="color: whitesmoke !important;"
                   >
                     {{ child.label }}
                   </a>
@@ -121,9 +121,9 @@
             <ng-template #singleLink>
               <a
                 mat-list-item
+                class="mobile-nav-link"
                 [routerLink]="item.route"
                 (click)="closeMenu()"
-                style="color: whitesmoke !important;"
               >
                 {{ item.label }}
               </a>

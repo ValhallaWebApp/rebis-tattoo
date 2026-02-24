@@ -49,7 +49,7 @@ export class CalendarComponentV2 implements OnInit, OnChanges {
   @Input() artistMap: Record<string, string> = {};
   @Input() artistPhotoMap: Record<string, string> = {};
 
-  /** Utente loggato (utile per precompilare idClient nel drawer) */
+  /** Utente loggato (utile per precompilare clientId nel drawer) */
   @Input() user: { uid: string; role?: string } | null = null;
 
   /** Tipo selezionato nel toggle (two-way binding) */
@@ -146,8 +146,8 @@ this.theme = this.initialTheme;
       time: slot?.time || '',
       duration: 60,
       description: '',
-      idClient: this.user?.uid ?? '',
-      idProject: '',
+      clientId: this.user?.uid ?? '',
+      projectId: '',
       price: 0,
       paidAmount: 0,
       metadata: null,
@@ -174,8 +174,8 @@ this.theme = this.initialTheme;
       time: value.time,
       duration: value.duration ?? 60,
       description: value.description ?? '',
-      idClient: value.idClient,
-      idProject: value.idProject,
+      clientId: value.clientId,
+      projectId: value.projectId,
       price: value.price,
       paidAmount: value.paidAmount,
       metadata: value.metadata,

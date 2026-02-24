@@ -9,7 +9,6 @@ import {
   set,
   update
 } from '@angular/fire/database';
-import { Firestore, collection, getDocs, query, where } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import {
   Conversation,
@@ -30,7 +29,6 @@ export class MessagingService {
 
   constructor(
     private db: Database,
-    private firestore: Firestore,
     private notifications: NotificationService,
     private audit: AuditLogService,
     private auth: AuthService
@@ -92,6 +90,9 @@ export class MessagingService {
         obs.complete();
       });
     }
+    if (actorRole === 'staff') {
+      return this.streamConversationsForUser(actorId);
+    }
 
     return new Observable<Conversation[]>(observer => {
       const conversationsRef = ref(this.db, this.conversationsPath);
@@ -104,12 +105,9 @@ export class MessagingService {
           }
 
           const raw = snapshot.val() as Record<string, any>;
-          let conversations = Object.entries(raw)
+          const conversations = Object.entries(raw)
             .map(([id, item]) => this.toConversation(id, item))
             .sort((a, b) => (b.lastMessageAt ?? b.updatedAt).localeCompare(a.lastMessageAt ?? a.updatedAt));
-          if (actorRole === 'staff') {
-            conversations = conversations.filter(c => this.canStaffAccessConversation(actorId, c));
-          }
           observer.next(conversations);
         },
         error => observer.error(error)
@@ -150,12 +148,7 @@ export class MessagingService {
     const now = new Date().toISOString();
     const node = push(ref(this.db, this.conversationsPath));
     const id = node.key!;
-
-    const admins = await this.getAdminLikeUsers();
     const participants: Record<string, ParticipantRole> = { [clientId]: 'client' };
-    admins.forEach(a => {
-      participants[a.id] = a.role;
-    });
 
     const conversation: Conversation = {
       id,
@@ -247,7 +240,7 @@ export class MessagingService {
       const link = recipientRole === 'admin'
         ? '/admin/messaging'
         : recipientRole === 'staff'
-          ? '/staff'
+          ? '/staff/messaging'
           : '/dashboard/chat';
       return this.notifications.createForUser(uid, {
         type: 'chat',
@@ -366,19 +359,6 @@ export class MessagingService {
         total: userIds.length
       });
     }
-  }
-
-  private async getAdminLikeUsers(): Promise<Array<{ id: string; role: ParticipantRole }>> {
-    const usersRef = collection(this.firestore, 'users');
-    const q = query(usersRef, where('role', 'in', ['admin', 'staff']));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => {
-      const role = String((d.data() as any).role ?? 'admin');
-      return {
-        id: d.id,
-        role: (role === 'staff' ? 'staff' : 'admin') as ParticipantRole
-      };
-    });
   }
 
   private toConversation(id: string, raw: any): Conversation {

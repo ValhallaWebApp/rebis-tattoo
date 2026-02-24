@@ -1,0 +1,281 @@
+.user-management {
+  padding: 2rem;
+  color: var(--app-main-text);
+  background-color: var(--app-main-bg);
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+
+    mat-icon {
+      margin-right: 0.5rem;
+    }
+  }
+
+  .role-tabs {
+    margin-bottom: 1rem;
+  }
+
+  .filters {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+
+    mat-form-field {
+      flex: 1;
+      min-width: 200px;
+    }
+  }
+
+  .user-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    justify-items: start;
+  }
+
+  .staff-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.1rem;
+    justify-content: flex-start;
+  }
+
+  .pager-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .page-size-field {
+    width: 140px;
+  }
+
+  .pager-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .page-indicator {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    min-width: 52px;
+    text-align: center;
+  }
+
+  .user-card {
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 1.25rem;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 300px;
+
+    .user-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.1rem;
+
+      img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--glass-border);
+        margin-top: 2px;
+      }
+
+      .user-main {
+        flex: 1;
+        min-width: 0;
+        display: grid;
+        gap: 0.55rem;
+      }
+
+      .user-meta {
+        display: grid;
+        gap: 0.2rem;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 1.02rem;
+        line-height: 1.25;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.88rem;
+        line-height: 1.3;
+        color: var(--text-muted);
+        word-break: break-word;
+      }
+
+      .role {
+        font-size: 0.75rem;
+        color: var(--app-main-text);
+        background-color: var(--glass-bg-strong);
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-top: 4px;
+        border: 1px solid var(--glass-border);
+      }
+
+      .active-flag {
+        text-transform: uppercase;
+      }
+
+      .active-flag.off {
+        background-color: #fee2e2;
+        border-color: #fca5a5;
+        color: #991b1b;
+      }
+
+      .role-editor {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .role-select {
+        margin-top: 2px;
+      }
+    }
+
+    .user-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 1.15rem;
+      gap: 0.5rem;
+
+      button {
+        color: var(--app-main-text);
+      }
+
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  .staff-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    padding: 1rem 1.05rem;
+    border-radius: 18px;
+    background: var(--glass-bg-strong);
+    box-shadow: var(--shadow-soft);
+    gap: 1.1rem;
+    width: 100%;
+    max-width: 300px;
+    min-height: 150px;
+
+    &.inactive {
+      opacity: 0.6;
+    }
+
+    .staff-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.9rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    img {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      object-fit: cover;
+    }
+
+    .staff-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-width: 0;
+
+      h3 {
+        margin: 0;
+        font-size: 0.98rem;
+        font-weight: 650;
+        color: whitesmoke;
+      }
+
+      .role {
+        margin: 0;
+        font-size: 0.85rem;
+        text-transform: capitalize;
+        opacity: 0.9;
+        color: whitesmoke;
+      }
+
+      .bio {
+        margin: 0;
+        font-size: 0.8rem;
+        opacity: 0.75;
+        color: whitesmoke;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      margin-top: 0.15rem;
+
+      &.active {
+        background: rgba(190, 144, 69, 0.18);
+        border: 1px solid #be9045;
+        color: #be9045;
+      }
+
+      &.inactive {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    .staff-actions {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: flex-end;
+      gap: 0.25rem;
+
+      button {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      button:hover {
+        color: whitesmoke;
+        background: rgba(255, 255, 255, 0.06);
+      }
+    }
+  }
+
+  .empty-state {
+    margin: 1rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+}

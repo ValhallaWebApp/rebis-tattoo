@@ -264,16 +264,17 @@ effect(() => {
   async fetchArtists() {
     try {
       this.loadingArtists.set(true);
+      this.error.set(null);
 
       const all = await firstValueFrom(this.staffService.getAllStaff());
 
-      // filtra: attivi + tatuatori
-      const artists = (all ?? [])
-        .filter(a => (a.isActive ?? true) === true)
-        .filter(a => a.role === 'tatuatore')
-        .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      const active = (all ?? []).filter(a => a.isActive !== false);
+      const artists = active.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
       this.artists.set(artists);
+      if (artists.length === 0) {
+        this.error.set('Nessun membro staff attivo disponibile al momento.');
+      }
     } catch (e: any) {
       console.error(e);
       this.error.set('Impossibile caricare gli artisti. Riprova.');
@@ -339,7 +340,7 @@ effect(() => {
       };
 
       const draftRes = await this.bookingService.addDraftFromChatSafe(chatDraft, {
-        idClient: uid,
+        clientId: uid,
         clientName: d.name,
         source: 'fast-booking'
       });

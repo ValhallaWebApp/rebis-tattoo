@@ -84,7 +84,7 @@ export class HomeProjectsComponent implements OnInit, OnDestroy {
   }
 
   private createdAtOf(p: TattooProject): string {
-    return String((p as any).createdAt ?? (p as any).createAt ?? (p as any).dataProgetto ?? '').trim();
+    return String((p as any).createdAt ?? '').trim();
   }
 
   private imageUrlsOf(p: TattooProject): string[] {

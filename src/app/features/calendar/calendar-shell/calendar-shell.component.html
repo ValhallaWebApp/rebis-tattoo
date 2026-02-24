@@ -69,6 +69,8 @@
       [initialValue]="drawerSeed ?? drawerEditingEvent"
       [editingEventId]="drawerEditingEvent?.id ?? null"
       [allowStandaloneSession]="false"
+      [canCreateProjects]="userCanManageProjects()"
+      [canCreateProjectForAssignedBooking]="canCreateProjectForAssignedBookingFromDrawer()"
       (createProjectRequested)="onCreateProjectRequested($event)"
       (close)="drawerOpen=false"
       (submit)="onDrawerSubmit($event)">

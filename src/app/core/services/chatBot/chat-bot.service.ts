@@ -1,202 +1,172 @@
 import { Injectable } from '@angular/core';
-import {
-  Database,
-  ref,
-  push,
-  set,
-  get,
-  onValue
-} from '@angular/fire/database';
-import { HttpClient } from '@angular/common/http';
-import { Observable, firstValueFrom } from 'rxjs';
-import { StaffService } from '../staff/staff.service';
-import { BookingService } from '../bookings/booking.service';
-import { addDays, format } from 'date-fns';
-import { AuthService } from '../auth/authservice';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { ChatActorRole, LocalLlmService } from './local-llm.service';
 
 export interface ChatMessage {
-  id?: string;
   from: 'user' | 'bot';
   text: string;
   timestamp: string;
   chips?: string[] | null;
 }
 
-export interface BotPlan {
+export interface ChatPlanResult {
   message: string;
-  chips: string[];
-  action?: {
-    type: 'booking-draft';
-    draft: {
-      artistId?: string;
-      date?: string;
-      time?: string;
-      duration?: number;
-      note?: string;
-    };
-  };
+  chips?: string[];
+}
+
+export interface ChatPlanContext {
+  role?: ChatActorRole;
+}
+
+interface StoredChatState {
+  emailToChatId: Record<string, string>;
+  chats: Record<string, ChatMessage[]>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ChatService {
-  private readonly path = 'chats';
-  // Backend proxy endpoint: no secret in frontend.
-  private readonly chatPlanUrl = 'http://localhost:3001/api/chat/plan';
+  private readonly storageKey = 'rebis.chat.front.v1';
+  private readonly subjects = new Map<string, BehaviorSubject<ChatMessage[]>>();
+  private state: StoredChatState = this.loadState();
 
-  constructor(
-    private db: Database,
-    private http: HttpClient,
-    private staffService: StaffService,
-    private bookingService: BookingService,
-    private authService: AuthService
-  ) {}
+  constructor(private localLlm: LocalLlmService) {}
 
-  /**
-   * Crea o riusa una chat a partire dalla email (che diventa chiave)
-   */
   async createOrReuseChatByEmail(email: string): Promise<string> {
-    const emailKey = email.replace(/\./g, '_');
-    const refIndex = ref(this.db, `chatsByEmail/${emailKey}`);
-    const snap = await get(refIndex);
-
-    if (snap.exists()) {
-      return snap.val().chatId;
+    const key = this.normalizeChatKey(email);
+    const existing = this.state.emailToChatId[key];
+    if (existing) {
+      this.ensureSubject(existing);
+      return existing;
     }
 
-    const refChat = push(ref(this.db, this.path));
-    const now = new Date().toISOString();
-
-    await set(refChat, {
-      id: refChat.key,
-      email,
-      createAt: now,
-      status: 'aperto'
-    });
-
-    await set(refIndex, { chatId: refChat.key });
-    return refChat.key!;
+    const chatId = this.buildChatId();
+    this.state.emailToChatId[key] = chatId;
+    this.state.chats[chatId] = [];
+    this.persistState();
+    this.ensureSubject(chatId);
+    return chatId;
   }
 
-  /**
-   * Salva un messaggio nella chat (RTDB)
-   */
-  async addMessage(chatId: string, msg: ChatMessage): Promise<void> {
-    const refMsg = push(ref(this.db, `${this.path}/${chatId}/messages`));
-    const payload: ChatMessage = {
-      ...msg,
-      timestamp: new Date().toISOString(),
-      chips: msg.chips && msg.chips.length ? msg.chips : null,
-      id: refMsg.key!
-    };
-    await set(refMsg, payload);
-  }
-
-  /**
-   * Legge tutti i messaggi della chat
-   */
   getMessages(chatId: string): Observable<ChatMessage[]> {
-    return new Observable(obs => {
-      const refChat = ref(this.db, `${this.path}/${chatId}/messages`);
-      const unsub = onValue(
-        refChat,
-        snap => {
-          const data = snap.val() || {};
-          const sorted = Object.values(data).sort((a: any, b: any) =>
-            a.timestamp.localeCompare(b.timestamp)
-          );
-          obs.next(sorted as ChatMessage[]);
-        },
-        err => obs.error(err)
-      );
-      return () => unsub();
-    });
+    return this.ensureSubject(chatId).asObservable();
   }
 
-  /**
-   * Crea risposta bot: preferisce backend proxy, fallback locale se non disponibile.
-   */
-  async replyWithPlan(chatId: string, history: ChatMessage[]): Promise<BotPlan> {
-    const staff = await firstValueFrom(this.staffService.getAllStaff());
-    const artists = staff.filter(s => s.isActive && s.role === 'tatuatore');
+  async addMessage(chatId: string, msg: ChatMessage): Promise<void> {
+    const subject = this.ensureSubject(chatId);
+    const sanitized: ChatMessage = {
+      from: msg.from,
+      text: (msg.text ?? '').trim(),
+      timestamp: msg.timestamp || new Date().toISOString(),
+      chips: msg.chips ?? null
+    };
 
-    const availability: Record<string, string[]> = {};
-    const today = new Date();
+    if (!sanitized.text) return;
 
-    for (const artist of artists) {
-      const days: string[] = [];
-      for (let i = 0; i < 3; i++) {
-        const date = format(addDays(today, i), 'yyyy-MM-dd');
-        const slots = await this.bookingService.getFreeSlotsInDay(artist.id!, date);
-        if (slots.length) {
-          days.push(`${date}: ${slots.slice(0, 3).map(s => s.time).join(', ')}`);
-        }
-      }
-      if (days.length) {
-        availability[artist.name!] = days;
-      }
-    }
-
-    const user = this.authService.userSig();
-    const userInfo = user
-      ? `Utente loggato: ${user.name} - Email: ${user.email}`
-      : 'Utente non loggato. Chiedi nome e contatto.';
-
-    try {
-      const response = await firstValueFrom(
-        this.http.post<BotPlan>(this.chatPlanUrl, {
-          chatId,
-          history,
-          artists,
-          availability,
-          userInfo
-        })
-      );
-
-      if (response?.message) {
-        return {
-          message: response.message,
-          chips: (response.chips ?? []).slice(0, 3),
-          action: response.action
-        };
-      }
-    } catch (err: any) {
-      console.warn('[ChatService] chat proxy unavailable, fallback locale.', err?.message ?? err);
-    }
-
-    return this.localFallbackPlan(artists, availability, history);
+    const next = [...subject.value, sanitized];
+    subject.next(next);
+    this.state.chats[chatId] = next;
+    this.persistState();
   }
 
-  private localFallbackPlan(
-    artists: Array<{ id?: string; name?: string }>,
-    availability: Record<string, string[]>,
-    history: ChatMessage[]
-  ): BotPlan {
-    const lastUser = [...history].reverse().find(m => m.from === 'user')?.text?.toLowerCase() ?? '';
+  async replyWithPlan(
+    _chatId: string,
+    history: ChatMessage[],
+    context: ChatPlanContext = {}
+  ): Promise<ChatPlanResult> {
+    const role: ChatActorRole = context.role ?? 'guest';
+    const lastUser = [...history].reverse().find((m) => m.from === 'user' && m.text.trim().length > 0);
 
-    if (!artists.length) {
+    if (!lastUser) {
       return {
-        message: 'Al momento non trovo artisti disponibili. Riprova tra poco o contattaci direttamente.',
-        chips: []
+        message: 'Ciao, sono l assistente virtuale Rebis. Scrivimi la tua richiesta.',
+        chips: this.defaultSupportChips(role)
       };
     }
 
-    if (lastUser.includes('orari') || lastUser.includes('disponibil') || lastUser.includes('quando')) {
-      const preview = Object.entries(availability)
-        .slice(0, 2)
-        .map(([name, slots]) => `${name}: ${slots.slice(0, 2).join(' | ')}`)
-        .join(' - ');
+    const aiReply = await this.localLlm.generateSupportReply({
+      role,
+      userMessage: lastUser.text,
+      history
+    });
 
+    if (aiReply) {
       return {
-        message: preview
-          ? `Ti mostro alcune disponibilita: ${preview}. Dimmi artista, giorno e orario preferiti.`
-          : 'Posso aiutarti a prenotare: indicami artista e giorno preferito.',
-        chips: artists.slice(0, 3).map(a => a.name || 'Artista').filter(Boolean)
+        message: aiReply,
+        chips: this.defaultSupportChips(role)
       };
     }
 
     return {
-      message: 'Perfetto, iniziamo dalla scelta artista. Poi ti propongo giorno e orario disponibili.',
-      chips: artists.slice(0, 3).map(a => a.name || 'Artista').filter(Boolean)
+      message: 'Non riesco a rispondere in questo momento. Riprova tra poco.',
+      chips: this.defaultSupportChips(role)
     };
+  }
+
+  private defaultSupportChips(role: ChatActorRole): string[] {
+    if (role === 'guest' || role === 'public') {
+      return ['Accedi', 'Apri booking'];
+    }
+    return ['Vai al profilo', 'Apri booking'];
+  }
+
+  private ensureSubject(chatId: string): BehaviorSubject<ChatMessage[]> {
+    const existing = this.subjects.get(chatId);
+    if (existing) return existing;
+
+    const list = this.state.chats[chatId] ?? [];
+    this.state.chats[chatId] = list;
+    const subject = new BehaviorSubject<ChatMessage[]>(list);
+    this.subjects.set(chatId, subject);
+    this.persistState();
+    return subject;
+  }
+
+  private normalizeChatKey(email: string): string {
+    return (email || 'guest')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9@._-]/g, '');
+  }
+
+  private buildChatId(): string {
+    const rand = Math.random().toString(36).slice(2, 10);
+    return `chat_${Date.now()}_${rand}`;
+  }
+
+  private loadState(): StoredChatState {
+    try {
+      const raw = this.safeStorageGet(this.storageKey);
+      if (!raw) {
+        return { emailToChatId: {}, chats: {} };
+      }
+
+      const parsed = JSON.parse(raw) as Partial<StoredChatState>;
+      return {
+        emailToChatId: parsed.emailToChatId ?? {},
+        chats: parsed.chats ?? {}
+      };
+    } catch {
+      return { emailToChatId: {}, chats: {} };
+    }
+  }
+
+  private persistState(): void {
+    this.safeStorageSet(this.storageKey, JSON.stringify(this.state));
+  }
+
+  private safeStorageGet(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private safeStorageSet(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // Ignore write errors (private mode / quota).
+    }
   }
 }

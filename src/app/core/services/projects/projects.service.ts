@@ -46,7 +46,7 @@ export interface TattooProject {
   subject?: string;
   imageUrls?: string[];
 
-  // legacy fields (compat)
+  // legacy fields still present in dataset
   genere?: string;
   copertine?: string[];
 }
@@ -77,6 +77,44 @@ export class ProjectsService {
 
     this.ui.warn(missingMessage);
     throw new Error(`PERMISSION_DENIED:${permissionKey}`);
+  }
+
+  private async ensureProjectCreateAccess(bookingId?: string): Promise<void> {
+    const user = this.auth.userSig();
+    if (!user) throw new Error('auth/not-logged-in');
+    if (user.role === 'admin') return;
+    if (user.role !== 'staff') throw new Error('PERMISSION_DENIED:only-admins-and-staff');
+    if (!bookingId) throw new Error('PERMISSION_DENIED:booking-required');
+    await this.ensureBookingOwnedByStaff(String(bookingId), user.uid);
+  }
+
+  private async ensureProjectUpdateAccess(id: string, changes: Partial<TattooProject>): Promise<void> {
+    const user = this.auth.userSig();
+    if (!user) throw new Error('auth/not-logged-in');
+    if (user.role === 'admin') return;
+    if (user.role !== 'staff') throw new Error('PERMISSION_DENIED:only-admins-and-staff');
+
+    const project = await this.getProjectById(id);
+    const bookingId = String(project?.bookingId ?? '').trim();
+    if (!bookingId) {
+      throw new Error('PERMISSION_DENIED:booking-required');
+    }
+
+    if (changes.bookingId && String(changes.bookingId ?? '').trim() && String(changes.bookingId ?? '').trim() !== bookingId) {
+      throw new Error('PERMISSION_DENIED:booking-reassign-not-allowed');
+    }
+
+    await this.ensureBookingOwnedByStaff(bookingId, user.uid);
+  }
+
+  private async ensureBookingOwnedByStaff(bookingId: string, uid: string): Promise<void> {
+    if (!bookingId) throw new Error('PERMISSION_DENIED:booking-required');
+    const snap = await get(ref(this.db, `bookings/${bookingId}`));
+    if (!snap.exists()) throw new Error('BOOKING_NOT_FOUND');
+    const booking = snap.val() as Record<string, any>;
+    const artistId = String((booking?.['artistId']) ?? '').trim();
+    if (!artistId) throw new Error('PERMISSION_DENIED:booking-missing-artist');
+    if (artistId !== uid) throw new Error('PERMISSION_DENIED:not-assigned-booking');
   }
 
   // -----------------------------
@@ -112,14 +150,11 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
         .filter(p => !!p.id)
         .map(p => {
           const raw: any = p as any;
-          const legacyArtistIds = Array.isArray(raw?.artistIds)
-            ? raw.artistIds.map((x: any) => String(x ?? '').trim()).filter(Boolean)
-            : [];
           return {
             id: String(p.id),
             title: p.title,
-            clientId: String(raw?.clientId ?? raw?.idClient ?? '').trim() || undefined,
-            artistId: String(raw?.artistId ?? raw?.idArtist ?? legacyArtistIds[0] ?? '').trim() || undefined,
+            clientId: String(raw?.clientId ?? '').trim() || undefined,
+            artistId: String(raw?.artistId ?? '').trim() || undefined,
             sessionIds: Array.isArray(p.sessionIds) ? p.sessionIds : [],
           };
         })
@@ -156,10 +191,7 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
   // Write
   // -----------------------------
   async createProject(data: Omit<TattooProject, 'id' | 'createdAt' | 'updatedAt'> & Partial<Pick<TattooProject,'createdAt'|'updatedAt'>>): Promise<string> {
-    this.ensureStaffPermission(
-      'canManageProjects',
-      'Permesso mancante: gestione progetti.'
-    );
+    await this.ensureProjectCreateAccess(data.bookingId);
     const node = push(ref(this.db, this.path));
     const now = this.formatLocal(new Date());
 
@@ -178,10 +210,7 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
   }
 
   async updateProject(id: string, changes: Partial<TattooProject>): Promise<void> {
-    this.ensureStaffPermission(
-      'canManageProjects',
-      'Permesso mancante: gestione progetti.'
-    );
+    await this.ensureProjectUpdateAccess(id, changes);
     if (Object.prototype.hasOwnProperty.call(changes ?? {}, 'artistId')) {
       this.ensureStaffPermission(
         'canReassignProjectArtist',
@@ -203,12 +232,69 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
   }
 
   async deleteProject(id: string): Promise<void> {
-    this.ensureStaffPermission(
-      'canManageProjects',
-      'Permesso mancante: gestione progetti.'
-    );
+    await this.ensureProjectUpdateAccess(id, {});
+    await this.clearProjectLinks(id);
     await remove(ref(this.db, `${this.path}/${id}`));
     this.toast('Progetto eliminato');
+  }
+
+  /**
+   * Mantiene consistenza referenziale prima della delete:
+   * - bookings/*.projectId
+   * - sessions/*.projectId
+   */
+  private async clearProjectLinks(projectId: string): Promise<void> {
+    const id = String(projectId ?? '').trim();
+    if (!id) return;
+    const now = this.formatLocal(new Date());
+    const project = await this.getProjectById(id);
+
+    const bookingIds = new Set<string>();
+    const linkedBookingId = String((project as any)?.bookingId ?? '').trim();
+    if (linkedBookingId) bookingIds.add(linkedBookingId);
+
+    const bookingSnap = await get(
+      query(ref(this.db, 'bookings'), orderByChild('projectId'), equalTo(id))
+    );
+    if (bookingSnap.exists()) {
+      for (const bookingId of Object.keys(bookingSnap.val() as Record<string, unknown>)) {
+        bookingIds.add(String(bookingId).trim());
+      }
+    }
+
+    for (const bookingId of bookingIds) {
+      if (!bookingId) continue;
+      const bookingRef = ref(this.db, `bookings/${bookingId}`);
+      const snap = await get(bookingRef);
+      if (!snap.exists()) continue;
+      const currentProjectId = String((snap.val() as any)?.projectId ?? '').trim();
+      if (currentProjectId && currentProjectId !== id) continue;
+      await update(bookingRef, { projectId: null, updatedAt: now } as any);
+    }
+
+    const sessionIds = new Set<string>(
+      Array.isArray((project as any)?.sessionIds)
+        ? ((project as any).sessionIds as unknown[]).map((x) => String(x ?? '').trim()).filter(Boolean)
+        : []
+    );
+    const sessionSnap = await get(
+      query(ref(this.db, 'sessions'), orderByChild('projectId'), equalTo(id))
+    );
+    if (sessionSnap.exists()) {
+      for (const sessionId of Object.keys(sessionSnap.val() as Record<string, unknown>)) {
+        sessionIds.add(String(sessionId).trim());
+      }
+    }
+
+    for (const sessionId of sessionIds) {
+      if (!sessionId) continue;
+      const sessionRef = ref(this.db, `sessions/${sessionId}`);
+      const snap = await get(sessionRef);
+      if (!snap.exists()) continue;
+      const currentProjectId = String((snap.val() as any)?.projectId ?? '').trim();
+      if (currentProjectId && currentProjectId !== id) continue;
+      await update(sessionRef, { projectId: null, updatedAt: now } as any);
+    }
   }
 
   // -----------------------------
