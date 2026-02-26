@@ -134,9 +134,9 @@
       }
 
       .active-flag.off {
-        background-color: #fee2e2;
-        border-color: #fca5a5;
-        color: #991b1b;
+        background-color: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.45);
+        color: var(--app-danger);
       }
 
       .role-editor {
@@ -211,7 +211,7 @@
         margin: 0;
         font-size: 0.98rem;
         font-weight: 650;
-        color: whitesmoke;
+        color: var(--app-main-text);
       }
 
       .role {
@@ -219,14 +219,14 @@
         font-size: 0.85rem;
         text-transform: capitalize;
         opacity: 0.9;
-        color: whitesmoke;
+        color: var(--app-main-text);
       }
 
       .bio {
         margin: 0;
         font-size: 0.8rem;
         opacity: 0.75;
-        color: whitesmoke;
+        color: var(--app-main-text);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -242,9 +242,9 @@
       margin-top: 0.15rem;
 
       &.active {
-        background: rgba(190, 144, 69, 0.18);
-        border: 1px solid #be9045;
-        color: #be9045;
+        background: rgba(183, 155, 85, 0.18);
+        border: 1px solid var(--accent);
+        color: var(--accent);
       }
 
       &.inactive {
@@ -267,7 +267,7 @@
       }
 
       button:hover {
-        color: whitesmoke;
+        color: var(--app-main-text);
         background: rgba(255, 255, 255, 0.06);
       }
     }
@@ -277,5 +277,54 @@
     margin: 1rem 0 0;
     color: var(--text-muted);
     font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .user-management {
+    padding: 1rem;
+  }
+
+  .user-management .user-cards {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .user-management .staff-cards {
+    gap: 0.8rem;
+  }
+
+  .user-management .user-card,
+  .user-management .staff-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-management .section-title {
+    font-size: 1.4rem;
+  }
+
+  .user-management .pager-row {
+    align-items: stretch;
+  }
+
+  .user-management .pager-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .user-management .page-size-field {
+    width: min(180px, 100%);
+  }
+
+  .user-management .staff-card {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .user-management .staff-card .staff-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }

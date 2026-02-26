@@ -15,8 +15,8 @@
       ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin')",
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin')",
-        ".write": "auth != null && (auth.uid === $uid || root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin')",
-        ".validate": "!newData.exists() || (newData.child('role').isString() && (newData.child('role').val() === 'admin' || newData.child('role').val() === 'staff' || newData.child('role').val() === 'client' || newData.child('role').val() === 'public' || newData.child('role').val() === 'guest'))"
+        ".write": "auth != null && ((root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin') || (auth.uid === $uid && (!data.exists() || (newData.child('role').val() === data.child('role').val() && newData.child('permissions').val() === data.child('permissions').val() && newData.child('staffLevel').val() === data.child('staffLevel').val() && newData.child('isActive').val() === data.child('isActive').val() && newData.child('isVisible').val() === data.child('isVisible').val() && newData.child('deletedAt').val() === data.child('deletedAt').val()))))",
+        ".validate": "!newData.exists() || (newData.child('role').isString() && (newData.child('role').val() === 'admin' || newData.child('role').val() === 'staff' || newData.child('role').val() === 'client' || newData.child('role').val() === 'public' || newData.child('role').val() === 'guest') && ((root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin') || (data.exists() && newData.child('role').val() === data.child('role').val()) || (!data.exists() && (newData.child('role').val() === 'client' || newData.child('role').val() === 'public' || newData.child('role').val() === 'guest'))))"
       }
     },
 
@@ -36,7 +36,7 @@
       ".indexOn": ["clientId", "idClient", "artistId", "idArtist", "start", "status", "projectId"],
       "$bookingId": {
         ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('staffProfiles/' + auth.uid + '/isActive').val() === true || root.child('users/' + auth.uid + '/role').val() === 'staff' || data.child('clientId').val() === auth.uid || data.child('idClient').val() === auth.uid || data.child('artistId').val() === auth.uid || data.child('idArtist').val() === auth.uid)",
-        ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('staffProfiles/' + auth.uid + '/isActive').val() === true || root.child('users/' + auth.uid + '/role').val() === 'staff' || data.child('clientId').val() === auth.uid || data.child('idClient').val() === auth.uid || data.child('artistId').val() === auth.uid || data.child('idArtist').val() === auth.uid || newData.child('clientId').val() === auth.uid || newData.child('idClient').val() === auth.uid || newData.child('artistId').val() === auth.uid || newData.child('idArtist').val() === auth.uid)"
+        ".write": "auth != null && ((root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('staffProfiles/' + auth.uid + '/isActive').val() === true || root.child('users/' + auth.uid + '/role').val() === 'staff') || (!data.exists() && (newData.child('clientId').val() === auth.uid || newData.child('idClient').val() === auth.uid || newData.child('artistId').val() === auth.uid || newData.child('idArtist').val() === auth.uid)) || (data.exists() && (data.child('clientId').val() === auth.uid || data.child('idClient').val() === auth.uid || data.child('artistId').val() === auth.uid || data.child('idArtist').val() === auth.uid) && newData.child('clientId').val() === data.child('clientId').val() && newData.child('idClient').val() === data.child('idClient').val() && newData.child('artistId').val() === data.child('artistId').val() && newData.child('idArtist').val() === data.child('idArtist').val()))"
       }
     },
 
@@ -45,7 +45,7 @@
       ".indexOn": ["artistId", "clientId", "idArtist", "idClient", "projectId", "bookingId", "start", "status"],
       "$sessionId": {
         ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('staffProfiles/' + auth.uid + '/isActive').val() === true || root.child('users/' + auth.uid + '/role').val() === 'staff' || data.child('clientId').val() === auth.uid || data.child('idClient').val() === auth.uid || data.child('artistId').val() === auth.uid || data.child('idArtist').val() === auth.uid)",
-        ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('staffProfiles/' + auth.uid + '/isActive').val() === true || root.child('users/' + auth.uid + '/role').val() === 'staff' || data.child('clientId').val() === auth.uid || data.child('idClient').val() === auth.uid || data.child('artistId').val() === auth.uid || data.child('idArtist').val() === auth.uid || newData.child('clientId').val() === auth.uid || newData.child('idClient').val() === auth.uid || newData.child('artistId').val() === auth.uid || newData.child('idArtist').val() === auth.uid)"
+        ".write": "auth != null && ((root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('staffProfiles/' + auth.uid + '/isActive').val() === true || root.child('users/' + auth.uid + '/role').val() === 'staff') || (!data.exists() && (newData.child('clientId').val() === auth.uid || newData.child('idClient').val() === auth.uid || newData.child('artistId').val() === auth.uid || newData.child('idArtist').val() === auth.uid)) || (data.exists() && (data.child('clientId').val() === auth.uid || data.child('idClient').val() === auth.uid || data.child('artistId').val() === auth.uid || data.child('idArtist').val() === auth.uid) && newData.child('clientId').val() === data.child('clientId').val() && newData.child('idClient').val() === data.child('idClient').val() && newData.child('artistId').val() === data.child('artistId').val() && newData.child('idArtist').val() === data.child('idArtist').val()))"
       }
     },
 
@@ -103,17 +103,47 @@
 
     "reviews": {
       ".read": true,
-      ".write": "auth != null",
+      ".write": "auth != null && ((root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff') || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid && newData.child('userId').val() === data.child('userId').val()))",
       ".indexOn": ["userId", "bookingId", "artistId", "status", "date"]
     },
 
     "bonus": {
-      ".read": "auth != null",
-      ".write": "auth != null",
-      "promoCodes": { ".indexOn": ["code", "active", "expiresAt"] },
-      "giftCards": { ".indexOn": ["code", "active", "expiresAt"] },
-      "wallets": { ".indexOn": ["updatedAt"] },
-      "ledger": { ".indexOn": ["at", "type"] }
+      ".read": false,
+      ".write": false,
+      "promoCodes": {
+        ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')",
+        ".indexOn": ["code", "active", "expiresAt"],
+        "$promoId": {
+          ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')"
+        }
+      },
+      "giftCards": {
+        ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')",
+        ".indexOn": ["code", "active", "expiresAt"],
+        "$giftId": {
+          ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')"
+        }
+      },
+      "wallets": {
+        ".indexOn": ["updatedAt"],
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')",
+          ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')"
+        }
+      },
+      "ledger": {
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')",
+          ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')",
+          ".indexOn": ["at", "type"]
+        }
+      },
+      "redeems": {
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')",
+          ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')"
+        }
+      }
     },
 
     "chats": {

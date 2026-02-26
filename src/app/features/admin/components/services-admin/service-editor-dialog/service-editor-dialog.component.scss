@@ -2,7 +2,7 @@
   display: grid;
   gap: 16px;
   padding: 16px;
-  color: #1a1a1a;
+  color: var(--app-main-text);
 }
 
 .dlg__head {
@@ -65,15 +65,15 @@
   align-items: center;
   padding: 12px;
   border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.08);
-  background: #fff;
+  border: 1px solid var(--glass-border);
+  background: var(--app-surface, rgba(16, 17, 24, 0.68));
 }
 
 .preview .icon {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(0,0,0,.05);
+  background: var(--app-dropdown-hover-bg, rgba(255, 255, 255, 0.1));
   display: grid;
   place-items: center;
 }
@@ -92,7 +92,7 @@
   justify-content: flex-end;
   gap: 8px;
   padding-top: 6px;
-  border-top: 1px solid rgba(0,0,0,.08);
+  border-top: 1px solid var(--glass-border);
 }
 
 :host ::ng-deep .service-editor-dialog .mat-mdc-dialog-container {
@@ -120,6 +120,6 @@
   :host ::ng-deep .service-editor-dialog.service-editor-expanded .dlg__footer {
     position: sticky;
     bottom: 0;
-    background: #fff;
+    background: var(--app-surface, rgba(16, 17, 24, 0.68));
   }
 }

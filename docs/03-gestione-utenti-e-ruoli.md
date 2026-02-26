@@ -1,33 +1,59 @@
 ﻿# 03 - Gestione Utenti e Ruoli
 
 ## Ruoli applicativi
+Tipi usati nel codice:
 - `admin`
 - `staff`
 - `client`
 - `public`
 - `guest`
+- `user` (compat legacy, trattato come client in alcuni flussi)
 
-## Controllo accessi frontend
-- `AuthGuard`: permette area dashboard a client/admin/staff autenticati
-- `AdminGuard`: permette area admin a admin/staff
-- `AdminOnlyGuard`: permette route strettamente admin
+## Permessi staff granulari
+Esempi chiave in `UserPermissions`:
+- `canManageRoles`
+- `canManageBookings`
+- `canManageProjects`
+- `canManageSessions`
+- `canManageMessages`
+- `canViewAnalytics`
+- `canViewAuditLogs`
 
-## Profilazione utente
-- Source principale: Firestore collection `users`
-- Supporto role inference iniziale:
-  - `adminUids/{uid}` in RTDB
-  - `staffProfiles/{uid}` in RTDB
+## Guard e controllo route
+- `AuthGuard`
+  - consente `/dashboard` a utenti autenticati con ruolo valido
+- `AdminGuard`
+  - consente `/staff` a `admin` o `staff`
+- `AdminOnlyGuard`
+  - consente `/admin` solo a `admin`
+- `RoleManagementGuard`
+  - limita sezioni gestione ruoli
+- `StaffPermissionGuard`
+  - controlla `route.data.permission` per staff
 
-## Regole pratiche nel codice
-- auto-creazione profilo utente al primo login se mancante
-- vincolo: un admin non puo declassare se stesso
-- vincolo: non si puo nascondere l'ultimo admin visibile
+## Flusso account
+### Register
+1. crea utente Firebase Auth
+2. costruisce payload profilo completo
+3. scrive `users/{uid}` in RTDB
+4. verifica persistenza e carica profilo in signal
 
-## Gestione notifiche per ruolo
-- lettura notifiche: owner o admin
-- scrittura notifiche su altri utenti: solo admin (per rules RTDB)
-- comportamento FE: per attore non-admin si limita invio a se stesso
+### Login
+1. autenticazione Firebase
+2. lettura `users/{uid}` RTDB
+3. normalizzazione profilo
 
-## Sessione e UX login
-- `pre-log` in localStorage per redirect post-login
-- route fallback `/access-denied` per accessi non autorizzati
+## Vincoli business gia implementati
+- admin non puo cambiare il proprio ruolo
+- non si puo rimuovere/nascondere l ultimo admin visibile
+- sync automatico `staffProfiles`/`publicStaff` nei cambi ruolo
+
+## Nodi dati coinvolti
+- `users`
+- `adminUids`
+- `staffProfiles`
+- `publicStaff`
+
+## Redirect post-login
+- la route richiesta prima del login viene salvata in `localStorage.pre-log`
+- redirect verso `/access-denied` su accessi non autorizzati

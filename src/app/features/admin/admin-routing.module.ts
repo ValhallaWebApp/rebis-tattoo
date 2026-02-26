@@ -1,7 +1,5 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.component';
-import { CalendarAdminComponent } from './components/calendar-admin/calendar-admin.component';
 import { UsersManagementComponent } from './components/users-management/users-management.component';
 import { ProjectTrackerComponent } from './components/project-tracker/project-tracker.component';
 import { BillingComponent } from './components/billing/billing.component';
@@ -14,9 +12,7 @@ import { ReviewListAdminComponent } from './components/review-list-admin/review-
 import { ServicesAdminComponent } from './components/services-admin/services-admin.component';
 import { ProjectManagerComponent } from './components/project-manager/project-manager.component';
 import { AuditLogsComponent } from './components/audit-logs/audit-logs.component';
-import { Calendar } from '@fullcalendar/core/index.js';
 import { CalendarComponent } from '../calendar/calendar.component';
-import { ProjectDetailComponent } from '../public/projects/components/project-detail/project-detail.component';
 import { BonusAdminComponent } from './components/bonus-admin/bonus-admin.component';
 import { AdminOnlyGuard } from '../../core/guards/admin-only.guard';
 import { RoleManagementGuard } from '../../core/guards/role-management.guard';
@@ -24,7 +20,7 @@ import { PermissionsAdminComponent } from './components/permissions-admin/permis
 import { StaffPermissionGuard } from '../../core/guards/staff-permission.guard';
 import { StaffDetailAdminComponent } from './components/staff-detail-admin/staff-detail-admin.component';
 
-const routes: Routes = [
+export const ADMIN_ROUTES: Routes = [
   { path: '', component: AdminDashboardComponent },
   { path: 'calendar', component: CalendarComponent, canActivate: [StaffPermissionGuard], data: { permission: 'canManageBookings' } },
   { path: 'users', component: UsersManagementComponent, canActivate: [AdminOnlyGuard], data: { defaultRole: 'client', pageTitle: 'Gestione Utenti' } },
@@ -52,9 +48,3 @@ const routes: Routes = [
   { path: 'review-list', component: ReviewListAdminComponent, canActivate: [AdminOnlyGuard] },
   { path: 'reviews', component: ReviewListAdminComponent, canActivate: [AdminOnlyGuard] }
 ];
-
-@NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
-})
-export class AdminRoutingModule {}

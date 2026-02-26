@@ -12,7 +12,10 @@ import { BookingService } from '../../../../core/services/bookings/booking.servi
 import { SessionService, Session } from '../../../../core/services/session/session.service';
 import { StaffService, StaffMember } from '../../../../core/services/staff/staff.service';
 import { ClientService, Client } from '../../../../core/services/clients/client.service';
-import { AuthService } from '../../../../core/services/auth/authservice';
+import { DateTimeHelperService } from '../../../../core/services/helpers/date-time-helper.service';
+import { CurrencyHelperService } from '../../../../core/services/helpers/currency-helper.service';
+import { BackofficeAccessService } from '../../../../core/services/helpers/backoffice-access.service';
+import { StatusHelperService } from '../../../../core/services/helpers/status-helper.service';
 import { Database, onValue, ref } from '@angular/fire/database';
 
 import { ProjectTrackerProjectDialogComponent } from './project-tracker-project-dialog/project-tracker-project-dialog.component';
@@ -68,7 +71,10 @@ export class ProjectTrackerComponent {
   private readonly sessionService = inject(SessionService);
   private readonly staffService = inject(StaffService);
   private readonly clientService = inject(ClientService);
-  private readonly auth = inject(AuthService);
+  private readonly dateTime = inject(DateTimeHelperService);
+  private readonly currency = inject(CurrencyHelperService);
+  private readonly access = inject(BackofficeAccessService);
+  private readonly status = inject(StatusHelperService);
   private readonly db = inject(Database);
 
   // ---------- lookups ----------
@@ -182,7 +188,7 @@ export class ProjectTrackerComponent {
               return String((b as any)?.projectId ?? '').trim() === pid;
             })
             .map(s => this.normalizeSessionForUi(s as any))
-            .sort((a, b) => this.toTimestamp(a._startIso) - this.toTimestamp(b._startIso));
+            .sort((a, b) => this.dateTime.toTimestamp(a._startIso) - this.dateTime.toTimestamp(b._startIso));
 
           const artistName = this.artistLabel(String((project as any).artistId ?? ''), staffMap);
           const clientName = this.clientLabel(String((project as any).clientId ?? ''), clientMap);
@@ -271,26 +277,46 @@ export class ProjectTrackerComponent {
 
   bookingWhenLabel(b: any): string {
     if (!b) return '-';
-    const start = this.normalizeLocalDateTime(String(b.start ?? b.date ?? '').trim());
-    const end = this.normalizeLocalDateTime(String(b.end ?? '').trim());
+    const start = this.dateTime.normalizeLocalDateTime(String(b.start ?? b.date ?? '').trim());
+    const end = this.dateTime.normalizeLocalDateTime(String(b.end ?? '').trim());
     if (!start) return '-';
-    return end ? `${this.formatLocal(start)} -> ${this.formatLocal(end)}` : this.formatLocal(start);
+    return end ? `${this.dateTime.formatLocalDateTime(start)} -> ${this.dateTime.formatLocalDateTime(end)}` : this.dateTime.formatLocalDateTime(start);
   }
 
   money(n: any): string {
-    const x = Number(n);
-    if (!isFinite(x)) return '-';
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(x);
+    return this.currency.formatEur(n, '-');
+  }
+
+  projectStatusLabel(status: unknown): string {
+    const label = this.status.projectLabel(status, 'admin');
+    return label === 'N/A' ? (String(status ?? '').trim() || '-') : label;
+  }
+
+  projectStatusClass(status: unknown): string {
+    return this.status.projectStatusKey(status);
+  }
+
+  bookingStatusLabel(status: unknown): string {
+    const key = this.status.bookingStatusKey(status);
+    return key ? this.status.bookingLabel(status) : '-';
+  }
+
+  sessionStatusLabel(status: unknown): string {
+    return this.status.sessionLabel(status);
+  }
+
+  sessionStatusClass(status: unknown): string {
+    return this.status.sessionStatusKey(status);
   }
 
   trackBySession = (index: number, s: UiSession) => String((s as any)?.id ?? index);
 
   openProjectManagerLink(): any[] {
-    return [this.getBackofficeBase(), 'project-manager'];
+    return [this.access.getBackofficeBase(), 'project-manager'];
   }
 
   openClientsLink(): any[] {
-    return [this.getBackofficeBase(), 'clients'];
+    return [this.access.getBackofficeBase(), 'clients'];
   }
 
   clientFilterParams(clientId: string | undefined | null): Record<string, string> {
@@ -300,7 +326,7 @@ export class ProjectTrackerComponent {
   }
 
   async editBooking(b: any) {
-    if (!this.hasStaffPermission('canManageBookings')) {
+    if (!this.access.hasStaffPermission('canManageBookings')) {
       this.snackBar.open('Permesso mancante: gestione prenotazioni.', 'OK', { duration: 2200 });
       return;
     }
@@ -336,7 +362,7 @@ export class ProjectTrackerComponent {
   }
 
   async addSession() {
-    if (!this.hasStaffPermission('canManageSessions')) {
+    if (!this.access.hasStaffPermission('canManageSessions')) {
       this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
       return;
     }
@@ -355,7 +381,7 @@ export class ProjectTrackerComponent {
   }
 
   editSession(s: UiSession) {
-    if (!this.hasStaffPermission('canManageSessions')) {
+    if (!this.access.hasStaffPermission('canManageSessions')) {
       this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
       return;
     }
@@ -368,7 +394,7 @@ export class ProjectTrackerComponent {
   }
 
   async editProject(project: TattooProject) {
-    if (!this.hasStaffPermission('canManageProjects')) {
+    if (!this.access.hasStaffPermission('canManageProjects')) {
       this.snackBar.open('Permesso mancante: gestione progetti.', 'OK', { duration: 2200 });
       return;
     }
@@ -389,7 +415,7 @@ export class ProjectTrackerComponent {
 
   async setProjectStatus(project: TattooProject, status: ProjectStatus) {
     if (!project) return;
-    if (!this.hasStaffPermission('canManageProjects')) {
+    if (!this.access.hasStaffPermission('canManageProjects')) {
       this.snackBar.open('Permesso mancante: gestione progetti.', 'OK', { duration: 2200 });
       return;
     }
@@ -433,8 +459,8 @@ export class ProjectTrackerComponent {
   }
 
   private normalizeSessionForUi(s: Session & any): UiSession {
-    const startIso = this.normalizeLocalDateTime(String(s.start ?? s.date ?? '').trim());
-    let endIso = this.normalizeLocalDateTime(String(s.end ?? '').trim());
+    const startIso = this.dateTime.normalizeLocalDateTime(String(s.start ?? s.date ?? '').trim());
+    let endIso = this.dateTime.normalizeLocalDateTime(String(s.end ?? '').trim());
 
     const duration = this.num(s.durationMinutes);
     if (!endIso && startIso && duration != null) {
@@ -442,50 +468,20 @@ export class ProjectTrackerComponent {
       if (!isNaN(d.getTime())) {
         const e = new Date(d);
         e.setMinutes(e.getMinutes() + duration);
-        endIso = this.toLocalDateTime(e);
+        endIso = this.dateTime.toLocalDateTime(e);
       }
     }
 
     return {
       ...(s as any),
-      status: this.normalizeSessionStatus((s as any).status),
+      status: this.status.sessionStatusKey((s as any).status),
       _startIso: startIso || undefined,
       _endIso: endIso || undefined,
-      _startLabel: startIso ? this.formatLocal(startIso) : '-',
-      _endLabel: endIso ? this.formatLocal(endIso) : undefined,
+      _startLabel: startIso ? this.dateTime.formatLocalDateTime(startIso) : '-',
+      _endLabel: endIso ? this.dateTime.formatLocalDateTime(endIso) : undefined,
       _durationMin: duration ?? undefined,
       _zoneLabel: String(s.zone ?? '').trim() || undefined
     };
-  }
-
-  private normalizeSessionStatus(status: any): string {
-    const s = String(status ?? '').trim().toLowerCase();
-    if (s === 'done') return 'completed';
-    return s || 'planned';
-  }
-
-  private normalizeLocalDateTime(input: string): string {
-    if (!input) return '';
-    let s = String(input).replace('Z', '');
-    s = s.split('.')[0];
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) return `${s}:00`;
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) return s;
-    const d = new Date(input);
-    if (!isNaN(d.getTime())) return this.toLocalDateTime(d);
-    return s;
-  }
-
-  private formatLocal(iso: string): string {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-
-  private toTimestamp(iso?: string): number {
-    if (!iso) return 0;
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? 0 : d.getTime();
   }
 
   private async getCurrentProjectForCalendarSeed(): Promise<TattooProject | null> {
@@ -506,23 +502,8 @@ export class ProjectTrackerComponent {
     const cleaned = Object.fromEntries(
       Object.entries(queryParams).filter(([, value]) => String(value ?? '').trim().length > 0)
     );
-    return this.router.navigate([`${this.getBackofficeBase()}/calendar`], { queryParams: cleaned });
-  }
-
-  private toLocalDateTime(d: Date) {
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
-  }
-
-  private getBackofficeBase(): '/admin' | '/staff' {
-    return this.auth.userSig()?.role === 'staff' ? '/staff' : '/admin';
-  }
-
-  private hasStaffPermission(key: string): boolean {
-    const user = this.auth.userSig();
-    if (!user) return false;
-    if (user.role === 'admin') return true;
-    if (user.role !== 'staff') return false;
-    return user.permissions?.[key] === true;
+    return this.router.navigate([`${this.access.getBackofficeBase()}/calendar`], { queryParams: cleaned });
   }
 }
+
+

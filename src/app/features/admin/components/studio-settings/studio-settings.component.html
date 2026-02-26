@@ -7,66 +7,28 @@
 
     <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="settings-form">
       <h3>Identita studio</h3>
-      <mat-form-field appearance="outline">
-        <mat-label>Nome studio</mat-label>
-        <input matInput formControlName="studioName" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Tagline</mat-label>
-        <input matInput formControlName="tagline" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>Mission</mat-label>
-        <textarea matInput rows="3" formControlName="mission"></textarea>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>Intro team</mat-label>
-        <textarea matInput rows="3" formControlName="teamIntro"></textarea>
-      </mat-form-field>
+      <app-dynamic-form
+        class="full"
+        [fields]="identityFields"
+        [formGroupInput]="settingsForm"
+        [showSubmit]="false"
+      ></app-dynamic-form>
 
       <h3>Titolare</h3>
-      <mat-form-field appearance="outline">
-        <mat-label>Nome titolare</mat-label>
-        <input matInput formControlName="ownerName" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Ruolo titolare</mat-label>
-        <input matInput formControlName="ownerRoleLabel" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>Bio titolare</mat-label>
-        <textarea matInput rows="4" formControlName="ownerBio"></textarea>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>Foto titolare (url o path assets)</mat-label>
-        <input matInput formControlName="ownerPhotoUrl" />
-      </mat-form-field>
+      <app-dynamic-form
+        class="full"
+        [fields]="ownerFields"
+        [formGroupInput]="settingsForm"
+        [showSubmit]="false"
+      ></app-dynamic-form>
 
       <h3>Contatti pubblici</h3>
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>Indirizzo</mat-label>
-        <input matInput formControlName="address" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Telefono</mat-label>
-        <input matInput formControlName="phoneDisplay" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Email</mat-label>
-        <input matInput type="email" formControlName="email" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Instagram URL</mat-label>
-        <input matInput formControlName="instagramUrl" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Instagram handle</mat-label>
-        <input matInput formControlName="instagramHandle" />
-      </mat-form-field>
+      <app-dynamic-form
+        class="full"
+        [fields]="contactsFields"
+        [formGroupInput]="settingsForm"
+        [showSubmit]="false"
+      ></app-dynamic-form>
 
       <div class="actions">
         <button mat-flat-button color="primary" type="submit" [disabled]="settingsForm.invalid || saving">

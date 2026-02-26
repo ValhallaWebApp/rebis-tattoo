@@ -1,6 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env['PLAYWRIGHT_BASE_URL'] ?? 'http://127.0.0.1:4200';
+const webServerCommand =
+  process.platform === 'win32'
+    ? 'npm.cmd run start -- --host 127.0.0.1 --port 4200'
+    : 'npm run start -- --host 127.0.0.1 --port 4200';
 
 export default defineConfig({
   testDir: './e2e/ui',
@@ -18,7 +22,7 @@ export default defineConfig({
     trace: 'on-first-retry'
   },
   webServer: {
-    command: 'npm.cmd run start -- --host 127.0.0.1 --port 4200',
+    command: webServerCommand,
     url: baseURL,
     timeout: 180_000,
     reuseExistingServer: true

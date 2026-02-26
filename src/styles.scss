@@ -29,6 +29,22 @@ $gestionale-tattuaggi-theme: mat.define-theme((
 // that you are using.
 :root {
   @include mat.all-component-themes($gestionale-tattuaggi-theme);
+  --z-content-base: 0;
+  --z-content-raised: 1;
+  --z-content-floating: 2;
+  --z-surface: 3;
+  --z-panel: 6;
+  --z-sheet: 7;
+  --z-sticky: 10;
+  --z-sticky-high: 20;
+  --z-chat-popup: 1000;
+  --z-chat-toggle: 1001;
+  --z-toolbar: 3000;
+  --z-toolbar-dropdown: 3100;
+  --z-toolbar-menu: 3200;
+  --z-drawer-backdrop: 3250;
+  --z-sidenav: 3300;
+  --z-overlay: 4000;
 }
 
 // Comment out the line below if you want to use the pre-defined typography utility classes.
@@ -88,4 +104,114 @@ body {
 .mat-mdc-snack-bar-container.app-snackbar .mdc-button__label {
   color: #ffffff !important;
   font-weight: 600;
+}
+
+body.theme-public,
+body.theme-client,
+body.theme-admin {
+  color-scheme: dark;
+  background-image:
+    radial-gradient(circle at 12% 10%, rgba(183, 155, 85, 0.12), transparent 34%),
+    radial-gradient(circle at 86% 0%, rgba(96, 165, 250, 0.1), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 45%);
+  background-attachment: fixed;
+}
+
+.liquid-surface {
+  background: var(--app-surface, rgba(16, 17, 24, 0.68));
+  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.18));
+  box-shadow: var(--shadow-soft, 0 12px 30px rgba(0, 0, 0, 0.22));
+  backdrop-filter: blur(var(--glass-blur, 18px)) saturate(135%);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 18px)) saturate(135%);
+}
+
+.cdk-overlay-container {
+  z-index: var(--z-overlay, 4000) !important;
+}
+
+.project-edit-status-panel.mat-mdc-select-panel {
+  background: var(--app-surface, rgba(16, 17, 24, 0.92)) !important;
+  color: var(--app-main-text, #f3f4f7) !important;
+  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.18));
+}
+
+.project-edit-status-panel .mdc-list-item__primary-text {
+  color: var(--app-main-text, #f3f4f7) !important;
+}
+
+.project-edit-status-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+.project-edit-status-panel .mat-mdc-option.mdc-list-item--selected {
+  background: var(--app-dropdown-hover-bg, rgba(255, 255, 255, 0.12)) !important;
+}
+
+body.theme-public,
+body.theme-client,
+body.theme-admin {
+  .mat-mdc-card,
+  .mat-expansion-panel,
+  .mat-drawer,
+  .mat-mdc-menu-panel,
+  .mat-mdc-select-panel,
+  .mat-mdc-autocomplete-panel,
+  .mat-mdc-dialog-surface {
+    background: var(--app-surface, rgba(16, 17, 24, 0.68)) !important;
+    color: var(--app-main-text, #f3f4f7) !important;
+    border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.18));
+    box-shadow: var(--shadow-soft, 0 12px 30px rgba(0, 0, 0, 0.22));
+    backdrop-filter: blur(var(--glass-blur, 18px)) saturate(135%);
+    -webkit-backdrop-filter: blur(var(--glass-blur, 18px)) saturate(135%);
+  }
+
+  .mat-mdc-menu-item,
+  .mat-mdc-option,
+  .mat-expansion-panel-header,
+  .mat-mdc-select-value,
+  .mat-mdc-form-field-infix,
+  .mat-mdc-form-field .mat-mdc-input-element,
+  .mat-mdc-form-field .mat-mdc-select-arrow,
+  .mat-mdc-form-field .mat-mdc-floating-label {
+    color: var(--app-main-text, #f3f4f7) !important;
+  }
+
+  .mat-mdc-menu-item:hover,
+  .mat-mdc-option.mdc-list-item--selected,
+  .mat-mdc-option:hover:not(.mdc-list-item--disabled) {
+    background: var(--app-dropdown-hover-bg, rgba(255, 255, 255, 0.1)) !important;
+  }
+
+  .mat-mdc-form-field {
+    --mdc-filled-text-field-container-color: var(--app-surface-muted, rgba(20, 22, 30, 0.58));
+    --mdc-filled-text-field-label-text-color: var(--app-main-text-muted, #c8ced8);
+    --mdc-filled-text-field-input-text-color: var(--app-main-text, #f3f4f7);
+    --mdc-outlined-text-field-label-text-color: var(--app-main-text-muted, #c8ced8);
+    --mdc-outlined-text-field-input-text-color: var(--app-main-text, #f3f4f7);
+    --mdc-outlined-text-field-outline-color: var(--glass-border, rgba(255, 255, 255, 0.18));
+    --mdc-outlined-text-field-hover-outline-color: var(--app-main-text-muted, #c8ced8);
+    --mdc-outlined-text-field-focus-outline-color: var(--accent, #b79b55);
+    --mdc-filled-text-field-focus-active-indicator-color: var(--accent, #b79b55);
+    --mat-form-field-focus-select-arrow-color: var(--accent, #b79b55);
+  }
+
+  .mat-mdc-raised-button.mat-primary,
+  .mat-mdc-unelevated-button.mat-primary {
+    --mdc-filled-button-container-color: var(--accent, #b79b55);
+    --mdc-filled-button-label-text-color: var(--accent-ink, #111111);
+  }
+
+  .mat-mdc-stroked-button {
+    border-color: var(--glass-border, rgba(255, 255, 255, 0.18));
+    color: var(--app-main-text, #f3f4f7);
+  }
+
+  .mat-mdc-icon-button:hover {
+    background: var(--app-dropdown-hover-bg, rgba(255, 255, 255, 0.1));
+  }
+
+  .mat-mdc-icon-button:focus-visible,
+  .mat-mdc-button:focus-visible,
+  .mat-mdc-raised-button:focus-visible,
+  .mat-mdc-stroked-button:focus-visible {
+    outline: 2px solid var(--app-focus-ring, rgba(183, 155, 85, 0.55));
+    outline-offset: 2px;
+  }
 }

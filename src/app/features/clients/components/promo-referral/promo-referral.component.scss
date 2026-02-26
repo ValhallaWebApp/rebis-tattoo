@@ -2,8 +2,9 @@
   padding: 20px;
   display: grid;
   gap: 16px;
-  color: #111;
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  color: var(--app-main-text);
+  background: var(--app-main-bg);
+  font-family: var(--font-base, "Inter", "Segoe UI", Arial, sans-serif);
 }
 
 .bonus-header h2 {
@@ -17,9 +18,9 @@
 
 .bonus-header p {
   margin: 6px 0 0;
-  color: #666;
+  color: var(--app-main-text-muted);
   font-size: 0.98rem;
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-family: var(--font-base, "Inter", "Segoe UI", Arial, sans-serif);
 }
 
 .bonus-grid {
@@ -49,7 +50,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid #dcdcdc;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
   border-radius: 10px;
   padding: 10px 12px;
 }
@@ -65,13 +67,13 @@
 .meta {
   margin: 2px 0 0;
   font-size: 0.85rem;
-  color: #616161;
+  color: var(--app-main-text-muted);
   font-family: 'Barlow Semi Condensed', sans-serif;
 }
 
 .empty {
   margin: 4px 0;
-  color: #616161;
+  color: var(--app-main-text-muted);
   font-family: 'Barlow Semi Condensed', sans-serif;
 }
 
@@ -85,11 +87,11 @@
 }
 
 ::ng-deep .bonus-page .mdc-floating-label {
-  color: #707070 !important;
+  color: var(--app-main-text-muted) !important;
 }
 
 ::ng-deep .bonus-page .mat-mdc-input-element {
-  color: #222 !important;
+  color: var(--app-main-text) !important;
 }
 
 @media (max-width: 720px) {

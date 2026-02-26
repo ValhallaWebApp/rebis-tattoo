@@ -11,7 +11,6 @@ function isValidHttpUrl(value: string): boolean {
 
 export function validateEnvironmentOrThrow(environment: AppEnvironment): void {
   const errors: string[] = [];
-  const warnings: string[] = [];
 
   if (!environment.paymentApiBaseUrl || !isValidHttpUrl(environment.paymentApiBaseUrl)) {
     errors.push('paymentApiBaseUrl must be a valid absolute URL.');
@@ -28,8 +27,12 @@ export function validateEnvironmentOrThrow(environment: AppEnvironment): void {
     errors.push('stripePublishableKey is missing or invalid.');
   }
 
-  if (environment.environmentName === 'production' && environment.stripePublishableKey.startsWith('pk_test_')) {
-    warnings.push('Production is using a Stripe test publishable key (pk_test_).');
+  if (environment.environmentName === 'production') {
+    if (environment.stripePublishableKey.startsWith('pk_test_')) {
+      errors.push('Production must not use Stripe test publishable keys (pk_test_*).');
+    } else if (!environment.stripePublishableKey.startsWith('pk_live_')) {
+      errors.push('Production must use a Stripe live publishable key (pk_live_*).');
+    }
   }
 
   const firebase = environment.firebaseConfig;
@@ -47,10 +50,6 @@ export function validateEnvironmentOrThrow(environment: AppEnvironment): void {
     if (!firebase[key] || String(firebase[key]).trim() === '') {
       errors.push(`firebaseConfig.${key} is required.`);
     }
-  }
-
-  if (warnings.length > 0) {
-    console.warn('[env] configuration warnings:', warnings);
   }
 
   if (errors.length > 0) {

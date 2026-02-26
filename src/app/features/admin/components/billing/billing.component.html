@@ -9,16 +9,11 @@
 
   <!-- FILTRI STATO -->
   <div class="filters-row">
-    <mat-button-toggle-group
-      [(ngModel)]="selectedStatus"
-      (ngModelChange)="onStatusChange()"
-      aria-label="Scegli stato fatture"
-    >
-      <mat-button-toggle value="all">Tutte</mat-button-toggle>
-      <mat-button-toggle value="pending">In sospeso</mat-button-toggle>
-      <mat-button-toggle value="paid">Completate</mat-button-toggle>
-      <mat-button-toggle value="cancelled">Annullate</mat-button-toggle>
-    </mat-button-toggle-group>
+    <app-dynamic-form
+      [fields]="filterFields"
+      [formGroupInput]="filterForm"
+      [showSubmit]="false"
+    ></app-dynamic-form>
   </div>
 
   <!-- LISTA FATTURE -->

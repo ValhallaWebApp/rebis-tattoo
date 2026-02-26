@@ -1,26 +1,28 @@
 ﻿# Task Simulazione 02 - Roadmap per Release
 
-## Sprint 1 - Security e Config
-- [ ] Rimuovere ogni valore sensibile hardcoded dal codice.
-- [ ] Standardizzare `app-config.js` per dev/stage/prod.
-- [ ] Validare env al bootstrap con errori bloccanti.
+## Release plan proposto
 
-## Sprint 2 - Booking affidabile
-- [ ] Consolidare schema booking (campi canonical + compat).
-- [ ] Uniformare transizioni stato e gestione errori UI.
-- [ ] Ridurre dipendenze da cast `any` nei flussi principali.
+### Fase 1 - Stabilita tecnica
+- [ ] chiudere mismatch schema dati (booking/messaging)
+- [ ] hardening env/runtime config in tutti gli ambienti
+- [ ] validare payment API contract in stage
 
-## Sprint 3 - Payments production-ready
-- [ ] Allineare FE/BE su amount server-side.
-- [ ] Gestire fallback/retry utente in caso di failure parziali.
-- [ ] Verificare comportamento webhook-driven post pagamento.
+### Fase 2 - Qualita flussi core
+- [ ] test e2e: login -> fast-booking -> pagamento -> successo
+- [ ] test e2e: admin gestione booking/progetto/sessione
+- [ ] test regressione route guard e permessi staff
 
-## Sprint 4 - Firebase governance
-- [ ] Revisione rules RTDB per tutti nodi business.
-- [ ] Spostare operazioni cross-user sensibili su backend.
-- [ ] Audit su accessi admin/staff e visibilita dati.
+### Fase 3 - Security e governance
+- [ ] spostare operazioni cross-user sensibili su backend
+- [ ] audit rules RTDB su path ad alta criticita
+- [ ] policy logging errori senza dati sensibili
 
-## Sprint 5 - QA e go-live
-- [ ] Test regressione full flow (public/client/admin).
-- [ ] Hardening console errors/warnings.
-- [ ] Demo checklist firmata + release note.
+### Fase 4 - Performance e UX
+- [ ] ottimizzare warmup chatbot locale
+- [ ] ridurre tempi percepiti wizard fast-booking
+- [ ] migliorare feedback errori utente lato pagamenti
+
+### Fase 5 - Go-live controllato
+- [ ] dry-run completo con checklist admin
+- [ ] export dati e piano rollback validati
+- [ ] sign-off stakeholder tecnico + business

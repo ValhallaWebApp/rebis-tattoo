@@ -1,10 +1,10 @@
 import { Component, ElementRef, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { Subscription } from 'rxjs';
-import { AuthService } from '../../../../core/services/auth/authservice';
+import { AuthService } from '../../../../core/services/auth/auth.service';
 import { MessagingService } from '../../../../core/services/messaging/messaging.service';
 import { Conversation, ConversationMessage, ConversationStatus, ParticipantRole } from '../../../../core/models/messaging.model';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
@@ -12,7 +12,7 @@ import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.serv
 @Component({
   selector: 'app-messaging',
   standalone: true,
-  imports: [CommonModule, MaterialModule, FormsModule, ReactiveFormsModule, PickerModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, PickerModule],
   templateUrl: './messaging.component.html',
   styleUrls: ['./messaging.component.scss']
 })
@@ -33,7 +33,7 @@ export class MessagingComponent implements OnDestroy {
   threads = signal<Conversation[]>([]);
   selectedThread = signal<Conversation | null>(null);
   messages = signal<ConversationMessage[]>([]);
-  newMessage = '';
+  messageCtrl = new FormControl<string>('', { nonNullable: true });
 
   emojiCategories: any[] = ['smileys', 'foods', 'activities', 'objects'];
   projectImages: string[] = [];
@@ -94,7 +94,7 @@ export class MessagingComponent implements OnDestroy {
   }
 
   async sendMessage(): Promise<void> {
-    const text = this.newMessage.trim();
+    const text = this.messageCtrl.value.trim();
     const t = this.selectedThread();
     if (!text || !t?.id || !this.currentUserId) return;
 
@@ -106,7 +106,7 @@ export class MessagingComponent implements OnDestroy {
       kind: 'text'
     });
 
-    this.newMessage = '';
+    this.messageCtrl.setValue('');
     this.emojiPickerVisible = false;
   }
 
@@ -152,7 +152,7 @@ export class MessagingComponent implements OnDestroy {
   }
 
   addEmoji(e: any): void {
-    this.newMessage += e.emoji.native;
+    this.messageCtrl.setValue(`${this.messageCtrl.value}${e.emoji.native}`);
     this.emojiPickerVisible = false;
   }
 
@@ -218,3 +218,5 @@ export class MessagingComponent implements OnDestroy {
     this.isDesktop = window.innerWidth >= 768;
   };
 }
+
+

@@ -5,6 +5,7 @@
   padding: 2rem;
   color: var(--app-main-text);
   background: var(--app-main-bg);
+  min-height: 100vh;
 }
 
 /* HEADER */
@@ -31,13 +32,13 @@
 /* DRAWER LAYOUT */
 .drawer-container {
   width: 100%;
-  min-height: 80vh;
+  min-height: 100vh;
   color: var(--app-main-text);
   background: transparent;
 }
 
 .service-drawer {
-  width: 420px;
+  width: min(420px, 100vw);
   padding: 1.5rem;
   background: var(--glass-bg-strong);
   border-left: 1px solid var(--glass-border);
@@ -160,9 +161,9 @@
     font-weight: 500;
 
     &.active {
-      background: rgba(34, 197, 94, 0.12);
-      color: #15803d;
-      border: 1px solid rgba(34, 197, 94, 0.35);
+      background: var(--app-status-success-bg);
+      color: var(--app-status-success-text);
+      border: 1px solid var(--app-status-success-text);
     }
 
     &.inactive {
@@ -270,6 +271,7 @@ mat-form-field {
     align-items: flex-start;
     gap: 0.75rem;
     flex: 1;
+    min-width: 0;
   }
 
   .icon-pill {
@@ -291,6 +293,7 @@ mat-form-field {
     flex-direction: column;
     gap: 0.25rem;
     color: var(--app-main-text);
+    min-width: 0;
 
     h3 {
       margin: 0;
@@ -359,8 +362,55 @@ mat-form-field {
     flex-direction: column;
     align-items: flex-start;
 
-    .service-actions {
-      align-self: flex-end;
+    .service-text .description {
+      max-width: 100%;
+      white-space: normal;
     }
+
+    .meta {
+      flex-wrap: wrap;
+    }
+
+    .service-actions {
+      align-self: stretch;
+      justify-content: flex-end;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .services-management {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .section-title {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .drawer-scroll {
+    height: auto;
+    max-height: calc(100vh - 180px);
+  }
+}
+
+@media (max-width: 640px) {
+  .services-management {
+    padding: 0.75rem;
+  }
+
+  .service-drawer {
+    padding: 1rem;
+  }
+
+  .preview-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .form-actions {
+    flex-wrap: wrap;
   }
 }

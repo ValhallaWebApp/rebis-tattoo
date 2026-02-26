@@ -11,12 +11,21 @@ import {
   set,
   update
 } from '@angular/fire/database';
+import { Auth } from '@angular/fire/auth';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { AuditLogService } from '../audit/audit-log.service';
-import { AuthService } from '../auth/authservice';
+import { AuthService } from '../auth/auth.service';
 import { LanguageService } from '../language/language.service';
-import { NotificationService } from '../notifications/notification.service';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
+import { environment } from '../../../../environment';
+import { mapHttpError } from '../../http/http-error.mapper';
+import { withCriticalHttpPolicy } from '../../http/http-policy';
+import {
+  BonusRedeemRequestDto,
+  BonusRedeemResponseDto
+} from '../../models/api/payment-bridge.dto';
 
 export interface PromoCode {
   id: string;
@@ -68,14 +77,16 @@ export interface WalletLedgerEntry {
 @Injectable({ providedIn: 'root' })
 export class BonusService {
   private readonly path = 'bonus';
+  private readonly paymentApiBaseUrl = environment.paymentApiBaseUrl.replace(/\/+$/, '');
 
   constructor(
     private db: Database,
     private auth: AuthService,
     private ui: UiFeedbackService,
     private audit: AuditLogService,
-    private notifications: NotificationService,
-    private lang: LanguageService
+    private lang: LanguageService,
+    private http: HttpClient,
+    private firebaseAuth: Auth
   ) {}
 
   streamPromoCodes(): Observable<PromoCode[]> {
@@ -375,188 +386,143 @@ export class BonusService {
   }
 
   async applyPromoCodeForCurrentUser(rawCode: string): Promise<{ code: string; amount: number; walletBalance: number }> {
-    const actor = await this.requireLogged();
+    await this.requireLogged();
     const code = this.normalizeCode(rawCode);
     if (!code) throw new Error(this.t('bonus.service.errors.enterPromoCode'));
-
-    const promo = await this.findPromoByCode(code);
-    if (!promo) throw new Error(this.t('bonus.service.errors.promoNotFound'));
-    this.assertPromoAvailable(promo);
-
-    const redeemRef = ref(this.db, `${this.path}/redeems/${actor.uid}/promo_${promo.id}`);
-    const alreadySnap = await get(redeemRef);
-    if (alreadySnap.exists()) {
-      throw new Error(this.t('bonus.service.errors.promoAlreadyUsed'));
-    }
-
-    const wallet = await this.readWallet(actor.uid);
-    const walletBalance = this.roundMoney(wallet.balance + promo.creditAmount);
-    const now = new Date().toISOString();
-    const ledgerNode = push(ref(this.db, `${this.path}/ledger/${actor.uid}`));
-    const ledgerId = ledgerNode.key ?? `${Date.now()}`;
-
-    const updates: Record<string, unknown> = {
-      [`promoCodes/${promo.id}/usedCount`]: (promo.usedCount || 0) + 1,
-      [`promoCodes/${promo.id}/updatedAt`]: now,
-      [`redeems/${actor.uid}/promo_${promo.id}`]: {
-        kind: 'promo',
-        code: promo.code,
-        amount: promo.creditAmount,
-        sourceId: promo.id,
-        at: now
-      },
-      [`wallets/${actor.uid}`]: {
-        userId: actor.uid,
-        balance: walletBalance,
-        updatedAt: now
-      },
-      [`ledger/${actor.uid}/${ledgerId}`]: {
-        id: ledgerId,
-        userId: actor.uid,
-        type: 'promo',
-        code: promo.code,
-        amount: promo.creditAmount,
-        sourceId: promo.id,
-        at: now,
-        note: promo.description ?? null
-      }
-    };
-
     try {
-      await update(ref(this.db, this.path), updates);
-      void this.notifications.createForUser(actor.uid, {
-        type: 'bonus',
-        title: this.t('bonus.service.notifications.promoTitle'),
-        message: this.t('bonus.service.notifications.promoMessage', {
-          code: promo.code,
-          amount: promo.creditAmount.toFixed(2)
-        }),
-        link: '/dashboard/buoni',
-        priority: 'normal',
-        meta: { code: promo.code }
-      });
-
-      this.ui.success(this.t('bonus.service.feedback.promoApplied', { amount: promo.creditAmount.toFixed(2) }));
-      void this.audit.log({
-        action: 'bonus.promo.redeem',
-        resource: 'bonus_promo',
-        resourceId: promo.id,
-        actorId: actor.uid,
-        actorRole: actor.role,
-        status: 'success',
-        targetUserId: actor.uid,
-        meta: { code: promo.code, amount: promo.creditAmount, walletBalance }
-      });
-
-      return { code: promo.code, amount: promo.creditAmount, walletBalance };
-    } catch (error: any) {
-      void this.audit.log({
-        action: 'bonus.promo.redeem',
-        resource: 'bonus_promo',
-        resourceId: promo.id,
-        actorId: actor.uid,
-        actorRole: actor.role,
-        status: 'error',
-        targetUserId: actor.uid,
-        message: String(error?.message ?? error),
-        meta: { code: promo.code }
-      });
-      this.ui.error(this.t('bonus.service.feedback.promoApplyError'));
-      throw error;
+      const result = await this.applyPromoCodeViaBackend(code);
+      this.ui.success(this.t('bonus.service.feedback.promoApplied', { amount: result.amount.toFixed(2) }));
+      return result;
+    } catch (error: unknown) {
+      const message = this.mapBonusBackendErrorToMessage(error, 'promo');
+      this.ui.error(message);
+      throw new Error(message);
     }
   }
 
   async redeemGiftCardForCurrentUser(rawCode: string): Promise<{ code: string; amount: number; walletBalance: number }> {
-    const actor = await this.requireLogged();
+    await this.requireLogged();
     const code = this.normalizeCode(rawCode);
     if (!code) throw new Error(this.t('bonus.service.errors.enterGiftCode'));
-
-    const gift = await this.findGiftCardByCode(code);
-    if (!gift) throw new Error(this.t('bonus.service.errors.giftNotFound'));
-    this.assertGiftCardAvailable(gift);
-
-    const amount = this.roundMoney(gift.balance);
-    if (amount <= 0) throw new Error(this.t('bonus.service.errors.giftAlreadyRedeemed'));
-
-    const wallet = await this.readWallet(actor.uid);
-    const walletBalance = this.roundMoney(wallet.balance + amount);
-    const now = new Date().toISOString();
-    const ledgerNode = push(ref(this.db, `${this.path}/ledger/${actor.uid}`));
-    const ledgerId = ledgerNode.key ?? `${Date.now()}`;
-
-    const updates: Record<string, unknown> = {
-      [`giftCards/${gift.id}/balance`]: 0,
-      [`giftCards/${gift.id}/active`]: false,
-      [`giftCards/${gift.id}/redeemedBy`]: actor.uid,
-      [`giftCards/${gift.id}/redeemedAt`]: now,
-      [`giftCards/${gift.id}/usesCount`]: (gift.usesCount || 0) + 1,
-      [`giftCards/${gift.id}/updatedAt`]: now,
-      [`redeems/${actor.uid}/gift_${gift.id}`]: {
-        kind: 'gift_card',
-        code: gift.code,
-        amount,
-        sourceId: gift.id,
-        at: now
-      },
-      [`wallets/${actor.uid}`]: {
-        userId: actor.uid,
-        balance: walletBalance,
-        updatedAt: now
-      },
-      [`ledger/${actor.uid}/${ledgerId}`]: {
-        id: ledgerId,
-        userId: actor.uid,
-        type: 'gift_card',
-        code: gift.code,
-        amount,
-        sourceId: gift.id,
-        at: now,
-        note: gift.note ?? null
-      }
-    };
-
     try {
-      await update(ref(this.db, this.path), updates);
-      void this.notifications.createForUser(actor.uid, {
-        type: 'bonus',
-        title: this.t('bonus.service.notifications.giftTitle'),
-        message: this.t('bonus.service.notifications.giftMessage', {
-          code: gift.code,
-          amount: amount.toFixed(2)
-        }),
-        link: '/dashboard/buoni',
-        priority: 'high',
-        meta: { code: gift.code }
-      });
-
-      this.ui.success(this.t('bonus.service.feedback.giftRedeemed', { amount: amount.toFixed(2) }));
-      void this.audit.log({
-        action: 'bonus.gift.redeem',
-        resource: 'gift_card',
-        resourceId: gift.id,
-        actorId: actor.uid,
-        actorRole: actor.role,
-        status: 'success',
-        targetUserId: actor.uid,
-        meta: { code: gift.code, amount, walletBalance }
-      });
-
-      return { code: gift.code, amount, walletBalance };
-    } catch (error: any) {
-      void this.audit.log({
-        action: 'bonus.gift.redeem',
-        resource: 'gift_card',
-        resourceId: gift.id,
-        actorId: actor.uid,
-        actorRole: actor.role,
-        status: 'error',
-        targetUserId: actor.uid,
-        message: String(error?.message ?? error),
-        meta: { code: gift.code }
-      });
-      this.ui.error(this.t('bonus.service.feedback.giftRedeemError'));
-      throw error;
+      const result = await this.redeemGiftCardViaBackend(code);
+      this.ui.success(this.t('bonus.service.feedback.giftRedeemed', { amount: result.amount.toFixed(2) }));
+      return result;
+    } catch (error: unknown) {
+      const message = this.mapBonusBackendErrorToMessage(error, 'gift');
+      this.ui.error(message);
+      throw new Error(message);
     }
+  }
+
+  private async getBackendAuthHeaders(): Promise<HttpHeaders> {
+    const token = await this.firebaseAuth.currentUser?.getIdToken();
+    if (!token) throw new Error(this.t('bonus.service.errors.notAuthenticated'));
+
+    return new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  }
+
+  private async applyPromoCodeViaBackend(code: string): Promise<{ code: string; amount: number; walletBalance: number }> {
+    const headers = await this.getBackendAuthHeaders();
+    const request: BonusRedeemRequestDto = { code };
+
+    let response: BonusRedeemResponseDto;
+    try {
+      response = await firstValueFrom(
+        this.http.post<BonusRedeemResponseDto>(
+          `${this.paymentApiBaseUrl}/bonus/apply-promo`,
+          request,
+          { headers }
+        ).pipe(withCriticalHttpPolicy())
+      );
+    } catch (error) {
+      const mapped = mapHttpError(error, {
+        fallbackMessage: this.t('bonus.service.feedback.promoApplyError'),
+        timeoutMessage: this.t('bonus.service.feedback.promoApplyError'),
+        networkMessage: this.t('bonus.service.feedback.promoApplyError'),
+        unauthorizedMessage: this.t('bonus.service.errors.notAuthenticated')
+      });
+      throw new Error(mapped.message);
+    }
+
+    if (!response?.success) {
+      throw new Error(this.t('bonus.service.feedback.promoApplyError'));
+    }
+
+    return {
+      code: this.normalizeCode(response.code),
+      amount: this.roundMoney(response.amount),
+      walletBalance: this.roundMoney(response.walletBalance)
+    };
+  }
+
+  private async redeemGiftCardViaBackend(code: string): Promise<{ code: string; amount: number; walletBalance: number }> {
+    const headers = await this.getBackendAuthHeaders();
+    const request: BonusRedeemRequestDto = { code };
+
+    let response: BonusRedeemResponseDto;
+    try {
+      response = await firstValueFrom(
+        this.http.post<BonusRedeemResponseDto>(
+          `${this.paymentApiBaseUrl}/bonus/redeem-gift`,
+          request,
+          { headers }
+        ).pipe(withCriticalHttpPolicy())
+      );
+    } catch (error) {
+      const mapped = mapHttpError(error, {
+        fallbackMessage: this.t('bonus.service.feedback.giftRedeemError'),
+        timeoutMessage: this.t('bonus.service.feedback.giftRedeemError'),
+        networkMessage: this.t('bonus.service.feedback.giftRedeemError'),
+        unauthorizedMessage: this.t('bonus.service.errors.notAuthenticated')
+      });
+      throw new Error(mapped.message);
+    }
+
+    if (!response?.success) {
+      throw new Error(this.t('bonus.service.feedback.giftRedeemError'));
+    }
+
+    return {
+      code: this.normalizeCode(response.code),
+      amount: this.roundMoney(response.amount),
+      walletBalance: this.roundMoney(response.walletBalance)
+    };
+  }
+
+  private mapBonusBackendErrorToMessage(error: unknown, kind: 'promo' | 'gift'): string {
+    const payload = (error as { error?: unknown } | null)?.error as Record<string, unknown> | string | undefined;
+    const code = typeof payload === 'string'
+      ? payload
+      : String(payload?.['error'] ?? payload?.['message'] ?? (error as { message?: unknown } | null)?.message ?? '')
+        .trim()
+        .toUpperCase();
+
+    if (kind === 'promo') {
+      if (code.includes('ENTER_PROMO_CODE')) return this.t('bonus.service.errors.enterPromoCode');
+      if (code.includes('PROMO_NOT_FOUND')) return this.t('bonus.service.errors.promoNotFound');
+      if (code.includes('PROMO_ALREADY_USED')) return this.t('bonus.service.errors.promoAlreadyUsed');
+      if (code.includes('PROMO_DISABLED')) return this.t('bonus.service.errors.promoDisabled');
+      if (code.includes('PROMO_EXPIRED')) return this.t('bonus.service.errors.promoExpired');
+      if (code.includes('PROMO_EXHAUSTED')) return this.t('bonus.service.errors.promoExhausted');
+      if (code.includes('NOT_AUTH') || code.includes('AUTH_FAILED') || code.includes('MISSING-AUTH-TOKEN')) {
+        return this.t('bonus.service.errors.notAuthenticated');
+      }
+      return this.t('bonus.service.feedback.promoApplyError');
+    }
+
+    if (code.includes('ENTER_GIFT_CODE')) return this.t('bonus.service.errors.enterGiftCode');
+    if (code.includes('GIFT_NOT_FOUND')) return this.t('bonus.service.errors.giftNotFound');
+    if (code.includes('GIFT_ALREADY_REDEEMED')) return this.t('bonus.service.errors.giftAlreadyRedeemed');
+    if (code.includes('GIFT_DISABLED')) return this.t('bonus.service.errors.giftDisabled');
+    if (code.includes('GIFT_EXPIRED')) return this.t('bonus.service.errors.giftExpired');
+    if (code.includes('NOT_AUTH') || code.includes('AUTH_FAILED') || code.includes('MISSING-AUTH-TOKEN')) {
+      return this.t('bonus.service.errors.notAuthenticated');
+    }
+    return this.t('bonus.service.feedback.giftRedeemError');
   }
 
   private async requireLogged(): Promise<{ uid: string; role: string }> {
@@ -719,3 +685,5 @@ export class BonusService {
     );
   }
 }
+
+

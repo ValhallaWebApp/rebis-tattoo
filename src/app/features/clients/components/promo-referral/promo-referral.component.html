@@ -22,16 +22,16 @@
         <mat-card-title>{{ lang.t('bonus.client.promo.title') }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <form [formGroup]="promoForm" (ngSubmit)="applyPromo()" class="action-form">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ lang.t('bonus.client.promo.codeLabel') }}</mat-label>
-            <input matInput formControlName="code" [placeholder]="lang.t('bonus.client.promo.placeholder')" />
-          </mat-form-field>
-
-          <button mat-flat-button color="primary" type="submit" [disabled]="promoForm.invalid || applyingPromo">
-            {{ applyingPromo ? lang.t('bonus.client.promo.loading') : lang.t('bonus.client.promo.submit') }}
-          </button>
-        </form>
+        <app-dynamic-form
+          class="action-form"
+          [fields]="promoFields"
+          [formGroupInput]="promoForm"
+          [showSubmit]="true"
+          [submitColor]="'primary'"
+          [submitLabel]="applyingPromo ? lang.t('bonus.client.promo.loading') : lang.t('bonus.client.promo.submit')"
+          [submitDisabled]="promoForm.invalid || applyingPromo"
+          (formSubmit)="applyPromo()"
+        ></app-dynamic-form>
       </mat-card-content>
     </mat-card>
 
@@ -41,16 +41,16 @@
         <mat-card-title>{{ lang.t('bonus.client.gift.title') }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <form [formGroup]="giftForm" (ngSubmit)="redeemGiftCard()" class="action-form">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ lang.t('bonus.client.gift.codeLabel') }}</mat-label>
-            <input matInput formControlName="code" [placeholder]="lang.t('bonus.client.gift.placeholder')" />
-          </mat-form-field>
-
-          <button mat-flat-button color="accent" type="submit" [disabled]="giftForm.invalid || redeemingGift">
-            {{ redeemingGift ? lang.t('bonus.client.gift.loading') : lang.t('bonus.client.gift.submit') }}
-          </button>
-        </form>
+        <app-dynamic-form
+          class="action-form"
+          [fields]="giftFields"
+          [formGroupInput]="giftForm"
+          [showSubmit]="true"
+          [submitColor]="'accent'"
+          [submitLabel]="redeemingGift ? lang.t('bonus.client.gift.loading') : lang.t('bonus.client.gift.submit')"
+          [submitDisabled]="giftForm.invalid || redeemingGift"
+          (formSubmit)="redeemGiftCard()"
+        ></app-dynamic-form>
       </mat-card-content>
     </mat-card>
   </div>

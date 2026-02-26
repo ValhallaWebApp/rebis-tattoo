@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { User } from '../../../../core/services/users/user.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 type UserEditDialogData = {
   user: User;
@@ -15,7 +16,7 @@ export type UserEditPatch = Pick<User, 'name' | 'email' | 'phone' | 'urlAvatar' 
 @Component({
   selector: 'app-user-edit-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, DynamicFormComponent],
   template: `
     <h2 mat-dialog-title>Modifica utente</h2>
 
@@ -41,30 +42,18 @@ export type UserEditPatch = Pick<User, 'name' | 'email' | 'phone' | 'urlAvatar' 
         </div>
       </mat-card>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Nome</mat-label>
-        <input matInput formControlName="name" />
-      </mat-form-field>
+      <app-dynamic-form
+        [fields]="baseFields"
+        [formGroupInput]="form"
+        [showSubmit]="false"
+      />
 
-      <mat-form-field appearance="outline">
-        <mat-label>Email</mat-label>
-        <input matInput type="email" formControlName="email" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Telefono</mat-label>
-        <input matInput formControlName="phone" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" *ngIf="data.isAdmin">
-        <mat-label>Avatar URL</mat-label>
-        <input matInput formControlName="urlAvatar" placeholder="/personale/client-01.jpg" />
-      </mat-form-field>
-
-      <div class="toggles" *ngIf="data.isAdmin">
-        <mat-slide-toggle formControlName="isActive">Account attivo</mat-slide-toggle>
-        <mat-slide-toggle formControlName="isVisible">Visibile in lista</mat-slide-toggle>
-      </div>
+      <app-dynamic-form
+        *ngIf="data.isAdmin"
+        [fields]="adminFields"
+        [formGroupInput]="form"
+        [showSubmit]="false"
+      />
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
@@ -122,6 +111,21 @@ export type UserEditPatch = Pick<User, 'name' | 'email' | 'phone' | 'urlAvatar' 
 })
 export class UserEditDialogComponent {
   readonly form;
+  readonly baseFields: DynamicField[] = [
+    { type: 'text', name: 'name', label: 'Nome', minLength: 2, required: true },
+    { type: 'email', name: 'email', label: 'Email', required: true },
+    { type: 'text', name: 'phone', label: 'Telefono' }
+  ];
+  readonly adminFields: DynamicField[] = [
+    {
+      type: 'text',
+      name: 'urlAvatar',
+      label: 'Avatar URL',
+      placeholder: '/personale/client-01.jpg'
+    },
+    { type: 'toggle', name: 'isActive', label: 'Account attivo', className: 'full' },
+    { type: 'toggle', name: 'isVisible', label: 'Visibile in lista', className: 'full' }
+  ];
 
   constructor(
     private fb: FormBuilder,

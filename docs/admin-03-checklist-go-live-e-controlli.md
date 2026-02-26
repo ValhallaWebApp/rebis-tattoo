@@ -1,33 +1,34 @@
 ﻿# Admin 03 - Checklist Go-Live e Controlli
 
-Checklist semplice da usare prima di demo importanti o rilascio operativo.
+## A. Config ambiente
+- [ ] `public/app-config.js` presente e valido
+- [ ] `paymentApiBaseUrl` HTTPS corretto
+- [ ] `stripePublishableKey` valorizzata
+- [ ] `firebaseConfig` completo
+- [ ] avvio app senza errori bloccanti di env
 
-## A. Controlli funzionali
-- [ ] Login admin funzionante
-- [ ] Calendario visibile e aggiornato
-- [ ] Flusso fast-booking completabile
-- [ ] Pagamento caparra funzionante
-- [ ] Prenotazione risulta aggiornata correttamente
+## B. Flussi critici
+- [ ] login client/admin funzionante
+- [ ] fast-booking completo fino a `success`
+- [ ] creazione PaymentIntent riuscita
+- [ ] conferma Stripe aggiorna booking a `paid`
+- [ ] route guard rispettate (`/dashboard`, `/staff`, `/admin`)
 
-## B. Controlli organizzativi
-- [ ] Team informato su eventuali cambi processo
-- [ ] Ruoli admin/staff verificati
-- [ ] Procedura gestione urgenze condivisa
-- [ ] Nominativo referente tecnico disponibile
+## C. Backoffice
+- [ ] calendario carica eventi
+- [ ] gestione utenti/staff operativa
+- [ ] messaging admin operativo
+- [ ] notifiche leggibili e azionabili
 
-## C. Controlli cliente (esperienza)
-- [ ] Sito pubblico navigabile da mobile
-- [ ] Form prenotazione chiaro e comprensibile
-- [ ] Messaggi di errore leggibili (non tecnici)
-- [ ] Tempi risposta percepiti adeguati
+## D. Qualita tecnica minima
+- [ ] `npm run lint` senza errori bloccanti
+- [ ] `npm run test` eseguito
+- [ ] `npm run test:ui` eseguito
+- [ ] nessun errore console critico ricorrente
 
-## D. Cosa evitare
-- non bypassare il flusso interno con procedure esterne
-- non modificare dati critici senza tracciamento
-- non fare test in orari di punta senza avvisare il team
+## E. Rollback readiness
+- [ ] snapshot/export RTDB disponibile
+- [ ] referente tecnico reperibile
+- [ ] piano rollback condiviso
 
-## E. Decisione finale pre-rilascio
-Se uno dei punti A non e verificato, meglio rimandare il rilascio operativo.
-
-## Nota utile
-Questa checklist e pensata per decisioni rapide: chiara, pratica, ripetibile.
+Decisione: se un punto A o B fallisce, non procedere al go-live.

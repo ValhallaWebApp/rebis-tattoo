@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../../core/modules/material.module';
 import { TattooProject } from '../../../../../core/services/projects/projects.service';
+import { DynamicField, DynamicFormComponent } from '../../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 export interface ProjectTrackerSessionDialogData {
   project: TattooProject;
@@ -13,12 +14,30 @@ export interface ProjectTrackerSessionDialogData {
 @Component({
   selector: 'app-project-tracker-session-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, DynamicFormComponent],
   templateUrl: './project-tracker-session-dialog.component.html',
   styleUrls: ['./project-tracker-session-dialog.component.scss']
 })
 export class ProjectTrackerSessionDialogComponent {
   readonly form;
+  readonly formFields: DynamicField[] = [
+    { type: 'date-native', name: 'date', label: 'Data', required: true },
+    { type: 'time', name: 'time', label: 'Ora', required: true },
+    { type: 'number', name: 'durationMinutes', label: 'Durata (min)', min: 15, required: true },
+    {
+      type: 'select',
+      name: 'status',
+      label: 'Status',
+      required: true,
+      options: [
+        { label: 'Pianificata', value: 'planned' },
+        { label: 'Completata', value: 'completed' },
+        { label: 'Annullata', value: 'cancelled' }
+      ]
+    },
+    { type: 'number', name: 'paidAmount', label: 'Pagato (sessione)', min: 0 },
+    { type: 'textarea', name: 'notesByAdmin', label: 'Note admin', rows: 2, className: 'full' }
+  ];
 
   constructor(
     private fb: FormBuilder,

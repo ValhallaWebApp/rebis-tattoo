@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { Database, onValue, ref } from '@angular/fire/database';
-import { BehaviorSubject } from 'rxjs';
 
 import { dataIt } from '../../data/language/it';
 import { dataEn } from '../../data/language/en';
@@ -15,8 +15,14 @@ export class LanguageService {
   private readonly bundleStoragePrefix = 'app.lang.bundle.';
   private readonly rtdbBasePath = 'i18n';
 
-  private readonly currentLang$ = new BehaviorSubject<LangCode>('it');
-  readonly language$ = this.currentLang$.asObservable();
+  private readonly currentLangSig = signal<LangCode>('it');
+  private readonly langRefreshTickSig = signal(0);
+  readonly language$ = toObservable(
+    computed(() => {
+      this.langRefreshTickSig();
+      return this.currentLangSig();
+    })
+  );
 
   private readonly localFallback: Record<LangCode, TranslationTree> = {
     it: dataIt,
@@ -33,19 +39,19 @@ export class LanguageService {
   constructor(private db: Database) {
     this.hydrateBundlesFromLocalStorage();
     const initialLang = this.getStoredActiveLang();
-    this.currentLang$.next(initialLang);
+    this.currentLangSig.set(initialLang);
     this.ensureDbSync(initialLang);
   }
 
   setLanguage(lang: string): void {
     const next = this.normalizeLang(lang);
-    this.currentLang$.next(next);
+    this.currentLangSig.set(next);
     this.storeActiveLang(next);
     this.ensureDbSync(next);
   }
 
   getCurrentLanguage(): LangCode {
-    return this.currentLang$.getValue();
+    return this.currentLangSig();
   }
 
   /**
@@ -57,7 +63,7 @@ export class LanguageService {
    * 4) path stesso (missing key)
    */
   t(path: string): string {
-    const lang = this.currentLang$.getValue();
+    const lang = this.currentLangSig();
     const fromRuntime = this.getByPath(this.runtimeBundles[lang], path);
     if (typeof fromRuntime === 'string') return fromRuntime;
 
@@ -86,9 +92,9 @@ export class LanguageService {
         this.runtimeBundles[lang] = merged;
         this.storeBundle(lang, merged);
 
-        if (this.currentLang$.getValue() === lang) {
-          // Trigger eventual re-render in consumers listening to language$.
-          this.currentLang$.next(lang);
+        if (this.currentLangSig() === lang) {
+          // Trigger re-render for subscribers when bundles are updated for active language.
+          this.langRefreshTickSig.update((value) => value + 1);
         }
       },
       (err) => {

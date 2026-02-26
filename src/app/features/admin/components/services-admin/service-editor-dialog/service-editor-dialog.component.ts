@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../../core/modules/material.module';
 import { Service } from '../../../../../core/services/services/services.service';
+import { DynamicField, DynamicFormComponent } from '../../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 export type ServiceEditorDialogData = {
   mode: 'create' | 'edit';
@@ -13,13 +14,51 @@ export type ServiceEditorDialogData = {
 @Component({
   selector: 'app-service-editor-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, DynamicFormComponent],
   templateUrl: './service-editor-dialog.component.html',
   styleUrl: './service-editor-dialog.component.scss'
 })
 export class ServiceEditorDialogComponent {
   isExpanded = false;
   readonly form;
+  readonly infoFields: DynamicField[] = [
+    { type: 'text', name: 'name', label: 'Nome*', required: true },
+    {
+      type: 'select',
+      name: 'categoria',
+      label: 'Categoria*',
+      required: true,
+      options: [
+        { label: 'Tatuaggio', value: 'tatuaggio' },
+        { label: 'Piercing', value: 'piercing' },
+        { label: 'Laser', value: 'laser' },
+        { label: 'Consulenza', value: 'consulenza' },
+        { label: 'Altro', value: 'altro' }
+      ]
+    },
+    {
+      type: 'select',
+      name: 'icon',
+      label: 'Icona',
+      options: [
+        { label: 'Automatica', value: '' },
+        { label: 'Tatuaggi', value: '/home/icon-01-80x80.png' },
+        { label: 'Fine Line', value: '/home/icon-07-80x80.png' },
+        { label: 'Copertura', value: '/home/icon-03-80x80.png' },
+        { label: 'Design', value: '/home/icon-04-80x80.png' },
+        { label: 'Trucco permanente', value: '/home/icon-05-80x80.png' },
+        { label: 'Su misura', value: '/home/icon-custom-02.png' }
+      ]
+    },
+    { type: 'textarea', name: 'description', label: 'Descrizione', rows: 4, className: 'full' }
+  ];
+  readonly commercialFields: DynamicField[] = [
+    { type: 'toggle', name: 'prezzoDaConcordare', label: 'Prezzo su richiesta', className: 'full' },
+    { type: 'toggle', name: 'durataDaConcordare', label: 'Durata su richiesta', className: 'full' },
+    { type: 'number', name: 'prezzo', label: 'Prezzo (EUR)', min: 0 },
+    { type: 'number', name: 'durata', label: 'Durata (min)', min: 0 },
+    { type: 'toggle', name: 'visibile', label: 'Pubblica il servizio', className: 'full' }
+  ];
 
   constructor(
     private fb: FormBuilder,

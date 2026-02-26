@@ -19,7 +19,7 @@ import { Observable } from 'rxjs';
 import { NotificationService } from '../notifications/notification.service';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuditLogService } from '../audit/audit-log.service';
-import { AuthService } from '../auth/authservice';
+import { AuthService } from '../auth/auth.service';
 import { ProjectsService } from '../projects/projects.service';
 
 /** Stati booking (nuovi + realistici) */
@@ -94,9 +94,13 @@ export class BookingDraftService {
   readonly draftSig = this._draft.asReadonly();
   readonly hasDraftSig = computed(() => this._draft() !== null);
 
-  private stripUndef<T extends Record<string, any>>(o: T): T {
-    const out: any = {};
-    for (const k of Object.keys(o)) if (o[k] !== undefined) out[k] = o[k];
+  private stripUndef<T extends object>(o: T): Partial<T> {
+    const out: Partial<T> = {};
+    for (const [k, value] of Object.entries(o)) {
+      if (value !== undefined) {
+        (out as Record<string, unknown>)[k] = value;
+      }
+    }
     return out;
   }
 
@@ -145,6 +149,10 @@ export class BookingService {
     private projects: ProjectsService
   ) {}
 
+  private toRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  }
+
   private ensureStaffPermission(permissionKey: string, missingMessage: string): void {
     const user = this.auth.userSig();
     if (!user) return;
@@ -157,9 +165,17 @@ export class BookingService {
   }
 
   private isPermissionDeniedError(err: unknown): boolean {
-    const code = String((err as any)?.code ?? '').toLowerCase();
-    const msg = String((err as any)?.message ?? '').toLowerCase();
+    const payload = err as { code?: unknown; message?: unknown } | null;
+    const code = String(payload?.code ?? '').toLowerCase();
+    const msg = String(payload?.message ?? '').toLowerCase();
     return code.includes('permission-denied') || msg.includes('permission_denied') || msg.includes('permission denied');
+  }
+
+  private getErrorMessage(err: unknown, fallback: string): string {
+    if (err instanceof Error && err.message) return err.message;
+    const payload = err as { message?: unknown } | null;
+    if (typeof payload?.message === 'string' && payload.message.trim()) return payload.message;
+    return fallback;
   }
 
   private assertNoLegacyBookingKeys(payload: Record<string, unknown>): void {
@@ -173,51 +189,54 @@ export class BookingService {
   // ---------------------------------------------------------------------------
   // Mappa dati DB -> Booking canonico
   // ---------------------------------------------------------------------------
-  private toCanonical(raw: any): Booking {
-    const createdAt = raw.createdAt ?? new Date().toISOString();
-    const updatedAt = raw.updatedAt ?? createdAt;
+  private toCanonical(raw: unknown): Booking {
+    const source = this.toRecord(raw);
+    const createdAt = String(source['createdAt'] ?? new Date().toISOString());
+    const updatedAt = String(source['updatedAt'] ?? createdAt);
 
-    const clientId = raw.clientId ?? '';
-    const artistId = raw.artistId ?? '';
+    const clientId = String(source['clientId'] ?? '');
+    const artistId = String(source['artistId'] ?? '');
 
-    const notes = raw.notes ?? '';
-    const createdById = String(raw.createdById ?? raw.createdBy ?? raw.creatorId ?? raw.creator ?? '').trim();
+    const notes = String(source['notes'] ?? '');
+    const createdById = String(source['createdById'] ?? source['createdBy'] ?? source['creatorId'] ?? source['creator'] ?? '').trim();
 
     const b: Booking = {
-      ...raw,
+      ...(source as Partial<Booking>),
+      id: String(source['id'] ?? ''),
+      title: String(source['title'] ?? ''),
+      start: String(source['start'] ?? ''),
+      end: String(source['end'] ?? ''),
       clientId,
       artistId,
       notes,
       createdById: createdById || undefined,
       createdAt,
       updatedAt,
+      status: (source['status'] as BookingStatus | undefined) ?? 'draft',
+      price: Number(source['price'] ?? 0) || 0,
+      paidAmount: Number(source['paidAmount'] ?? 0) || 0,
     };
 
     b.start = this.normalizeLocalDateTime(b.start);
     b.end = this.normalizeLocalDateTime(b.end);
 
-    // defaults hardening
-    b.status = (b.status ?? 'draft') as BookingStatus;
-    b.price = b.price ?? 0;
-    b.paidAmount = b.paidAmount ?? 0;
-
     return b;
   }
 
   /** patch generico -> patch DB canonico */
-  private toDbPatch(patch: Partial<Booking>): any {
-    const out: any = { ...patch };
+  private toDbPatch(patch: Partial<Booking>): Record<string, unknown> {
+    const out: Record<string, unknown> = { ...(patch as Record<string, unknown>) };
 
     this.assertNoLegacyBookingKeys(out);
 
     // normalize times
-    if (out.start) out.start = this.normalizeLocalDateTime(out.start);
-    if (out.end) out.end = this.normalizeLocalDateTime(out.end);
+    if (out['start']) out['start'] = this.normalizeLocalDateTime(String(out['start']));
+    if (out['end']) out['end'] = this.normalizeLocalDateTime(String(out['end']));
 
     return out;
   }
 
-  private normalizeIdCandidate(value: any): string {
+  private normalizeIdCandidate(value: unknown): string {
     if (Array.isArray(value)) {
       const first = value.find(v => typeof v === 'string' && v.trim().length > 0);
       return String(first ?? '').trim();
@@ -225,17 +244,53 @@ export class BookingService {
     return String(value ?? '').trim();
   }
 
-  private getProjectPartyIds(project: any): { artistId: string; clientId: string } {
-    const artistId = this.normalizeIdCandidate((project as any)?.artistId);
-    const clientId = this.normalizeIdCandidate((project as any)?.clientId);
+  private getProjectPartyIds(project: unknown): { artistId: string; clientId: string } {
+    const source = this.toRecord(project);
+    const artistId = this.normalizeIdCandidate(source['artistId']);
+    const clientId = this.normalizeIdCandidate(source['clientId']);
     return { artistId, clientId };
+  }
+
+  private async buildBookingProjectLinkPatch(params: {
+    bookingId: string;
+    oldProjectId?: string;
+    nextProjectId?: string;
+  }): Promise<Record<string, unknown>> {
+    const bookingId = String(params.bookingId ?? '').trim();
+    const oldProjectId = String(params.oldProjectId ?? '').trim();
+    const nextProjectId = String(params.nextProjectId ?? '').trim();
+    const now = this.formatLocal(new Date());
+
+    const updates: Record<string, unknown> = {
+      [`${this.path}/${bookingId}/projectId`]: nextProjectId || null,
+      [`${this.path}/${bookingId}/updatedAt`]: now
+    };
+
+    if (oldProjectId && oldProjectId !== nextProjectId) {
+      const oldProject = await this.projects.getProjectById(oldProjectId);
+      const linkedBookingId = String((oldProject as any)?.bookingId ?? '').trim();
+      if (linkedBookingId === bookingId) {
+        updates[`projects/${oldProjectId}/bookingId`] = null;
+        updates[`projects/${oldProjectId}/updatedAt`] = now;
+      }
+    }
+
+    if (nextProjectId && oldProjectId !== nextProjectId) {
+      updates[`projects/${nextProjectId}/bookingId`] = bookingId;
+      updates[`projects/${nextProjectId}/status`] = 'scheduled';
+      updates[`projects/${nextProjectId}/updatedAt`] = now;
+    }
+
+    return updates;
   }
 
   private snapshotToList(snapshot: DataSnapshot): Booking[] {
     const data = snapshot.val();
     if (!data) return [];
     // data può essere {id: {...}} o array: gestiamo oggetto
-    return Object.entries<any>(data).map(([key, value]) => this.toCanonical({ id: key, ...value }));
+    return Object.entries(data as Record<string, unknown>).map(([key, value]) =>
+      this.toCanonical({ id: key, ...this.toRecord(value) })
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -300,7 +355,7 @@ export class BookingService {
     }
 
     const all: Booking[] = snap.exists()
-      ? Object.values<any>(snap.val()).map(v => this.toCanonical(v))
+      ? Object.values(snap.val() as Record<string, unknown>).map(v => this.toCanonical(v))
       : [];
 
     // booking che NON bloccano slot
@@ -414,7 +469,7 @@ export class BookingService {
   // ---------------------------------------------------------------------------
   // COMPAT: addDraft (vecchio codice lo usa ovunque)
   // ---------------------------------------------------------------------------
-  async addDraft(draft: any): Promise<string> {
+  async addDraft(draft: Partial<Booking> & Record<string, unknown>): Promise<string> {
     const node = push(ref(this.db, this.path));
     const id = node.key!;
     const now = new Date().toISOString();
@@ -425,7 +480,7 @@ export class BookingService {
       status: 'draft',
       createdAt: draft.createdAt ?? now,
       updatedAt: now
-    } as any);
+    });
 
     console.log('[BookingService] addDraft →', payload);
     await set(node, payload);
@@ -448,13 +503,16 @@ export class BookingService {
       const now = new Date().toISOString();
 
       // Pre-check project linkage if provided to avoid creating inconsistent data.
-      const requestedProjectId = String((data as any)?.projectId ?? '').trim();
-      let resolvedArtistId = this.normalizeIdCandidate((data as any)?.artistId);
-      let resolvedClientId = this.normalizeIdCandidate((data as any)?.clientId);
+      const requestedProjectId = String(data.projectId ?? '').trim();
+      let resolvedArtistId = this.normalizeIdCandidate(data.artistId);
+      let resolvedClientId = this.normalizeIdCandidate(data.clientId);
       if (requestedProjectId) {
         const project = await this.projects.getProjectById(requestedProjectId);
+        if (!project) {
+          throw new Error(`PROJECT_NOT_FOUND:${requestedProjectId}`);
+        }
         if (project) {
-          const existing = String((project as any).bookingId ?? '').trim();
+          const existing = String(project.bookingId ?? '').trim();
           if (existing && existing !== id) {
             this.ui.warn(`Il progetto ${requestedProjectId} ha già una prenotazione collegata (${existing}).`);
             throw new Error(`PROJECT_BOOKING_CONFLICT:${requestedProjectId}:${existing}`);
@@ -483,20 +541,35 @@ export class BookingService {
         updatedAt: now
       });
 
-      await set(node, this.toDbPatch(payload));
+      const createPatch = this.toDbPatch(payload);
+      const projectId = String(payload.projectId ?? '').trim();
+      if (projectId) {
+        delete createPatch['projectId'];
+      }
+
+      await set(node, createPatch);
 
       // Keep project <-> booking linkage consistent.
       // Invariant: a project can have at most 1 bookingId.
-      const projectId = String((payload as any).projectId ?? '').trim();
       if (projectId) {
         const project = await this.projects.getProjectById(projectId);
         if (project) {
-          const existing = String((project as any).bookingId ?? '').trim();
+          const existing = String(project.bookingId ?? '').trim();
           if (existing && existing !== id) {
             this.ui.warn(`Il progetto ${projectId} ha già una prenotazione collegata (${existing}).`);
+            await remove(ref(this.db, `${this.path}/${id}`));
             throw new Error(`PROJECT_BOOKING_CONFLICT:${projectId}:${existing}`);
           }
-          await this.projects.attachBooking(projectId, id);
+          try {
+            const linkPatch = await this.buildBookingProjectLinkPatch({
+              bookingId: id,
+              nextProjectId: projectId
+            });
+            await update(ref(this.db), linkPatch);
+          } catch (linkError) {
+            await remove(ref(this.db, `${this.path}/${id}`));
+            throw linkError;
+          }
         }
       }
 
@@ -535,29 +608,32 @@ export class BookingService {
     const normalizedChanges: Partial<Booking> = { ...changes };
     try {
       const current = await this.getBookingById(id);
-      const oldProjectId = String((current as any)?.projectId ?? '').trim();
+      const oldProjectId = String(current?.projectId ?? '').trim();
       const nextProjectId =
         Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'projectId')
-          ? String((normalizedChanges as any).projectId ?? '').trim()
+          ? String(normalizedChanges.projectId ?? '').trim()
           : oldProjectId;
 
       // Pre-check project linkage if requested, before writing.
       if (nextProjectId) {
         const project = await this.projects.getProjectById(nextProjectId);
+        if (!project) {
+          throw new Error(`PROJECT_NOT_FOUND:${nextProjectId}`);
+        }
         if (project) {
-          const existing = String((project as any).bookingId ?? '').trim();
+          const existing = String(project.bookingId ?? '').trim();
           if (existing && existing !== id) {
-            this.ui.warn(`Il progetto ${nextProjectId} ha già una prenotazione collegata (${existing}).`);
+            this.ui.warn(`Il progetto ${nextProjectId} ha gia una prenotazione collegata (${existing}).`);
             throw new Error(`PROJECT_BOOKING_CONFLICT:${nextProjectId}:${existing}`);
           }
 
           const { artistId: pArtistId, clientId: pClientId } = this.getProjectPartyIds(project);
           let bArtistId = Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'artistId')
-            ? this.normalizeIdCandidate((normalizedChanges as any).artistId)
-            : this.normalizeIdCandidate((current as any)?.artistId);
+            ? this.normalizeIdCandidate(normalizedChanges.artistId)
+            : this.normalizeIdCandidate(current?.artistId);
           let bClientId = Object.prototype.hasOwnProperty.call(normalizedChanges ?? {}, 'clientId')
-            ? this.normalizeIdCandidate((normalizedChanges as any).clientId)
-            : this.normalizeIdCandidate((current as any)?.clientId);
+            ? this.normalizeIdCandidate(normalizedChanges.clientId)
+            : this.normalizeIdCandidate(current?.clientId);
           if (pArtistId && (!bArtistId || pArtistId !== bArtistId)) {
             this.ui.info('Artista booking allineato automaticamente al progetto.');
             bArtistId = pArtistId;
@@ -566,8 +642,8 @@ export class BookingService {
             this.ui.info('Cliente booking allineato automaticamente al progetto.');
             bClientId = pClientId;
           }
-          if (bArtistId) (normalizedChanges as any).artistId = bArtistId;
-          if (bClientId) (normalizedChanges as any).clientId = bClientId;
+          if (bArtistId) normalizedChanges.artistId = bArtistId;
+          if (bClientId) normalizedChanges.clientId = bClientId;
         }
       }
 
@@ -577,27 +653,25 @@ export class BookingService {
       });
 
       // non cambiare createdAt
-      delete patch.createdAt;
-
-      console.log('[BookingService] updateBooking ->', { id, patch });
-      await update(ref(this.db, `${this.path}/${id}`), patch);
-
-      // Sync linkage if projectId changed (or removed).
-      // We use "current" as source of truth for the old value.
-      if (oldProjectId && oldProjectId !== nextProjectId) {
-        await this.projects.detachBookingIfMatch(oldProjectId, id);
+      delete patch['createdAt'];
+      const hasProjectChange = oldProjectId !== nextProjectId;
+      if (hasProjectChange) {
+        delete patch['projectId'];
       }
 
-      if (nextProjectId) {
-        const project = await this.projects.getProjectById(nextProjectId);
-        if (project) {
-          const existing = String((project as any).bookingId ?? '').trim();
-          if (existing && existing !== id) {
-            this.ui.warn(`Il progetto ${nextProjectId} ha già una prenotazione collegata (${existing}).`);
-            throw new Error(`PROJECT_BOOKING_CONFLICT:${nextProjectId}:${existing}`);
-          }
-          await this.projects.attachBooking(nextProjectId, id);
-        }
+      console.log('[BookingService] updateBooking ->', { id, patch });
+      if (Object.keys(patch).length > 0) {
+        await update(ref(this.db, `${this.path}/${id}`), patch);
+      }
+
+      // Keep booking.projectId and project.bookingId aligned in a single write.
+      if (hasProjectChange) {
+        const linkPatch = await this.buildBookingProjectLinkPatch({
+          bookingId: id,
+          oldProjectId,
+          nextProjectId
+        });
+        await update(ref(this.db), linkPatch);
       }
 
       void this.audit.log({
@@ -640,12 +714,22 @@ export class BookingService {
     const actor = this.auth.userSig();
     try {
       const existing = await this.getBookingById(id);
-      const projectId = String((existing as any)?.projectId ?? '').trim();
+      const projectId = String(existing?.projectId ?? '').trim();
+      const deletePatch: Record<string, unknown> = {
+        [`${this.path}/${id}`]: null
+      };
+
       if (projectId) {
-        await this.projects.detachBookingIfMatch(projectId, id);
+        const project = await this.projects.getProjectById(projectId);
+        const linkedBookingId = String((project as any)?.bookingId ?? '').trim();
+        if (linkedBookingId === id) {
+          deletePatch[`projects/${projectId}/bookingId`] = null;
+          deletePatch[`projects/${projectId}/updatedAt`] = this.formatLocal(new Date());
+        }
       }
+
       console.log('[BookingService] deleteBooking ->', { id });
-      await remove(ref(this.db, `${this.path}/${id}`));
+      await update(ref(this.db), deletePatch);
       void this.audit.log({
         action: 'booking.delete',
         resource: 'booking',
@@ -711,10 +795,10 @@ export class BookingService {
     try {
       await this.safeSetStatus(id, newStatus, extra);
       return { ok: true, data: undefined };
-    } catch (err: any) {
+    } catch (err: unknown) {
       return {
         ok: false,
-        error: String(err?.message ?? `Errore aggiornamento stato a ${newStatus}`)
+        error: this.getErrorMessage(err, `Errore aggiornamento stato a ${newStatus}`)
       };
     }
   }
@@ -755,7 +839,7 @@ export class BookingService {
     return new Observable(obs => {
       const unsub = onValue(ref(this.db, this.path), snap => {
         const total = snap.val()
-          ? Object.values<any>(snap.val())
+          ? Object.values(snap.val() as Record<string, unknown>)
               .map(v => this.toCanonical(v))
               .filter(b => b.status === 'paid' && b.start.startsWith(`${year}-${month}`))
               .reduce((sum, b) => sum + (b.price ?? 0), 0)
@@ -845,10 +929,10 @@ export class BookingService {
     try {
       const bookingId = await this.addDraftFromChat(draft, params);
       return { ok: true, data: bookingId };
-    } catch (err: any) {
+    } catch (err: unknown) {
       return {
         ok: false,
-        error: String(err?.message ?? 'Errore creazione bozza prenotazione')
+        error: this.getErrorMessage(err, 'Errore creazione bozza prenotazione')
       };
     }
   }
@@ -1009,7 +1093,7 @@ export class BookingService {
       .map((result, index) => ({ result, userId: recipients[index] }))
       .filter((x): x is { result: PromiseRejectedResult; userId: string } => x.result.status === 'rejected')
       .map(({ result, userId }) => {
-        const err = result.reason as any;
+        const err = result.reason as { code?: unknown; message?: unknown } | null;
         return {
           userId,
           code: err?.code ?? 'unknown',
@@ -1054,16 +1138,16 @@ export class BookingService {
 
       const ids = new Set<string>();
       if (usersSnap.exists()) {
-        const users = usersSnap.val() as Record<string, any>;
+        const users = usersSnap.val() as Record<string, unknown>;
         for (const [uid, row] of Object.entries(users)) {
-          if (String((row as any)?.role ?? '').toLowerCase() === 'admin') {
+          if (String(this.toRecord(row)['role'] ?? '').toLowerCase() === 'admin') {
             ids.add(uid);
           }
         }
       }
 
       if (adminUidsSnap.exists()) {
-        const adminUids = adminUidsSnap.val() as Record<string, any>;
+        const adminUids = adminUidsSnap.val() as Record<string, unknown>;
         for (const [uid, flag] of Object.entries(adminUids)) {
           if (flag === true) ids.add(uid);
         }
@@ -1076,5 +1160,8 @@ export class BookingService {
     }
   }
 }
+
+
+
 
 

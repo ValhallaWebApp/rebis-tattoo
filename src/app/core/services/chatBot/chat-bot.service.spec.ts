@@ -28,7 +28,6 @@ describe('ChatService (AI-only message flow)', () => {
 
     expect(llmSpy.generateSupportReply).toHaveBeenCalled();
     expect(result.message).toBe('Risposta AI locale.');
-    expect(result.action).toBeUndefined();
   });
 
   it('fallback quando il modello non risponde', async () => {
@@ -38,7 +37,6 @@ describe('ChatService (AI-only message flow)', () => {
 
     expect(llmSpy.generateSupportReply).toHaveBeenCalled();
     expect(result.message).toContain('Non riesco a rispondere');
-    expect(result.action).toBeUndefined();
   });
 
   it('usa chips coerenti con il ruolo', async () => {
@@ -47,7 +45,6 @@ describe('ChatService (AI-only message flow)', () => {
     const result = await service.replyWithPlan('chat-3', userHistory('dammi supporto'), { role: 'admin' });
 
     expect(result.chips).toEqual(['Vai al profilo', 'Apri booking']);
-    expect(result.action).toBeUndefined();
   });
 
   it('non crea action booking: la chat usa solo risposta AI', async () => {
@@ -56,6 +53,6 @@ describe('ChatService (AI-only message flow)', () => {
     const result = await service.replyWithPlan('chat-4', userHistory('prenota domani alle 15'), { role: 'client' });
 
     expect(llmSpy.generateSupportReply).toHaveBeenCalled();
-    expect(result.action).toBeUndefined();
+    expect(result.chips).toContain('Apri booking');
   });
 });

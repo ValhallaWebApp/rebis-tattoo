@@ -1,48 +1,99 @@
-<div class="sidebar">
-  <h3>Conversazioni</h3>
-  <mat-list>
-    <mat-list-item
-      class="white"
-      *ngFor="let thread of threads"
-      (click)="selectThread(thread)"
-      [class.unread]="(thread.unreadBy?.[actorId] ?? 0) > 0"
-    >
-      <span class="thread-label">
-        {{ thread.summary || ('Conversazione #' + (thread.id | slice:-6)) }} ({{ labelStatus(thread.status) }})
-      </span>
-    </mat-list-item>
-  </mat-list>
-</div>
-
-<div class="chat-window" *ngIf="selectedThread">
-  <h3>{{ selectedThread.summary || ('Conversazione #' + (selectedThread.id | slice:-6)) }} - {{ labelStatus(selectedThread.status) }}</h3>
-
-  <div class="status-actions">
-    <button mat-stroked-button color="primary" *ngIf="selectedThread.status !== 'closed'" (click)="setStatus('chiuso')">
-      Chiudi
-    </button>
-    <button mat-stroked-button color="primary" *ngIf="selectedThread.status === 'closed'" (click)="setStatus('aperto')">
-      Riapri
-    </button>
-  </div>
-
-  <div class="messages">
-    <div *ngFor="let msg of messages">
-      <p [class.admin]="isAdminMessage(msg)" [class.chatbot]="msg.senderRole === 'bot'">
-        <strong>{{ msg.senderRole }}:</strong> {{ msg.text }}
-      </p>
+<aside class="sidebar" [class.hidden-mobile]="!sidebarOpen && !isDesktop">
+  <header class="sidebar-header">
+    <h3>Conversazioni</h3>
+    <div class="header-meta">
+      <span class="badge" *ngIf="totalUnreadCount() > 0">{{ totalUnreadCount() }} non lette</span>
+      <button mat-icon-button class="mobile-only" (click)="sidebarOpen = false" *ngIf="!isDesktop" aria-label="Chiudi lista">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
+  </header>
+
+  <app-dynamic-form
+    class="filters"
+    [fields]="filterFields"
+    [formGroupInput]="filtersForm"
+    [showSubmit]="false"
+  ></app-dynamic-form>
+
+  <ul class="thread-list">
+    <li
+      *ngFor="let thread of filteredThreads; trackBy: trackThread"
+      (click)="selectThread(thread)"
+      [class.active]="isThreadSelected(thread)"
+      [class.unread]="unreadCount(thread) > 0"
+    >
+      <div class="thread-main">
+        <div class="thread-title">{{ conversationTitle(thread) }}</div>
+        <span class="status-chip" [ngClass]="statusChipClass(thread.status)">{{ labelStatus(thread.status) }}</span>
+      </div>
+      <div class="thread-preview">{{ conversationPreview(thread) }}</div>
+      <div class="thread-meta">
+        <span>{{ lastActivityDate(thread) | date:'short' }}</span>
+        <span class="unread-pill" *ngIf="unreadCount(thread) > 0">{{ unreadCount(thread) }}</span>
+      </div>
+    </li>
+
+    <li class="empty" *ngIf="!filteredThreads.length">
+      Nessuna conversazione trovata per i filtri attuali.
+    </li>
+  </ul>
+</aside>
+
+<section class="chat-window" *ngIf="selectedThread as activeThread; else noThread">
+  <header class="chat-header">
+    <div class="chat-title-wrap">
+      <button mat-icon-button class="mobile-only" (click)="sidebarOpen = true" *ngIf="!isDesktop" aria-label="Apri lista conversazioni">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <div>
+        <h3>{{ conversationTitle(activeThread) }}</h3>
+        <div class="chat-subtitle">
+          <span class="status-chip" [ngClass]="statusChipClass(activeThread.status)">{{ labelStatus(activeThread.status) }}</span>
+          <span>Ultima attività: {{ lastActivityDate(activeThread) | date:'short' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-actions">
+      <button mat-stroked-button color="primary" *ngIf="activeThread.status !== 'closed'" (click)="setStatus('chiuso')">
+        Chiudi
+      </button>
+      <button mat-stroked-button color="primary" *ngIf="activeThread.status === 'closed'" (click)="setStatus('aperto')">
+        Riapri
+      </button>
+    </div>
+  </header>
+
+  <div class="messages" #messagesBox>
+    <article class="message" *ngFor="let msg of messages; trackBy: trackMessage" [class.mine]="isOwnMessage(msg)" [class.chatbot]="msg.senderRole === 'bot'">
+      <div class="message-head">
+        <strong>{{ msg.senderRole | titlecase }}</strong>
+        <span>{{ msg.createdAt | date:'shortTime' }}</span>
+      </div>
+      <p>{{ msg.text }}</p>
+    </article>
   </div>
 
-  <mat-form-field appearance="outline" class="message-input">
-    <input matInput placeholder="Scrivi una risposta..." [(ngModel)]="newMessage" />
-  </mat-form-field>
+  <div class="composer">
+    <app-dynamic-form
+      class="message-input"
+      [fields]="composerFields"
+      [formGroupInput]="composerForm"
+      [showSubmit]="false"
+    ></app-dynamic-form>
 
-  <button mat-flat-button color="primary" (click)="sendMessage()" [disabled]="!newMessage.trim() || selectedThread.status === 'closed'">
-    Invia
-  </button>
-</div>
+    <button mat-flat-button color="primary" (click)="sendMessage()" [disabled]="!messageCtrl.value.trim() || activeThread.status === 'closed'">
+      Invia
+    </button>
+  </div>
+</section>
 
-<div class="chat-window" *ngIf="!selectedThread">
-  <p>Seleziona una conversazione.</p>
-</div>
+<ng-template #noThread>
+  <section class="chat-window empty-chat">
+    <button mat-icon-button class="mobile-only" (click)="sidebarOpen = true" *ngIf="!isDesktop" aria-label="Apri lista conversazioni">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <p>Seleziona una conversazione dalla lista.</p>
+  </section>
+</ng-template>

@@ -8,18 +8,23 @@ import { MatDialog } from '@angular/material/dialog';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { UserEditDialogComponent } from './user-edit-dialog.component';
 import { StaffMember, StaffService } from '../../../../core/services/staff/staff.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 @Component({
   selector: 'app-users-management',
   standalone: true,
   templateUrl: './users-management.component.html',
   styleUrls: ['./users-management.component.scss'],
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule]
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, DynamicFormComponent]
 })
 export class UsersManagementComponent implements OnInit {
   readonly avatarFallback = '/loghi/logo.png';
   readonly allowedRoles: UserRole[] = ['client', 'staff', 'admin'];
   activeRoleTab: 'client' | 'staff' = 'client';
+  readonly filterFields: DynamicField[] = [
+    { type: 'text', name: 'name', label: 'Nome', placeholder: 'Mario Rossi' },
+    { type: 'email', name: 'email', label: 'Email', placeholder: 'mario@email.com' }
+  ];
   filterForm!: FormGroup;
   allUsers: User[] = [];
   filteredUsers: User[] = [];

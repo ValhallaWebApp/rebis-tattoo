@@ -1,8 +1,8 @@
 :host {
   display: block;
   padding:8vh 2rem;
-  background-color: #111;
-  color: whitesmoke;
+  background-color: var(--app-main-bg);
+  color: var(--app-main-text);
 }
 
 .analytics-container {
@@ -12,7 +12,8 @@
 }
 
 .analytics-header {
-  background-color: #1a1a1a;
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 1.5rem 2rem;
   display: flex;
@@ -24,29 +25,29 @@
   mat-card-title {
     font-size: 1.6rem;
     font-weight: bold;
-    color: #d4af37;
+    color: var(--accent);
   }
 
   mat-form-field {
     width: 200px;
-    background-color: #222;
+    background-color: var(--app-surface-muted);
     border-radius: 6px;
 
     .mat-input-element,
     .mat-select-value {
-      color: whitesmoke;
+      color: var(--app-main-text);
     }
   }
 
   button {
-    background-color: #d4af37;
-    color: #111;
+    background-color: var(--accent);
+    color: var(--accent-ink);
     font-weight: 600;
     padding: 0.6rem 1.5rem;
     border-radius: 8px;
 
     &:hover {
-      background-color: #c39e28;
+      filter: brightness(1.08);
     }
   }
 }
@@ -65,20 +66,21 @@ ngx-charts-bar-horizontal {
 }
 
 .chart-card {
-  background-color: #1a1a1a;
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-soft);
   max-width: 650px;
-  width: 80vw;
+  width: min(100%, 80vw);
   min-width: 250px;
   max-height: min-content;
-      overflow-x: scroll;
+  overflow-x: auto;
 
   mat-card-title {
     font-size: 1.2rem;
     font-weight: 600;
-    color: #d4af37;
+    color: var(--accent);
     margin-bottom: 1rem;
   }
 
@@ -93,42 +95,56 @@ ngx-charts-bar-horizontal {
 
 // Theme patch
 ::ng-deep .ngx-charts {
-  background-color: #1a1a1a !important;
-  color: whitesmoke;
+  background-color: var(--glass-bg) !important;
+  color: var(--app-main-text);
   border-radius: 12px;
 }
 
 ::ng-deep text {
-  fill: whitesmoke !important;
+  fill: var(--app-main-text) !important;
   font-weight: 500;
 }
 
 ::ng-deep .axis-label {
-  fill: #bbb !important;
+  fill: var(--app-main-text-muted) !important;
   font-size: 13px;
 }
 
 ::ng-deep .gridline,
 ::ng-deep .axis line {
-  stroke: #444 !important;
+  stroke: var(--app-surface-border, rgba(255, 255, 255, 0.18)) !important;
 }
 
 ::ng-deep .tooltip-content {
-  background: #222 !important;
-  color: whitesmoke;
-  border: 1px solid #d4af37;
+  background: var(--app-surface-strong, rgba(8, 9, 14, 0.84)) !important;
+  color: var(--app-main-text);
+  border: 1px solid var(--accent);
   padding: 0.5rem 1rem;
   border-radius: 8px;
 }
 
 @media (max-width: 768px) {
+  :host {
+    padding: 8vh 1rem 1rem;
+  }
+
   .analytics-header {
     flex-direction: column;
     align-items: flex-start;
+
+    mat-form-field {
+      width: 100%;
+    }
   }
 
   .analytics-grid {
-    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .chart-card {
+    width: 100%;
+    min-width: 0;
+    padding: 1rem;
   }
 }
 ::ng-deep .legend-items {

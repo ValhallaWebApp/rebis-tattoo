@@ -45,9 +45,21 @@ export const routes: Routes = [
   { path: 'chi-siamo', component: ChiSiamoComponent },
   { path: 'contatti', component: ContattiComponent },
 
-  { path: 'dashboard', loadChildren: () => import('./features/clients/clients.module').then(m => m.ClientsModule), canActivate: [AuthGuard] },
-  { path: 'staff', loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule), canActivate: [AdminGuard] },
-  { path: 'admin', loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule), canActivate: [AdminOnlyGuard] },
+  {
+    path: 'dashboard',
+    loadChildren: () => import('./features/clients/clients-routing.module').then(r => r.CLIENTS_ROUTES),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'staff',
+    loadChildren: () => import('./features/admin/admin-routing.module').then(r => r.ADMIN_ROUTES),
+    canActivate: [AdminGuard]
+  },
+  {
+    path: 'admin',
+    loadChildren: () => import('./features/admin/admin-routing.module').then(r => r.ADMIN_ROUTES),
+    canActivate: [AdminOnlyGuard]
+  },
 
   { path: '**', redirectTo: '/home' }
 ];

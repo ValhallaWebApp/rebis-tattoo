@@ -52,8 +52,7 @@
     <mat-form-field appearance="outline" class="input-field">
       <input
         matInput
-        [(ngModel)]="inputText"
-        name="message"
+        [formControl]="inputCtrl"
         placeholder="Scrivi un messaggio..."
         aria-label="Scrivi un messaggio"
         autocomplete="off"
@@ -65,7 +64,7 @@
       mat-icon-button
       color="primary"
       type="submit"
-      [disabled]="typing || !inputText.trim()"
+      [disabled]="typing || !inputCtrl.value.trim()"
       aria-label="Invia messaggio"
     >
       <mat-icon>send</mat-icon>

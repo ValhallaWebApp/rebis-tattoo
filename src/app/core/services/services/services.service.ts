@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Database, get, onValue, push, ref, remove, set, update } from '@angular/fire/database';
 import { Observable } from 'rxjs';
-import { AuthService } from '../auth/authservice';
+import { AuthService } from '../auth/auth.service';
 import { ConfirmActionService } from '../ui/confirm-action.service';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 
@@ -193,3 +193,5 @@ export class ServicesService {
     } as Service;
   }
 }
+
+

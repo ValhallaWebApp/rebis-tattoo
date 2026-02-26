@@ -1,63 +1,181 @@
-.week-wrap { padding: 12px; overflow: auto; }
-
-.grid {
+.week-wrap {
   display: grid;
-  grid-template-columns: 220px repeat(7, minmax(120px, 1fr));
+  gap: 12px;
+  padding: 12px;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
-  min-width: 980px;
 }
 
-.corner {
-  height: 48px;
-}
-
-.col-head {
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-}
-
-.row-head {
-  height: 74px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-
-  .name { font-weight: 800; }
-}
-
-.cell {
-  height: 74px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(0,0,0,0.30);
-  text-align: left;
+.day-card {
+  border-radius: 14px;
+  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.12));
+  background: var(--app-surface, rgba(16, 17, 24, 0.68));
+  color: var(--app-main-text, #f3f4f7);
+  min-height: 130px;
   padding: 10px;
+  text-align: left;
   cursor: pointer;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  transition: transform 0.12s ease, filter 0.2s ease, border-color 0.2s ease;
+}
 
-  .count {
-    font-size: 20px;
-    font-weight: 900;
-    line-height: 1;
+.day-card:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.day-card.c0 {
+  background: var(--app-surface-muted, rgba(18, 20, 28, 0.58));
+}
+
+.day-card.c1 {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: linear-gradient(160deg, rgba(34, 197, 94, 0.16), rgba(16, 17, 24, 0.72));
+}
+
+.day-card.c2 {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: linear-gradient(160deg, rgba(251, 191, 36, 0.18), rgba(16, 17, 24, 0.72));
+}
+
+.day-card.c3 {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: linear-gradient(160deg, rgba(239, 68, 68, 0.18), rgba(16, 17, 24, 0.72));
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+  font-weight: 700;
+}
+
+.total {
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.card-meta {
+  font-size: 12px;
+  color: var(--app-main-text-muted, #c8ced8);
+}
+
+.artists-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.artist-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.16));
+  background: rgba(0, 0, 0, 0.22);
+  padding: 2px 8px 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.artist-more {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: 0 0 9px;
+}
+
+.legend {
+  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  background: var(--app-surface, rgba(16, 17, 24, 0.68));
+  padding: 10px;
+}
+
+.legend-title {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.legend-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.16));
+  padding: 4px 10px 4px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 12px;
+}
+
+.legend-item .name {
+  font-weight: 600;
+}
+
+.legend-item .count {
+  opacity: 0.85;
+}
+
+@media (max-width: 1100px) {
+  .days-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-  .meta {
-    margin-top: 6px;
-    font-size: 12px;
-    opacity: .8;
+}
+
+@media (max-width: 900px) {
+  .days-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .week-wrap {
+    padding: 8px;
+    gap: 10px;
   }
 
-  &:hover { filter: brightness(1.08); }
+  .days-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
 
-  &.c0 { background: rgba(255,255,255,0.02); }
-  &.c1 { background: rgba(46, 125, 50, 0.18); }
-  &.c2 { background: rgba(46, 125, 50, 0.28); }
-  &.c3 { background: rgba(46, 125, 50, 0.38); }
+  .day-card {
+    min-height: 120px;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .total {
+    font-size: 22px;
+  }
 }

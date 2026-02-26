@@ -1,10 +1,11 @@
-import { Component, effect, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { timer } from 'rxjs';
 
 @Component({
   selector: 'app-home-featured-artists',
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('fadeInOut', [
       transition(':enter', [

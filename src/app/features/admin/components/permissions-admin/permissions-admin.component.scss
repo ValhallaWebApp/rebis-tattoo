@@ -34,7 +34,7 @@
 .permissions-admin__list {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: minmax(300px, 380px) minmax(420px, 1fr);
+  grid-template-columns: minmax(260px, 360px) minmax(320px, 1fr);
 }
 
 
@@ -108,8 +108,8 @@ mat-label,mat-select{
 }
 
 .user-pill--active {
-  border-color: #be9045 !important;
-  box-shadow: inset 0 0 0 1px #be9045;
+  border-color: var(--accent) !important;
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .pill-name {
@@ -256,4 +256,51 @@ mat-label,mat-select{
 
 :host ::ng-deep .mat-mdc-option.mdc-list-item--selected .mdc-list-item__primary-text {
   color: var(--accent) !important;
+}
+
+@media (max-width: 980px) {
+  .permissions-admin {
+    padding: 1rem;
+  }
+
+  .selector-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .page-size-field {
+    width: min(180px, 100%);
+  }
+}
+
+@media (max-width: 640px) {
+  .permissions-admin {
+    gap: 0.75rem;
+  }
+
+  .permissions-admin__legend .legend-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pager {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .permission-user .meta-row {
+    flex-wrap: wrap;
+  }
+
+  .level-field {
+    width: 100%;
+  }
+
+  .perm-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .perm-row mat-slide-toggle {
+    align-self: flex-end;
+  }
 }

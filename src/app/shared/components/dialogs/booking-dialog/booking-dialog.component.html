@@ -14,21 +14,24 @@
     <app-dynamic-form
       *ngIf="stepIndex === 0"
       [fields]="step0Fields"
-      [formGroup]="bookingForm">
+      [formGroupInput]="bookingForm"
+      [showSubmit]="false">
     </app-dynamic-form>
 
     <!-- Step 1 Â· Data e orario -->
     <app-dynamic-form
       *ngIf="stepIndex === 1"
       [fields]="step1Fields"
-      [formGroup]="bookingForm">
+      [formGroupInput]="bookingForm"
+      [showSubmit]="false">
     </app-dynamic-form>
 
     <!-- Step 2 Â· Conferma dati -->
     <app-dynamic-form
       *ngIf="stepIndex === 2"
       [fields]="step2Fields"
-      [formGroup]="bookingForm">
+      [formGroupInput]="bookingForm"
+      [showSubmit]="false">
     </app-dynamic-form>
 
     <!-- Step 3 Â· Riepilogo -->

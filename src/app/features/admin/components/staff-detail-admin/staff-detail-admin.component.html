@@ -27,29 +27,11 @@
         <mat-divider class="sep soft"></mat-divider>
 
         <form [formGroup]="calendarForm" class="form">
-          <mat-slide-toggle formControlName="enabled">Abilitato</mat-slide-toggle>
-
-          <div class="grid">
-            <mat-form-field appearance="outline">
-              <mat-label>Colore</mat-label>
-              <input matInput type="color" formControlName="color" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Inizio giornata</mat-label>
-              <input matInput type="time" formControlName="workdayStart" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Fine giornata</mat-label>
-              <input matInput type="time" formControlName="workdayEnd" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Step (min)</mat-label>
-              <input matInput type="number" formControlName="stepMinutes" />
-            </mat-form-field>
-          </div>
+          <app-dynamic-form
+            [fields]="calendarFields"
+            [formGroupInput]="calendarForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
 
           <div class="btnrow">
             <button mat-flat-button color="primary" type="button" (click)="saveCalendar()">

@@ -1,23 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild, inject, effect, DestroyRef } from '@angular/core';
+import { Component, DestroyRef, OnInit, ViewChild, effect, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 import { MatDrawer } from '@angular/material/sidenav';
-import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
-import { AuthService } from '../../../../core/services/auth/authservice';
-import { Review, ReviewsService } from '../../../../core/services/reviews/rewies.service';
+import { AuthService } from '../../../../core/services/auth/auth.service';
+import { Review, ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { StaffService } from '../../../../core/services/staff/staff.service';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 type ReviewStatus = 'pending' | 'approved' | 'rejected' | string;
 
 @Component({
   selector: 'app-reviews',
   standalone: true,
-  imports: [CommonModule, MaterialModule, ReactiveFormsModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, DynamicFormComponent],
   templateUrl: './reviews.component.html',
   styleUrls: ['./reviews.component.scss']
 })
@@ -32,31 +31,39 @@ export class ReviewsComponent implements OnInit {
   @ViewChild('reviewDrawer') reviewDrawer!: MatDrawer;
 
   user: any;
-
   reviews: Review[] = [];
   artists: any[] = [];
 
-  // filtro status (usato nel template)
   filterStatusCtrl = this.fb.control<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  readonly statusFilterForm = this.fb.group({
+    filterStatusCtrl: this.filterStatusCtrl
+  });
+  readonly statusFilterFields: DynamicField[] = [
+    {
+      type: 'select',
+      name: 'filterStatusCtrl',
+      label: 'Stato',
+      options: [
+        { label: 'Tutti', value: 'all' },
+        { label: 'In attesa', value: 'pending' },
+        { label: 'Pubblicate', value: 'approved' },
+        { label: 'Rifiutate', value: 'rejected' }
+      ]
+    }
+  ];
 
-  // drawer/form
   reviewForm!: FormGroup;
-  artistCtrl = this.fb.control<any>(''); // qui ci passa anche oggetto artista quando selezionato
-  filteredArtists$: Observable<any[]> = new Observable<any[]>();
+  reviewFields: DynamicField[] = [];
 
-  selectedArtistId = '';
   selectedReview: Review | null = null;
-
   submitting = false;
   isReadOnly = false;
 
-  // auto-load su user
   readonly _loadUserEffect = effect(() => {
     const u = this.auth.userSig();
-    if (u?.uid) {
-      this.user = u;
-      this.loadData();
-    }
+    if (!u?.uid) return;
+    this.user = u;
+    this.loadData();
   });
 
   ngOnInit(): void {
@@ -66,68 +73,45 @@ export class ReviewsComponent implements OnInit {
       rating: [5, Validators.required],
       artistId: ['', Validators.required]
     });
+
+    this.updateReviewFields();
   }
 
-  // -------------------------
-  // LOAD
-  // -------------------------
   private loadData(): void {
     if (!this.user?.uid) return;
 
     this.reviewForm.get('author')?.setValue(this.user?.name || this.user?.email || '');
 
-    // reviews
     this.reviewsService.getReviewsByUser(this.user.uid)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((list) => {
         this.reviews = (list ?? []).slice().sort((a, b) => (b.date ?? 0) - (a.date ?? 0));
       });
 
-    // staff
     this.staffService.getAllStaff()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((staff) => {
         this.artists = staff ?? [];
-
-        // autocomplete
-        this.filteredArtists$ = this.artistCtrl.valueChanges.pipe(
-          startWith(''),
-          map((value) => {
-            const text =
-              typeof value === 'string'
-                ? value
-                : (value?.name ?? '');
-
-            return this._filterArtists(text);
-          })
-        );
+        this.updateReviewFields();
       });
   }
 
-  private _filterArtists(value: string): any[] {
-    const v = (value ?? '').toLowerCase();
-    return (this.artists ?? []).filter(a => (a?.name ?? '').toLowerCase().includes(v));
-  }
-
-  // -------------------------
-  // TEMPLATE HELPERS
-  // -------------------------
   filteredReviews(): Review[] {
     const status = this.filterStatusCtrl.value;
     if (!status || status === 'all') return this.reviews;
-    return this.reviews.filter(r => r.status === status);
+    return this.reviews.filter((r) => r.status === status);
   }
 
   getArtistNameById(id: string | undefined): string {
     if (!id) return 'Artista';
-    const a = this.artists.find(x => x.id === id);
-    return a?.name || 'Artista';
+    const artist = this.artists.find((x) => x.id === id);
+    return artist?.name || 'Artista';
   }
 
   getArtistPhotoById(id: string | undefined): string {
     if (!id) return 'https://i.pravatar.cc/300?img=1';
-    const a = this.artists.find(x => x.id === id);
-    return a?.photoUrl || 'https://i.pravatar.cc/300?img=1';
+    const artist = this.artists.find((x) => x.id === id);
+    return artist?.photoUrl || 'https://i.pravatar.cc/300?img=1';
   }
 
   getStatusLabel(status: ReviewStatus): string {
@@ -154,56 +138,32 @@ export class ReviewsComponent implements OnInit {
     return now - (review.date ?? 0) <= fiveMinutes;
   }
 
-  // -------------------------
-  // HEADER BUTTON
-  // -------------------------
-openCreate(): void {
-  console.log('[Reviews] openCreate() click');
+  openCreate(): void {
+    if (!this.reviewDrawer) return;
 
-  if (!this.reviewDrawer) {
-    console.error('[Reviews] reviewDrawer is undefined. @ViewChild non agganciato.');
-    return;
+    this.selectedReview = null;
+    this.isReadOnly = false;
+    this.submitting = false;
+
+    this.reviewForm.enable();
+    this.reviewForm.reset({
+      author: this.user?.name || this.user?.email || '',
+      comment: '',
+      rating: 5,
+      artistId: ''
+    });
+
+    this.reviewDrawer.open();
   }
-
-  this.selectedReview = null;
-  this.isReadOnly = false;
-  this.submitting = false;
-
-  this.reviewForm.enable();
-  this.artistCtrl.enable();
-
-  this.reviewForm.reset({
-    author: this.user?.name || this.user?.email || '',
-    comment: '',
-    rating: 5,
-    artistId: ''
-  });
-
-  this.artistCtrl.setValue('');
-  this.selectedArtistId = '';
-
-  // ✅ forza apertura
-  this.reviewDrawer.open();
-  console.log('[Reviews] drawer opened?', this.reviewDrawer.opened);
-}
-
 
   closeDrawer(): void {
     this.reviewDrawer.close();
     this.isReadOnly = false;
-
-    // ripristino controlli
     this.reviewForm.enable();
-    this.artistCtrl.enable();
-
     this.selectedReview = null;
-    this.selectedArtistId = '';
     this.submitting = false;
   }
 
-  // -------------------------
-  // CARD ACTIONS
-  // -------------------------
   viewReview(review: Review): void {
     this.selectedReview = review;
     this.isReadOnly = true;
@@ -215,13 +175,7 @@ openCreate(): void {
       artistId: review.artistId ?? ''
     });
 
-    const a = this.artists.find(x => x.id === review.artistId);
-    this.artistCtrl.setValue(a?.name ?? '');
-
-    // readonly
     this.reviewForm.disable();
-    this.artistCtrl.disable();
-
     this.reviewDrawer.open();
   }
 
@@ -230,8 +184,6 @@ openCreate(): void {
     this.isReadOnly = false;
 
     this.reviewForm.enable();
-    this.artistCtrl.enable();
-
     this.reviewForm.patchValue({
       author: this.user?.name || this.user?.email || '',
       comment: review.comment ?? '',
@@ -239,40 +191,22 @@ openCreate(): void {
       artistId: review.artistId ?? ''
     });
 
-    const a = this.artists.find(x => x.id === review.artistId);
-    this.artistCtrl.setValue(a?.name ?? '');
-
-    this.selectedArtistId = review.artistId || '';
-
     this.reviewDrawer.open();
   }
 
-  selectArtist(artist: any): void {
-    if (!artist?.id) return;
-
-    this.artistCtrl.setValue(artist.name);
-    this.selectedArtistId = artist.id;
-
-    this.reviewForm.get('artistId')?.setValue(artist.id);
-  }
-
-  // -------------------------
-  // SUBMIT / DELETE
-  // -------------------------
   submitReview(): void {
     if (this.isReadOnly) return;
     if (this.reviewForm.invalid) return;
 
-    this.submitting = true;
-
-    if (!this.selectedArtistId) {
+    const artistId = String(this.reviewForm.getRawValue().artistId ?? '').trim();
+    if (!artistId) {
       this.snackbar.open('Seleziona un artista.', 'Chiudi', { duration: 2500 });
-      this.submitting = false;
       return;
     }
 
+    this.submitting = true;
+
     if (this.selectedReview) {
-      // update
       if (!this.canEditReview(this.selectedReview)) {
         this.snackbar.open('Modifica non consentita: tempo scaduto.', 'Chiudi', { duration: 3000 });
         this.submitting = false;
@@ -282,7 +216,7 @@ openCreate(): void {
       const updatedData: Partial<Review> = {
         comment: this.reviewForm.getRawValue().comment,
         rating: this.reviewForm.getRawValue().rating,
-        artistId: this.selectedArtistId
+        artistId
       };
 
       this.reviewsService.updateReview(this.selectedReview.id, updatedData)
@@ -292,27 +226,28 @@ openCreate(): void {
           this.loadData();
         })
         .finally(() => (this.submitting = false));
-    } else {
-      // create
-      const newReview: Review = {
-        id: '',
-        userId: this.user.uid,
-        tattooTitle: 'Altro',
-        comment: this.reviewForm.getRawValue().comment,
-        rating: this.reviewForm.getRawValue().rating,
-        status: 'pending',
-        date: Date.now(),
-        artistId: this.selectedArtistId
-      };
 
-      this.reviewsService.addReview(newReview)
-        .then(() => {
-          this.snackbar.open('Recensione inviata! In attesa di approvazione.', 'Chiudi', { duration: 3000 });
-          this.closeDrawer();
-          this.loadData();
-        })
-        .finally(() => (this.submitting = false));
+      return;
     }
+
+    const newReview: Review = {
+      id: '',
+      userId: this.user.uid,
+      tattooTitle: 'Altro',
+      comment: this.reviewForm.getRawValue().comment,
+      rating: this.reviewForm.getRawValue().rating,
+      status: 'pending',
+      date: Date.now(),
+      artistId
+    };
+
+    this.reviewsService.addReview(newReview)
+      .then(() => {
+        this.snackbar.open('Recensione inviata! In attesa di approvazione.', 'Chiudi', { duration: 3000 });
+        this.closeDrawer();
+        this.loadData();
+      })
+      .finally(() => (this.submitting = false));
   }
 
   deleteReview(id: string): void {
@@ -323,8 +258,44 @@ openCreate(): void {
       .then(() => {
         this.snackbar.open('Recensione eliminata.', 'Chiudi', { duration: 2500 });
         this.loadData();
-        // se stavi guardando quella recensione nel drawer, chiudi
         if (this.selectedReview?.id === id) this.closeDrawer();
       });
+  }
+
+  private updateReviewFields(): void {
+    this.reviewFields = [
+      {
+        type: 'autocomplete',
+        name: 'artistId',
+        label: 'Artista',
+        required: true,
+        options: this.artists.map((artist) => ({
+          label: String(artist?.name ?? 'Artista'),
+          value: String(artist?.id ?? '')
+        }))
+      },
+      {
+        type: 'textarea',
+        name: 'comment',
+        label: 'Commento',
+        rows: 4,
+        className: 'full',
+        minLength: 10,
+        required: true
+      },
+      {
+        type: 'select',
+        name: 'rating',
+        label: 'Valutazione',
+        required: true,
+        options: [
+          { label: '1 stella', value: 1 },
+          { label: '2 stelle', value: 2 },
+          { label: '3 stelle', value: 3 },
+          { label: '4 stelle', value: 4 },
+          { label: '5 stelle', value: 5 }
+        ]
+      }
+    ];
   }
 }

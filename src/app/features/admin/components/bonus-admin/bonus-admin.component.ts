@@ -9,11 +9,12 @@ import {
 } from '../../../../core/services/bonus/bonus.service';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { LanguageService } from '../../../../core/services/language/language.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 @Component({
   selector: 'app-bonus-admin',
   standalone: true,
-  imports: [CommonModule, MaterialModule, ReactiveFormsModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, DynamicFormComponent],
   templateUrl: './bonus-admin.component.html',
   styleUrl: './bonus-admin.component.scss'
 })
@@ -40,6 +41,72 @@ export class BonusAdminComponent {
 
   savingPromo = false;
   savingGift = false;
+
+  get promoFields(): DynamicField[] {
+    return [
+      {
+        type: 'text',
+        name: 'code',
+        label: this.lang.t('bonus.admin.promoForm.codeLabel'),
+        placeholder: this.lang.t('bonus.admin.promoForm.codePlaceholder')
+      },
+      {
+        type: 'number',
+        name: 'creditAmount',
+        label: this.lang.t('bonus.admin.promoForm.creditLabel'),
+        min: 1,
+        required: true
+      },
+      {
+        type: 'number',
+        name: 'maxUses',
+        label: this.lang.t('bonus.admin.promoForm.maxUsesLabel'),
+        min: 1
+      },
+      {
+        type: 'date-native',
+        name: 'expiresAt',
+        label: this.lang.t('bonus.admin.promoForm.expiryLabel')
+      },
+      {
+        type: 'textarea',
+        name: 'description',
+        label: this.lang.t('bonus.admin.promoForm.descriptionLabel'),
+        rows: 2,
+        className: 'full'
+      }
+    ];
+  }
+
+  get giftFields(): DynamicField[] {
+    return [
+      {
+        type: 'text',
+        name: 'code',
+        label: this.lang.t('bonus.admin.giftForm.codeLabel'),
+        placeholder: this.lang.t('bonus.admin.giftForm.codePlaceholder')
+      },
+      {
+        type: 'number',
+        name: 'amount',
+        label: this.lang.t('bonus.admin.giftForm.amountLabel'),
+        min: 1,
+        required: true
+      },
+      {
+        type: 'date-native',
+        name: 'expiresAt',
+        label: this.lang.t('bonus.admin.giftForm.expiryLabel')
+      },
+      {
+        type: 'textarea',
+        name: 'note',
+        label: this.lang.t('bonus.admin.giftForm.noteLabel'),
+        rows: 2,
+        className: 'full'
+      }
+    ];
+  }
 
   constructor(
     private bonusService: BonusService,

@@ -3,18 +3,18 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { MaterialModule } from '../../../core/modules/material.module';
 import { ChatService, ChatMessage } from '../../../core/services/chatBot/chat-bot.service';
-import { AuthService } from '../../../core/services/auth/authservice';
+import { AuthService } from '../../../core/services/auth/auth.service';
 import { LocalLlmService, LlmRuntimeStatus } from '../../../core/services/chatBot/local-llm.service';
 
 @Component({
   selector: 'app-chat-bot',
   standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
   templateUrl: './chat-bot.component.html',
   styleUrls: ['./chat-bot.component.scss']
 })
@@ -23,7 +23,7 @@ export class ChatBotComponent implements AfterViewChecked {
   private readonly destroyRef = inject(DestroyRef);
 
   messages: { text: string; from: 'user' | 'bot'; chips?: string[] | null }[] = [];
-  inputText = '';
+  inputCtrl = new FormControl<string>('', { nonNullable: true });
   typing = false;
   isUserAtBottom = true;
   loadingLabel = 'Elaboro la risposta...';
@@ -130,11 +130,11 @@ export class ChatBotComponent implements AfterViewChecked {
   }
 
   async sendMessage(): Promise<void> {
-    const userText = this.inputText.trim();
+    const userText = this.inputCtrl.value.trim();
     if (!userText || !this.chatId || this.typing) return;
 
     this.addUserMessage(userText);
-    this.inputText = '';
+    this.inputCtrl.setValue('');
     this.typing = true;
     await this.flushUi();
 
@@ -176,7 +176,7 @@ export class ChatBotComponent implements AfterViewChecked {
       return;
     }
 
-    this.inputText = label;
+    this.inputCtrl.setValue(label);
     void this.sendMessage();
   }
 
@@ -219,3 +219,5 @@ export class ChatBotComponent implements AfterViewChecked {
     }
   }
 }
+
+

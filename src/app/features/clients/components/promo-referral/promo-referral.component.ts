@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, of } from 'rxjs';
-import { AuthService } from '../../../../core/services/auth/authservice';
+import { AuthService } from '../../../../core/services/auth/auth.service';
 import {
   BonusService,
   UserWallet,
@@ -10,11 +10,12 @@ import {
 } from '../../../../core/services/bonus/bonus.service';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { LanguageService } from '../../../../core/services/language/language.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 @Component({
   selector: 'app-promo-referral',
   standalone: true,
-  imports: [CommonModule, MaterialModule, ReactiveFormsModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, DynamicFormComponent],
   templateUrl: './promo-referral.component.html',
   styleUrls: ['./promo-referral.component.scss']
 })
@@ -28,6 +29,8 @@ export class PromoReferralComponent implements OnInit {
   giftForm = this.fb.group({
     code: ['', [Validators.required, Validators.minLength(3)]]
   });
+  promoFields: DynamicField[] = [];
+  giftFields: DynamicField[] = [];
 
   wallet$: Observable<UserWallet> = of({ userId: '', balance: 0, updatedAt: new Date(0).toISOString() });
   ledger$: Observable<WalletLedgerEntry[]> = of([]);
@@ -42,6 +45,23 @@ export class PromoReferralComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    this.promoFields = [
+      {
+        type: 'text',
+        name: 'code',
+        label: this.lang.t('bonus.client.promo.codeLabel'),
+        placeholder: this.lang.t('bonus.client.promo.placeholder')
+      }
+    ];
+    this.giftFields = [
+      {
+        type: 'text',
+        name: 'code',
+        label: this.lang.t('bonus.client.gift.codeLabel'),
+        placeholder: this.lang.t('bonus.client.gift.placeholder')
+      }
+    ];
+
     const user = await this.auth.resolveCurrentUser();
     if (!user) return;
 
@@ -87,3 +107,5 @@ export class PromoReferralComponent implements OnInit {
     return this.lang.t('bonus.client.ledger.typeAdjustment');
   }
 }
+
+

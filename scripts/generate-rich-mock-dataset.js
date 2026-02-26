@@ -835,20 +835,29 @@ const notifications = {
 const conversations = {
   conv_001: {
     id: 'conv_001',
+    summary: 'Conversazione booking bk_004',
     bookingId: 'bk_004',
     projectId: 'prj_005',
     clientId: 'cli_01',
     staffId: 'stf_senior_01',
-    participantIds: ['cli_01', 'stf_senior_01'],
+    participants: {
+      cli_01: 'client',
+      stf_senior_01: 'staff'
+    },
     status: 'open',
     lastMessageText: 'Confermo la sessione di domenica.',
     lastMessageAt: '2026-02-15T09:20:00.000Z',
+    unreadBy: {
+      cli_01: 0,
+      stf_senior_01: 0
+    },
     createdAt: '2026-02-14T11:00:00.000Z',
+    updatedAt: '2026-02-15T09:20:00.000Z',
     createdBy: 'cli_01'
   }
 };
 
-const messages = {
+const conversationMessages = {
   conv_001: {
     msg_001: {
       id: 'msg_001',
@@ -920,7 +929,7 @@ const rtdb = {
   reviews,
   notifications,
   conversations,
-  messages,
+  conversationMessages,
   userConversations,
   chats,
   chatsByEmail

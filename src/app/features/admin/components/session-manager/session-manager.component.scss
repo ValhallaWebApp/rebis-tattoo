@@ -12,10 +12,11 @@
 .drawer {
   width: 100%;
   max-width: 400px;
-  background-color: #111;
-  color: white;
+  background-color: var(--app-surface-strong, rgba(8, 9, 14, 0.84));
+  color: var(--app-main-text);
   padding: 1.5rem;
   overflow-y: auto;
+  border-right: 1px solid var(--glass-border);
 
   .form-title {
     font-size: 1.4rem;
@@ -35,12 +36,12 @@
       input,
       textarea,
       mat-select {
-        color: white;
+        color: var(--app-main-text);
       }
 
       .mat-input-element,
       .mat-select-value {
-        color: white;
+        color: var(--app-main-text);
       }
     }
 
@@ -50,23 +51,23 @@
       gap: 1rem;
 
       button[color='primary'] {
-        background-color: whitesmoke;
-        color: #000;
+        background-color: var(--accent);
+        color: var(--accent-ink);
 
         &:hover {
-          background-color: #c39d28;
+          filter: brightness(1.08);
         }
       }
 
       button[color='warn'] {
-        color: #f44336;
+        color: var(--app-status-danger-text);
       }
     }
   }
 }
 
 mat-drawer-content {
-  background-color: #fff;
+  background-color: var(--app-main-bg);
   padding: 1rem;
 
   .header {
@@ -78,11 +79,11 @@ mat-drawer-content {
     h2 {
       font-size: 1.6rem;
       font-weight: 600;
-      color: #111;
+      color: var(--app-main-text);
     }
 
     button {
-      color: #111;
+      color: var(--app-main-text);
     }
   }
 
@@ -93,17 +94,17 @@ mat-drawer-content {
 
     mat-card-title {
       font-weight: bold;
-      color: #000;
+      color: var(--app-main-text);
     }
 
     mat-card-subtitle {
       font-style: italic;
-      color: #555;
+      color: var(--app-main-text-muted);
     }
 
     mat-card-content {
       font-size: 0.9rem;
-      color: #444;
+      color: var(--app-main-text);
 
       p {
         margin: 0.3rem 0;
@@ -119,7 +120,7 @@ mat-drawer-content {
         font-size: 0.9rem;
 
         &:hover {
-          color: #c39d28;
+          color: var(--accent);
         }
       }
     }
@@ -127,7 +128,7 @@ mat-drawer-content {
 
   .empty-message {
     text-align: center;
-    color: #444;
+    color: var(--app-main-text-muted);
     margin-top: 3rem;
 
     button {

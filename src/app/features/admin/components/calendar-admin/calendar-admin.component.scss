@@ -1,13 +1,13 @@
 :host {
   display: block;
-  background-color: #0a0a0a;
-  color: whitesmoke;
+  background-color: var(--app-main-bg);
+  color: var(--app-main-text);
   padding: 1rem;
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  font-family: var(--font-base, "Inter", "Segoe UI", Arial, sans-serif);
 }
 section{
   padding: 8vh 1rem;
-  min-height: 90vh;
+  min-height: 100vh;
 }
 .calendar-header {
   display: flex;
@@ -17,20 +17,20 @@ section{
   gap: 1rem;
   margin-bottom: 1rem;
   input[type="text"] {
-    background-color: #1a1a1a;
-    border: 1px solid #444;
-    color: whitesmoke;
+    background-color: var(--app-surface-muted);
+    border: 1px solid var(--glass-border);
+    color: var(--app-main-text);
     padding: 0.4rem 0.8rem;
     border-radius: 4px;
     width: 100%;
     max-width: 300px;
 
     &::placeholder {
-      color: #999;
+      color: var(--app-main-text-muted);
     }
 
     &:focus {
-      border-color: #BE9045;
+      border-color: var(--accent);
       outline: none;
     }
   }
@@ -41,16 +41,16 @@ section{
 
     button {
       background: transparent;
-      color: whitesmoke;
-      border: 1px solid #BE9045;
+      color: var(--app-main-text);
+      border: 1px solid var(--accent);
       padding: 0.4rem 0.8rem;
       border-radius: 4px;
       cursor: pointer;
       font-weight: 500;
 
       &:hover {
-        background-color: #BE9045;
-        color: #000;
+        background-color: var(--accent);
+        color: var(--accent-ink);
       }
     }
   }
@@ -69,20 +69,39 @@ section{
     font-weight: 500;
 
     &.confermata {
-      color: #4CAF50;
+      color: var(--app-success);
     }
 
     &.inAttesa {
-      color: #FFC107;
+      color: var(--app-warning);
     }
 
     &.cancellata {
-      color: #F44336;
+      color: var(--app-danger);
     }
 
     input[type="checkbox"] {
       accent-color: currentColor;
     }
+  }
+}
+
+@media (max-width: 640px) {
+  section {
+    padding: 8vh 0.5rem 0.75rem;
+  }
+
+  .calendar-header {
+    gap: 0.75rem;
+
+    .view-buttons {
+      flex-wrap: wrap;
+    }
+  }
+
+  .filter-status {
+    flex-wrap: wrap;
+    gap: 0.6rem 0.9rem;
   }
 }
 
@@ -95,12 +114,12 @@ section{
   .fc-daygrid-day-number,
   .fc-timegrid-slot-label,
   .fc-timegrid-axis {
-    color: whitesmoke;
+    color: var(--app-main-text);
   }
 
   td,
   th {
-    border-color: #333;
+    border-color: var(--app-surface-border, rgba(255, 255, 255, 0.18));
   }
 
   .fc-event {

@@ -1,16 +1,17 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { StaffMember, StaffService } from '../../../../../core/services/staff/staff.service';
-import { AuthService } from '../../../../../core/services/auth/authservice';
+import { AuthService } from '../../../../../core/services/auth/auth.service';
 import { FastBookingStore } from '../../../fast-booking/state/fast-booking-store.service';
 
 @Component({
   selector: 'app-home-contact',
   templateUrl: './home-contact.component.html',
   styleUrl: './home-contact.component.scss',
-  standalone: false
+  standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomeContactComponent {
   private readonly fb = inject(FormBuilder);
@@ -131,3 +132,5 @@ export class HomeContactComponent {
     this.router.navigate(['/fast-booking']);
   }
 }
+
+

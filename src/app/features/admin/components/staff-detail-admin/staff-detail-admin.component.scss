@@ -1,8 +1,8 @@
 .page {
   padding: 1.5rem 2rem;
-  background: #121212;
-  color: whitesmoke;
-  min-height: 80vh;
+  background: var(--app-main-bg);
+  color: var(--app-main-text);
+  min-height: 100vh;
 }
 
 .hdr {
@@ -35,8 +35,8 @@
   color: rgba(255, 255, 255, 0.75);
 }
 .pill.on {
-  border-color: #be9045;
-  color: #be9045;
+  border-color: var(--accent);
+  color: var(--accent);
   background: rgba(190, 144, 69, 0.16);
 }
 
@@ -86,7 +86,7 @@ h3 {
 }
 
 .day {
-  background: #151515;
+  background: var(--glass-bg);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
   padding: 1rem;
@@ -133,7 +133,7 @@ h3 {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 :host ::ng-deep .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
-  color: #be9045 !important;
+  color: var(--accent) !important;
 }
 :host ::ng-deep .mat-mdc-form-field .mat-mdc-floating-label {
   color: rgba(255, 255, 255, 0.82) !important;
@@ -143,10 +143,10 @@ h3 {
 }
 :host ::ng-deep .mat-mdc-input-element,
 :host ::ng-deep .mat-mdc-select-value-text {
-  color: whitesmoke !important;
+  color: var(--app-main-text) !important;
 }
 :host ::ng-deep .mat-mdc-text-field-wrapper {
-  background: #1b1b1b !important;
+  background: var(--app-surface-muted, rgba(20, 22, 30, 0.58)) !important;
   border-radius: 12px;
 }
 :host ::ng-deep .mdc-notched-outline__leading,

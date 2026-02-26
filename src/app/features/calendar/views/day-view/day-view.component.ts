@@ -427,7 +427,7 @@ export class DayViewComponent implements OnChanges {
     const start = new Date(e.start);
     const hh = String(start.getHours()).padStart(2, '0');
     const mm = String(start.getMinutes()).padStart(2, '0');
-    const range = `${this.formatTime(e.start)}–${this.formatTime(e.end)}`;
+    const range = `${this.formatTime(e.start)}-${this.formatTime(e.end)}`;
 
     const titleUi =
       (e as any).notes?.trim?.() ||

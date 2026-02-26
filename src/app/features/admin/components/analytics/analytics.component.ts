@@ -4,7 +4,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
 import * as XLSX from 'xlsx';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { BookingService } from '../../../../core/services/bookings/booking.service';
-import { ReviewsService } from '../../../../core/services/reviews/rewies.service';
+import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { InvoicesService } from '../../../../core/services/invoices/invoices.service';
 import { ClientService } from '../../../../core/services/clients/client.service';
 
@@ -165,3 +165,4 @@ appointmentsByArtist = [
     // Implementa filtri su richiesta
   }
 }
+

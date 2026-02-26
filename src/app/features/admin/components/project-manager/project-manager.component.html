@@ -8,23 +8,21 @@
       </div>
     </div>
 
-    <div class="pm__tools" [formGroup]="form">
-      <mat-form-field appearance="outline" class="search">
-        <mat-label>Cerca</mat-label>
-        <input matInput formControlName="q" placeholder="Titolo, id, cliente, email, zona, stile..." />
-        <button
-          mat-icon-button
-          matSuffix
-          type="button"
-          *ngIf="form.controls.q.value"
-          (click)="form.controls.q.setValue('')">
-          <mat-icon>close</mat-icon>
-        </button>
-      </mat-form-field>
+    <div class="pm__tools">
+      <app-dynamic-form
+        [fields]="filterFields"
+        [formGroupInput]="form"
+        [showSubmit]="false"
+      ></app-dynamic-form>
 
-      <mat-slide-toggle formControlName="onlyNotClosed">
-        Solo non conclusi
-      </mat-slide-toggle>
+      <button
+        mat-icon-button
+        type="button"
+        *ngIf="form.controls.q.value"
+        (click)="form.controls.q.setValue('')"
+        aria-label="Pulisci ricerca">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
   </header>
 

@@ -14,7 +14,12 @@ import { BookingService, Booking } from '../../../../core/services/bookings/book
 import { SessionService, Session } from '../../../../core/services/session/session.service';
 import { InvoicesService, Invoice } from '../../../../core/services/invoices/invoices.service';
 import { ClientService, Client } from '../../../../core/services/clients/client.service';
-import { AuthService } from '../../../../core/services/auth/authservice';
+import { DateTimeHelperService } from '../../../../core/services/helpers/date-time-helper.service';
+import { CurrencyHelperService } from '../../../../core/services/helpers/currency-helper.service';
+import { BackofficeAccessService } from '../../../../core/services/helpers/backoffice-access.service';
+import { ExternalActionsHelperService } from '../../../../core/services/helpers/external-actions-helper.service';
+import { StatusHelperService } from '../../../../core/services/helpers/status-helper.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 import { Database, onValue, ref } from '@angular/fire/database';
 
@@ -63,7 +68,7 @@ type VmRow = {
 @Component({
   selector: 'app-project-manager',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, MaterialModule, DynamicFormComponent],
   templateUrl: './project-manager.component.html',
   styleUrls: ['./project-manager.component.scss'],
 })
@@ -75,7 +80,11 @@ export class ProjectManagerComponent {
   private readonly sessionService = inject(SessionService);
   private readonly invoicesService = inject(InvoicesService);
   private readonly clientService = inject(ClientService);
-  private readonly auth = inject(AuthService);
+  private readonly dateTime = inject(DateTimeHelperService);
+  private readonly currency = inject(CurrencyHelperService);
+  private readonly access = inject(BackofficeAccessService);
+  private readonly externalActions = inject(ExternalActionsHelperService);
+  private readonly status = inject(StatusHelperService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(UiFeedbackService);
 
@@ -93,6 +102,19 @@ export class ProjectManagerComponent {
     q: this.fb.nonNullable.control(''),
     onlyNotClosed: this.fb.nonNullable.control(true),
   });
+  readonly filterFields: DynamicField[] = [
+    {
+      type: 'text',
+      name: 'q',
+      label: 'Cerca',
+      placeholder: 'Titolo, id, cliente, email, zona, stile...'
+    },
+    {
+      type: 'toggle',
+      name: 'onlyNotClosed',
+      label: 'Solo non conclusi'
+    }
+  ];
 
   // ---- Payments RTDB (nodo: payments) ----
   private payments$(): Observable<PaymentRow[]> {
@@ -241,7 +263,7 @@ export class ProjectManagerComponent {
         const sess = pid ? (sessionsByProjectId.get(pid) ?? []) : [];
         const normalizedSessions = sess
           .map(s => this.normalizeSessionForUi(s as any))
-          .sort((a, b) => this.toTimestamp(a._startIso) - this.toTimestamp(b._startIso));
+          .sort((a, b) => this.dateTime.toTimestamp(a._startIso) - this.dateTime.toTimestamp(b._startIso));
 
         const sessionsCount = normalizedSessions.length;
 
@@ -368,7 +390,7 @@ export class ProjectManagerComponent {
   }
 
   async editProject(p: TattooProject): Promise<void> {
-    if (!this.hasStaffPermission('canManageProjects')) {
+    if (!this.access.hasStaffPermission('canManageProjects')) {
       this.snackBar.open('Permesso mancante: gestione progetti.', 'OK', { duration: 2200 });
       return;
     }
@@ -404,11 +426,11 @@ export class ProjectManagerComponent {
   // Actions (agganci reali dopo)
   // -----------------------------
   openProject(p: TattooProject) {
-    return [`${this.getBackofficeBase()}/portfolio`, (p as any).id];
+    return [`${this.access.getBackofficeBase()}/portfolio`, (p as any).id];
   }
 
   openClientsLink(): any[] {
-    return [this.getBackofficeBase(), 'clients'];
+    return [this.access.getBackofficeBase(), 'clients'];
   }
 
   clientFilterParams(clientId: string | undefined | null): Record<string, string> {
@@ -418,7 +440,7 @@ export class ProjectManagerComponent {
   }
 
   createBookingForProject(p: TattooProject) {
-    if (!this.hasStaffPermission('canManageBookings')) {
+    if (!this.access.hasStaffPermission('canManageBookings')) {
       this.snackBar.open('Permesso mancante: gestione prenotazioni.', 'OK', { duration: 2200 });
       return;
     }
@@ -438,7 +460,7 @@ export class ProjectManagerComponent {
       .filter(Boolean)
       .join(' | ');
 
-    void this.router.navigate([`${this.getBackofficeBase()}/calendar`], {
+    void this.router.navigate([`${this.access.getBackofficeBase()}/calendar`], {
       queryParams: {
         open: 'create-booking',
         projectId,
@@ -455,7 +477,7 @@ export class ProjectManagerComponent {
   }
 
   addSessionToProject(p: TattooProject) {
-    if (!this.hasStaffPermission('canManageSessions')) {
+    if (!this.access.hasStaffPermission('canManageSessions')) {
       this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
       return;
     }
@@ -468,7 +490,7 @@ export class ProjectManagerComponent {
     const artistId = String((p as any)?.artistId ?? '').trim();
     const clientId = String((p as any)?.clientId ?? '').trim();
 
-    void this.router.navigate([this.getBackofficeBase() + '/calendar'], {
+    void this.router.navigate([this.access.getBackofficeBase() + '/calendar'], {
       queryParams: {
         open: 'create-session',
         projectId,
@@ -479,7 +501,7 @@ export class ProjectManagerComponent {
   }
 
   editSession(s: Session) {
-    if (!this.hasStaffPermission('canManageSessions')) {
+    if (!this.access.hasStaffPermission('canManageSessions')) {
       this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
       return;
     }
@@ -488,7 +510,7 @@ export class ProjectManagerComponent {
       this.snackBar.open('Sessione non valida.', 'OK', { duration: 2200 });
       return;
     }
-    void this.router.navigate([this.getBackofficeBase() + '/calendar'], {
+    void this.router.navigate([this.access.getBackofficeBase() + '/calendar'], {
       queryParams: {
         open: 'edit-session',
         sessionId
@@ -502,16 +524,16 @@ export class ProjectManagerComponent {
     const email = String(row.client?.email ?? '').trim();
 
     if (phone) {
-      // WhatsApp: aggiungi prefisso se serve (qui lascio com'è)
-      const url = `https://wa.me/${encodeURIComponent(phone)}`;
-      window.open(url, '_blank');
+      this.externalActions.openWhatsApp(phone);
       return;
     }
 
     if (email) {
-      const subject = encodeURIComponent(`Rebis Tattoo — Progetto ${row.project.title}`);
-      const body = encodeURIComponent(`Ciao,\n\nTi scriviamo per aggiornamenti sul progetto "${row.project.title}".\n\n— Rebis Tattoo`);
-      window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_self');
+      this.externalActions.openMailTo({
+        email,
+        subject: `Rebis Tattoo - Progetto ${row.project.title}`,
+        body: `Ciao,\n\nTi scriviamo per aggiornamenti sul progetto "${row.project.title}".\n\n- Rebis Tattoo`
+      });
       return;
     }
 
@@ -536,30 +558,20 @@ export class ProjectManagerComponent {
   // UI helpers
   // -----------------------------
   statusLabel(s: any): string {
-    const v = String(s ?? '').trim();
-    switch (v) {
-      case 'draft': return 'Bozza';
-      case 'scheduled': return 'Prenotato';
-      case 'active': return 'Attivo';
-      case 'healing': return 'Guarigione';
-      case 'completed': return 'Concluso';
-      case 'cancelled': return 'Annullato';
-      default: return v || '—';
-    }
+    const label = this.status.projectLabel(s, 'admin');
+    return label === 'N/A' ? (String(s ?? '').trim() || 'â€”') : label;
   }
 
   bookingWhenLabel(b?: any): string {
     if (!b) return '—';
-    const start = this.normalizeLocalDateTime(String(b.start ?? b.date ?? '').trim());
-    const end = this.normalizeLocalDateTime(String(b.end ?? '').trim());
+    const start = this.dateTime.normalizeLocalDateTime(String(b.start ?? b.date ?? '').trim());
+    const end = this.dateTime.normalizeLocalDateTime(String(b.end ?? '').trim());
     if (!start) return '—';
-    return end ? `${this.formatLocal(start)} → ${this.formatLocal(end)}` : this.formatLocal(start);
+    return end ? `${this.dateTime.formatLocalDateTime(start)} → ${this.dateTime.formatLocalDateTime(end)}` : this.dateTime.formatLocalDateTime(start);
   }
 
   money(n: any): string {
-    const x = Number(n);
-    if (!isFinite(x)) return '—';
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(x);
+    return this.currency.formatEur(n, '—');
   }
 
   invoiceAmount(inv: Invoice): number | undefined {
@@ -572,8 +584,8 @@ export class ProjectManagerComponent {
     const raw =
       String((inv as any)?.date ?? (inv as any)?.issuedAt ?? (inv as any)?.createdAt ?? '').trim();
     if (!raw) return '—';
-    const iso = this.normalizeLocalDateTime(raw);
-    return this.formatLocal(iso);
+    const iso = this.dateTime.normalizeLocalDateTime(raw);
+    return this.dateTime.formatLocalDateTime(iso);
   }
 
   invoiceStatus(inv: Invoice): string {
@@ -617,8 +629,8 @@ export class ProjectManagerComponent {
   }
 
   isSettledProject(row: VmRow): boolean {
-    const status = String((row?.project as any)?.status ?? '').trim().toLowerCase();
-    if (status !== 'completed') return false;
+    const projectStatus = this.status.projectStatusKey((row?.project as any)?.status);
+    if (projectStatus !== 'completed') return false;
     if (row.expectedTotal == null) return false;
 
     const expected = Number(row.expectedTotal);
@@ -656,8 +668,8 @@ export class ProjectManagerComponent {
   }
 
   private normalizeSessionForUi(s: Session & any): UiSession {
-    const startIso = this.normalizeLocalDateTime(String(s.start ?? s.date ?? '').trim());
-    let endIso = this.normalizeLocalDateTime(String(s.end ?? '').trim());
+    const startIso = this.dateTime.normalizeLocalDateTime(String(s.start ?? s.date ?? '').trim());
+    let endIso = this.dateTime.normalizeLocalDateTime(String(s.end ?? '').trim());
 
     // durata (se mai la aggiungi in futuro)
     const duration = this.num(s.durationMinutes ?? s._durationMin);
@@ -667,66 +679,24 @@ export class ProjectManagerComponent {
       if (!isNaN(d.getTime())) {
         const e = new Date(d);
         e.setMinutes(e.getMinutes() + duration);
-        endIso = this.toLocalDateTime(e);
+        endIso = this.dateTime.toLocalDateTime(e);
       }
     }
 
     return {
       ...(s as any),
-      status: this.normalizeSessionStatus((s as any).status),
+      status: this.status.sessionStatusKey((s as any).status),
       _startIso: startIso || undefined,
       _endIso: endIso || undefined,
-      _start: startIso ? this.formatLocal(startIso) : '—',
-      _end: endIso ? this.formatLocal(endIso) : undefined,
+      _start: startIso ? this.dateTime.formatLocalDateTime(startIso) : '—',
+      _end: endIso ? this.dateTime.formatLocalDateTime(endIso) : undefined,
       _durationMin: duration ?? undefined,
     };
   }
 
-  private normalizeSessionStatus(status: any): string {
-    const s = String(status ?? '').trim().toLowerCase();
-    if (s === 'done') return 'completed';
-    return s || 'planned';
-  }
-
-  private normalizeLocalDateTime(input: string): string {
-    if (!input) return '';
-    let s = String(input).replace('Z', '');
-    s = s.split('.')[0];
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) return `${s}:00`;
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) return s;
-    const d = new Date(input);
-    if (!isNaN(d.getTime())) return this.toLocalDateTime(d);
-    return s;
-  }
-
-  private formatLocal(iso: string): string {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-
-  private toTimestamp(iso?: string): number {
-    if (!iso) return 0;
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? 0 : d.getTime();
-  }
-
-  private toLocalDateTime(d: Date) {
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
-  }
-
-  private getBackofficeBase(): '/admin' | '/staff' {
-    return this.auth.userSig()?.role === 'staff' ? '/staff' : '/admin';
-  }
-
-  private hasStaffPermission(key: string): boolean {
-    const user = this.auth.userSig();
-    if (!user) return false;
-    if (user.role === 'admin') return true;
-    if (user.role !== 'staff') return false;
-    return user.permissions?.[key] === true;
-  }
 }
+
+
+
+
 

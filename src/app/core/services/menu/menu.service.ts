@@ -69,11 +69,20 @@ export class MenuService {
       { label: 'Dashboard', route: '/admin' },
       { label: 'Calendario', route: '/admin/calendar' },
       { label: 'Utenti', route: '/admin/users' },
+      { label: 'Clienti', route: '/admin/clients' },
+      { label: 'Staff', route: '/admin/staff' },
       { label: 'Permessi', route: '/admin/permissions' },
-      { label: 'Impostazioni Studio', route: '/admin/settings' },
+      { label: 'Portfolio', route: '/admin/portfolio' },
       { label: 'Servizi', route: '/admin/servizi' },
       { label: 'Recensioni', route: '/admin/reviews' },
-      { label: 'Portfolio', route: '/admin/portfolio' }
+      { label: 'Messaggi', route: '/admin/messaging' },
+      { label: 'Fatturazione', route: '/admin/billing' },
+      { label: 'Bonus', route: '/admin/bonus' },
+      { label: 'Analytics', route: '/admin/analytics' },
+      { label: 'Audit Logs', route: '/admin/audit-logs' },
+      { label: 'Documenti', route: '/admin/documents' },
+      { label: 'Waitlist', route: '/admin/waitlist' },
+      { label: 'Impostazioni Studio', route: '/admin/settings' }
     ]
   };
 

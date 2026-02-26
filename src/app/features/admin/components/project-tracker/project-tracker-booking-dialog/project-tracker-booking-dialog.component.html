@@ -2,41 +2,11 @@
 
 <form [formGroup]="form" (ngSubmit)="save()">
   <mat-dialog-content class="dlg">
-    <div class="row2">
-      <mat-form-field appearance="outline">
-        <mat-label>Data</mat-label>
-        <input matInput type="date" formControlName="date">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Ora</mat-label>
-        <input matInput type="time" formControlName="time">
-      </mat-form-field>
-    </div>
-
-    <div class="row2">
-      <mat-form-field appearance="outline">
-        <mat-label>Durata (min)</mat-label>
-        <input matInput type="number" min="15" formControlName="durationMinutes">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
-          <mat-option value="draft">Bozza</mat-option>
-          <mat-option value="pending">In attesa</mat-option>
-          <mat-option value="confirmed">Confermata</mat-option>
-          <mat-option value="in_progress">In corso</mat-option>
-          <mat-option value="completed">Completata</mat-option>
-          <mat-option value="cancelled">Annullata</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Note</mat-label>
-      <textarea matInput rows="2" formControlName="notes"></textarea>
-    </mat-form-field>
+    <app-dynamic-form
+      [fields]="formFields"
+      [formGroupInput]="form"
+      [showSubmit]="false"
+    ></app-dynamic-form>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">

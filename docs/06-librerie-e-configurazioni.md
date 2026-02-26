@@ -1,44 +1,57 @@
 ﻿# 06 - Librerie e Configurazioni
 
 ## Dipendenze framework
-- `@angular/*` 18.x
-- `rxjs`
-- `zone.js`
+- `@angular/*` `18.2.x`
+- `rxjs` `7.8.x`
+- `zone.js` `0.14.x`
 
-## UI e visual
+## UI e rendering
 - `@angular/material`, `@angular/cdk`
-- `@swimlane/ngx-charts`
 - `@fullcalendar/*`
-- `d3`
-- `three`
+- `@swimlane/ngx-charts`
+- `d3`, `three`
 
-## Integrazioni
+## Integrazioni esterne
 - `@angular/fire`
 - `@stripe/stripe-js`
 - `xlsx`
+- `@huggingface/transformers` + `onnxruntime-web` (chat locale)
+
+## Build/test/tooling
+- Angular CLI + build-angular
+- ESLint (`eslint.config.js`)
+- Storybook (`.storybook/*`)
+- Karma/Jasmine unit test
+- Playwright UI visual test
 
 ## Script npm principali
-- `start`: dev server
-- `start:stage`: dev server config stage
-- `build`: build production
-- `build:stage`: build stage
-- `test`: Karma/Jasmine
-- `db:*`: export/import RTDB script powershell
-- `firebase:deploy`: deploy functions + database rules
+- `npm run start`
+- `npm run start:stage`
+- `npm run build`
+- `npm run build:stage`
+- `npm run lint`
+- `npm run test`
+- `npm run test:ui`
+- `npm run storybook`
+- `npm run build-storybook`
+- `npm run db:generate:mock`
+- `npm run db:export`
+- `npm run db:import:*`
 
-## Config Angular
-- `angular.json`:
-  - build configurations `development`, `stage`, `production`
-  - file replacement env (`environment*.ts`)
-- `app.config.ts`:
-  - router hash strategy
-  - locale `it-IT`
-  - provider Firebase app/auth/firestore/database
+## Config Angular (`angular.json`)
+Configurazioni build:
+- `development`
+- `stage`
+- `production`
 
-## Runtime config
-- file usato in runtime: `public/app-config.js`
+File replacement:
+- `src/environment.ts` -> `src/environment.stage.ts|src/environment.prod.ts`
+
+## Config runtime
 - template: `public/app-config.template.js`
-- validazione bootstrap: `environment-validation.ts`
+- file runtime attivo: `public/app-config.js`
+- merge runtime/base: `src/runtime-config.ts`
+- validazione: `src/app/core/config/environment-validation.ts`
 
-## Nota ambiente Windows
-Possibile errore `spawn EPERM` su build Angular/esbuild in alcuni contesti locali.
+## SSR
+- nessuna configurazione SSR rilevata (`@angular/ssr` assente)

@@ -19,7 +19,7 @@ import {
 } from '../../models/messaging.model';
 import { NotificationService } from '../notifications/notification.service';
 import { AuditLogService } from '../audit/audit-log.service';
-import { AuthService } from '../auth/authservice';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class MessagingService {
@@ -33,6 +33,39 @@ export class MessagingService {
     private audit: AuditLogService,
     private auth: AuthService
   ) {}
+
+  private toRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  }
+
+  private isPermissionDeniedReason(reason: unknown): boolean {
+    const payload = reason as { code?: unknown } | null;
+    return String(payload?.code ?? '').includes('PERMISSION_DENIED');
+  }
+
+  private normalizeParticipantRole(value: unknown): ParticipantRole {
+    const role = String(value ?? '').toLowerCase();
+    if (role === 'admin' || role === 'staff' || role === 'bot') return role;
+    return 'client';
+  }
+
+  private toParticipants(value: unknown): Record<string, ParticipantRole> {
+    const source = this.toRecord(value);
+    const participants: Record<string, ParticipantRole> = {};
+    for (const [uid, role] of Object.entries(source)) {
+      participants[uid] = this.normalizeParticipantRole(role);
+    }
+    return participants;
+  }
+
+  private toUnreadBy(value: unknown): Record<string, number> {
+    const source = this.toRecord(value);
+    const unreadBy: Record<string, number> = {};
+    for (const [uid, count] of Object.entries(source)) {
+      unreadBy[uid] = Number(count ?? 0) || 0;
+    }
+    return unreadBy;
+  }
 
   private roleOf(uid: string, conv: Conversation): ParticipantRole | undefined {
     return conv.participants?.[uid];
@@ -104,7 +137,7 @@ export class MessagingService {
             return;
           }
 
-          const raw = snapshot.val() as Record<string, any>;
+          const raw = snapshot.val() as Record<string, unknown>;
           const conversations = Object.entries(raw)
             .map(([id, item]) => this.toConversation(id, item))
             .sort((a, b) => (b.lastMessageAt ?? b.updatedAt).localeCompare(a.lastMessageAt ?? a.updatedAt));
@@ -129,7 +162,7 @@ export class MessagingService {
             return;
           }
 
-          const raw = snapshot.val() as Record<string, any>;
+          const raw = snapshot.val() as Record<string, unknown>;
           const messages = Object.entries(raw)
             .map(([id, value]) => this.toMessage(id, conversationId, value))
             .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -349,7 +382,7 @@ export class MessagingService {
 
     const denied = results.filter(
       (r): r is PromiseRejectedResult =>
-        r.status === 'rejected' && String((r.reason as any)?.code ?? '').includes('PERMISSION_DENIED')
+        r.status === 'rejected' && this.isPermissionDeniedReason(r.reason)
     ).length;
 
     if (denied > 0) {
@@ -361,31 +394,35 @@ export class MessagingService {
     }
   }
 
-  private toConversation(id: string, raw: any): Conversation {
+  private toConversation(id: string, raw: unknown): Conversation {
+    const source = this.toRecord(raw);
     return {
       id,
-      summary: String(raw?.summary ?? 'Conversazione'),
-      status: raw?.status === 'closed' ? 'closed' : 'open',
-      createdAt: String(raw?.createdAt ?? new Date(0).toISOString()),
-      updatedAt: String(raw?.updatedAt ?? raw?.createdAt ?? new Date(0).toISOString()),
-      createdBy: String(raw?.createdBy ?? ''),
-      participants: (raw?.participants ?? {}) as Record<string, ParticipantRole>,
-      lastMessageText: raw?.lastMessageText ? String(raw.lastMessageText) : undefined,
-      lastMessageAt: raw?.lastMessageAt ? String(raw.lastMessageAt) : undefined,
-      lastMessageBy: raw?.lastMessageBy ? String(raw.lastMessageBy) : undefined,
-      unreadBy: (raw?.unreadBy ?? {}) as Record<string, number>
+      summary: String(source['summary'] ?? 'Conversazione'),
+      status: source['status'] === 'closed' ? 'closed' : 'open',
+      createdAt: String(source['createdAt'] ?? new Date(0).toISOString()),
+      updatedAt: String(source['updatedAt'] ?? source['createdAt'] ?? new Date(0).toISOString()),
+      createdBy: String(source['createdBy'] ?? ''),
+      participants: this.toParticipants(source['participants']),
+      lastMessageText: source['lastMessageText'] ? String(source['lastMessageText']) : undefined,
+      lastMessageAt: source['lastMessageAt'] ? String(source['lastMessageAt']) : undefined,
+      lastMessageBy: source['lastMessageBy'] ? String(source['lastMessageBy']) : undefined,
+      unreadBy: this.toUnreadBy(source['unreadBy'])
     };
   }
 
-  private toMessage(id: string, conversationId: string, raw: any): ConversationMessage {
+  private toMessage(id: string, conversationId: string, raw: unknown): ConversationMessage {
+    const source = this.toRecord(raw);
     return {
       id,
       conversationId,
-      senderId: String(raw?.senderId ?? ''),
-      senderRole: (raw?.senderRole ?? 'client') as ParticipantRole,
-      text: String(raw?.text ?? ''),
-      kind: (raw?.kind ?? 'text') as MessageKind,
-      createdAt: String(raw?.createdAt ?? new Date(0).toISOString())
+      senderId: String(source['senderId'] ?? ''),
+      senderRole: this.normalizeParticipantRole(source['senderRole']),
+      text: String(source['text'] ?? ''),
+      kind: source['kind'] === 'media' || source['kind'] === 'system' ? source['kind'] : 'text',
+      createdAt: String(source['createdAt'] ?? new Date(0).toISOString())
     };
   }
 }
+
+

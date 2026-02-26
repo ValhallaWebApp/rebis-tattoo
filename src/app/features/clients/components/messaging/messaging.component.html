@@ -127,8 +127,8 @@
         <textarea
           rows="1"
           placeholder="Scrivi un messaggio…"
-          [(ngModel)]="newMessage"
-          (keydown.enter)="sendMessage()"
+          [formControl]="messageCtrl"
+          (keydown.enter)="sendMessage(); $event.preventDefault()"
         ></textarea>
 
         <div class="emoji-panel" *ngIf="emojiPickerVisible">
@@ -137,7 +137,7 @@
       </div>
 
       <div class="right">
-        <button mat-raised-button color="primary" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+        <button mat-raised-button color="primary" (click)="sendMessage()" [disabled]="!messageCtrl.value.trim()">
           Invia
         </button>
       </div>

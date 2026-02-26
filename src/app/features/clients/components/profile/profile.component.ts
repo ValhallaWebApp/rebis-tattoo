@@ -1,22 +1,29 @@
-// profile.component.ts
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, effect, Injector, runInInjectionContext } from '@angular/core'; // ⬅️ aggiunti inject, Injector, runInInjectionContext
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, OnInit, inject, effect, Injector, runInInjectionContext } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../core/modules/material.module';
-import { AppUser, AuthService } from '../../../../core/services/auth/authservice';
-import { StaffService } from '../../../../core/services/staff/staff.service';
+import { AppUser, AuthService } from '../../../../core/services/auth/auth.service';
 import { BookingService } from '../../../../core/services/bookings/booking.service';
+import { ProjectStatus, ProjectsService, TattooProject } from '../../../../core/services/projects/projects.service';
+import { StatusHelperService } from '../../../../core/services/helpers/status-helper.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
+
+type DashboardLink = {
+  icon: string;
+  title: string;
+  description: string;
+  route: string;
+};
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [RouterLink, CommonModule, MaterialModule, ReactiveFormsModule],
+  imports: [RouterLink, CommonModule, MaterialModule, ReactiveFormsModule, DynamicFormComponent],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent implements OnInit {
-  // stato
   user: AppUser | null = null;
   profileForm!: FormGroup;
   isEditing = false;
@@ -26,23 +33,53 @@ export class ProfileComponent implements OnInit {
   lastBooking: any = null;
   isUpcomingSoon = false;
   notifications: any[] = [];
-  checklist: any[] = [];
+  checklist: Array<{ text: string }> = [];
 
-  sections = [
-    { icon: 'event', title: 'Storico Prenotazioni', description: 'Controlla tutte le tue sedute passate e future.', route: 'booking-history' },
-    { icon: 'redeem', title: 'Codici Promo & Buoni', description: 'Riscatta promo e gift card nel wallet crediti.', route: 'buoni' },
-    { icon: 'reviews', title: 'Le Tue Recensioni', description: 'Gestisci le recensioni lasciate agli artisti.', route: 'reviews' }
+  projects: TattooProject[] = [];
+
+  sections: DashboardLink[] = [
+    {
+      icon: 'event',
+      title: 'Le tue prenotazioni',
+      description: 'Controlla prossime sedute, storico e modifiche.',
+      route: 'booking-history'
+    },
+    {
+      icon: 'confirmation_number',
+      title: 'Assistenza',
+      description: 'Apri ticket o chat con lo studio.',
+      route: 'ticket'
+    },
+    {
+      icon: 'redeem',
+      title: 'Codici promo e buoni',
+      description: 'Gestisci wallet, sconti e codici regalo.',
+      route: 'buoni'
+    },
+    {
+      icon: 'reviews',
+      title: 'Recensioni',
+      description: 'Visualizza e aggiorna le tue recensioni.',
+      route: 'reviews'
+    }
   ];
 
-  // servizi
-  private fb = inject(FormBuilder);
-  private bookingService = inject(BookingService);
-  private authService = inject(AuthService);
-  private staffService = inject(StaffService);
-  private injector = inject(Injector); // ⬅️ per fornire l’injection context all’effetto
+  private readonly fb = inject(FormBuilder);
+  private readonly bookingService = inject(BookingService);
+  private readonly authService = inject(AuthService);
+  private readonly projectsService = inject(ProjectsService);
+  private readonly status = inject(StatusHelperService);
+  private readonly injector = inject(Injector);
+
+  get profileFields(): DynamicField[] {
+    return [
+      { type: 'text', name: 'name', label: 'Nome', readonly: !this.isEditing, required: true },
+      { type: 'text', name: 'phone', label: 'Telefono', readonly: !this.isEditing },
+      { type: 'date', name: 'dateOfBirth', label: 'Data di nascita', readonly: !this.isEditing }
+    ];
+  }
 
   ngOnInit(): void {
-    // 1) crea il form PRIMA dell’effetto
     this.profileForm = this.fb.group({
       name: [''],
       email: [''],
@@ -55,15 +92,12 @@ export class ProfileComponent implements OnInit {
       country: ['']
     });
 
-    // 2) esegui l’effetto DENTRO un injection context
     runInInjectionContext(this.injector, () => {
       effect(() => {
-        const user = this.authService.userSig(); // signal
+        const user = this.authService.userSig();
         if (!user) return;
 
         this.user = user;
-
-        // patch del form con i dati utente
         this.profileForm.patchValue({
           name: user.name || '',
           email: user.email || '',
@@ -76,34 +110,64 @@ export class ProfileComponent implements OnInit {
           country: user.country || ''
         });
 
-        // carica dati aggiuntivi
         this.loadBookings(user.uid);
+        this.loadProjects(user.uid);
         this.loadNotifications();
       });
     });
   }
 
-  // --- resto del codice invariato ---
+  get visibleProjects(): TattooProject[] {
+    return this.projects.slice(0, 3);
+  }
+
+  get activeProjectsCount(): number {
+    return this.projects.filter(p => this.status.projectStatusKey(p.status) === 'active').length;
+  }
+
+  get healingProjectsCount(): number {
+    return this.projects.filter(p => this.status.projectStatusKey(p.status) === 'healing').length;
+  }
+
+  get completedProjectsCount(): number {
+    return this.projects.filter(p => this.status.projectStatusKey(p.status) === 'completed').length;
+  }
+
   private loadNotifications(): void {
     this.notifications = [
       { icon: 'event_available', message: 'Hai una seduta prevista per il 10 luglio alle 15:00.', date: '2025-07-08T10:00:00', type: 'appointment' },
-      { icon: 'star_rate', message: 'La tua ultima recensione è stata approvata!', date: '2025-07-07T09:00:00', type: 'review' },
+      { icon: 'star_rate', message: 'La tua ultima recensione e stata approvata.', date: '2025-07-07T09:00:00', type: 'review' },
       { icon: 'chat', message: 'Hai ricevuto una risposta nel messaggio con lo studio.', date: '2025-07-06T17:30:00', type: 'message' }
     ];
   }
 
+  private loadProjects(clientId: string): void {
+    this.projectsService.getProjectsByClient(clientId).subscribe(projects => {
+      this.projects = (projects ?? [])
+        .slice()
+        .sort((a, b) => this.toTimestamp(b?.updatedAt) - this.toTimestamp(a?.updatedAt));
+      this.rebuildChecklist();
+    });
+  }
+
   loadBookings(clientId: string): void {
     this.bookingService.getBookingsByClient(clientId).subscribe(bookings => {
-      if (!bookings?.length) return;
+      const list = (bookings ?? []).slice();
+      if (!list.length) {
+        this.lastBooking = null;
+        this.nextBooking = null;
+        this.isUpcomingSoon = false;
+        this.unreadMessagesCount = 0;
+        this.rebuildChecklist();
+        return;
+      }
 
-      const sorted = bookings.sort((a, b) =>
-        new Date(a.start).getTime() - new Date(b.start).getTime()
-      );
-
+      const sorted = list.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
       this.lastBooking = sorted[sorted.length - 1];
-      this.nextBooking = sorted.find(b => new Date(b.start).getTime() > Date.now());
+      this.nextBooking = sorted.find(b => new Date(b.start).getTime() > Date.now()) ?? null;
       this.checkIfBookingIsSoon();
       this.unreadMessagesCount = 3;
+      this.rebuildChecklist();
     });
   }
 
@@ -115,10 +179,6 @@ export class ProfileComponent implements OnInit {
         dateOfBirth: this.user.dateOfBirth ? new Date(this.user.dateOfBirth) : null
       });
     }
-  }
-
-  scrollTop(): void {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   saveProfile(): void {
@@ -136,7 +196,6 @@ export class ProfileComponent implements OnInit {
       postalCode: updated.postalCode,
       country: updated.country
     }).then(() => {
-      console.log('Profilo aggiornato');
       this.toggleEdit();
     }).catch(err => {
       console.error('Errore aggiornamento profilo:', err);
@@ -156,10 +215,46 @@ export class ProfileComponent implements OnInit {
   }
 
   checkIfBookingIsSoon(): void {
-    if (!this.nextBooking?.start) return;
+    if (!this.nextBooking?.start) {
+      this.isUpcomingSoon = false;
+      return;
+    }
     const today = new Date();
     const bookingDate = new Date(this.nextBooking.start);
     const diff = (bookingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
     this.isUpcomingSoon = diff >= 0 && diff <= 3;
+  }
+
+  projectStatusLabel(status: ProjectStatus | string | undefined): string {
+    return this.status.projectLabel(status, 'client');
+  }
+
+  projectStatusClass(status: ProjectStatus | string | undefined): string {
+    return this.status.projectStatusKey(status);
+  }
+
+  private rebuildChecklist(): void {
+    const items: Array<{ text: string }> = [];
+
+    if (!this.nextBooking) {
+      items.push({ text: 'Prenota la prossima seduta dal calendario o dalla chat.' });
+    } else {
+      items.push({ text: 'Controlla data e ora della prossima seduta.' });
+      items.push({ text: 'Apri ticket se devi spostare o annullare l appuntamento.' });
+      if (this.isUpcomingSoon) {
+        items.push({ text: 'Seduta vicina: prepara riferimenti e aftercare richiesto.' });
+      }
+    }
+
+    if (this.projects.some(p => ['active', 'healing', 'scheduled'].includes(this.status.projectStatusKey(p.status)))) {
+      items.push({ text: 'Monitora lo stato progetto e i prossimi step con lo studio.' });
+    }
+
+    this.checklist = items;
+  }
+
+  private toTimestamp(value: unknown): number {
+    const date = new Date(String(value ?? ''));
+    return Number.isNaN(date.getTime()) ? 0 : date.getTime();
   }
 }

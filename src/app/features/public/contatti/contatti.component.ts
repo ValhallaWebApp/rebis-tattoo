@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
 
 import {
   DEFAULT_STUDIO_PROFILE,
@@ -17,13 +17,14 @@ import {
   templateUrl: './contatti.component.html',
   styleUrls: ['./contatti.component.scss']
 })
-export class ContattiComponent implements OnInit, OnDestroy {
+export class ContattiComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly studioProfileService = inject(StudioProfileService);
-  private profileSub?: Subscription;
+  private readonly profileSig = toSignal(this.studioProfileService.getProfile(), {
+    initialValue: DEFAULT_STUDIO_PROFILE
+  });
 
   contactForm!: FormGroup;
-  profile: StudioProfile = DEFAULT_STUDIO_PROFILE;
 
   ngOnInit(): void {
     this.contactForm = this.fb.group({
@@ -32,13 +33,10 @@ export class ContattiComponent implements OnInit, OnDestroy {
       message: ['', [Validators.required, Validators.minLength(10)]]
     });
 
-    this.profileSub = this.studioProfileService.getProfile().subscribe((profile) => {
-      this.profile = profile;
-    });
   }
 
-  ngOnDestroy(): void {
-    this.profileSub?.unsubscribe();
+  get profile(): StudioProfile {
+    return this.profileSig();
   }
 
   get heroImageUrl(): string {

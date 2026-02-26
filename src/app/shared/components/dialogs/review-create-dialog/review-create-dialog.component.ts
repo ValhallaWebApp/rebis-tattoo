@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, Validators, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../../core/modules/material.module';
-import { ReviewsService } from '../../../../core/services/reviews/rewies.service';
+import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 
 @Component({
   selector: 'app-review-create-dialog',
@@ -50,3 +50,4 @@ submit(): void {
     this.dialogRef.close(false);
   }
 }
+

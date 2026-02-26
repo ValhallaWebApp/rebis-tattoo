@@ -1,31 +1,33 @@
-﻿# Task Simulazione 01 - Rebuild Completo Progetto
+﻿# Task Simulazione 01 - Rebuild Completo (stato attuale + delta)
 
-## Epic A - Fondazione
-- [ ] Inizializzare workspace Angular 18 con routing e Material.
-- [ ] Configurare struttura `core/features/shared`.
-- [ ] Impostare ambiente runtime (`app-config.js`) + validazione bootstrap.
+## Obiettivo
+Portare il progetto da stato ibrido attuale a baseline stabile e piu uniforme.
 
-## Epic B - Integrazione Firebase
-- [ ] Configurare provider AngularFire (auth/firestore/database).
-- [ ] Implementare `AuthService` con bootstrap profilo utente.
-- [ ] Definire rules RTDB base deny-by-default.
+## Stato sintetico
+- [x] base Angular/Firebase/Material operativa
+- [x] aree public/client/admin operative
+- [x] fast-booking + payment flow funzionante
+- [ ] uniformita architetturale completa (standalone-first)
+- [ ] test e2e completi sui flussi core
 
-## Epic C - Dominio booking
-- [ ] Implementare model `Booking` e `BookingStatus`.
-- [ ] Implementare `BookingService` con CRUD e transizioni sicure.
-- [ ] Implementare calcolo disponibilita slot giornalieri.
+## Workstream
 
-## Epic D - Payment flow
-- [ ] Implementare `PaymentApiService` con contratto `/create`.
-- [ ] Integrare Stripe Elements (`stripe-payment` component).
-- [ ] Collegare conferma pagamento a update stato booking.
+### WS1 - Architettura frontend
+- [ ] ridurre moduli legacy residui non necessari
+- [ ] uniformare naming e struttura feature
+- [ ] eliminare cast `any` nei servizi core
 
-## Epic E - Aree UI
-- [ ] Costruire area pubblica (home, servizi, progetti, contatti).
-- [ ] Costruire area cliente (profilo, booking history, messaging).
-- [ ] Costruire area admin (calendar, clients, billing, analytics).
+### WS2 - Dominio dati
+- [ ] completare migrazione campi legacy booking
+- [ ] validare allineamento schema mock/runtime/rules
+- [ ] definire contratti DTO stabili per API interne
 
-## Epic F - Qualita
-- [ ] Test unit base services core.
-- [ ] Test integration fast-booking flow.
-- [ ] Runbook operativo + checklist pre-release.
+### WS3 - Qualita
+- [ ] aumentare copertura unit test su booking/auth/messaging
+- [ ] aggiungere e2e su pagamento e route guard
+- [ ] introdurre gate CI minimi (lint + test)
+
+### WS4 - Operativita
+- [ ] hardening runbook admin
+- [ ] checklist go-live automatizzabile
+- [ ] telemetria minima errori critici

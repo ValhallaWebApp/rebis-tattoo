@@ -40,13 +40,13 @@ table {
 .status {
   padding: 2px 8px;
   border-radius: 999px;
-  background: #d1fae5;
-  color: #065f46;
+  background: rgba(134, 239, 172, 0.2);
+  color: var(--app-success);
 }
 
 .status.err {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--app-danger);
 }
 
 .loading {

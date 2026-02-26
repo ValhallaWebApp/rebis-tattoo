@@ -1,10 +1,10 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { StaffMember, StaffService } from '../../../../core/services/staff/staff.service';
-import { BookingChatDraft, BookingService } from '../../../../core/services/bookings/booking.service';
+import { Booking, BookingChatDraft, BookingService } from '../../../../core/services/bookings/booking.service';
 import { UserService } from '../../../../core/services/users/user.service';
 import { PaymentApiService } from '../../../../core/services/payments/payment-api.service';
-import { AuthService } from '../../../../core/services/auth/authservice';
+import { AuthService } from '../../../../core/services/auth/auth.service';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 
 type Step =
@@ -26,8 +26,27 @@ type HomeSeed = {
   comments?: string | null;
 };
 
+type FastBookingDraft = {
+  artistId: string | null;
+  artistName: string | null;
+  date: string | null;
+  time: string | null;
+  name: string | null;
+  contact: string | null;
+  description: string | null;
+};
+
+type E2EFastBookingGlobal = {
+  __E2E_FASTBOOKING_MOCK__?: boolean;
+};
+
+function isE2EFastBookingMockEnabled(): boolean {
+  return Boolean((globalThis as unknown as E2EFastBookingGlobal).__E2E_FASTBOOKING_MOCK__);
+}
+
 @Injectable({ providedIn: 'root' })
 export class FastBookingStore {
+  readonly isE2EMockMode = isE2EFastBookingMockEnabled();
   private readonly staffService = inject(StaffService);
   private readonly bookingService = inject(BookingService);
   private readonly userService = inject(UserService);
@@ -35,7 +54,7 @@ export class FastBookingStore {
   private readonly auth = inject(AuthService);
   private readonly ui = inject(UiFeedbackService);
 
- HOME_SEED_KEY = 'FAST_BOOKING_HOME_SEED';
+ readonly HOME_SEED_KEY = 'FAST_BOOKING_HOME_SEED';
 
   // FLOW
   private readonly steps: Step[] = [
@@ -74,16 +93,14 @@ export class FastBookingStore {
   readonly error = signal<string | null>(null);
 
   // DRAFT (client)
-  readonly draft = signal<any>({
-    artistId: null as string | null,
-    artistName: null as string | null,
-
-    date: null as string | null, // YYYY-MM-DD
-    time: null as string | null, // HH:mm
-
-    name: null as string | null,
-    contact: null as string | null, // email o telefono
-    description: null as string | null,
+  readonly draft = signal<FastBookingDraft>({
+    artistId: null,
+    artistName: null,
+    date: null, // YYYY-MM-DD
+    time: null, // HH:mm
+    name: null,
+    contact: null, // email o telefono
+    description: null,
   });
 
   constructor() {
@@ -93,15 +110,14 @@ export class FastBookingStore {
         const u = this.auth.userSig();
         if (!u) return;
 
-        const nameFromUser = (u as any).name ?? (u as any).displayName ?? null;
-
-        const emailFromUser = (u as any).email ?? null;
-        const phoneFromUser = (u as any).phone ?? (u as any).phoneNumber ?? null;
+        const nameFromUser = u.name || null;
+        const emailFromUser = u.email || null;
+        const phoneFromUser = u.phone || null;
 
         // preferisci email, altrimenti phone
         const contactFromUser = emailFromUser ?? phoneFromUser ?? null;
 
-        this.draft.update((d: any) => {
+        this.draft.update((d) => {
           const next = { ...d };
 
           if (!next.name || String(next.name).trim() === '') {
@@ -134,7 +150,7 @@ effect(() => {
   // ✅ guardia anti-loop
   if (currentName === nextName) return;
 
-  this.draft.update((prev: any) => ({
+  this.draft.update((prev) => ({
     ...prev,
     artistName: nextName,
   }));
@@ -152,12 +168,13 @@ effect(() => {
       const s = this.step();
       const d = this.draft();
       const date = this.selectedDate();
+      const artistId = d.artistId;
 
       if (s !== 'when') return;
-      if (!d.artistId) return;
+      if (!artistId) return;
       if (!date) return;
 
-      queueMicrotask(() => this.fetchSlots(d.artistId, date));
+      queueMicrotask(() => this.fetchSlots(artistId, date));
     });
 
     queueMicrotask(() => this.hydrateFromHomeSeed());
@@ -227,7 +244,7 @@ effect(() => {
 
   // ACTIONS: artist
   setArtist(artist: StaffMember) {
-    this.draft.update((d: any) => ({
+    this.draft.update((d) => ({
       ...d,
       artistId: artist.id ?? null,
       artistName: artist.name ?? null,
@@ -243,16 +260,16 @@ effect(() => {
   setDate(date: string | null) {
     this.selectedDate.set(date);
     // reset time selezionato quando cambi giorno
-    this.draft.update((d: any) => ({ ...d, date, time: null }));
+    this.draft.update((d) => ({ ...d, date, time: null }));
   }
 
   setWhen(date: string | null, time: string | null) {
-    this.draft.update((d: any) => ({ ...d, date, time }));
+    this.draft.update((d) => ({ ...d, date, time }));
   }
 
   // ACTIONS: details
   setDetails(payload: { name: string; contact: string; description: string }) {
-    this.draft.update((d: any) => ({
+    this.draft.update((d) => ({
       ...d,
       name: payload.name,
       contact: payload.contact,
@@ -262,6 +279,21 @@ effect(() => {
 
   // DATA FETCH: artists (REAL)
   async fetchArtists() {
+    if (this.isE2EMockMode) {
+      this.artists.set([
+        {
+          id: 'e2e_artist_01',
+          name: 'E2E Artist',
+          role: 'tatuatore',
+          photoUrl: '/personale/1.jpg',
+          isActive: true
+        } as StaffMember
+      ]);
+      this.loadingArtists.set(false);
+      this.error.set(null);
+      return;
+    }
+
     try {
       this.loadingArtists.set(true);
       this.error.set(null);
@@ -275,7 +307,7 @@ effect(() => {
       if (artists.length === 0) {
         this.error.set('Nessun membro staff attivo disponibile al momento.');
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       this.error.set('Impossibile caricare gli artisti. Riprova.');
     } finally {
@@ -285,6 +317,17 @@ effect(() => {
 
   // DATA FETCH: slots (REAL)
   async fetchSlots(artistId: string, date: string) {
+    if (this.isE2EMockMode) {
+      this.slots.set([
+        { time: '10:00' },
+        { time: '11:00' },
+        { time: '15:00' }
+      ]);
+      this.loadingSlots.set(false);
+      this.error.set(null);
+      return;
+    }
+
     try {
       this.loadingSlots.set(true);
       this.error.set(null);
@@ -306,6 +349,20 @@ effect(() => {
 
   // PAYMENT FLOW (REAL DATA + hook)
   async startPayment() {
+    if (this.isE2EMockMode) {
+      const d = this.draft();
+      if (!d.artistId || !d.date || !d.time || !d.name || !d.contact || !d.description) {
+        this.error.set('Completa i dati prima di avviare il pagamento.');
+        return;
+      }
+
+      this.error.set(null);
+      this.bookingId.set(`e2e_bk_${Date.now()}`);
+      this.paymentClientSecret.set(`e2e_cs_${Date.now()}`);
+      this.paymentIntentId.set(`e2e_pi_${Date.now()}`);
+      return;
+    }
+
     try {
       if (this.paying()) return;
       if (this.paymentClientSecret()) return;
@@ -369,7 +426,7 @@ effect(() => {
         await this.bookingService.safeSetStatusSafe(bookingId, 'pending', {
           updatedAt: new Date().toISOString(),
           notes: `${d.description ?? ''}\n[payment-init-failed] ${payRes.error}`.trim()
-        } as any);
+        } as Partial<Booking>);
         this.error.set(payRes.error);
         this.ui.error(payRes.error);
         return;
@@ -380,9 +437,9 @@ effect(() => {
       this.ui.success('Pagamento inizializzato correttamente.');
 
       // 3) Stripe Elements gestito nello step payment
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      const msg = String(e?.message ?? 'Errore durante la creazione del pagamento. Riprova.');
+      const msg = this.getErrorMessage(e, 'Errore durante la creazione del pagamento. Riprova.');
       this.error.set(msg);
       this.ui.error(msg);
     } finally {
@@ -392,6 +449,12 @@ effect(() => {
 
   // CHIAMA QUESTO QUANDO STRIPE CONFERMA OK (webhook o return-url)
   async confirmPaymentSuccess() {
+    if (this.isE2EMockMode) {
+      this.error.set(null);
+      this.go('success');
+      return;
+    }
+
     if (this.confirmingPayment()) return;
 
     try {
@@ -436,7 +499,7 @@ effect(() => {
         paidAmount: paid,
         price: paid,
         updatedAt: new Date().toISOString(),
-      } as any);
+      } as Partial<Booking>);
       if (!toPaid.ok) {
         const fresh = await this.bookingService.getBookingById(id);
         if (fresh?.status === 'paid') {
@@ -451,7 +514,7 @@ effect(() => {
 
       this.go('success');
       this.ui.success('Pagamento registrato con successo.');
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       const msg = 'Pagamento registrato? Non riesco ad aggiornare lo stato booking.';
       this.error.set(msg);
@@ -470,9 +533,9 @@ resetAll() {
   this.slots.set([]);
 
   const u = this.auth.userSig();
-  const nameFromUser = u ? ((u as any).name ?? (u as any).displayName ?? null) : null;
-  const emailFromUser = u ? ((u as any).email ?? null) : null;
-  const phoneFromUser = u ? ((u as any).phone ?? (u as any).phoneNumber ?? null) : null;
+  const nameFromUser = u ? (u.name || null) : null;
+  const emailFromUser = u ? (u.email || null) : null;
+  const phoneFromUser = u ? (u.phone || null) : null;
   const contactFromUser = u ? (emailFromUser ?? phoneFromUser ?? null) : null;
 
   this.draft.set({
@@ -516,7 +579,7 @@ seedFromHome(seed: HomeSeed) {
       .join('\n\n') || null;
 
   // set artistId (artistName verrà risolto dopo)
-  this.draft.update((d: any) => ({
+  this.draft.update((d) => ({
     ...d,
     artistId,
     artistName: d.artistName, // la risolviamo sotto
@@ -588,7 +651,7 @@ applyHomeSeed(seed: HomeSeed, opts?: { overwrite?: boolean }) {
       .filter(Boolean)
       .join('\n\n') || null;
 
-  this.draft.update((d: any) => ({
+  this.draft.update((d) => ({
     ...d,
 
     // artista: se overwrite o era vuoto
@@ -605,4 +668,13 @@ applyHomeSeed(seed: HomeSeed, opts?: { overwrite?: boolean }) {
   }));
 }
 
+private getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message;
+  const maybeMessage = (error as { message?: unknown } | null)?.message;
+  if (typeof maybeMessage === 'string' && maybeMessage.trim()) return maybeMessage;
+  return fallback;
 }
+
+}
+
+

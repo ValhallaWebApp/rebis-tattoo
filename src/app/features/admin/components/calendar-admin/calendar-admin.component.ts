@@ -12,7 +12,7 @@ import { CalendarComponent } from '../../../calendar/calendar.component';
 import { Booking, BookingService } from '../../../../core/services/bookings/booking.service';
 import { Session, SessionService } from '../../../../core/services/session/session.service';
 import { StaffService } from '../../../../core/services/staff/staff.service';
-import { AuthService } from '../../../../core/services/auth/authservice';
+import { AuthService } from '../../../../core/services/auth/auth.service';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { combineLatest, map, Subscription } from 'rxjs';
@@ -605,3 +605,5 @@ handleBooking(draft: any): void {
     return this.normalizeLocalDateTime(`${date}T${time}:00`);
   }
 }
+
+

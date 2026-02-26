@@ -40,7 +40,21 @@
       </div>
     }
 
-    @if (bookingId() && clientSecret() && !confirmingPayment()) {
+    @if (bookingId() && clientSecret() && !confirmingPayment() && store.isE2EMockMode) {
+      <div class="stripe-box">
+        <div class="small">Booking creato: <b>{{ bookingId() }}</b></div>
+        <button
+          data-testid="e2e-mock-payment-success"
+          mat-flat-button
+          color="primary"
+          (click)="onStripeSuccess()"
+        >
+          Simula pagamento riuscito
+        </button>
+      </div>
+    }
+
+    @if (bookingId() && clientSecret() && !confirmingPayment() && !store.isE2EMockMode) {
       <div class="stripe-box">
         <div class="small">Booking creato: <b>{{ bookingId() }}</b></div>
         <app-stripe-payment

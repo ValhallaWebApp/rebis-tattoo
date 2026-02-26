@@ -1,4 +1,4 @@
-﻿import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, map } from 'rxjs';
 import { LanguageService } from '../../../../../core/services/language/language.service';
 import { ProjectsService, TattooProject } from '../../../../../core/services/projects/projects.service';
@@ -13,6 +13,7 @@ type HomeProjectCard = {
 @Component({
   selector: 'app-home-projects',
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home-projects.component.html',
   styleUrl: './home-projects.component.scss'
 })
@@ -114,3 +115,4 @@ export class HomeProjectsComponent implements OnInit, OnDestroy {
     }
   }
 }
+

@@ -1,61 +1,63 @@
 ﻿# 04 - UI/UX Mappa
 
-## Area pubblica
-Route:
+## Mappa navigazione
+
+### Pubblico
 - `/home`
 - `/servizi`
 - `/progetti`
 - `/progetto/:idProgetto`
 - `/fast-booking`
-- `/contatti`
 - `/chi-siamo`
+- `/contatti`
 
-UX principali:
-- landing con sezioni promozionali e CTA
-- catalogo servizi/progetti
-- wizard fast-booking multi-step
+### Cliente (`/dashboard`)
+- profilo (`/dashboard`)
+- storico booking (`/dashboard/booking-history`)
+- chat (`/dashboard/chat`, alias `ticket`)
+- recensioni (`/dashboard/reviews`)
+- buoni (`/dashboard/buoni`)
 
-## Area cliente (`/dashboard`)
-- profilo
-- storico prenotazioni
-- chat/ticket
-- recensioni
-- promo/buoni
-- route compat `invoices` -> booking-history
+### Staff/Admin (`/staff`, `/admin`)
+- dashboard, calendario, portfolio, messaging
+- utenti/clienti/staff (con guard dedicati)
+- bonus, analytics, audit logs, settings
 
-## Area admin (`/admin`)
-- dashboard
-- calendario
-- clienti
-- billing
-- documenti
-- messaging/ticket
-- project manager/tracker
-- session manager
-- bonus
-- analytics
-- audit logs
-- settings
+## Shell globale
+`AppComponent` gestisce:
+- toolbar + menu dinamico per ruolo (`MenuService`)
+- notification center con unread badge
+- popup chatbot globale
+- switch tema automatico basato su route
 
-## Fast-booking UX
-Step:
-1. intro
-2. scelta artista
-3. data/orario
-4. dettagli
-5. riepilogo
-6. pagamento
-7. successo
+## Temi visual
+Tema applicato al `body`:
+- `theme-public` su route pubbliche
+- `theme-client` su `/dashboard`
+- `theme-admin` su `/admin` e `/staff`
 
-Migliorie implementate:
-- niente simulazione pagamento
-- Stripe reale con feedback error/success
-- lock anti doppio submit su init/confirm
-- stato processing esplicito durante conferma
+Token CSS centralizzati in:
+- `src/styles/theme-public.scss`
+- `src/styles/theme-client.scss`
+- `src/styles/theme-admin.scss`
 
-## Componenti condivisi rilevanti
-- `stripe-payment`
-- dialog admin/booking/project/service
-- componenti calendario v2
-- `tattoo-avatar`
-- `chat-bot`
+## Fast booking UX
+Wizard 7 step:
+1. `intro`
+2. `artist`
+3. `when`
+4. `details`
+5. `summary`
+6. `payment`
+7. `success`
+
+Caratteristiche:
+- prefill dati utente loggato
+- lock campi nome/contatto se gia valorizzati
+- anti doppio submit pagamento
+- gestione errori con messaggi utente
+
+## Qualita UX osservata
+- responsive menu mobile via `mat-sidenav`
+- notifiche e feedback centralizzati (`UiFeedbackService`)
+- fallback route `** -> /home`

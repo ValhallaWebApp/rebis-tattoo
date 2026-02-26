@@ -6,15 +6,16 @@ import { Observable, combineLatest, map, startWith } from 'rxjs';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
-import { Review, ReviewsService } from '../../../../core/services/reviews/rewies.service';
+import { Review, ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { StaffMember, StaffService } from '../../../../core/services/staff/staff.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 type SortOrder = 'date_desc' | 'date_asc' | 'rating_desc' | 'rating_asc';
 
 @Component({
   selector: 'app-review-list-admin',
   standalone: true,
-  imports: [CommonModule, MaterialModule, ReactiveFormsModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, DynamicFormComponent],
   templateUrl: './review-list-admin.component.html',
   styleUrls: ['./review-list-admin.component.scss']
 })
@@ -27,6 +28,7 @@ export class ReviewListAdminComponent implements OnInit {
   reviews: Review[] = [];
   artists: StaffMember[] = [];
   showFilters = true;
+  filterFields: DynamicField[] = [];
 
   readonly searchControl = new FormControl<string>('', { nonNullable: true });
   readonly artistControl = new FormControl<string>('', { nonNullable: true });
@@ -45,6 +47,8 @@ export class ReviewListAdminComponent implements OnInit {
   filteredReviews$: Observable<Review[]> = new Observable<Review[]>();
 
   ngOnInit(): void {
+    this.updateFilterFields();
+
     this.reviewsService.getAllReviews()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(reviews => {
@@ -56,6 +60,7 @@ export class ReviewListAdminComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(artists => {
         this.artists = artists ?? [];
+        this.updateFilterFields();
       });
   }
 
@@ -157,4 +162,60 @@ export class ReviewListAdminComponent implements OnInit {
       orderByControl: 'date_desc'
     });
   }
+
+  private updateFilterFields(): void {
+    this.filterFields = [
+      {
+        type: 'text',
+        name: 'searchControl',
+        label: 'Ricerca',
+        placeholder: 'Commento, titolo o artista'
+      },
+      {
+        type: 'select',
+        name: 'artistControl',
+        label: 'Artista',
+        options: [
+          { label: 'Tutti', value: '' },
+          ...this.artists.map((artist) => ({ label: artist.name, value: artist.id }))
+        ]
+      },
+      {
+        type: 'select',
+        name: 'ratingControl',
+        label: 'Rating minimo',
+        options: [
+          { label: 'Tutti', value: '' },
+          { label: '1+', value: '1' },
+          { label: '2+', value: '2' },
+          { label: '3+', value: '3' },
+          { label: '4+', value: '4' },
+          { label: '5+', value: '5' }
+        ]
+      },
+      {
+        type: 'select',
+        name: 'statusControl',
+        label: 'Stato',
+        options: [
+          { label: 'Tutti', value: '' },
+          { label: 'Approvate', value: 'approved' },
+          { label: 'In attesa', value: 'pending' },
+          { label: 'Rifiutate', value: 'rejected' }
+        ]
+      },
+      {
+        type: 'select',
+        name: 'orderByControl',
+        label: 'Ordina per',
+        options: [
+          { label: 'Data (recenti)', value: 'date_desc' },
+          { label: 'Data (vecchie)', value: 'date_asc' },
+          { label: 'Valutazione (alta)', value: 'rating_desc' },
+          { label: 'Valutazione (bassa)', value: 'rating_asc' }
+        ]
+      }
+    ];
+  }
 }
+

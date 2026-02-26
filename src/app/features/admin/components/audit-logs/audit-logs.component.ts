@@ -5,16 +5,33 @@ import { Subscription } from 'rxjs';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { AuditLogRecord, AuditLogService } from '../../../../core/services/audit/audit-log.service';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 @Component({
   selector: 'app-audit-logs',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, DynamicFormComponent],
   templateUrl: './audit-logs.component.html',
   styleUrls: ['./audit-logs.component.scss']
 })
 export class AuditLogsComponent implements OnInit, OnDestroy {
   filterForm!: FormGroup;
+  readonly filterFields: DynamicField[] = [
+    { type: 'text', name: 'action', label: 'Azione', placeholder: 'booking.update' },
+    { type: 'text', name: 'actorId', label: 'Actor ID', placeholder: 'uid...' },
+    {
+      type: 'select',
+      name: 'status',
+      label: 'Stato',
+      options: [
+        { label: 'Tutti', value: '' },
+        { label: 'success', value: 'success' },
+        { label: 'error', value: 'error' }
+      ]
+    },
+    { type: 'date-native', name: 'from', label: 'Da' },
+    { type: 'date-native', name: 'to', label: 'A' }
+  ];
   allLogs: AuditLogRecord[] = [];
   filteredLogs: AuditLogRecord[] = [];
   loading = true;

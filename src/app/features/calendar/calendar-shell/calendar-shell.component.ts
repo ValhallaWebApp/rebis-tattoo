@@ -28,7 +28,7 @@ import { CreateProjectTriggerPayload } from '../drawer/event-drawer/event-drawer
 import { ClientLite, ProjectLite } from '../drawer/event-drawer/event-drawer.component';
 import { ClientService } from '../../../core/services/clients/client.service';
 import { ProjectsService } from '../../../core/services/projects/projects.service';
-import { AuthService } from '../../../core/services/auth/authservice';
+import { AuthService } from '../../../core/services/auth/auth.service';
 import { SessionService } from '../../../core/services/session/session.service';
 
 type DrawerRouteAction =
@@ -376,10 +376,11 @@ export class CalendarShellComponent implements OnChanges {
   // ---------------------------------------------
   // called from views
   // ---------------------------------------------
-  openDayFromWeekCell(payload: { artistId: string; dateKey: string }) {
+  openDayFromWeekCell(payload: { artistId?: string; dateKey: string }) {
     this.view.set('day');
     this.anchorDate.set(new Date(`${payload.dateKey}T00:00:00`));
-    this.selectedArtistIds.set([payload.artistId]);
+    const artistId = String(payload.artistId ?? '').trim();
+    this.selectedArtistIds.set(artistId ? [artistId] : []);
   }
 
   openDayFromMonth(payload: { dateKey: string }) {
@@ -1117,3 +1118,5 @@ export class CalendarShellComponent implements OnChanges {
     return fallback;
   }
 }
+
+

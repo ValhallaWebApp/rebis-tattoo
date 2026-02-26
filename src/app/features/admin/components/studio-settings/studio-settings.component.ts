@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { MaterialModule } from '../../../../core/modules/material.module';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 import {
   DEFAULT_STUDIO_PROFILE,
   StudioProfile,
@@ -14,7 +15,7 @@ import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.serv
 @Component({
   selector: 'app-studio-settings',
   standalone: true,
-  imports: [CommonModule, MaterialModule, ReactiveFormsModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, DynamicFormComponent],
   templateUrl: './studio-settings.component.html',
   styleUrls: ['./studio-settings.component.scss']
 })
@@ -43,6 +44,33 @@ export class StudioSettingsComponent implements OnInit {
     instagramUrl: [DEFAULT_STUDIO_PROFILE.instagramUrl, [Validators.required]],
     instagramHandle: [DEFAULT_STUDIO_PROFILE.instagramHandle, [Validators.required]]
   });
+
+  readonly identityFields: DynamicField[] = [
+    { type: 'text', name: 'studioName', label: 'Nome studio' },
+    { type: 'text', name: 'tagline', label: 'Tagline' },
+    { type: 'textarea', name: 'mission', label: 'Mission', rows: 3, className: 'full' },
+    { type: 'textarea', name: 'teamIntro', label: 'Intro team', rows: 3, className: 'full' }
+  ];
+
+  readonly ownerFields: DynamicField[] = [
+    { type: 'text', name: 'ownerName', label: 'Nome titolare' },
+    { type: 'text', name: 'ownerRoleLabel', label: 'Ruolo titolare' },
+    { type: 'textarea', name: 'ownerBio', label: 'Bio titolare', rows: 4, className: 'full' },
+    {
+      type: 'text',
+      name: 'ownerPhotoUrl',
+      label: 'Foto titolare (url o path assets)',
+      className: 'full'
+    }
+  ];
+
+  readonly contactsFields: DynamicField[] = [
+    { type: 'text', name: 'address', label: 'Indirizzo', className: 'full' },
+    { type: 'text', name: 'phoneDisplay', label: 'Telefono' },
+    { type: 'email', name: 'email', label: 'Email' },
+    { type: 'text', name: 'instagramUrl', label: 'Instagram URL' },
+    { type: 'text', name: 'instagramHandle', label: 'Instagram handle' }
+  ];
 
   ngOnInit(): void {
     this.studioProfile.getProfile()

@@ -13,7 +13,7 @@
       "isVisible": true,
       "phone": "+39 340 099 8312",
       "createdAt": "2026-02-10T08:00:00.000Z",
-      "updatedAt": "2026-02-15T20:42:22.409Z",
+      "updatedAt": "2026-02-25T01:14:42.617Z",
       "urlAvatar": "/personale/1.jpg"
     },
     "adm_admin_02": {
@@ -25,7 +25,7 @@
       "isVisible": true,
       "phone": "+39 340 000 0202",
       "createdAt": "2026-02-10T08:05:00.000Z",
-      "updatedAt": "2026-02-15T20:42:22.409Z",
+      "updatedAt": "2026-02-25T01:14:42.617Z",
       "urlAvatar": "/personale/2.jpg"
     },
     "stf_junior_01": {
@@ -46,7 +46,7 @@
       "isVisible": true,
       "phone": "+39 340 111 0001",
       "createdAt": "2026-02-10T08:10:00.000Z",
-      "updatedAt": "2026-02-15T20:42:22.409Z",
+      "updatedAt": "2026-02-25T01:14:42.617Z",
       "urlAvatar": "/personale/1.jpg"
     },
     "stf_test_01": {
@@ -67,7 +67,7 @@
       "isVisible": true,
       "phone": "+39 340 111 0002",
       "createdAt": "2026-02-10T08:12:00.000Z",
-      "updatedAt": "2026-02-15T20:42:22.409Z",
+      "updatedAt": "2026-02-25T01:14:42.617Z",
       "urlAvatar": "/personale/2.jpg"
     },
     "stf_senior_01": {
@@ -88,7 +88,7 @@
       "isVisible": true,
       "phone": "+39 340 111 0003",
       "createdAt": "2026-02-10T08:14:00.000Z",
-      "updatedAt": "2026-02-15T20:42:22.409Z",
+      "updatedAt": "2026-02-25T01:14:42.617Z",
       "urlAvatar": "/personale/3.jpg"
     },
     "stf_manager_01": {
@@ -109,7 +109,7 @@
       "isVisible": true,
       "phone": "+39 340 111 0004",
       "createdAt": "2026-02-10T08:16:00.000Z",
-      "updatedAt": "2026-02-15T20:42:22.409Z",
+      "updatedAt": "2026-02-25T01:14:42.617Z",
       "urlAvatar": "/personale/1.jpg"
     },
     "cli_01": {
@@ -121,7 +121,7 @@
       "isVisible": true,
       "phone": "+39 333 001 0001",
       "createdAt": "2026-02-10T08:20:00.000Z",
-      "updatedAt": "2026-02-15T20:42:22.409Z",
+      "updatedAt": "2026-02-25T01:14:42.617Z",
       "urlAvatar": "/personale/1.jpg"
     },
     "cli_02": {
@@ -133,7 +133,7 @@
       "isVisible": true,
       "phone": "+39 333 001 0002",
       "createdAt": "2026-02-10T08:22:00.000Z",
-      "updatedAt": "2026-02-15T20:42:22.409Z",
+      "updatedAt": "2026-02-25T01:14:42.617Z",
       "urlAvatar": "/personale/2.jpg"
     },
     "cli_03": {
@@ -145,7 +145,7 @@
       "isVisible": true,
       "phone": "+39 333 001 0003",
       "createdAt": "2026-02-10T08:24:00.000Z",
-      "updatedAt": "2026-02-15T20:42:22.409Z",
+      "updatedAt": "2026-02-25T01:14:42.617Z",
       "urlAvatar": "/personale/3.jpg"
     },
     "cli_04": {
@@ -157,7 +157,7 @@
       "isVisible": true,
       "phone": "+39 333 001 0004",
       "createdAt": "2026-02-10T08:26:00.000Z",
-      "updatedAt": "2026-02-15T20:42:22.409Z",
+      "updatedAt": "2026-02-25T01:14:42.617Z",
       "urlAvatar": "/personale/1.jpg"
     }
   },
@@ -934,22 +934,28 @@
   "conversations": {
     "conv_001": {
       "id": "conv_001",
+      "summary": "Conversazione booking bk_004",
       "bookingId": "bk_004",
       "projectId": "prj_005",
       "clientId": "cli_01",
       "staffId": "stf_senior_01",
-      "participantIds": [
-        "cli_01",
-        "stf_senior_01"
-      ],
+      "participants": {
+        "cli_01": "client",
+        "stf_senior_01": "staff"
+      },
       "status": "open",
       "lastMessageText": "Confermo la sessione di domenica.",
       "lastMessageAt": "2026-02-15T09:20:00.000Z",
+      "unreadBy": {
+        "cli_01": 0,
+        "stf_senior_01": 0
+      },
       "createdAt": "2026-02-14T11:00:00.000Z",
+      "updatedAt": "2026-02-15T09:20:00.000Z",
       "createdBy": "cli_01"
     }
   },
-  "messages": {
+  "conversationMessages": {
     "conv_001": {
       "msg_001": {
         "id": "msg_001",

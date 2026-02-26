@@ -9,9 +9,20 @@ import {
   set,
   update
 } from '@angular/fire/database';
+import { Auth } from '@angular/fire/auth';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { map, Observable, of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { AppNotification, NotificationPriority, NotificationType } from '../../models/notification.model';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
+import { AuthService } from '../auth/auth.service';
+import { environment } from '../../../../environment';
+import { mapHttpError } from '../../http/http-error.mapper';
+import { withCriticalHttpPolicy } from '../../http/http-policy';
+import {
+  NotificationCreateRequestDto,
+  NotificationCreateResponseDto
+} from '../../models/api/payment-bridge.dto';
 
 type AppRole = 'admin' | 'client' | 'public' | string;
 
@@ -27,10 +38,14 @@ type CreateNotificationPayload = {
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private readonly path = 'notifications';
+  private readonly paymentApiBaseUrl = environment.paymentApiBaseUrl.replace(/\/+$/, '');
 
   constructor(
     private db: Database,
-    private ui: UiFeedbackService
+    private ui: UiFeedbackService,
+    private http: HttpClient,
+    private authService: AuthService,
+    private firebaseAuth: Auth
   ) {}
 
   private isPermissionDenied(error: unknown): boolean {
@@ -79,6 +94,18 @@ export class NotificationService {
   }
 
   async createForUser(userId: string, payload: CreateNotificationPayload): Promise<string> {
+    const actor = this.authService.userSig();
+    const isCrossUserWrite = !!actor && actor.uid !== userId;
+    const canUseBackend = isCrossUserWrite && (actor.role === 'admin' || actor.role === 'staff');
+
+    if (canUseBackend) {
+      try {
+        return await this.createForUserViaBackend(userId, payload);
+      } catch (error) {
+        console.warn('[NotificationService] backend notification create failed, fallback to direct RTDB write', error);
+      }
+    }
+
     const node = push(ref(this.db, `${this.path}/${userId}`));
     const id = node.key ?? `${Date.now()}`;
     const now = new Date().toISOString();
@@ -103,6 +130,52 @@ export class NotificationService {
       if (this.isPermissionDenied(error)) return id;
       throw error;
     }
+  }
+
+  private async createForUserViaBackend(userId: string, payload: CreateNotificationPayload): Promise<string> {
+    const token = await this.firebaseAuth.currentUser?.getIdToken();
+    if (!token) {
+      throw new Error('missing-auth-token');
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    const request: NotificationCreateRequestDto = {
+      userId,
+      type: payload.type,
+      title: payload.title,
+      message: payload.message,
+      link: payload.link,
+      priority: payload.priority ?? 'normal',
+      meta: payload.meta
+    };
+
+    let response: NotificationCreateResponseDto;
+    try {
+      response = await firstValueFrom(
+        this.http.post<NotificationCreateResponseDto>(
+          `${this.paymentApiBaseUrl}/notifications/create`,
+          request,
+          { headers }
+        ).pipe(withCriticalHttpPolicy())
+      );
+    } catch (error) {
+      const mapped = mapHttpError(error, {
+        fallbackMessage: 'Errore creazione notifica backend.',
+        timeoutMessage: 'Timeout chiamata notifiche backend.',
+        networkMessage: 'Backend notifiche non raggiungibile.'
+      });
+      throw new Error(mapped.message);
+    }
+
+    if (!response?.success || !response.id) {
+      throw new Error('invalid-backend-notification-response');
+    }
+
+    return response.id;
   }
 
   async markAsRead(userId: string, notificationId: string): Promise<void> {
@@ -221,3 +294,5 @@ export class NotificationService {
     return out as Partial<T>;
   }
 }
+
+

@@ -2,7 +2,7 @@
   padding: 2rem;
   color: var(--app-main-text);
   background: var(--app-main-bg);
-  min-height: 100%;
+  min-height: 100vh;
 }
 
 .header-row {
@@ -24,13 +24,17 @@
 
 .toolbar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
   margin-bottom: 18px;
   padding: 14px;
   border: 1px solid var(--glass-border);
   border-radius: 14px;
   background: var(--glass-bg);
+}
+
+.toolbar app-dynamic-form {
+  width: 100%;
 }
 
 .reset-btn {
@@ -118,18 +122,18 @@
 }
 
 .badge.pending {
-  background: rgba(255, 152, 0, 0.12);
-  color: #ffb74d;
+  background: var(--app-status-warning-bg);
+  color: var(--app-status-warning-text);
 }
 
 .badge.approved {
-  background: rgba(76, 175, 80, 0.12);
-  color: #81c784;
+  background: var(--app-status-success-bg);
+  color: var(--app-status-success-text);
 }
 
 .badge.rejected {
-  background: rgba(244, 67, 54, 0.12);
-  color: #ef9a9a;
+  background: var(--app-status-danger-bg);
+  color: var(--app-status-danger-text);
 }
 
 .rating {
@@ -140,7 +144,7 @@
 
 .rating mat-icon {
   font-size: 20px;
-  color: #fbc02d;
+  color: var(--app-status-warning-text);
 }
 
 .comment {

@@ -11,22 +11,22 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry.js';
-import { FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-tattoo-avatar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="avatar-wrapper">
       <canvas #canvas></canvas>
       <div class="controls">
         <input type="file" accept="image/*" (change)="onTattooUpload($event)" />
         <label>Scale
-          <input type="range" min="0.05" max="0.5" step="0.01" [(ngModel)]="decalScale" />
+          <input type="range" min="0.05" max="0.5" step="0.01" [formControl]="decalScaleCtrl" />
         </label>
         <label>Rotation
-          <input type="range" min="0" max="360" step="1" [(ngModel)]="decalRotation" />°
+          <input type="range" min="0" max="360" step="1" [formControl]="decalRotationCtrl" />°
         </label>
         <button (click)="clearTattoos()">Reset</button>
       </div>
@@ -78,8 +78,8 @@ export class TattooAvatarComponent implements AfterViewInit, OnDestroy {
   private animationId?: number;
 
   // user‑controlled decal parameters
-  decalScale = 0.15;
-  decalRotation = 0;
+  decalScaleCtrl = new FormControl<number>(0.15, { nonNullable: true });
+  decalRotationCtrl = new FormControl<number>(0, { nonNullable: true });
 
   // === life‑cycle ========================================================
   ngAfterViewInit(): void {
@@ -158,13 +158,14 @@ export class TattooAvatarComponent implements AfterViewInit, OnDestroy {
 
     const { point, face, object } = intersects[0];
     const normal = face?.normal.clone().transformDirection(object.matrixWorld);
-    const orientation = new THREE.Euler(0, 0, THREE.MathUtils.degToRad(this.decalRotation));
+    const orientation = new THREE.Euler(0, 0, THREE.MathUtils.degToRad(this.decalRotationCtrl.value));
+    const decalScale = this.decalScaleCtrl.value;
 
     const decalGeometry = new DecalGeometry(
       object as THREE.Mesh,
       point,
       orientation,
-      new THREE.Vector3(this.decalScale, this.decalScale, this.decalScale)
+      new THREE.Vector3(decalScale, decalScale, decalScale)
     );
 
     const decalMesh = new THREE.Mesh(decalGeometry, this.tattooMaterial);
@@ -198,3 +199,4 @@ export class TattooAvatarComponent implements AfterViewInit, OnDestroy {
     this.renderer.render(this.scene, this.camera);
   };
 }
+

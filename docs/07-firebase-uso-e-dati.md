@@ -1,50 +1,40 @@
-﻿# 07 - Firebase: uso e dati gestiti
+﻿# 07 - Firebase: uso e dati
 
 ## Servizi Firebase usati
 - Firebase Auth
-- Firestore
-- Realtime Database (RTDB)
+- Realtime Database (centrale)
+- Firestore (provider attivo, uso secondario)
 
-## Come il frontend usa Firebase
+## Dove viene usato
+- Auth: login/register/sessione corrente
+- RTDB: dominio principale (utenti, booking, progetti, chat, notifiche)
+- Firestore: presente ma non dominante nei flussi core attuali
 
-### Auth
-- login/register/logout
-- risoluzione sessione utente
-- bootstrap profilo se assente
-
-### Firestore
-- uso limitato/non centrale nel flusso corrente
-- il profilo utente operativo e gestito principalmente in RTDB
-
-### RTDB
-Nodi principali gestiti dal FE:
-- `users`
-- `auditLogs`
-- `bookings`
-- `notifications`
-- `staffProfiles`
-- `projects`
-- `sessions`
-- `invoices`
-- `bonus`
-- `conversations`
-- `conversationMessages`
-- `userConversations`
-- `adminUids`
-
-## Rules RTDB (sintesi)
+## Regole RTDB (`database.rules.json`)
+Impostazione base:
 - root deny by default (`.read/.write = false`)
-- accesso owner/admin su nodi utente
-- nodi pubblici limitati (es. alcune letture servizi/progetti)
-- indice dichiarati su nodi ad alta query (`bookings`, `sessions`, `projects`, `bonus`, etc.)
 
-## Dati business principali
-- booking: slot, stato, importi, relazioni cliente/artista
-- progetto/sessione: pianificazione e avanzamento lavoro
-- utenti/ruoli/permessi: `users` (RTDB)
-- notifiche: feed utente con priorita e link
-- bonus: wallet, codici promo, gift card
-- messaging: conversazioni e messaggi multi-ruolo
+Pattern autorizzativi:
+- owner o admin per molti nodi utente
+- staff attivo abilitato su nodi operativi specifici
+- nodi pubblici in sola lettura per catalogo/visibilita (`services`, `studioProfile`, `publicStaff`)
 
-## Limiti attuali e raccomandazione
-Operazioni cross-user sensibili (es. notifiche verso terzi) dovrebbero essere spostate su backend privilegiato (Cloud Functions/API) per robustezza e sicurezza.
+Nodi con `indexOn` gia dichiarati:
+- `bookings`, `sessions`, `projects`, `invoices`, `payments`, `bonus`, `notifications`
+
+## Nodi business principali
+- access/ruoli: `users`, `adminUids`, `staffProfiles`, `publicStaff`
+- operazioni: `bookings`, `projects`, `sessions`, `invoices`, `payments`
+- comunicazione: `notifications`, `conversations`, `conversationMessages`, `userConversations`, `chats`, `chatsByEmail`
+- controllo: `auditLogs`, `bonus`, `reviews`, `services`, `studioProfile`
+
+## Funzioni cloud correlate
+`functions/index.js` espone `paymentApi` (region `europe-west1`) con endpoint:
+- `POST /api/payments/create`
+- `POST /api/payments/confirm` (test-gated)
+- `POST /api/payments/webhook`
+- `GET /health`
+
+## Note operative
+- azioni cross-user dal frontend possono essere limitate dalle rules (gestire fallback UX)
+- path dati mock e path runtime devono restare allineati (specialmente messaging)

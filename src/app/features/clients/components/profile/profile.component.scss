@@ -3,10 +3,15 @@ $radius: 12px;
 .dashboard {
   display: grid;
   gap: 2rem;
-  grid-template-columns: 360px 1fr;
-  padding:8vh 2rem;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  padding: 8vh 2rem;
   color: var(--app-main-text);
   background: var(--app-main-bg);
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: clip;
+  align-items: start;
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
   }
@@ -22,13 +27,16 @@ $radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  min-width: 0;
 }
 
 .profile-card,
 .next-booking,
 .notice,
 .checklist,
-.tile {
+.tile,
+.quick-actions-card,
+.projects-card {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: $radius;
@@ -73,8 +81,11 @@ $radius: 12px;
   }
 
   .profile-form-fields {
-    display: grid;
-    gap: 0.75rem;
+    display: block;
+  }
+
+  .profile-form-fields app-dynamic-form {
+    width: 100%;
   }
 
   .actions {
@@ -94,12 +105,39 @@ $radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  min-width: 0;
 }
 
 .tile-grid {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.quick-actions-card {
+  h3 {
+    margin: 0 0 0.8rem;
+  }
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 0.6rem;
+
+  button {
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.2;
+    height: auto;
+    padding-block: 0.55rem;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    border-color: var(--glass-border);
+    color: var(--app-main-text);
+  }
 }
 
 .tile {
@@ -119,7 +157,7 @@ $radius: 12px;
   p {
     font-size: 0.85rem;
     opacity: 0.75;
-    min-height: 40px;
+    min-height: 0;
   }
 }
 .item-label {
@@ -191,6 +229,114 @@ $radius: 12px;
     opacity: 0.85;
     margin-bottom: 1rem;
   }
+
+  .date,
+  .artist {
+    overflow-wrap: anywhere;
+  }
+
+  .booking-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+}
+
+.projects-card {
+  h3 {
+    margin: 0 0 0.8rem;
+  }
+}
+
+.project-kpis {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+
+  .kpi {
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg-strong);
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.82rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}
+
+.project-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.project-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+  border-radius: 12px;
+  padding: 0.5rem 0.65rem;
+}
+
+.project-main {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+
+  strong,
+  small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  strong {
+    white-space: nowrap;
+  }
+
+  small {
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+}
+
+.project-status {
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--app-status-neutral-bg);
+  color: var(--app-status-neutral-text);
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.project-status[data-status="scheduled"] {
+  background: var(--app-status-info-bg);
+  color: var(--app-status-info-text);
+}
+
+.project-status[data-status="active"] {
+  background: var(--app-status-success-bg);
+  color: var(--app-status-success-text);
+}
+
+.project-status[data-status="healing"] {
+  background: var(--app-status-warning-bg);
+  color: var(--app-status-warning-text);
+}
+
+.project-status[data-status="completed"] {
+  background: var(--app-status-info-bg);
+  color: var(--app-status-info-text);
+}
+
+.project-status[data-status="cancelled"] {
+  background: var(--app-status-danger-bg);
+  color: var(--app-status-danger-text);
 }
 
 // NOTICE & CHECKLIST
@@ -204,6 +350,7 @@ $radius: 12px;
   p{
 
     color: var(--app-main-text)!important;
+    overflow-wrap: anywhere;
   }
   mat-list-item,
   mat-list-option {
@@ -226,5 +373,68 @@ button.mat-raised-button {
 
   &:hover {
     filter: brightness(1.1);
+  }
+}
+
+@media (max-width: 1024px) {
+  .dashboard {
+    padding: 8vh 1rem 1rem;
+    gap: 1.2rem;
+  }
+
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard {
+    gap: 1rem;
+    padding: 8vh 0.75rem 1rem;
+  }
+
+  .profile-card,
+  .next-booking,
+  .notice,
+  .checklist,
+  .tile,
+  .quick-actions-card,
+  .projects-card {
+    padding: 1rem;
+  }
+
+  .profile-card .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profile-card h2,
+  .profile-card .muted {
+    overflow-wrap: anywhere;
+  }
+
+  .profile-card .profile-form-fields mat-form-field {
+    width: 100%;
+  }
+
+  .tile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .project-main strong,
+  .project-main small {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .project-status {
+    align-self: flex-start;
+    white-space: normal;
   }
 }

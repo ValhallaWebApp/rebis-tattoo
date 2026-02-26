@@ -30,6 +30,26 @@ body.theme-admin {
 
   --app-main-bg: var(--page-bg);
   --app-main-text: var(--text-primary);
+  --app-main-text-muted: #c8ced8;
+  --app-surface: rgba(16, 17, 24, 0.68);
+  --app-surface-muted: rgba(20, 22, 30, 0.58);
+  --app-surface-strong: rgba(8, 9, 14, 0.84);
+  --app-surface-border: var(--glass-border);
+  --app-focus-ring: rgba(183, 155, 85, 0.55);
+  --app-success: #86efac;
+  --app-warning: #fbbf24;
+  --app-info: #7dd3fc;
+  --app-danger: #ef4444;
+  --app-status-success-bg: rgba(134, 239, 172, 0.16);
+  --app-status-success-text: #86efac;
+  --app-status-warning-bg: rgba(251, 191, 36, 0.16);
+  --app-status-warning-text: #fbbf24;
+  --app-status-info-bg: rgba(125, 211, 252, 0.16);
+  --app-status-info-text: #7dd3fc;
+  --app-status-danger-bg: rgba(239, 68, 68, 0.16);
+  --app-status-danger-text: #fca5a5;
+  --app-status-neutral-bg: rgba(148, 163, 184, 0.16);
+  --app-status-neutral-text: #cbd5e1;
   --app-toolbar-bg: var(--glass-bg-strong);
   --app-toolbar-text: var(--text-primary);
   --app-toolbar-shadow: var(--glass-shadow);

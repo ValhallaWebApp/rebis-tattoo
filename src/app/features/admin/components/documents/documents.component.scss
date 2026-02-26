@@ -1,13 +1,13 @@
 .documents-section {
   padding:8vh 2rem;
-  background: #111;
-  color: whitesmoke;
-  min-height: 90vh;
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  background: var(--app-main-bg);
+  color: var(--app-main-text);
+  min-height: 100vh;
+  font-family: var(--font-base, "Inter", "Segoe UI", Arial, sans-serif);
 
   .section-title {
     font-size: 1.8rem;
-    color: #d4af37;
+    color: var(--accent);
     margin-bottom: 1.5rem;
     text-align: center;
   }
@@ -19,14 +19,15 @@
   }
 
   .doc-card {
-    background-color: #1a1a1a;
-    color: whitesmoke;
+    background-color: var(--glass-bg);
+    color: var(--app-main-text);
+    border: 1px solid var(--glass-border);
     border-radius: 12px;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-soft);
 
     mat-icon {
       font-size: 32px;
-      color: #d4af37;
+      color: var(--accent);
       margin-right: 0.5rem;
     }
 
@@ -37,19 +38,19 @@
 
     mat-card-subtitle {
       font-size: 0.9rem;
-      color: #ccc;
+      color: var(--app-main-text-muted);
     }
 
     mat-card-actions {
       padding: 1rem;
 
       button {
-        background-color: #d4af37;
-        color: #111;
+        background-color: var(--accent);
+        color: var(--accent-ink);
         font-weight: 600;
 
         &:hover {
-          background-color: #c39e28;
+          filter: brightness(1.08);
         }
       }
     }

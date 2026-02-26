@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../../core/modules/material.module';
 import { TattooProject } from '../../../../../core/services/projects/projects.service';
+import { DynamicField, DynamicFormComponent } from '../../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 export interface ProjectTrackerBookingDialogData {
   project: TattooProject;
@@ -13,12 +14,32 @@ export interface ProjectTrackerBookingDialogData {
 @Component({
   selector: 'app-project-tracker-booking-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, DynamicFormComponent],
   templateUrl: './project-tracker-booking-dialog.component.html',
   styleUrls: ['./project-tracker-booking-dialog.component.scss']
 })
 export class ProjectTrackerBookingDialogComponent {
   readonly form;
+  readonly formFields: DynamicField[] = [
+    { type: 'date-native', name: 'date', label: 'Data', required: true },
+    { type: 'time', name: 'time', label: 'Ora', required: true },
+    { type: 'number', name: 'durationMinutes', label: 'Durata (min)', min: 15, required: true },
+    {
+      type: 'select',
+      name: 'status',
+      label: 'Status',
+      required: true,
+      options: [
+        { label: 'Bozza', value: 'draft' },
+        { label: 'In attesa', value: 'pending' },
+        { label: 'Confermata', value: 'confirmed' },
+        { label: 'In corso', value: 'in_progress' },
+        { label: 'Completata', value: 'completed' },
+        { label: 'Annullata', value: 'cancelled' }
+      ]
+    },
+    { type: 'textarea', name: 'notes', label: 'Note', rows: 2, className: 'full' }
+  ];
 
   constructor(
     private fb: FormBuilder,

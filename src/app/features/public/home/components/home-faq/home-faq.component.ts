@@ -1,10 +1,11 @@
-﻿import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { LanguageService } from '../../../../../core/services/language/language.service';
 
 @Component({
   selector: 'app-home-faq',
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home-faq.component.html',
   styleUrl: './home-faq.component.scss',
   animations: [
@@ -51,3 +52,4 @@ export class HomeFaqComponent {
     this.activeIndex = this.activeIndex === index ? null : index;
   }
 }
+

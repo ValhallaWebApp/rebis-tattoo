@@ -65,7 +65,7 @@
           <h1>{{ p.title }}</h1>
           <div class="chips">
             <mat-chip-set>
-              <mat-chip class="status-chip" [attr.data-status]="p.status" >{{ p.status }}</mat-chip>
+              <mat-chip class="status-chip" [attr.data-status]="projectStatusClass(p.status)" >{{ projectStatusLabel(p.status) }}</mat-chip>
               <!-- <mat-chip *ngIf="(p as any).style">{{ (p as any).style }}</mat-chip> -->
               <mat-chip *ngIf="p.zone">{{ p.zone }}</mat-chip>
             </mat-chip-set>
@@ -155,7 +155,7 @@
 
           <div class="line">
             <span class="k">Status</span>
-            <span class="v">{{ vm.booking.status || '-' }}</span>
+            <span class="v">{{ bookingStatusLabel(vm.booking?.status) }}</span>
           </div>
 
           <div class="line" *ngIf="vm.booking.durationMinutes">
@@ -196,7 +196,7 @@
                 </div>
 
                 <div class="mini">
-                  <span class="tag" [attr.data-status]="s.status">{{ s.status }}</span>
+                  <span class="tag" [attr.data-status]="sessionStatusClass(s.status)">{{ sessionStatusLabel(s.status) }}</span>
                   <span class="dot">·</span>
                   <span *ngIf="s._durationMin">{{ s._durationMin }} min</span>
                   <span *ngIf="sessionZone(s)"> · {{ sessionZone(s) }}</span>

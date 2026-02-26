@@ -13,11 +13,12 @@ import {
   WeekdayKey,
   StaffTimeSlot,
 } from '../../../../core/services/staff/staff.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 @Component({
   selector: 'app-staff-detail-admin',
   standalone: true,
-  imports: [CommonModule, MaterialModule, ReactiveFormsModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, DynamicFormComponent],
   templateUrl: './staff-detail-admin.component.html',
   styleUrls: ['./staff-detail-admin.component.scss'],
 })
@@ -39,6 +40,13 @@ export class StaffDetailAdminComponent implements OnInit, OnDestroy {
     workdayEnd: this.fb.nonNullable.control('20:00', [Validators.required]),
     stepMinutes: this.fb.nonNullable.control(30, [Validators.required, Validators.min(5)]),
   });
+  readonly calendarFields: DynamicField[] = [
+    { type: 'toggle', name: 'enabled', label: 'Abilitato', className: 'full' },
+    { type: 'color', name: 'color', label: 'Colore' },
+    { type: 'time', name: 'workdayStart', label: 'Inizio giornata', required: true },
+    { type: 'time', name: 'workdayEnd', label: 'Fine giornata', required: true },
+    { type: 'number', name: 'stepMinutes', label: 'Step (min)', min: 5, required: true }
+  ];
 
   availability: StaffAvailability = {
     timezone: 'Europe/Rome',

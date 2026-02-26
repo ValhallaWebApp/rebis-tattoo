@@ -1,80 +1,51 @@
-# 05 - Interfacce e Contratti
+﻿# 05 - Interfacce e Contratti
 
-## Interfacce dominio (core/models)
-- `Booking`, `BookingChatDraft`, `BookingStatus`
-- `Conversation`, `ConversationMessage`, `ParticipantRole`
-- `Project`, `ProjectStatus`
-- `AppUser`, `UserRole`, `UserPermissions`
-- `StaffMember`
-- `Invoice`
-- `AppNotification`, `NotificationType`, `NotificationPriority`
+## Modelli principali (`src/app/core/models`)
+- Booking: `Booking`, `BookingStatus`, `BookingChatDraft`
+- Project: `Project`, `ProjectStatus`
+- Messaging: `Conversation`, `ConversationMessage`, `ParticipantRole`
+- User: `AppUser`, `UserRole`, `UserPermissions`
+- Notification: `AppNotification`
+- Invoice, StaffMember, Client, CalendarEvent
 
-## Interfacce servizi (core/services)
-- Auth:
-  - `AppUser`
-- Payments:
-  - `CreatePaymentRequest`
-  - `PaymentIntentResultOk/Err`
-- Audit:
-  - `AuditLogEvent`, `AuditLogRecord`
-- Bonus:
-  - `PromoCode`, `GiftCard`, `UserWallet`, `WalletLedgerEntry`
-- Messaging:
-  - `ConversationStatus`, `MessageKind`, `ParticipantRole`
+## Contratto pagamenti FE -> API
+Service: `PaymentApiService`
 
-## Contratto RTDB allineato al dataset attuale
-Root nodes principali:
-- `auditLogs`
-- `bookings`
-- `conversations`
-- `projects`
-- `services`
-- `sessions`
-- `staffProfiles`
-- `userConversations`
-- `users`
+### Create Payment Intent
+- endpoint: `POST {paymentApiBaseUrl}/create`
+- request:
+  - `amount` (intero in centesimi)
+  - `bookingId`
+  - `currency` (`eur|usd|gbp`, default `eur`)
+  - `description` opzionale
+- response attesa:
+  - `success: true`
+  - `clientSecret`
+  - `paymentIntentId`
 
-Pattern dati attuali:
-- Booking:
-  - canonico: `clientId`, `artistId`, `createdAt`, `updatedAt`, `notes`, `projectId`
-  - i campi legacy `idClient`, `idArtist`, `createAt`, `updateAt`, `description` sono bloccati in scrittura dal service
-- Session:
-  - canonico: `artistId`, `clientId`, `projectId`, `bookingId` (opzionale), `start`, `end`
-- Project:
-  - prevale `artistId`/`clientId` con `bookingId`, `sessionIds[]`
-- User:
-  - campi completi profilo (`id`, `uid`, `role`, `permissions`, `isActive`, `isVisible`, `urlAvatar`, ecc.)
-- Conversation:
-  - `participants: Record<uid, role>`
-  - `unreadBy: Record<uid, number>`
+## Contratto runtime config
+Origine runtime: `window.__APP_CONFIG__` (`public/app-config.js`)
 
-## Contratto Payment API usato dal frontend
-Request `POST /create`:
-- `amount: number` (cents)
-- `bookingId: string`
-- `currency?: 'eur'|'usd'|'gbp'`
-- `description?: string`
+Campi obbligatori validati a bootstrap:
+- `paymentApiBaseUrl` (URL assoluto)
+- `stripePublishableKey` (`pk_...`)
+- `firebaseConfig.*` (chiavi Firebase)
 
-Response:
-- `success: boolean`
-- `clientSecret: string`
-- `paymentIntentId: string`
+## Contratto RTDB (principali nodi)
+- `users`, `adminUids`, `staffProfiles`, `publicStaff`
+- `bookings`, `projects`, `sessions`, `invoices`
+- `notifications`, `auditLogs`
+- `conversations`, `conversationMessages`, `userConversations`
+- `services`, `reviews`, `bonus`, `studioProfile`
+- `chats`, `chatsByEmail`
 
-## Contratto runtime config (`window.__APP_CONFIG__`)
-- `paymentApiBaseUrl`
-- `stripePublishableKey`
-- `firebaseConfig`:
-  - `apiKey`
-  - `authDomain`
-  - `databaseURL`
-  - `projectId`
-  - `storageBucket`
-  - `messagingSenderId`
-  - `appId`
-  - `measurementId?`
+## Booking: schema canonico attuale
+Campi chiave:
+- `clientId`, `artistId`, `projectId?`
+- `start`, `end`, `status`
+- `source` (`fast-booking|chat-bot|manual`)
+- `price`, `depositRequired`, `paidAmount`
+- `createdAt`, `updatedAt`, `createdById?`
 
-## Note compatibilita
-Il codice mantiene bridge attivi per alias legacy, in particolare su:
-- `BookingService`
-- `SessionService`
-- `ProjectsService` (read/write misti su dataset eterogenei)
+Regola di compatibilita:
+- il service blocca in scrittura alcuni campi legacy (`idClient`, `idArtist`, `description`, `createAt`, `updateAt`).

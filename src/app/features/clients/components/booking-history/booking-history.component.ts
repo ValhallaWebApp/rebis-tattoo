@@ -1,25 +1,25 @@
-﻿import { Component, OnInit, inject, effect, Injector } from '@angular/core';
+import { Component, OnInit, inject, effect, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../../core/modules/material.module';
 
 import { Booking, BookingService } from '../../../../core/services/bookings/booking.service';
 import { StaffService } from '../../../../core/services/staff/staff.service';
-import { AuthService } from '../../../../core/services/auth/authservice';
+import { AuthService } from '../../../../core/services/auth/auth.service';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatDialog } from '@angular/material/dialog';
-import { ReviewsService } from '../../../../core/services/reviews/rewies.service';
+import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { ReviewCreateDialogComponent } from '../../../../shared/components/dialogs/review-create-dialog/review-create-dialog.component';
 import { firstValueFrom } from 'rxjs';
 import { InvoicesService, Invoice } from '../../../../core/services/invoices/invoices.service';
+import { ExternalActionsHelperService } from '../../../../core/services/helpers/external-actions-helper.service';
 
 @Component({
   selector: 'app-booking-history',
   standalone: true,
-  imports: [CommonModule, MaterialModule, FormsModule],
+  imports: [CommonModule, MaterialModule],
   styleUrls: ['./booking-history.component.scss'],
   templateUrl: './booking-history.component.html',
   animations: [
@@ -44,7 +44,8 @@ export class BookingHistoryComponent implements OnInit {
   private readonly reviewsService = inject(ReviewsService);
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
-private readonly invoicesService = inject(InvoicesService);
+  private readonly invoicesService = inject(InvoicesService);
+  private readonly externalActions = inject(ExternalActionsHelperService);
 
   readonly WHATSAPP_NUMBER = '393333333333';
 
@@ -238,10 +239,10 @@ private readonly invoicesService = inject(InvoicesService);
 
   openWhatsApp(b: Booking): void {
     const d = new Date((b as any).start);
-    const msg = encodeURIComponent(
+    const msg =
       `Ciao! Ti scrivo per la prenotazione: "${this.getBookingLabel(b)}" del ${d.toLocaleDateString()} alle ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
-    );
-    window.open(`https://wa.me/${this.WHATSAPP_NUMBER}?text=${msg}`, '_blank');
+    ;
+    this.externalActions.openWhatsApp(this.WHATSAPP_NUMBER, msg);
   }
 
   openTicket(b: Booking) {
@@ -485,17 +486,7 @@ private buildInvoiceHtml(invoice: any, booking: any): string {
 
 
 private downloadHtmlFile(html: string, filename: string): void {
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 500);
+  this.externalActions.downloadTextFile(html, filename, 'text/html;charset=utf-8');
 }
 private money(value: number, currency: string): string {
   try {
@@ -516,5 +507,7 @@ private escapeHtml(input: string): string {
 }
 
 }
+
+
 
 

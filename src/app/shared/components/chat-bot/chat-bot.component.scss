@@ -97,7 +97,7 @@
   justify-content: center;
   gap: 10px;
   color: #ffffff;
-  z-index: 20;
+  z-index: var(--z-sticky-high, 20);
   font-size: 14px;
   font-weight: 500;
   backdrop-filter: blur(1px);

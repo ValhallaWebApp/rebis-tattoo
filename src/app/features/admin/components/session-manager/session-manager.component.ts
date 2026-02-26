@@ -5,16 +5,17 @@ import { CommonModule } from '@angular/common';
 import { MatDrawer } from '@angular/material/sidenav';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 import { MatDialogModule } from '@angular/material/dialog';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { Session, SessionService } from '../../../../core/services/session/session.service';
 import { StaffMember, StaffService } from '../../../../core/services/staff/staff.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 @Component({
   selector: 'app-session-manager',
   standalone: true,
-  imports: [CommonModule, MaterialModule, FormsModule, ReactiveFormsModule, MatDialogModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, MatDialogModule, DynamicFormComponent],
   templateUrl: './session-manager.component.html',
   styleUrls: ['./session-manager.component.scss']
 })
@@ -29,12 +30,14 @@ export class SessionManagerComponent implements OnInit {
 
   sessions: Session[] = [];
   staff: StaffMember[] = [];
+  formFields: DynamicField[] = [];
   form!: FormGroup;
   editingSession: Session | null = null;
 
   async ngOnInit(): Promise<void> {
     this.staffService.getAllStaff().subscribe(staff => {
        this.staff = staff;
+       this.syncFormFields();
     });
     await this.loadSessions();
     this.initForm();
@@ -63,6 +66,8 @@ async loadSessions() {
       price: [session?.price || 0],
       status: [session?.status || 'planned', Validators.required]
     });
+
+    this.syncFormFields();
   }
 
   async save() {
@@ -141,6 +146,47 @@ getArtistName(id: string): string {
       this.snackbar.open('Seduta eliminata', 'Chiudi', { duration: 2000 });
       await this.loadSessions();
     }
+  }
+
+  private syncFormFields(): void {
+    this.formFields = [
+      { type: 'date', name: 'date', label: 'Data', required: true },
+      { type: 'time', name: 'time', label: 'Ora', required: true },
+      {
+        type: 'number',
+        name: 'duration',
+        label: 'Durata (minuti)',
+        required: true,
+        min: 15,
+        hint: 'Inserisci multipli di 15'
+      },
+      {
+        type: 'select',
+        name: 'artistId',
+        label: 'Artista',
+        required: true,
+        options: this.staff.map((member) => ({ label: member.name, value: member.id }))
+      },
+      {
+        type: 'textarea',
+        name: 'notesByAdmin',
+        label: 'Note',
+        rows: 3,
+        className: 'full'
+      },
+      { type: 'number', name: 'price', label: 'Prezzo' },
+      {
+        type: 'select',
+        name: 'status',
+        label: 'Stato',
+        required: true,
+        options: [
+          { label: 'Pianificata', value: 'planned' },
+          { label: 'Completata', value: 'completed' },
+          { label: 'Annullata', value: 'cancelled' }
+        ]
+      }
+    ];
   }
 
 

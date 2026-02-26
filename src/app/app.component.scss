@@ -44,7 +44,7 @@
 .main-toolbar {
   position: sticky;
   top: 0;
-  z-index: 3000;
+  z-index: var(--z-toolbar, 3000);
   isolation: isolate;
   overflow: visible !important;
   background-color: var(--app-toolbar-bg, #121212) !important;
@@ -96,7 +96,7 @@
 
     .dropdown {
       position: relative;
-      z-index: 3100;
+      z-index: var(--z-toolbar-dropdown, 3100);
 
       .dropdown-toggle {
         display: flex;
@@ -105,7 +105,7 @@
       }
 
       .dropdown-menu {
-        z-index: 3200;
+        z-index: var(--z-toolbar-menu, 3200);
         position: absolute;
         top: calc(100% + 6px);
         left: 0;
@@ -116,7 +116,7 @@
         padding: 0.4rem 0;
         min-width: 180px;
         max-height: 60vh;
-        overflow-y: scroll;
+        overflow-y: auto;
         border-radius: 6px;
         visibility: hidden;
         opacity: 0;
@@ -131,6 +131,8 @@
           color: var(--app-nav-link, #f0f0f0);
           padding: 0.5rem 1.2rem;
           font-size: 0.92rem;
+          font-weight: 500;
+          letter-spacing: 0.01em;
           white-space: nowrap;
           transition: background 0.2s;
 
@@ -200,11 +202,11 @@
   height: calc(100vh - 8vh);
   overflow-y: hidden;
   position: relative;
-  z-index: 1;
+  z-index: var(--z-content-raised, 1);
 }
 
 .mobile-sidenav {
-  z-index: 3300 !important;
+  z-index: var(--z-sidenav, 3300) !important;
   background-color: var(--app-sidenav-bg, #2d2f38);
   color: var(--app-sidenav-text, #f1f1f1);
   width: 270px;
@@ -284,8 +286,8 @@
   min-height: 100vh;
 }
 
-:host ::ng-deep .mat-drawer-backdrop.mat-drawer-shown {
-  z-index: 3250 !important;
+:host ::ng-deep .sidenav-container > .mat-drawer-backdrop.mat-drawer-shown {
+  z-index: var(--z-drawer-backdrop, 3250) !important;
 }
 
 :host ::ng-deep .mat-mdc-menu-panel.notif-menu {

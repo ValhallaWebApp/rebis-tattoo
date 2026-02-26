@@ -14,7 +14,7 @@ import {
 } from '@angular/fire/database';
 import { Observable } from 'rxjs';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
-import { AuthService } from '../auth/authservice';
+import { AuthService } from '../auth/auth.service';
 import { ProjectsService } from '../projects/projects.service';
 import { BookingService } from '../bookings/booking.service';
 
@@ -474,5 +474,7 @@ export class SessionService {
     return s;
   }
 }
+
+
 
 

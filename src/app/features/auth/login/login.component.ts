@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../../core/modules/material.module';
-import { AppUser, AuthService } from '../../../core/services/auth/authservice';
+import { AppUser, AuthService } from '../../../core/services/auth/auth.service';
 import { UiFeedbackService } from '../../../core/services/ui/ui-feedback.service';
 
 @Component({
@@ -242,4 +242,6 @@ export class LoginComponent implements OnInit {
   };
 
 }
+
+
 

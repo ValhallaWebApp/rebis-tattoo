@@ -1,35 +1,42 @@
-# Dataset Test RTDB (allineato snapshot operativo)
+﻿# Dataset Test Simulazione
 
-## Root presenti
-- `auditLogs`
-- `bookings`
-- `conversations`
-- `projects`
-- `services`
-- `sessions`
-- `staffProfiles`
-- `userConversations`
-- `users`
+## Origine
+Dataset generato da script:
+- `scripts/generate-rich-mock-dataset.js`
 
-## Utenti presenti nello snapshot
-- `1EoVwmdPbXWdjpD8MIQuVxQOFlv2` (`test.admin@gmail.com`)
-- `Ygu8JDe9fbPFsb2ZFQ0pSkOpkAV2` (`client.test@gmail.com`)
-- `v97oOiulG1M71jtiVYpSo8FN6Ap1` (`staff.test@gmail.com`)
+File prodotti:
+- `firebase-rtdb-export.mock.json`
+- `firebase-rtdb-export.mock.safe.json`
+- `firestore-users.mock.json`
+- `firebase-unified.mock.json`
+- `mock-demo-playbook.json`
 
-## Stato schema reale (importante)
-- Booking mantiene campi doppi:
-  - canonici: `clientId`, `artistId`, `createdAt`, `updatedAt`, `notes`
-  - legacy: `idClient`, `idArtist`, `createAt`, `updateAt`, `description`
-- Session usa prevalentemente `idArtist`/`idClient`.
-- Project usa `artistId`/`clientId` e link `bookingId`, `sessionIds`.
-- Conversation usa `participants` e `unreadBy` per utente.
-- Services usa naming italiano (`categoria`, `prezzo`, `durata`, `visibile`).
+## Contenuto mock (versione script attuale)
+- utenti: `10`
+- progetti: `6`
+- booking: `6`
+- sessioni: `12`
+- recensioni: `12`
 
-## Audit log osservato
-- Eventi `auth.register` con errori `PERMISSION_DENIED` e `auth/*`.
-- Eventi `user.update.staffSync` ripetuti in errore (sync staff profile).
-- Eventi `booking.update` e `messaging.conversation.create` coerenti con flussi admin.
+Include dati per:
+- admin/staff/client
+- portfolio e progetti multi-stato
+- booking da fonti diverse (`manual`, `fast-booking`, `chat-bot`)
+- conversazioni e notifiche demo
 
-## Nota operativa
-Questo dataset non e "pulito/normalizzato": rappresenta uno stato reale di esercizio.
-Il frontend deve quindi continuare a supportare sia campi canonici sia alias legacy.
+## Credenziali demo (mock playbook)
+- admin owner: `valhallawebapp@gmail.com` / `131099`
+- staff operator: `staff.test@rebistattoo.it` / `131099`
+- client demo: `cliente.alfa@rebistattoo.it` / `131099`
+
+## Comandi utili
+- genera mock: `npm run db:generate:mock`
+- import RTDB mock safe: `npm run db:import:mock`
+- import Firestore users mock: `npm run db:import:firestore-users`
+
+## Attenzione su coerenza schema
+Il dataset deve restare allineato con:
+- path usati nei service runtime
+- rules in `database.rules.json`
+
+In caso di mismatch (es. nodi messaging), correggere prima i generatori o i service, poi rigenerare.

@@ -1,9 +1,9 @@
-﻿import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BookingService, Booking } from '../../../../core/services/bookings/booking.service';
-import { AuthService } from '../../../../core/services/auth/authservice';
+import { AuthService } from '../../../../core/services/auth/auth.service';
 import { StaffMember, StaffService } from '../../../../core/services/staff/staff.service';
 import { DynamicField, DynamicFormComponent } from '../../form/dynamic-form/dynamic-form.component';
 import { CommonModule } from '@angular/common';
@@ -77,7 +77,7 @@ export class BookingDialogComponent implements OnInit {
     }
   }
 
-  get step0Fields(): any[] {
+  get step0Fields(): DynamicField[] {
     return [
       { type: 'text', name: 'clientName', label: 'Nome Cliente', required: true },
       { type: 'email', name: 'email', label: 'Email', required: true },
@@ -93,7 +93,7 @@ export class BookingDialogComponent implements OnInit {
     ];
   }
 
-  get step1Fields(): any[] {
+  get step1Fields(): DynamicField[] {
     return [
       { type: 'date', name: 'date', label: 'Data', required: true },
       {
@@ -106,7 +106,7 @@ export class BookingDialogComponent implements OnInit {
     ];
   }
 
-  get step2Fields(): any[] {
+  get step2Fields(): DynamicField[] {
     return [
       {
         type: 'checkbox',
@@ -161,7 +161,7 @@ async onSubmit(): Promise<void> {
   if (!this.bookingForm.valid) return;
 
   const v = this.bookingForm.value;
-  const user = this.authService.getUser(); // âœ… sostituito getCurrentUser
+  const user = this.authService.getUser(); // ✅ sostituito getCurrentUser
 
   if (!user?.uid) {
     this.snackbar.open('Utente non autenticato. Impossibile completare la prenotazione.', 'OK', { duration: 3000 });
@@ -170,7 +170,7 @@ async onSubmit(): Promise<void> {
 
   const nowIso = new Date().toISOString();
   const booking: Omit<Booking, 'id' | 'status'> = {
-    title: `${v.start.split('T')[1]?.slice(0, 5)} ${v.description} â€“ ${v.clientName}`,
+    title: `${v.start.split('T')[1]?.slice(0, 5)} ${v.description} – ${v.clientName}`,
     start: v.start,
     end: v.end,
     clientId: user.uid,
@@ -248,7 +248,7 @@ async onSubmit(): Promise<void> {
   }
 
 private prefillFromUserOrLocal(): void {
-  const user = this.authService.getUser(); // âœ… sincrono
+  const user = this.authService.getUser(); // ✅ sincrono
 
   const local = localStorage.getItem('pendingBooking');
   const parsed = local ? safeParse(local) : {};
@@ -283,4 +283,6 @@ private prefillFromUserOrLocal(): void {
     this.dialogRef.close(false);
   }
 }
+
+
 

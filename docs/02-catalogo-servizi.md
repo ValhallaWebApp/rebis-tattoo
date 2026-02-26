@@ -1,60 +1,64 @@
 ﻿# 02 - Catalogo Servizi
 
-## Core servizi principali
+## Panoramica
+Service core rilevati: `21` file in `src/app/core/services`.
 
-### Auth e utenti
-- `AuthService` (`core/services/auth/authservice.ts`)
+## Servizi per dominio
+
+### Auth e sessione
+- `AuthService`
   - login/register/logout
-  - risoluzione sessione corrente
-  - bootstrap profilo utente in Firestore
-- `UserService` (`core/services/users/user.service.ts`)
-  - lista utenti/clienti gestibili
-  - update/hide utente con vincoli admin
-  - merge dati Firestore + RTDB
+  - bootstrap profilo utente da RTDB
+  - segnali utente/ruolo/permessi
 
-### Booking e scheduling
-- `BookingService` (`core/services/bookings/booking.service.ts`)
-  - CRUD booking
-  - ricerca slot liberi
-  - transizioni stato sicure (`safeSetStatus`)
-  - notifiche collegate al ciclo booking
-- `BookingDraftService`
-  - gestione draft in-memory
-
-### Pagamenti
-- `PaymentApiService` (`core/services/payments/payment-api.service.ts`)
-  - create payment intent
-  - validazione payload lato FE
-  - mapping errori backend
-  - wrapper safe result (`ok/error`)
-
-### Staff, progetti, sessioni
+### Utenti, ruoli, profili
+- `UserService`
+  - lista utenti gestibili
+  - update role/permessi/visibilita
+  - vincoli anti auto-demotion e anti ultimo admin
 - `StaffService`
+- `StudioProfileService`
+
+### Booking, progetto, sessione
+- `BookingService`
+  - CRUD booking
+  - transizioni stato sicure
+  - disponibilita slot giornalieri
+  - integrazione notifiche
 - `ProjectsService`
+  - gestione progetti + linkage booking
 - `SessionService`
 
-### Notifiche e messaging
-- `NotificationService`
-  - create, read, mark, delete notifiche per utente
-- `MessagingService`
-  - conversazioni, messaggi, stato lettura, permessi per ruolo
-
-### Altri domini
-- `BonusService`
-- `InvoicesService`
+### Catalogo e recensioni
 - `ServicesService`
-- `ReviewsService`
-- `StudioProfileService`
-- `UiFeedbackService`
-- `AuditLogService`
+- `ReviewsService` (`rewies.service.ts` nel path attuale)
 
-## Servizi adapter/utility
-- `BookingAdapterService`
-- `StaffAdapterService`
-- `TattooBookingAgentService`
+### Pagamenti e fatture
+- `PaymentApiService`
+  - endpoint payment API
+  - validazione payload FE
+  - gestione errori/timeout
+- `InvoicesService`
+
+### Messaggistica e notifiche
+- `MessagingService`
+  - conversazioni + messaggi + unread
+- `NotificationService`
+  - create/read/mark/delete notifiche
+
+### Altri servizi business
+- `BonusService`
+- `AuditLogService`
 - `LanguageService`
 - `MenuService`
-- `TattooAreaService`
+- `UiFeedbackService`
+- `ConfirmActionService`
+- `ChatService` + `LocalLlmService`
+
+## Dipendenze trasversali rilevanti
+- `BookingService` dipende da `ProjectsService`, `NotificationService`, `AuditLogService`, `AuthService`
+- `MessagingService` dipende da `NotificationService`, `AuditLogService`, `AuthService`
+- `UserService` usa conferme UI + audit + sync profili staff
 
 ## Nota operativa
-I servizi non sono omogenei al 100%: alcuni sono model-driven e robusti, altri mantengono compat legacy con campi duplicati (`clientId/idClient`, `artistId/idArtist`).
+Lo strato service contiene sia accesso dati sia logica business. Questo accelera lo sviluppo, ma richiede test regressivi forti su ogni modifica.

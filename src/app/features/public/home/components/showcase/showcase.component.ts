@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { LanguageService } from '../../../../../core/services/language/language.service';
 
 @Component({
   selector: 'app-showcase',
-  standalone:false,
+  standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './showcase.component.html',
   styleUrl: './showcase.component.scss'
 })
@@ -12,3 +13,4 @@ export class ShowcaseComponent {
  constructor(public lang: LanguageService) {
  }
 }
+

@@ -1,49 +1,45 @@
-﻿# Admin 01 - Panorama Operativo (per la Titolare)
+﻿# Admin 01 - Overview Operativo
 
-Questa pagina spiega in modo semplice cosa gestisce il gestionale e come usarlo nelle attivita quotidiane.
+## Scopo
+Guida rapida per titolare e amministrazione studio.
 
-## Cosa puoi fare con il sistema
-- ricevere prenotazioni dal sito pubblico
-- gestire clienti, appuntamenti e progetti
-- controllare pagamenti/caparre
-- monitorare messaggi e richieste
-- verificare stato lavori e storico
+## Cosa gestisci nel gestionale
+- prenotazioni e calendario
+- clienti e staff
+- progetti e sessioni
+- pagamenti/caparre
+- messaggistica e notifiche
+- audit e controllo operativo
 
-## Aree principali
+## Aree principali da menu
+### Frontoffice pubblico
+- home, servizi, progetti, fast-booking, contatti
 
-### Area Pubblica
-Serve ai clienti per:
-- vedere servizi e portfolio
-- inviare richiesta prenotazione (fast-booking)
-- pagare la caparra quando richiesto
+### Area cliente (`/dashboard`)
+- profilo
+- storico booking
+- chat
+- recensioni
+- buoni
 
-### Area Cliente
-Serve al cliente loggato per:
-- vedere storico prenotazioni
-- comunicare con lo studio
-- gestire informazioni personali
+### Backoffice (`/admin` e `/staff`)
+- calendario
+- utenti/clienti/staff
+- portfolio/progetti
+- servizi
+- bonus
+- analytics e audit logs
 
-### Area Admin
-Serve a te e al team per:
-- calendario generale
-- lista clienti
-- gestione pratiche/progetti/sedute
-- billing e controllo pagamenti
-- dashboard operativa
+## Flusso business principale
+1. cliente invia fast-booking
+2. sistema crea bozza booking
+3. pagamento caparra via Stripe
+4. booking aggiornato a `paid`
+5. presa in carico operativa staff/admin
 
-## Flusso prenotazione (in breve)
-1. il cliente compila il fast-booking
-2. il sistema crea la prenotazione
-3. il cliente completa il pagamento caparra
-4. la prenotazione passa allo stato pagato
-5. il team la prende in lavorazione
-
-## Cosa monitorare ogni giorno
-- nuove prenotazioni
+## KPI giornalieri consigliati
+- nuove prenotazioni in `pending`
 - pagamenti non completati
-- messaggi in attesa
-- appuntamenti della giornata
-- eventuali errori segnalati dal team
-
-## Indicazione pratica
-Il punto piu importante per evitare disallineamenti: usare sempre il flusso integrato interno, evitando processi manuali esterni.
+- messaggi non letti
+- agenda giornata successiva
+- errori operativi segnalati dal team

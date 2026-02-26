@@ -3,8 +3,8 @@
   flex-direction: column;
   gap: 1.5rem;
   padding: 2rem;
-  color: #f2f2f2;
-  background-color: #121212;
+  color: var(--app-main-text);
+  background-color: var(--app-main-bg);
   min-height: 100vh;
 }
 
@@ -34,10 +34,16 @@
   justify-content: flex-start;
   margin-bottom: 0.5rem;
 
+  app-dynamic-form {
+    width: 100%;
+    max-width: fit-content;
+  }
+
   mat-button-toggle-group {
-    background: #1c1c1c;
+    background: var(--glass-bg-strong);
     border-radius: 999px;
     padding: 0.15rem;
+    border: 1px solid var(--glass-border);
   }
 
   mat-button-toggle {
@@ -45,8 +51,8 @@
     color: rgba(255, 255, 255, 0.7);
 
     &.mat-button-toggle-checked {
-      background: #be9045;
-      color: #121212;
+      background: var(--accent);
+      color: var(--accent-ink);
       font-weight: 600;
     }
   }
@@ -67,10 +73,10 @@
 
 /* CARD FATTURA */
 .payment-card {
-  background: #151515;
+  background: var(--glass-bg);
   border-radius: 18px;
   padding: 0.9rem 1.1rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-soft);
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -126,7 +132,7 @@
       display: block;
       font-size: 1.1rem;
       font-weight: 700;
-      color: #be9045;
+      color: var(--accent);
     }
   }
 }
@@ -187,11 +193,11 @@
   }
 
   button[color='warn'] mat-icon {
-    color: #ff5252;
+    color: var(--app-status-danger-text);
   }
 
   button[color='accent'] mat-icon {
-    color: #2ecc71;
+    color: var(--app-status-success-text);
   }
 }
 

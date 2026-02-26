@@ -2,36 +2,12 @@
   <mat-card class="toolbar">
     <mat-card-title>Audit Logs</mat-card-title>
 
-    <form [formGroup]="filterForm" class="filters">
-      <mat-form-field appearance="outline">
-        <mat-label>Azione</mat-label>
-        <input matInput formControlName="action" placeholder="booking.update" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Actor ID</mat-label>
-        <input matInput formControlName="actorId" placeholder="uid..." />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Stato</mat-label>
-        <mat-select formControlName="status">
-          <mat-option value="">Tutti</mat-option>
-          <mat-option value="success">success</mat-option>
-          <mat-option value="error">error</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Da</mat-label>
-        <input matInput type="date" formControlName="from" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>A</mat-label>
-        <input matInput type="date" formControlName="to" />
-      </mat-form-field>
-    </form>
+    <app-dynamic-form
+      class="filters"
+      [fields]="filterFields"
+      [formGroupInput]="filterForm"
+      [showSubmit]="false"
+    ></app-dynamic-form>
 
     <div class="actions">
       <button mat-stroked-button (click)="resetFilters()">Reset filtri</button>

@@ -79,6 +79,14 @@
 .drawer { width: 420px; max-width: 92vw; }
 .mat-drawer-backdrop { background: rgba(0,0,0,.45) !important; }
 
+:host ::ng-deep .drawer-container .mat-drawer-backdrop.mat-drawer-shown {
+  z-index: var(--z-content-raised, 1) !important;
+}
+
+:host ::ng-deep .drawer-container .mat-drawer.mat-drawer-opened {
+  z-index: var(--z-panel, 6) !important;
+}
+
 /* ===========================
    Responsive (Phone / Tablet)
    =========================== */
@@ -106,7 +114,7 @@
   .filters {
     position: sticky;
     top: 64px;
-    z-index: 10;
+    z-index: var(--z-sticky, 10);
   }
 
   .content {

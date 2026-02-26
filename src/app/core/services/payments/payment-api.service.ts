@@ -1,20 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom, map, Observable, catchError, throwError, timeout, tap } from 'rxjs';
+import { firstValueFrom, map, Observable, catchError, throwError, tap } from 'rxjs';
 import { environment } from '../../../../environment';
+import { mapHttpError } from '../../http/http-error.mapper';
+import { withCriticalHttpPolicy } from '../../http/http-policy';
+import {
+  CreatePaymentIntentRequestDto,
+  CreatePaymentIntentResponseDto
+} from '../../models/api/payment-bridge.dto';
 
-export interface CreatePaymentRequest {
-  amount: number; // in centesimi
-  bookingId: string;
-  currency?: string;
-  description?: string;
-}
-
-interface CreatePaymentResponse {
-  success: boolean;
-  clientSecret: string;
-  paymentIntentId: string;
-}
+export type CreatePaymentRequest = CreatePaymentIntentRequestDto;
 
 export interface PaymentIntentResultOk {
   ok: true;
@@ -34,7 +29,6 @@ export type PaymentIntentResult = PaymentIntentResultOk | PaymentIntentResultErr
 })
 export class PaymentApiService {
   private readonly baseUrl = environment.paymentApiBaseUrl;
-  private readonly requestTimeoutMs = 15000;
 
   constructor(private http: HttpClient) {}
 
@@ -56,17 +50,24 @@ export class PaymentApiService {
     };
 
     return this.http
-      .post<CreatePaymentResponse>(`${this.baseUrl}/create`, requestBody)
+      .post<CreatePaymentIntentResponseDto>(`${this.baseUrl}/create`, requestBody)
       .pipe(
-        timeout(this.requestTimeoutMs),
+        withCriticalHttpPolicy(),
         map(res => this.mapCreatePaymentResponse(res)),
         tap(({ paymentIntentId }) => this.logDevPaymentIntent(paymentIntentId, requestBody.bookingId)),
-        catchError((err: any) => {
-          const msg = this.normalizeErrorMessage(err);
+        catchError((err: unknown) => {
+          const mapped = mapHttpError(err, {
+            fallbackMessage: 'Errore pagamento non previsto.',
+            timeoutMessage: 'Timeout chiamata pagamento. Riprova.',
+            networkMessage: 'Backend pagamenti non raggiungibile.',
+            badRequestMessage: 'Dati pagamento non validi.',
+            unauthorizedMessage: 'Non autorizzato alla creazione pagamento.',
+            serverMessage: 'Errore interno del backend pagamenti.'
+          });
           return throwError(() => ({
-            message: msg,
-            status: err?.status,
-            original: err
+            message: mapped.message,
+            status: mapped.status,
+            original: mapped.original
           }));
         })
       );
@@ -76,26 +77,16 @@ export class PaymentApiService {
     try {
       const data = await firstValueFrom(this.createPaymentIntent(payload));
       return { ok: true, data };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const mapped = mapHttpError(err, {
+        fallbackMessage: 'Errore creazione pagamento'
+      });
       return {
         ok: false,
-        error: String(err?.message ?? 'Errore creazione pagamento'),
-        status: err?.status
+        error: mapped.message,
+        status: mapped.status
       };
     }
-  }
-
-  private normalizeErrorMessage(err: any): string {
-    if (!err) return 'Errore di rete durante la richiesta pagamento.';
-    if (err?.name === 'TimeoutError') return 'Timeout chiamata pagamento. Riprova.';
-
-    const status = Number(err?.status ?? 0);
-    if (status === 0) return 'Backend pagamenti non raggiungibile.';
-    if (status === 400) return err?.error?.error || 'Dati pagamento non validi.';
-    if (status === 401 || status === 403) return 'Non autorizzato alla creazione pagamento.';
-    if (status >= 500) return 'Errore interno del backend pagamenti.';
-
-    return err?.error?.error || err?.message || 'Errore pagamento non previsto.';
   }
 
   private validateCreatePayload(payload: CreatePaymentRequest): string | null {
@@ -118,7 +109,7 @@ export class PaymentApiService {
     return null;
   }
 
-  private mapCreatePaymentResponse(res: CreatePaymentResponse): { clientSecret: string; paymentIntentId: string } {
+  private mapCreatePaymentResponse(res: CreatePaymentIntentResponseDto): { clientSecret: string; paymentIntentId: string } {
     if (!res?.success || !res?.clientSecret || !res?.paymentIntentId) {
       throw {
         message: 'Risposta backend pagamenti non valida.',

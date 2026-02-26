@@ -4,9 +4,9 @@
 
 .studio-settings {
   padding: 2rem;
-  background: #121212;
-  min-height: 100%;
-  color: #f2f2f2;
+  background: var(--app-main-bg);
+  min-height: 100vh;
+  color: var(--app-main-text);
 }
 
 .panel {
@@ -14,18 +14,18 @@
   margin: 0 auto;
   padding: 1.5rem;
   border-radius: 14px;
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
 }
 
 .head h2 {
   margin: 0;
-  color: #fff;
+  color: var(--app-main-text);
 }
 
 .head p {
   margin: 0.4rem 0 1rem;
-  color: #bdbdbd;
+  color: var(--app-main-text-muted);
 }
 
 .settings-form {
@@ -37,7 +37,7 @@
 .settings-form h3 {
   grid-column: 1 / -1;
   margin: 0.8rem 0 0.2rem;
-  color: #be9045;
+  color: var(--accent);
 }
 
 .full {

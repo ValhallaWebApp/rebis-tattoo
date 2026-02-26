@@ -1,27 +1,138 @@
 <div class="admin-dashboard">
+  <header class="dashboard-head">
+    <div>
+      <h1>{{ 'Dashboard Amministrativa'.toUpperCase() }}</h1>
+      <p class="subtitle">Vista operativa rapida: priorita del giorno e azioni immediate.</p>
+    </div>
+    <button mat-stroked-button [routerLink]="toRoute('calendar')">
+      <mat-icon>today</mat-icon>
+      Apri calendario
+    </button>
+  </header>
 
-  <h1>{{'Dashboard Amministrativa'.toUpperCase()}}</h1>
+  <section class="kpi-grid">
+    <mat-card class="kpi-card">
+      <mat-icon>event</mat-icon>
+      <div>
+        <div class="kpi-label">Appuntamenti oggi</div>
+        <div class="kpi-value">{{ todayAppointments.length }}</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-icon>hourglass_top</mat-icon>
+      <div>
+        <div class="kpi-label">In attesa oggi</div>
+        <div class="kpi-value">{{ todayPendingCount }}</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-icon>euro</mat-icon>
+      <div>
+        <div class="kpi-label">Incasso mese</div>
+        <div class="kpi-value">{{ totalRevenue | currency:'EUR':'symbol':'1.0-0':'it-IT' }}</div>
+      </div>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <mat-icon>groups</mat-icon>
+      <div>
+        <div class="kpi-label">Clienti totali</div>
+        <div class="kpi-value">{{ totalClients }}</div>
+      </div>
+    </mat-card>
+  </section>
+
+  <section class="ops-grid">
+    <mat-card class="wide-card">
+      <mat-card-header>
+        <mat-card-title>Focus operativo</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="focus-list">
+          <button mat-stroked-button [routerLink]="toRoute('calendar')">
+            <mat-icon>pending_actions</mat-icon>
+            Prenotazioni in attesa
+            <span class="badge">{{ todayPendingCount }}</span>
+          </button>
+
+          <button mat-stroked-button [routerLink]="toRoute('reviews')">
+            <mat-icon>rate_review</mat-icon>
+            Recensioni da moderare
+            <span class="badge">{{ pendingReviewsCount }}</span>
+          </button>
+
+          <button mat-stroked-button [routerLink]="toRoute('portfolio')">
+            <mat-icon>palette</mat-icon>
+            Progetti in corso
+            <span class="badge">{{ todayInProgressCount }}</span>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="wide-card">
+      <mat-card-header>
+        <mat-card-title>Agenda di oggi</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="list" *ngIf="todayTopAppointments.length; else noTodayBookings">
+          <div class="list-item" *ngFor="let booking of todayTopAppointments">
+            <div class="list-main">
+              <strong>{{ bookingTitle(booking) }}</strong>
+              <small>{{ bookingTime(booking) }}</small>
+            </div>
+            <span class="status-pill" [ngClass]="bookingStatusClass(booking?.status)">
+              {{ bookingStatusLabel(booking?.status) }}
+            </span>
+          </div>
+        </div>
+        <ng-template #noTodayBookings>
+          <p class="empty-text">Nessun appuntamento previsto per oggi.</p>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="wide-card">
+      <mat-card-header>
+        <mat-card-title>Recensioni recenti</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="reviews-list" *ngIf="latestReviews.length; else noReviews">
+          <div class="list-item" *ngFor="let review of latestReviews">
+            <div class="list-main">
+              <strong>{{ reviewAuthor(review) }}</strong>
+              <small>Rating: {{ review?.rating ?? '-' }}</small>
+            </div>
+            <span class="status-pill" [ngClass]="reviewStatusClass(review?.status)">
+              {{ reviewStatusLabel(review?.status) }}
+            </span>
+          </div>
+        </div>
+        <ng-template #noReviews>
+          <p class="empty-text">Nessuna recensione disponibile.</p>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </section>
 
   <h2 class="mat-headline-5 section-title">Sezioni rapide</h2>
 
-<div class="quick-grid">
-  <mat-card class="link-card mat-elevation-z2" *ngFor="let link of quickLinks">
-    <mat-card-header>
-      <mat-icon mat-card-avatar>{{ link.icon }}</mat-icon>
-      <mat-card-title>{{ link.title }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <p>{{ link.description }}</p>
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-raised-button color="primary" [routerLink]="link.route">
-        Vai
-      </button>
-    </mat-card-actions>
-  </mat-card>
-</div>
-
-
-
-
+  <div class="quick-grid">
+    <mat-card class="link-card mat-elevation-z2" *ngFor="let link of quickLinks">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>{{ link.icon }}</mat-icon>
+        <mat-card-title>{{ link.title }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>{{ link.description }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" [routerLink]="link.route">
+          Vai
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
 </div>

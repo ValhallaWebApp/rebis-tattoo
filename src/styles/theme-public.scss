@@ -31,6 +31,16 @@ body.theme-public {
 
   --app-main-bg: var(--page-bg);
   --app-main-text: var(--text-primary);
+  --app-main-text-muted: #c8ced8;
+  --app-surface: rgba(16, 17, 24, 0.68);
+  --app-surface-muted: rgba(20, 22, 30, 0.58);
+  --app-surface-strong: rgba(8, 9, 14, 0.84);
+  --app-surface-border: var(--glass-border);
+  --app-focus-ring: rgba(183, 155, 85, 0.55);
+  --app-success: #86efac;
+  --app-warning: #fbbf24;
+  --app-info: #7dd3fc;
+  --app-danger: #ef4444;
   --app-toolbar-bg: var(--glass-bg-strong);
   --app-toolbar-text: var(--text-primary);
   --app-toolbar-shadow: var(--glass-shadow);

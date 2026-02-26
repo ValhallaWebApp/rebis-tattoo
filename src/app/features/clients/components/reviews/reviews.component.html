@@ -1,9 +1,6 @@
 <mat-drawer-container class="drawer-wrap" autosize>
-
-  <!-- ✅ Drawer (overlay) -->
   <mat-drawer #reviewDrawer mode="over" position="end" class="drawer">
     <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="drawer-form">
-
       <div class="drawer-head">
         <h3>
           {{ isReadOnly ? 'Dettaglio Recensione' : (selectedReview ? 'Modifica Recensione' : 'Nuova Recensione') }}
@@ -14,36 +11,20 @@
         </button>
       </div>
 
-      <mat-form-field appearance="fill">
-        <mat-label>Artista</mat-label>
-        <input matInput [formControl]="artistCtrl" [matAutocomplete]="auto" />
-        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selectArtist($event.option.value)">
-          <mat-option *ngFor="let artist of filteredArtists$ | async" [value]="artist">
-            {{ artist.name }}
-          </mat-option>
-        </mat-autocomplete>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill">
-        <mat-label>Commento</mat-label>
-        <textarea matInput formControlName="comment" rows="4" placeholder="Raccontaci com’è andata…"></textarea>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill">
-        <mat-label>Valutazione</mat-label>
-        <mat-select formControlName="rating">
-          <mat-option *ngFor="let n of [1,2,3,4,5]" [value]="n">
-            {{ n }} stelle
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+      <app-dynamic-form
+        [fields]="reviewFields"
+        [formGroupInput]="reviewForm"
+        [showSubmit]="false"
+      ></app-dynamic-form>
 
       <div class="drawer-actions">
-        <button *ngIf="!isReadOnly"
-                mat-flat-button
-                color="primary"
-                type="submit"
-                [disabled]="reviewForm.invalid || submitting">
+        <button
+          *ngIf="!isReadOnly"
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="reviewForm.invalid || submitting"
+        >
           <mat-icon>save</mat-icon>
           Salva
         </button>
@@ -55,15 +36,12 @@
 
       <div class="drawer-foot" *ngIf="isReadOnly">
         <mat-icon>lock</mat-icon>
-        <span>Modalità sola lettura</span>
+        <span>Modalita sola lettura</span>
       </div>
-
     </form>
   </mat-drawer>
 
-  <!-- ✅ Page content (wrappato nello stesso container) -->
   <mat-drawer-content class="page">
-
     <section class="reviews">
       <div class="header-row">
         <h2 class="section-title">
@@ -77,19 +55,16 @@
       </div>
 
       <div class="toolbar">
-        <mat-form-field appearance="fill" class="status-filter">
-          <mat-label>Stato</mat-label>
-          <mat-select [formControl]="filterStatusCtrl">
-            <mat-option value="all">Tutti</mat-option>
-            <mat-option value="pending">In attesa</mat-option>
-            <mat-option value="approved">Pubblicate</mat-option>
-            <mat-option value="rejected">Rifiutate</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <app-dynamic-form
+          class="status-filter"
+          [fields]="statusFilterFields"
+          [formGroupInput]="statusFilterForm"
+          [showSubmit]="false"
+        ></app-dynamic-form>
 
         <div class="hint">
           <mat-icon>info</mat-icon>
-          <span>Le recensioni sono visibili al pubblico solo dopo l’approvazione.</span>
+          <span>Le recensioni sono visibili al pubblico solo dopo l'approvazione.</span>
         </div>
       </div>
 
@@ -116,17 +91,19 @@
             </mat-icon>
           </div>
 
-          <p class="comment">“{{ r.comment }}”</p>
+          <p class="comment">"{{ r.comment }}"</p>
 
           <div class="actions">
             <button mat-icon-button (click)="viewReview(r)" matTooltip="Apri">
               <mat-icon>visibility</mat-icon>
             </button>
 
-            <button *ngIf="canEditReview(r)"
-                    mat-icon-button
-                    (click)="editReview(r)"
-                    matTooltip="Modifica (entro 5 min)">
+            <button
+              *ngIf="canEditReview(r)"
+              mat-icon-button
+              (click)="editReview(r)"
+              matTooltip="Modifica (entro 5 min)"
+            >
               <mat-icon>edit</mat-icon>
             </button>
 
@@ -148,9 +125,6 @@
           </button>
         </div>
       </ng-template>
-
     </section>
-
   </mat-drawer-content>
-
 </mat-drawer-container>

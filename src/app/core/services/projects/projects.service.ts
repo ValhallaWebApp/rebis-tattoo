@@ -14,7 +14,7 @@ import {
 } from '@angular/fire/database';
 import { map, Observable } from 'rxjs';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
-import { AuthService } from '../auth/authservice';
+import { AuthService } from '../auth/auth.service';
 
 export type ProjectStatus = 'draft' | 'scheduled' | 'active' | 'healing' | 'completed' | 'cancelled';
 
@@ -313,7 +313,11 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
     const current = String((p as any).bookingId ?? '').trim();
     if (!current) return;
     if (current !== String(bookingId ?? '').trim()) return;
-    await this.updateProject(projectId, { bookingId: undefined });
+    await this.ensureProjectUpdateAccess(projectId, {});
+    await update(ref(this.db, `${this.path}/${projectId}`), {
+      bookingId: null,
+      updatedAt: this.formatLocal(new Date())
+    } as any);
   }
 
   /** ✅ aggiunge sessionId in array (no duplicati) */
@@ -373,3 +377,5 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
     return `${y}-${m}-${day}T${hh}:${mm}:${ss}`;
   }
 }
+
+

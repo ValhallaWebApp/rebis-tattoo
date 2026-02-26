@@ -53,19 +53,21 @@
 }
 
 .pm__tools {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
   gap: 12px;
 
-  .search { width: 360px; }
+  app-dynamic-form {
+    width: 100%;
+  }
 }
 
 @media (max-width: 980px) {
   .pm__header { flex-direction: column; align-items: stretch; }
   .pm__tools {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     align-items: stretch;
-    .search { width: 100%; }
   }
 }
 
@@ -171,13 +173,13 @@
     &.is-hidden {
       border-color: rgba(244,63,94,.35);
       background: rgba(244,63,94,.12);
-      color: #fecdd3;
+      color: var(--app-status-danger-text);
     }
 
     &.is-settled {
       border-color: rgba(34,197,94,.45);
       background: rgba(34,197,94,.14);
-      color: #bbf7d0;
+      color: var(--app-status-success-text);
     }
   }
 }
@@ -191,12 +193,12 @@
   background: var(--pm-surface);
   opacity: .95;
 }
-.status[data-status="draft"] { color: #cbd5f5; border-color: rgba(148,163,184,.35); }
-.status[data-status="scheduled"] { color: #93c5fd; border-color: rgba(59,130,246,.35); }
-.status[data-status="active"] { color: #86efac; border-color: rgba(34,197,94,.35); }
-.status[data-status="healing"] { color: #fbbf24; border-color: rgba(251,191,36,.35); }
-.status[data-status="completed"] { color: #a78bfa; border-color: rgba(167,139,250,.35); }
-.status[data-status="cancelled"] { color: #fca5a5; border-color: rgba(239,68,68,.35); }
+.status[data-status="draft"] { color: var(--app-status-neutral-text); border-color: rgba(148,163,184,.35); }
+.status[data-status="scheduled"] { color: var(--app-status-info-text); border-color: rgba(59,130,246,.35); }
+.status[data-status="active"] { color: var(--app-status-success-text); border-color: rgba(34,197,94,.35); }
+.status[data-status="healing"] { color: var(--app-status-warning-text); border-color: rgba(251,191,36,.35); }
+.status[data-status="completed"] { color: var(--app-status-info-text); border-color: rgba(167,139,250,.35); }
+.status[data-status="cancelled"] { color: var(--app-status-danger-text); border-color: rgba(239,68,68,.35); }
 
 .meta {
   margin-top: 10px;
@@ -357,7 +359,7 @@
     background: rgba(34,197,94,.12);
 
     strong {
-      color: #bbf7d0;
+      color: var(--app-status-success-text);
     }
   }
 }

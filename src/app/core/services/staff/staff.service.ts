@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Database, get, onValue, ref, remove, set, update } from '@angular/fire/database';
 import { catchError, combineLatest, map, Observable, of } from 'rxjs';
-import { AuthService } from '../auth/authservice';
+import { AuthService } from '../auth/auth.service';
 import { ConfirmActionService } from '../ui/confirm-action.service';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 
@@ -524,3 +524,5 @@ export class StaffService {
     await Promise.all(writes);
   }
 }
+
+

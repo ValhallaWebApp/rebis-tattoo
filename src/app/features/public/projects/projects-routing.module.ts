@@ -1,7 +1,4 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { ProjectDetailComponent } from './components/project-detail/project-detail.component';
-import { ProjectListComponent } from './components/project-list/project-list.component';
+import { Routes } from '@angular/router';
 
 export const PROJECTS_ROUTES: Routes = [
   // /progetti

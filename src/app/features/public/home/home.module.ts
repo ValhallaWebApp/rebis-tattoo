@@ -10,7 +10,7 @@ import { HomeProjectsComponent } from "./components/home-projects/home-projects.
 import { HomeContactComponent } from "./components/home-contact/home-contact.component";
 import { HomeFeaturedArtistsComponent } from "./components/home-featured-artists/home-featured-artists.component";
 import { HomeFaqComponent } from './components/home-faq/home-faq.component';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { ShowcaseComponent } from './components/showcase/showcase.component';
 import { MaterialModule } from '../../../core/modules/material.module';
 
@@ -33,7 +33,6 @@ import { MaterialModule } from '../../../core/modules/material.module';
     HomeRoutingModule,
     MaterialModule,
     ReactiveFormsModule,
-    FormsModule,
 ]
 })
 export class HomeModule { }

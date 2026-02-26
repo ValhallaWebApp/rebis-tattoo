@@ -19,37 +19,12 @@
   <!-- CONTENUTO PRINCIPALE -->
   <div class="drawer-content">
     <!-- FILTRI -->
-    <form [formGroup]="filterForm" class="filters">
-      <mat-form-field>
-        <mat-label>Nome</mat-label>
-        <input
-          matInput
-          formControlName="name"
-          placeholder="Filtra per nome"
-        />
-      </mat-form-field>
-
-      <mat-form-field>
-        <mat-label>Categoria</mat-label>
-        <mat-select formControlName="categoria">
-          <mat-option value="">Tutte</mat-option>
-          <mat-option value="tatuaggio">Tatuaggio</mat-option>
-          <mat-option value="piercing">Piercing</mat-option>
-          <mat-option value="laser">Laser</mat-option>
-          <mat-option value="consulenza">Consulenza</mat-option>
-          <mat-option value="altro">Altro</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field>
-        <mat-label>Visibilita'</mat-label>
-        <mat-select formControlName="visibile">
-          <mat-option value="">Tutti</mat-option>
-          <mat-option value="true">Solo visibili</mat-option>
-          <mat-option value="false">Solo nascosti</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </form>
+    <app-dynamic-form
+      class="filters"
+      [fields]="filterFields"
+      [formGroupInput]="filterForm"
+      [showSubmit]="false"
+    ></app-dynamic-form>
 
     <!-- LISTA SERVIZI -->
     <div class="service-cards">

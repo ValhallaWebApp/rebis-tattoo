@@ -9,7 +9,7 @@
     <div *ngIf="showNoteInput" class="note-input">
       <mat-form-field appearance="outline" floatLabel="auto">
         <mat-label>Nota di chiusura (opzionale)</mat-label>
-        <input matInput [(ngModel)]="note" />
+        <input matInput [formControl]="noteCtrl" />
       </mat-form-field>
 
       <button mat-stroked-button color="accent" (click)="confirm('close')">

@@ -1,10 +1,20 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Auth } from '@angular/fire/auth';
 import { Database, get as getDb, onValue, ref, update as updateDb } from '@angular/fire/database';
 import { catchError, map, Observable, of } from 'rxjs';
-import { AuthService } from '../auth/authservice';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuditLogService } from '../audit/audit-log.service';
 import { ConfirmActionService } from '../ui/confirm-action.service';
+import { environment } from '../../../../environment';
+import { mapHttpError } from '../../http/http-error.mapper';
+import { withCriticalHttpPolicy } from '../../http/http-policy';
+import {
+  StaffSyncProfileRequestDto,
+  StaffSyncProfileResponseDto
+} from '../../models/api/payment-bridge.dto';
 
 export type UserRole = 'admin' | 'staff' | 'client' | 'user' | 'guest' | 'public';
 
@@ -38,23 +48,26 @@ export interface User {
   phone?: string;
   isActive?: boolean;
   isVisible?: boolean;
-  deletedAt?: any;
-  createdAt: any;
-  updatedAt?: any;
-  urlAvatar: any
+  deletedAt?: string | null;
+  createdAt: string | number | null;
+  updatedAt?: string | number | null;
+  urlAvatar: string | null;
   // altri campi...
 }
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private db = inject(Database);
+  private http = inject(HttpClient);
+  private firebaseAuth = inject(Auth);
   private auth = inject(AuthService);
   private ui = inject(UiFeedbackService);
   private audit = inject(AuditLogService);
   private confirmAction = inject(ConfirmActionService);
+  private readonly paymentApiBaseUrl = environment.paymentApiBaseUrl.replace(/\/+$/, '');
 
-  private normalizePermissions(input: any): UserPermissions {
-    const source = (input && typeof input === 'object') ? input as Record<string, any> : {};
+  private normalizePermissions(input: unknown): UserPermissions {
+    const source = (input && typeof input === 'object') ? input as Record<string, unknown> : {};
     const normalized: UserPermissions = {};
     for (const [key, value] of Object.entries(source)) {
       normalized[key] = value === true;
@@ -72,17 +85,29 @@ export class UserService {
     return s;
   }
 
+  private normalizeTemporal(value: unknown): string | number | null {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'string' || typeof value === 'number') return value;
+    return String(value);
+  }
+
+  private normalizeOptionalString(value: unknown): string | null {
+    if (value === null || value === undefined) return null;
+    const text = String(value).trim();
+    return text ? text : null;
+  }
+
   private isVisibleAndNotDeleted(user: Pick<User, 'isVisible' | 'deletedAt'>): boolean {
     return user.isVisible !== false && !this.normalizeDeletedAt(user.deletedAt);
   }
 
-  private normalizeUser(input: any): User {
-    const raw = (input ?? {}) as Record<string, any>;
+  private normalizeUser(input: unknown): User {
+    const raw = (input ?? {}) as Record<string, unknown>;
     const canonicalId = String(raw['id'] ?? raw['uid'] ?? '').trim();
     const { uid: _uid, ...rest } = raw;
 
     return {
-      ...(rest as any),
+      ...(rest as Record<string, unknown>),
       id: canonicalId,
       name: String(raw['name'] ?? ''),
       email: String(raw['email'] ?? ''),
@@ -93,9 +118,9 @@ export class UserService {
       isActive: raw['isActive'] !== undefined ? Boolean(raw['isActive']) : undefined,
       isVisible: raw['isVisible'] !== undefined ? Boolean(raw['isVisible']) : undefined,
       deletedAt: this.normalizeDeletedAt(raw['deletedAt']),
-      createdAt: raw['createdAt'] ?? null,
-      updatedAt: raw['updatedAt'] ?? null,
-      urlAvatar: raw['urlAvatar'] ?? raw['avatar'] ?? null
+      createdAt: this.normalizeTemporal(raw['createdAt']),
+      updatedAt: this.normalizeTemporal(raw['updatedAt']),
+      urlAvatar: this.normalizeOptionalString(raw['urlAvatar'] ?? raw['avatar'])
     };
   }
 
@@ -109,8 +134,8 @@ export class UserService {
             observer.next([]);
             return;
           }
-          const raw = snap.val() as Record<string, any>;
-          const list = Object.entries(raw).map(([id, value]) => this.normalizeUser({ id, ...(value as any) }));
+          const raw = snap.val() as Record<string, unknown>;
+          const list = Object.entries(raw).map(([id, value]) => this.normalizeUser({ id, ...(value as Record<string, unknown>) }));
           observer.next(list);
         },
         (err) => observer.error(err)
@@ -143,8 +168,9 @@ export class UserService {
   }
 
   private isPermissionDeniedError(err: unknown): boolean {
-    const code = String((err as any)?.code ?? '').toLowerCase();
-    const msg = String((err as any)?.message ?? '').toLowerCase();
+    const payload = err as { code?: unknown; message?: unknown } | null;
+    const code = String(payload?.code ?? '').toLowerCase();
+    const msg = String(payload?.message ?? '').toLowerCase();
     return code.includes('permission-denied') || msg.includes('permission_denied') || msg.includes('permission denied');
   }
 
@@ -223,15 +249,15 @@ export class UserService {
     );
   }
 
-  private isVisibleUser(data: Record<string, any> | undefined): boolean {
+  private isVisibleUser(data: Record<string, unknown> | undefined): boolean {
     if (!data) return false;
     return data['isVisible'] !== false && !data['deletedAt'];
   }
 
   private async syncStaffProfileForRoleChange(
     userId: string,
-    currentUser: Record<string, any>,
-    nextUser: Record<string, any>,
+    currentUser: Record<string, unknown>,
+    nextUser: Record<string, unknown>,
     prevRole: string,
     nextRole: string,
     nowIso: string
@@ -243,8 +269,8 @@ export class UserService {
 
     if (normalizedPrevRole !== 'staff' && normalizedNextRole === 'staff') {
       const profileSnap = await getDb(profileRef);
-      const existing = (profileSnap.exists() ? profileSnap.val() : {}) as Record<string, any>;
-      await updateDb(profileRef, {
+      const existing = (profileSnap.exists() ? profileSnap.val() : {}) as Record<string, unknown>;
+      const staffProfilePatch: Record<string, unknown> = {
         id: userId,
         userId,
         name: String(nextUser['name'] ?? currentUser['name'] ?? '').trim() || userId,
@@ -255,8 +281,10 @@ export class UserService {
         phone: String(nextUser['phone'] ?? currentUser['phone'] ?? ''),
         isActive: nextUser['isActive'] !== false,
         deletedAt: null,
-      } as any);
-      await updateDb(publicRef, {
+      };
+      await updateDb(profileRef, staffProfilePatch);
+
+      const publicStaffPatch: Record<string, unknown> = {
         id: userId,
         userId,
         name: String(nextUser['name'] ?? currentUser['name'] ?? '').trim() || userId,
@@ -267,25 +295,29 @@ export class UserService {
         phone: String(nextUser['phone'] ?? currentUser['phone'] ?? ''),
         isActive: nextUser['isActive'] !== false,
         deletedAt: null,
-      } as any);
+      };
+      await updateDb(publicRef, publicStaffPatch);
       return;
     }
 
     if (normalizedPrevRole === 'staff' && normalizedNextRole !== 'staff') {
-      await updateDb(profileRef, { isActive: false, deletedAt: nowIso } as any);
-      await updateDb(publicRef, { isActive: false, deletedAt: nowIso } as any);
+      const disablePatch: Record<string, unknown> = { isActive: false, deletedAt: nowIso };
+      await updateDb(profileRef, disablePatch);
+      await updateDb(publicRef, disablePatch);
       return;
     }
 
     if (normalizedNextRole === 'staff') {
-      await updateDb(profileRef, {
+      const staffProfileUpdatePatch: Record<string, unknown> = {
         name: String(nextUser['name'] ?? currentUser['name'] ?? '').trim(),
         photoUrl: String(nextUser['urlAvatar'] ?? currentUser['urlAvatar'] ?? ''),
         email: String(nextUser['email'] ?? currentUser['email'] ?? ''),
         phone: String(nextUser['phone'] ?? currentUser['phone'] ?? ''),
         isActive: nextUser['isActive'] !== false,
-      } as any);
-      await updateDb(publicRef, {
+      };
+      await updateDb(profileRef, staffProfileUpdatePatch);
+
+      const publicStaffUpdatePatch: Record<string, unknown> = {
         id: userId,
         userId,
         name: String(nextUser['name'] ?? currentUser['name'] ?? '').trim(),
@@ -295,7 +327,56 @@ export class UserService {
         phone: String(nextUser['phone'] ?? currentUser['phone'] ?? ''),
         isActive: nextUser['isActive'] !== false,
         deletedAt: null,
-      } as any);
+      };
+      await updateDb(publicRef, publicStaffUpdatePatch);
+    }
+  }
+
+  private async syncStaffProfileForRoleChangeViaBackend(
+    userId: string,
+    currentUser: Record<string, unknown>,
+    nextUser: Record<string, unknown>,
+    prevRole: string,
+    nextRole: string,
+    nowIso: string
+  ): Promise<void> {
+    const token = await this.firebaseAuth.currentUser?.getIdToken();
+    if (!token) throw new Error('missing-auth-token');
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    const request: StaffSyncProfileRequestDto = {
+      userId,
+      currentUser,
+      nextUser,
+      prevRole,
+      nextRole,
+      nowIso
+    };
+
+    let response: StaffSyncProfileResponseDto;
+    try {
+      response = await firstValueFrom(
+        this.http.post<StaffSyncProfileResponseDto>(
+          `${this.paymentApiBaseUrl}/staff/sync-profile`,
+          request,
+          { headers }
+        ).pipe(withCriticalHttpPolicy())
+      );
+    } catch (error) {
+      const mapped = mapHttpError(error, {
+        fallbackMessage: 'Errore sincronizzazione profilo staff.',
+        timeoutMessage: 'Timeout sincronizzazione profilo staff.',
+        networkMessage: 'Backend sync staff non raggiungibile.'
+      });
+      throw new Error(mapped.message);
+    }
+
+    if (!response?.success) {
+      throw new Error('invalid-backend-sync-response');
     }
   }
 
@@ -323,10 +404,10 @@ export class UserService {
   async getVisibleAdminCount(excludeUserId?: string): Promise<number> {
     const snap = await getDb(ref(this.db, 'users'));
     if (!snap.exists()) return 0;
-    const users = Object.entries((snap.val() ?? {}) as Record<string, any>);
+    const users = Object.entries((snap.val() ?? {}) as Record<string, unknown>);
     return users.reduce((acc, [id, raw]) => {
       if (excludeUserId && id === excludeUserId) return acc;
-      const data = (raw ?? {}) as Record<string, any>;
+      const data = (raw ?? {}) as Record<string, unknown>;
       if (String(data['role'] ?? '') !== 'admin') return acc;
       if (this.isVisibleUser(data)) return acc + 1;
       return acc;
@@ -342,7 +423,7 @@ export class UserService {
 
       const userRef = ref(this.db, `users/${userId}`);
       const currentSnap = await getDb(userRef);
-      const current = (currentSnap.val() ?? {}) as Record<string, any>;
+      const current = (currentSnap.val() ?? {}) as Record<string, unknown>;
       const nowIso = new Date().toISOString();
       const currentRole = String(current['role'] ?? '');
       const nextRole = patch.role ? String(patch.role) : currentRole;
@@ -366,32 +447,48 @@ export class UserService {
       delete safePatch['id'];
       delete safePatch['uid'];
       delete safePatch['createdAt'];
-      await updateDb(userRef, safePatch as any);
+      await updateDb(userRef, safePatch);
       let syncWarning: string | null = null;
       const shouldSyncStaff = this.shouldSyncStaffProfile(patch, currentRole, String(nextRole));
       if (shouldSyncStaff) {
         try {
-          await this.syncStaffProfileForRoleChange(
+          const mergedUser = {
+            ...current,
+            ...(safePatch as Record<string, unknown>)
+          } as Record<string, unknown>;
+
+          await this.syncStaffProfileForRoleChangeViaBackend(
             userId,
             current,
-            { ...current, ...(safePatch as Record<string, unknown>) } as Record<string, any>,
+            mergedUser,
             currentRole,
             String(nextRole),
             nowIso
           );
         } catch (syncErr) {
-          syncWarning = this.isPermissionDeniedError(syncErr)
-            ? 'Utente aggiornato, ma sincronizzazione staff non consentita dalle regole database.'
-            : 'Utente aggiornato, ma sincronizzazione staff non completata.';
-          void this.audit.log({
-            action: 'user.update.staffSync',
-            resource: 'staffProfile',
-            resourceId: userId,
-            status: 'error',
-            actorId: actor?.uid,
-            actorRole: actor?.role,
-            targetUserId: userId
-          });
+          try {
+            await this.syncStaffProfileForRoleChange(
+              userId,
+              current,
+              { ...current, ...(safePatch as Record<string, unknown>) } as Record<string, unknown>,
+              currentRole,
+              String(nextRole),
+              nowIso
+            );
+          } catch (fallbackSyncErr) {
+            syncWarning = this.isPermissionDeniedError(fallbackSyncErr)
+              ? 'Utente aggiornato, ma sincronizzazione staff non consentita dalle regole database.'
+              : 'Utente aggiornato, ma sincronizzazione staff non completata.';
+            void this.audit.log({
+              action: 'user.update.staffSync',
+              resource: 'staffProfile',
+              resourceId: userId,
+              status: 'error',
+              actorId: actor?.uid,
+              actorRole: actor?.role,
+              targetUserId: userId
+            });
+          }
         }
       }
       void this.audit.log({
@@ -406,7 +503,7 @@ export class UserService {
       });
       this.ui.success(this.buildUpdateSuccessMessage(patch));
       if (syncWarning) this.ui.warn(syncWarning);
-    } catch (error: any) {
+    } catch (error: unknown) {
       void this.audit.log({
         action: 'user.update',
         resource: 'user',
@@ -417,7 +514,7 @@ export class UserService {
         targetUserId: userId,
         meta: { changedKeys: Object.keys(patch ?? {}) }
       });
-      this.ui.error(error?.message || 'Errore aggiornamento utente');
+      this.ui.error(this.getErrorMessage(error, 'Errore aggiornamento utente'));
       throw error;
     }
   }
@@ -439,7 +536,7 @@ export class UserService {
 
       const userRef = ref(this.db, `users/${userId}`);
       const currentSnap = await getDb(userRef);
-      const current = (currentSnap.val() ?? {}) as Record<string, any>;
+      const current = (currentSnap.val() ?? {}) as Record<string, unknown>;
       const currentRole = String(current['role'] ?? '');
       if (currentRole === 'admin') {
         const adminCount = await this.getVisibleAdminCount();
@@ -448,12 +545,13 @@ export class UserService {
         }
       }
 
-      await updateDb(userRef, {
+      const hidePatch: Record<string, unknown> = {
         isVisible: false,
         isActive: false,
         deletedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      } as any);
+      };
+      await updateDb(userRef, hidePatch);
       void this.audit.log({
         action: 'user.hide',
         resource: 'user',
@@ -464,7 +562,7 @@ export class UserService {
         targetUserId: userId
       });
       this.ui.warn('Utente nascosto');
-    } catch (error: any) {
+    } catch (error: unknown) {
       void this.audit.log({
         action: 'user.hide',
         resource: 'user',
@@ -474,8 +572,17 @@ export class UserService {
         actorRole: actor?.role,
         targetUserId: userId
       });
-      this.ui.error(error?.message || 'Errore eliminazione utente');
+      this.ui.error(this.getErrorMessage(error, 'Errore eliminazione utente'));
       throw error;
     }
   }
+
+  private getErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof Error && error.message) return error.message;
+    const maybeMessage = (error as { message?: unknown } | null)?.message;
+    if (typeof maybeMessage === 'string' && maybeMessage.trim()) return maybeMessage;
+    return fallback;
+  }
 }
+
+

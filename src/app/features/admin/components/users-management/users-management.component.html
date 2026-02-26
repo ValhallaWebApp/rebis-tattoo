@@ -8,17 +8,12 @@
     <mat-button-toggle value="staff">Staff</mat-button-toggle>
   </mat-button-toggle-group>
 
-  <form [formGroup]="filterForm" class="filters">
-    <mat-form-field>
-      <mat-label>Nome</mat-label>
-      <input matInput formControlName="name" placeholder="Mario Rossi" />
-    </mat-form-field>
-
-    <mat-form-field>
-      <mat-label>Email</mat-label>
-      <input matInput formControlName="email" placeholder="mario@email.com" />
-    </mat-form-field>
-  </form>
+  <app-dynamic-form
+    class="filters"
+    [fields]="filterFields"
+    [formGroupInput]="filterForm"
+    [showSubmit]="false"
+  ></app-dynamic-form>
 
   <div class="pager-row" *ngIf="filteredUsers.length > 0">
     <mat-form-field appearance="outline" class="page-size-field">

@@ -12,48 +12,11 @@
   </div>
 
   <div class="toolbar" *ngIf="showFilters">
-    <mat-form-field appearance="fill">
-      <mat-label>Ricerca</mat-label>
-      <input matInput [formControl]="searchControl" placeholder="Commento, titolo o artista" />
-    </mat-form-field>
-
-    <mat-form-field appearance="fill">
-      <mat-label>Artista</mat-label>
-      <mat-select [formControl]="artistControl">
-        <mat-option value="">Tutti</mat-option>
-        <mat-option *ngFor="let artist of artists" [value]="artist.id">
-          {{ artist.name }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="fill">
-      <mat-label>Rating minimo</mat-label>
-      <mat-select [formControl]="ratingControl">
-        <mat-option value="">Tutti</mat-option>
-        <mat-option *ngFor="let r of [1,2,3,4,5]" [value]="r">{{ r }}+</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="fill">
-      <mat-label>Stato</mat-label>
-      <mat-select [formControl]="statusControl">
-        <mat-option value="">Tutti</mat-option>
-        <mat-option value="approved">Approvate</mat-option>
-        <mat-option value="pending">In attesa</mat-option>
-        <mat-option value="rejected">Rifiutate</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="fill">
-      <mat-label>Ordina per</mat-label>
-      <mat-select [formControl]="orderByControl">
-        <mat-option value="date_desc">Data (recenti)</mat-option>
-        <mat-option value="date_asc">Data (vecchie)</mat-option>
-        <mat-option value="rating_desc">Valutazione (alta)</mat-option>
-        <mat-option value="rating_asc">Valutazione (bassa)</mat-option>
-      </mat-select>
-    </mat-form-field>
+    <app-dynamic-form
+      [fields]="filterFields"
+      [formGroupInput]="filterForm"
+      [showSubmit]="false"
+    ></app-dynamic-form>
 
     <button mat-button type="button" class="reset-btn" (click)="resetFilters()">
       <mat-icon>restart_alt</mat-icon>

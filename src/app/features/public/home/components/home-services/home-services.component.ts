@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { LanguageService } from '../../../../../core/services/language/language.service';
 import { Service, ServicesService } from '../../../../../core/services/services/services.service';
@@ -6,6 +6,7 @@ import { Service, ServicesService } from '../../../../../core/services/services/
 @Component({
   selector: 'app-home-services',
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home-services.component.html',
   styleUrl: './home-services.component.scss'
 })

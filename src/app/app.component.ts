@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSidenav } from '@angular/material/sidenav';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { Observable, of, filter } from 'rxjs';
-import { AuthService } from './core/services/auth/authservice';
+import { AuthService } from './core/services/auth/auth.service';
 import { MenuItem, MenuService, MenuUserContext } from './core/services/menu/menu.service';
 import { MaterialModule } from './core/modules/material.module';
 import { AppNotification } from './core/models/notification.model';
@@ -140,3 +140,5 @@ export class AppComponent implements OnInit {
     await this.notificationService.markAllAsRead(user.uid);
   }
 }
+
+

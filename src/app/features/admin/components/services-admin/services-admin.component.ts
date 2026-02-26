@@ -7,18 +7,45 @@ import { MaterialModule } from '../../../../core/modules/material.module';
 import { Service, ServicesService } from '../../../../core/services/services/services.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ServiceEditorDialogComponent, ServiceEditorDialogData } from './service-editor-dialog/service-editor-dialog.component';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 
 @Component({
   selector: 'app-services-admin',
   standalone: true,
-  imports: [CommonModule, MaterialModule, ReactiveFormsModule,MatTooltipModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, MatTooltipModule, DynamicFormComponent],
   templateUrl: './services-admin.component.html',
   styleUrl: './services-admin.component.scss',
 })
 export class ServicesAdminComponent implements OnInit {
   services: Service[] = [];
   filteredServices: Service[] = [];
+  readonly filterFields: DynamicField[] = [
+    { type: 'text', name: 'name', label: 'Nome', placeholder: 'Filtra per nome' },
+    {
+      type: 'select',
+      name: 'categoria',
+      label: 'Categoria',
+      options: [
+        { label: 'Tutte', value: '' },
+        { label: 'Tatuaggio', value: 'tatuaggio' },
+        { label: 'Piercing', value: 'piercing' },
+        { label: 'Laser', value: 'laser' },
+        { label: 'Consulenza', value: 'consulenza' },
+        { label: 'Altro', value: 'altro' }
+      ]
+    },
+    {
+      type: 'select',
+      name: 'visibile',
+      label: "Visibilita'",
+      options: [
+        { label: 'Tutti', value: '' },
+        { label: 'Solo visibili', value: 'true' },
+        { label: 'Solo nascosti', value: 'false' }
+      ]
+    }
+  ];
 
   filterForm!: FormGroup;
 

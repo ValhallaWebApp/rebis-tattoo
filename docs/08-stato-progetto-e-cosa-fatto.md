@@ -1,24 +1,34 @@
 ﻿# 08 - Stato Progetto e Cosa e stato fatto
 
-## Interventi tecnici recenti
-- rifattorizzata configurazione ambiente con runtime config esterna (`app-config.js`)
-- introdotta validazione ambiente all'avvio app
-- riallineato flow pagamento fast-booking al backend reale
-- rimossa simulazione pagamento nello step UI
-- aggiunti lock anti doppio submit su pagamento/conferma
-- introdotto hardening stato booking post-pagamento
-- ridotto rumore errori notifiche per utenti non-admin
+## Stato attuale (As-Is)
+Il prodotto e utilizzabile sui flussi principali:
+- navigazione pubblico/client/admin
+- auth e gestione ruoli
+- fast-booking con pagamento Stripe
+- calendario/booking/progetti/sessioni
+- messaggistica e notifiche
 
-## Effetto pratico
-- demo cliente piu affidabile sul flusso booking+pagamento
-- minore dipendenza da valori hardcoded in repository
-- migliore governance configurazioni per dev/stage/prod
+## Punti consolidati
+- runtime config esterna (`app-config.js`) + validazione bootstrap
+- payment flow collegato a backend Cloud Functions
+- hardening transizioni stato booking
+- guard route e permessi staff/admin gia operativi
+- chatbot locale con pipeline worker e fallback
 
-## Debito tecnico residuo
-- consolidamento pagamenti anche in aree legacy admin/client
-- migrazione logica notifiche cross-user su backend
-- test automatici completi su payment flow
-- allineamento completo modelli legacy/new fields
+## Debito tecnico aperto
+- architettura ibrida (standalone + moduli) da uniformare
+- presenza di `any` in aree core (booking/fast-booking)
+- parte logica business critica ancora lato frontend
+- copertura e2e limitata (attualmente 1 spec visual home)
+- convergenza naming legacy/canonico ancora incompleta in alcuni dati storici
 
-## Stato complessivo
-Progetto funzionante su percorsi principali, con margini di consolidamento su hardening, test e uniformita dominio.
+## Rischi principali
+- regressioni su flusso pagamento senza test end-to-end estesi
+- mismatch possibili tra dataset mock e rules runtime
+- gestione notifiche cross-user dipendente da permessi runtime
+
+## Priorita consigliate
+1. estendere test e2e su fast-booking e pagamenti
+2. spostare operazioni sensibili su backend privilegiato
+3. ridurre `any` e rafforzare contratti tipizzati
+4. completare migrazione verso componenti/feature completamente standalone

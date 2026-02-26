@@ -1,20 +1,41 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { Invoice, InvoicesService } from '../../../../core/services/invoices/invoices.service';
-import { AuthService } from '../../../../core/services/auth/authservice';
+import { AuthService } from '../../../../core/services/auth/auth.service';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
+import { FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'app-billing',
   standalone: true,
-  imports: [CommonModule, MaterialModule, FormsModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, DynamicFormComponent],
   templateUrl: './billing.component.html',
   styleUrls: ['./billing.component.scss']
 })
 export class BillingComponent implements OnInit {
-  selectedStatus: string = 'all';
+  private readonly destroyRef = inject(DestroyRef);
+
+  selectedStatusCtrl = new FormControl<'all' | 'pending' | 'paid' | 'cancelled'>('all', { nonNullable: true });
+  readonly filterForm = new FormGroup({
+    selectedStatusCtrl: this.selectedStatusCtrl
+  });
+  readonly filterFields: DynamicField[] = [
+    {
+      type: 'button-toggle',
+      name: 'selectedStatusCtrl',
+      label: 'Scegli stato fatture',
+      options: [
+        { label: 'Tutte', value: 'all' },
+        { label: 'In sospeso', value: 'pending' },
+        { label: 'Completate', value: 'paid' },
+        { label: 'Annullate', value: 'cancelled' }
+      ]
+    }
+  ];
   allInvoices: Invoice[] = []
   filteredPayments: Invoice[] = [];
 
@@ -34,11 +55,17 @@ export class BillingComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.invoiceService.getInvoices().subscribe((invoices) => {
+    this.invoiceService.getInvoices().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((invoices) => {
       this.allInvoices = invoices;
       this.filterPayments();
     });
-  }
+
+    this.selectedStatusCtrl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.filterPayments());
+}
 markAsPaid(invoice: Invoice): void {
   this.invoiceService.updateInvoice(invoice.id!, {
     status: 'paid',
@@ -75,15 +102,14 @@ getStatusColor(status: string): string {
     this.router.navigate([`${base}/invoices`, invoiceId]);
   }
 
-  onStatusChange() {
-    this.filterPayments();
-  }
-
   filterPayments() {
-    if (this.selectedStatus === 'all') {
+    const status = this.selectedStatusCtrl.value;
+    if (status === 'all') {
       this.filteredPayments = this.allInvoices;
     } else {
-      this.filteredPayments = this.allInvoices.filter(i => i.status === this.selectedStatus);
+      this.filteredPayments = this.allInvoices.filter(i => i.status === status);
     }
   }
 }
+
+

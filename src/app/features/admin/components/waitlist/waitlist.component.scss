@@ -1,11 +1,11 @@
 .waitlist-section {
   padding:8vh 2rem;
-  background-color: #111;
-  color: whitesmoke;
-  min-height: 90vh;
+  background-color: var(--app-main-bg);
+  color: var(--app-main-text);
+  min-height: 100vh;
   .section-title {
     font-size: 1.8rem;
-    color: #d4af37;
+    color: var(--accent);
     margin-bottom: 2rem;
     text-align: center;
   }
@@ -17,21 +17,22 @@
   }
 
   .waitlist-card {
-    background-color: #1a1a1a;
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     border-radius: 12px;
     padding: 1rem;
-    color: whitesmoke;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+    color: var(--app-main-text);
+    box-shadow: var(--shadow-soft);
 
     mat-card-title {
       font-weight: 600;
       font-size: 1.2rem;
-      color: #d4af37;
+      color: var(--accent);
     }
 
     mat-card-subtitle {
       font-size: 0.9rem;
-      color: #ccc;
+      color: var(--app-main-text-muted);
 
       p {
         margin: 0.3rem 0;
@@ -52,7 +53,7 @@
   .empty-state {
     text-align: center;
     font-size: 1rem;
-    color: #888;
+    color: var(--app-main-text-muted);
     margin-top: 2rem;
   }
 }

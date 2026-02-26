@@ -2,11 +2,11 @@
   position: fixed;
   bottom: 16px;
   right: 16px;
-  z-index: 1000;
+  z-index: var(--z-chat-popup, 1000);
 
   .chat-toggle {
     position: relative;
-    z-index: 1001;
+    z-index: var(--z-chat-toggle, 1001);
   }
 
   .chat-box {
