@@ -1,136 +1,138 @@
-<ng-template #fieldsTemplate>
-  <ng-container *ngFor="let field of fields; trackBy: trackByName">
-    <div class="form-field" [ngClass]="field.className">
-      <ng-container [ngSwitch]="field.type">
-        <mat-form-field *ngSwitchCase="'text'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <input matInput [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
+<div [formGroup]="form">
+  <ng-template #fieldsTemplate>
+    <ng-container *ngFor="let field of fields; trackBy: trackByName">
+      <div class="form-field" [ngClass]="field.className">
+        <ng-container [ngSwitch]="field.type">
+          <mat-form-field *ngSwitchCase="'text'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
 
-        <mat-form-field *ngSwitchCase="'number'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <input matInput type="number" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
+          <mat-form-field *ngSwitchCase="'number'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput type="number" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
 
-        <mat-form-field *ngSwitchCase="'email'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <input matInput type="email" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
+          <mat-form-field *ngSwitchCase="'email'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput type="email" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
 
-        <mat-form-field *ngSwitchCase="'password'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <input matInput type="password" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
+          <mat-form-field *ngSwitchCase="'password'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput type="password" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
 
-        <mat-form-field *ngSwitchCase="'textarea'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <textarea matInput [readonly]="field.readonly" [rows]="field.rows || 3" [formControlName]="field.name" [placeholder]="field.placeholder || ''"></textarea>
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
+          <mat-form-field *ngSwitchCase="'textarea'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <textarea matInput [readonly]="field.readonly" [rows]="field.rows || 3" [formControlName]="field.name" [placeholder]="field.placeholder || ''"></textarea>
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
 
-        <mat-form-field *ngSwitchCase="'select'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <mat-select [formControlName]="field.name">
-            <mat-option *ngFor="let option of field.options || []" [value]="option.value">
+          <mat-form-field *ngSwitchCase="'select'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <mat-select [formControlName]="field.name" [placeholder]="field.placeholder || ''">
+              <mat-option *ngFor="let option of field.options || []" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-select>
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
+
+          <mat-button-toggle-group *ngSwitchCase="'button-toggle'" [formControlName]="field.name" [attr.aria-label]="field.label">
+            <mat-button-toggle *ngFor="let option of field.options || []" [value]="option.value">
               {{ option.label }}
-            </mat-option>
-          </mat-select>
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
+            </mat-button-toggle>
+          </mat-button-toggle-group>
 
-        <mat-button-toggle-group *ngSwitchCase="'button-toggle'" [formControlName]="field.name" [attr.aria-label]="field.label">
-          <mat-button-toggle *ngFor="let option of field.options || []" [value]="option.value">
-            {{ option.label }}
-          </mat-button-toggle>
-        </mat-button-toggle-group>
+          <mat-checkbox *ngSwitchCase="'checkbox'" [formControlName]="field.name">
+            {{ field.label }}
+          </mat-checkbox>
 
-        <mat-checkbox *ngSwitchCase="'checkbox'" [formControlName]="field.name">
-          {{ field.label }}
-        </mat-checkbox>
+          <mat-slide-toggle *ngSwitchCase="'toggle'" [formControlName]="field.name">
+            {{ field.label }}
+          </mat-slide-toggle>
 
-        <mat-slide-toggle *ngSwitchCase="'toggle'" [formControlName]="field.name">
-          {{ field.label }}
-        </mat-slide-toggle>
+          <mat-form-field *ngSwitchCase="'date'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput [matDatepicker]="picker" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
 
-        <mat-form-field *ngSwitchCase="'date'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <input matInput [matDatepicker]="picker" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
-          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
+          <mat-form-field *ngSwitchCase="'date-native'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput type="date" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
 
-        <mat-form-field *ngSwitchCase="'date-native'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <input matInput type="date" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
+          <mat-form-field *ngSwitchCase="'autocomplete'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input
+              type="text"
+              matInput
+              [readonly]="field.readonly"
+              [formControlName]="field.name"
+              [placeholder]="field.placeholder || ''"
+              [matAutocomplete]="auto"
+            />
+            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayWith(field.name)">
+              <mat-option *ngFor="let option of filteredOptionsMap[field.name] || []" [value]="option.value">
+                {{ option.label }}
+              </mat-option>
+            </mat-autocomplete>
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
 
-        <mat-form-field *ngSwitchCase="'autocomplete'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <input
-            type="text"
-            matInput
-            [readonly]="field.readonly"
-            [formControlName]="field.name"
-            [placeholder]="field.placeholder || ''"
-            [matAutocomplete]="auto"
-          />
-          <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayWith(field.name)">
-            <mat-option *ngFor="let option of filteredOptionsMap[field.name] || []" [value]="option.value">
-              {{ option.label }}
-            </mat-option>
-          </mat-autocomplete>
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
+          <mat-form-field *ngSwitchCase="'time'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput type="time" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
 
-        <mat-form-field *ngSwitchCase="'time'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <input matInput type="time" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
+          <mat-form-field *ngSwitchCase="'color'" appearance="outline" class="full-width" [floatLabel]="field.placeholder ? 'always' : 'auto'">
+            <mat-label>{{ field.label }}</mat-label>
+            <input matInput type="color" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
+            <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
+            <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
+          </mat-form-field>
+        </ng-container>
+      </div>
+    </ng-container>
+  </ng-template>
 
-        <mat-form-field *ngSwitchCase="'color'" appearance="outline" class="full-width">
-          <mat-label>{{ field.label }}</mat-label>
-          <input matInput type="color" [readonly]="field.readonly" [formControlName]="field.name" [placeholder]="field.placeholder || ''" />
-          <mat-hint *ngIf="field.hint">{{ field.hint }}</mat-hint>
-          <mat-error *ngIf="isFieldInvalid(field.name)">{{ getFieldError(field) }}</mat-error>
-        </mat-form-field>
-      </ng-container>
+  <form *ngIf="!isExternalForm" (ngSubmit)="onSubmit()" class="dynamic-form">
+    <ng-container [ngTemplateOutlet]="fieldsTemplate"></ng-container>
+
+    <div class="actions" *ngIf="showSubmit">
+      <button mat-flat-button [color]="submitColor" type="submit" [disabled]="submitDisabled">
+        {{ submitLabel }}
+      </button>
     </div>
-  </ng-container>
-</ng-template>
+  </form>
 
-<form *ngIf="!isExternalForm" [formGroup]="form" (ngSubmit)="onSubmit()" class="dynamic-form">
-  <ng-container [ngTemplateOutlet]="fieldsTemplate"></ng-container>
+  <div *ngIf="isExternalForm" class="dynamic-form">
+    <ng-container [ngTemplateOutlet]="fieldsTemplate"></ng-container>
 
-  <div class="actions" *ngIf="showSubmit">
-    <button mat-flat-button [color]="submitColor" type="submit" [disabled]="submitDisabled">
-      {{ submitLabel }}
-    </button>
-  </div>
-</form>
-
-<div *ngIf="isExternalForm" [formGroup]="form" class="dynamic-form">
-  <ng-container [ngTemplateOutlet]="fieldsTemplate"></ng-container>
-
-  <div class="actions" *ngIf="showSubmit">
-    <button mat-flat-button [color]="submitColor" type="button" (click)="onSubmit()" [disabled]="submitDisabled">
-      {{ submitLabel }}
-    </button>
+    <div class="actions" *ngIf="showSubmit">
+      <button mat-flat-button [color]="submitColor" type="button" (click)="onSubmit()" [disabled]="submitDisabled">
+        {{ submitLabel }}
+      </button>
+    </div>
   </div>
 </div>

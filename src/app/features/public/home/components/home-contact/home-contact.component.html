@@ -6,7 +6,7 @@
   </div>
 
   <!-- ✅ Banner login / registrazione (solo se NON loggato) -->
-  reminding: <ng-container *ngIf="!loading()">
+  <ng-container *ngIf="!loading()">
     <mat-card class="auth-banner" *ngIf="!isLogged()">
       <div class="auth-banner__left">
         <mat-icon class="auth-ico">account_circle</mat-icon>
@@ -43,52 +43,14 @@
     </mat-card>
 
     <!-- Form -->
-    <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()" class="form-grid">
-
-      <mat-form-field appearance="fill" class="form-group">
-        <mat-label>Nome completo</mat-label>
-        <input matInput formControlName="fullName" />
-        <mat-hint *ngIf="isLogged()">Campo precompilato</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" class="form-group">
-        <mat-label>Email</mat-label>
-        <input matInput type="email" formControlName="email" />
-        <mat-hint *ngIf="isLogged()">Campo precompilato</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" class="form-group">
-        <mat-label>Telefono</mat-label>
-        <input matInput type="tel" formControlName="phone" />
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" class="form-group">
-        <mat-label>Procedura</mat-label>
-        <mat-select formControlName="procedure">
-          <mat-option *ngFor="let proc of procedures" [value]="proc">{{ proc }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" class="form-group">
-        <mat-label>Artista</mat-label>
-        <mat-select formControlName="artist">
-          <mat-option *ngFor="let artist of staff()" [value]="artist.id">
-  {{ artist.name }}
-</mat-option>
-
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" class="form-group full-width">
-        <mat-label>Commenti</mat-label>
-        <textarea matInput rows="4" formControlName="comments"></textarea>
-      </mat-form-field>
+    <form (ngSubmit)="onSubmit()" class="form-grid">
+      <app-dynamic-form
+        [fields]="bookingFields()"
+        [formGroupInput]="bookingForm"
+        [showSubmit]="false"
+      ></app-dynamic-form>
 
       <div class="form-footer full-width">
-        <mat-checkbox formControlName="privacyConsent">
-          Acconsento al trattamento dei dati personali
-        </mat-checkbox>
-
         <button mat-raised-button color="primary" type="submit" [disabled]="bookingForm.invalid">
           Scegli la Data
         </button>

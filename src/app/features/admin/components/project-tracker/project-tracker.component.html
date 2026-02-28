@@ -32,12 +32,12 @@
 
     <button mat-stroked-button type="button" *ngIf="!vm.loading && !vm.notFound && !vm.booking" (click)="editBooking(null)">
       <mat-icon>event</mat-icon>
-      Crea Booking
+      Crea consulenza
     </button>
 
     <button mat-raised-button color="primary" type="button" (click)="addSession()" [disabled]="vm.notFound || vm.loading">
       <mat-icon>add</mat-icon>
-      Aggiungi Sessione
+      Aggiungi seduta
     </button>
   </header>
 
@@ -104,11 +104,11 @@
 
         <div class="hero__kpi">
           <div class="kpi">
-            <div class="k">Booking</div>
+            <div class="k">Consulenza</div>
             <div class="v">{{ vm.booking?.status || '-' }}</div>
           </div>
           <div class="kpi">
-            <div class="k">Sessioni</div>
+            <div class="k">Sedute</div>
             <div class="v">{{ vm.sessions.length }}</div>
           </div>
           <div class="kpi">
@@ -137,7 +137,7 @@
         <mat-card-header>
           <mat-card-title>
             <mat-icon>event</mat-icon>
-            Booking
+            Consulenza
           </mat-card-title>
           <span class="spacer"></span>
 
@@ -168,7 +168,7 @@
           <mat-card-content class="empty-mini">
             <mat-icon>event_busy</mat-icon>
             <div>
-              <strong>Nessuna booking collegata</strong>
+              <strong>Nessuna consulenza collegata</strong>
               <div class="muted">Creala dal Project Manager.</div>
             </div>
           </mat-card-content>
@@ -180,7 +180,7 @@
         <mat-card-header>
           <mat-card-title>
             <mat-icon>calendar_month</mat-icon>
-            Sessioni
+            Sedute
           </mat-card-title>
         </mat-card-header>
 
@@ -230,7 +230,7 @@
           <mat-card-content class="empty-mini">
             <mat-icon>playlist_add</mat-icon>
             <div>
-              <strong>Nessuna sessione</strong>
+              <strong>Nessuna seduta</strong>
               <div class="muted">Aggiungine una con il pulsante in alto.</div>
             </div>
           </mat-card-content>

@@ -79,6 +79,40 @@
     max-width: 900px;
     margin: auto;
     margin-top: 2rem;
+
+    app-dynamic-form {
+      --df-field-bg: rgba(255, 255, 255, 0.05);
+      --df-field-bg-hover: rgba(255, 255, 255, 0.07);
+      --df-field-bg-focus: rgba(255, 255, 255, 0.09);
+      --df-field-text: #787878;
+      --df-field-label: #787878;
+      --df-field-hint: #a4a4a4;
+      --df-field-border: rgba(190, 144, 69, 0.34);
+      --df-field-border-focus: #be9045;
+      --df-field-icon: #787878;
+    }
+
+    app-dynamic-form ::ng-deep .mat-mdc-form-field .mat-mdc-floating-label,
+    app-dynamic-form ::ng-deep .mat-mdc-form-field .mdc-floating-label,
+    app-dynamic-form ::ng-deep .mat-mdc-form-field .mat-mdc-form-field-required-marker {
+      color: #787878 !important;
+    }
+
+    app-dynamic-form ::ng-deep .mat-mdc-input-element,
+    app-dynamic-form ::ng-deep textarea.mat-mdc-input-element,
+    app-dynamic-form ::ng-deep .mat-mdc-select-value-text,
+    app-dynamic-form ::ng-deep .mat-mdc-select-arrow,
+    app-dynamic-form ::ng-deep .mat-mdc-form-field-icon-prefix,
+    app-dynamic-form ::ng-deep .mat-mdc-form-field-icon-suffix,
+    app-dynamic-form ::ng-deep .mat-mdc-form-field-hint {
+      color: #787878 !important;
+    }
+
+    app-dynamic-form ::ng-deep .mat-mdc-input-element::placeholder,
+    app-dynamic-form ::ng-deep textarea.mat-mdc-input-element::placeholder {
+      color: #a4a4a4 !important;
+      opacity: 1 !important;
+    }
   }
 
   .form-group {

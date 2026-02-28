@@ -50,8 +50,8 @@ export class PermissionsAdminComponent implements OnInit {
     },
     {
       key: 'canManageSessions',
-      label: 'Gestione Sessioni',
-      description: 'Consente gestione sessioni di lavoro.',
+      label: 'Gestione Sedute',
+      description: 'Consente gestione sedute di lavoro.',
     },
     {
       key: 'canReassignProjectArtist',

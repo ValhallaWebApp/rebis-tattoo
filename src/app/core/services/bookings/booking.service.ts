@@ -15,7 +15,7 @@ import {
   endAt,
   DataSnapshot
 } from '@angular/fire/database';
-import { Observable } from 'rxjs';
+import { combineLatest, Observable } from 'rxjs';
 import { NotificationService } from '../notifications/notification.service';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuditLogService } from '../audit/audit-log.service';
@@ -194,8 +194,8 @@ export class BookingService {
     const createdAt = String(source['createdAt'] ?? new Date().toISOString());
     const updatedAt = String(source['updatedAt'] ?? createdAt);
 
-    const clientId = String(source['clientId'] ?? '');
-    const artistId = String(source['artistId'] ?? '');
+    const clientId = String(source['clientId'] ?? source['idClient'] ?? '');
+    const artistId = String(source['artistId'] ?? source['idArtist'] ?? '');
 
     const notes = String(source['notes'] ?? '');
     const createdById = String(source['createdById'] ?? source['createdBy'] ?? source['creatorId'] ?? source['creator'] ?? '').trim();
@@ -387,11 +387,38 @@ export class BookingService {
     });
   }
 
-  /** Client bookings (nuovo campo: clientId) */
+  /** Client bookings (supporta clientId + idClient legacy) */
   getBookingsByClient(clientId: string): Observable<Booking[]> {
-    console.log('[BookingService] getBookingsByClient → subscribe', { clientId });
-    return new Observable(obs => {
-      const qy = query(ref(this.db, this.path), orderByChild('clientId'), equalTo(clientId));
+    const cid = String(clientId ?? '').trim();
+    console.log('[BookingService] getBookingsByClient → subscribe', { clientId: cid });
+    if (!cid) return new Observable<Booking[]>(obs => { obs.next([]); obs.complete(); });
+
+    return new Observable<Booking[]>(obs => {
+      const sub = combineLatest([
+        this.queryBookingsByChild('clientId', cid),
+        this.queryBookingsByChild('idClient', cid)
+      ]).subscribe({
+        next: ([modern, legacy]) => {
+          const merged = new Map<string, Booking>();
+          for (const b of [...modern, ...legacy]) {
+            const bid = String((b as any)?.id ?? '').trim();
+            if (!bid) continue;
+            merged.set(bid, b);
+          }
+          const list = Array.from(merged.values()).sort((a, b) => a.start.localeCompare(b.start));
+          obs.next(list);
+        },
+        error: err => obs.error(err)
+      });
+      return () => sub.unsubscribe();
+    });
+  }
+
+  private queryBookingsByChild(child: string, value: string): Observable<Booking[]> {
+    const v = String(value ?? '').trim();
+    if (!v) return new Observable<Booking[]>(obs => { obs.next([]); obs.complete(); });
+    const qy = query(ref(this.db, this.path), orderByChild(child), equalTo(v));
+    return new Observable<Booking[]>(obs => {
       const unsub = onValue(
         qy,
         snap => {
@@ -520,11 +547,11 @@ export class BookingService {
 
           const { artistId: pArtistId, clientId: pClientId } = this.getProjectPartyIds(project);
           if (pArtistId && (!resolvedArtistId || pArtistId !== resolvedArtistId)) {
-            this.ui.info('Artista booking allineato automaticamente al progetto.');
+            this.ui.info('Artista consulenza allineato automaticamente al progetto.');
             resolvedArtistId = pArtistId;
           }
           if (pClientId && (!resolvedClientId || pClientId !== resolvedClientId)) {
-            this.ui.info('Cliente booking allineato automaticamente al progetto.');
+            this.ui.info('Cliente consulenza allineato automaticamente al progetto.');
             resolvedClientId = pClientId;
           }
         }
@@ -635,11 +662,11 @@ export class BookingService {
             ? this.normalizeIdCandidate(normalizedChanges.clientId)
             : this.normalizeIdCandidate(current?.clientId);
           if (pArtistId && (!bArtistId || pArtistId !== bArtistId)) {
-            this.ui.info('Artista booking allineato automaticamente al progetto.');
+            this.ui.info('Artista consulenza allineato automaticamente al progetto.');
             bArtistId = pArtistId;
           }
           if (pClientId && (!bClientId || pClientId !== bClientId)) {
-            this.ui.info('Cliente booking allineato automaticamente al progetto.');
+            this.ui.info('Cliente consulenza allineato automaticamente al progetto.');
             bClientId = pClientId;
           }
           if (bArtistId) normalizedChanges.artistId = bArtistId;
@@ -1006,12 +1033,12 @@ export class BookingService {
 
     await this.notifyUsers([booking.artistId], {
       title: 'Nuova prenotazione',
-      message: `Nuovo booking assegnato per ${startText}.`
+      message: `Nuova consulenza assegnata per ${startText}.`
     });
 
     await this.notifyUsers(adminIds, {
       title: 'Nuova prenotazione',
-      message: `Creato nuovo booking per ${startText}.`
+      message: `Creata nuova consulenza per ${startText}.`
     });
   }
 

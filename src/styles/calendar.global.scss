@@ -1,0 +1,307 @@
+:root,
+body.theme-public,
+body.theme-client,
+body.theme-admin {
+  /* Calendar palette aligned to admin tokens */
+  --cal-bg: var(--app-main-bg, #050508);
+  --cal-surface: rgba(11, 12, 18, 0.86);
+  --cal-surface-muted: rgba(10, 11, 16, 0.9);
+  --cal-surface-elevated: rgba(7, 8, 12, 0.94);
+  --cal-border: rgba(255, 255, 255, 0.14);
+  --cal-border-strong: rgba(255, 255, 255, 0.24);
+  --cal-text: var(--app-main-text, #f3f4f7);
+  --cal-text-strong: #ffffff;
+  --cal-text-muted: var(--app-main-text-muted, #c8ced8);
+  --cal-text-on-accent: var(--accent-ink, #111111);
+  --cal-accent: var(--accent, #b79b55);
+  --cal-accent-soft: rgba(183, 155, 85, 0.14);
+  --cal-danger: var(--app-danger, #ef4444);
+  --cal-success: var(--app-success, #86efac);
+  --cal-warning: var(--app-warning, #fbbf24);
+  --cal-event-booking: var(--accent, #b79b55);
+  --cal-event-session: var(--app-info, #7dd3fc);
+  --cal-glass-blur: 16px;
+  --cal-glass-shadow: 0 18px 38px rgba(0, 0, 0, 0.34);
+  --cal-glass-highlight: rgba(255, 255, 255, 0.06);
+
+  --cal-filter-panel-bg: linear-gradient(
+      160deg,
+      rgba(183, 155, 85, 0.12) 0%,
+      rgba(183, 155, 85, 0.03) 40%,
+      rgba(0, 0, 0, 0.44) 100%
+    ),
+    var(--cal-surface-elevated);
+  --cal-filter-field-bg: rgba(0, 0, 0, 0.42);
+  --cal-row-hover: rgba(255, 255, 255, 0.06);
+}
+
+.cal-shell {
+  color: var(--cal-text, var(--app-main-text, #f3f4f7));
+}
+
+.cal-shell .toolbar,
+.cal-shell .filters,
+.cal-shell .content,
+.cal-shell .filters-panel,
+.cal-shell .days-list,
+.cal-shell .legend,
+.cal-shell .drawer {
+  border-color: var(--cal-border, var(--app-surface-border, rgba(255, 255, 255, 0.12)));
+  box-shadow: var(--cal-glass-shadow);
+  backdrop-filter: blur(var(--cal-glass-blur)) saturate(132%);
+  -webkit-backdrop-filter: blur(var(--cal-glass-blur)) saturate(132%);
+}
+
+.cal-shell .toolbar {
+  background:
+    linear-gradient(145deg, var(--cal-glass-highlight), rgba(255, 255, 255, 0.01) 48%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface-muted, rgba(20, 31, 45, 0.78));
+}
+
+.cal-shell .filters {
+  background:
+    linear-gradient(150deg, rgba(183, 155, 85, 0.09), rgba(255, 255, 255, 0.02) 42%, rgba(0, 0, 0, 0.45)),
+    var(--cal-surface, rgba(15, 23, 35, 0.78));
+}
+
+.cal-shell .content {
+  background:
+    radial-gradient(circle at 10% 0, rgba(183, 155, 85, 0.12), transparent 34%),
+    radial-gradient(circle at 100% 0, rgba(255, 255, 255, 0.05), transparent 26%),
+    var(--cal-bg, rgba(10, 16, 24, 0.9));
+}
+
+.cal-shell .drawer {
+  background:
+    linear-gradient(160deg, rgba(183, 155, 85, 0.1), rgba(255, 255, 255, 0.01) 36%, rgba(0, 0, 0, 0.46)),
+    var(--cal-surface-elevated, rgba(26, 38, 53, 0.96));
+  border-left-color: var(--cal-border, rgba(148, 163, 184, 0.24));
+}
+
+.cal-shell .filters-panel {
+  background: var(--cal-filter-panel-bg) !important;
+  color: var(--cal-text) !important;
+  border-color: var(--cal-border) !important;
+}
+
+.cal-shell .filters-panel .mat-expansion-panel-header {
+  background: transparent !important;
+}
+
+.cal-shell .filters-panel .mat-expansion-panel-header:hover {
+  background: var(--cal-accent-soft) !important;
+}
+
+.cal-shell .filters-panel .mat-expansion-panel-header-title,
+.cal-shell .filters-panel .mat-panel-title,
+.cal-shell .filters-panel .mat-expansion-indicator::after,
+.cal-shell .filters-panel .mat-icon {
+  color: var(--cal-text) !important;
+}
+
+.cal-shell .filters-panel .mat-mdc-form-field {
+  --mdc-outlined-text-field-outline-color: var(--cal-border);
+  --mdc-outlined-text-field-hover-outline-color: var(--cal-border-strong);
+  --mdc-outlined-text-field-focus-outline-color: var(--cal-accent);
+  --mdc-outlined-text-field-label-text-color: var(--cal-text-muted);
+  --mdc-outlined-text-field-focus-label-text-color: var(--cal-accent);
+  --mdc-outlined-text-field-input-text-color: var(--cal-text);
+  --mat-form-field-focus-select-arrow-color: var(--cal-accent);
+}
+
+.cal-shell .filters-panel .mat-mdc-text-field-wrapper {
+  background: var(--cal-filter-field-bg) !important;
+}
+
+.cal-shell .filters-panel .mat-mdc-input-element,
+.cal-shell .filters-panel .mdc-floating-label,
+.cal-shell .filters-panel .mat-mdc-form-field-icon-prefix,
+.cal-shell .filters-panel .mat-mdc-select-arrow,
+.cal-shell .filters-panel .mat-mdc-select-value-text {
+  color: var(--cal-text) !important;
+}
+
+.cal-shell .filters-panel .mat-mdc-input-element::placeholder {
+  color: var(--cal-text-muted) !important;
+  opacity: 1;
+}
+
+.cal-shell .filters-panel .mat-mdc-stroked-button:not(:disabled) {
+  border-color: var(--cal-border-strong);
+  color: var(--cal-text);
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.cal-shell .filters-panel .mat-mdc-stroked-button:not(:disabled):hover {
+  background: var(--cal-accent-soft);
+}
+
+.cal-shell .days-list .list-row:hover {
+  background: var(--cal-row-hover, rgba(125, 211, 252, 0.1));
+}
+
+.cal-shell .toolbar .mat-mdc-stroked-button:not(:disabled),
+.cal-shell .toolbar .mat-mdc-icon-button,
+.cal-shell .toolbar .mat-button-toggle {
+  color: var(--cal-text) !important;
+}
+
+.cal-shell .toolbar .mat-mdc-stroked-button:not(:disabled) {
+  border-color: var(--cal-border-strong);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cal-shell .toolbar .mat-mdc-stroked-button:not(:disabled):hover,
+.cal-shell .toolbar .mat-mdc-icon-button:hover {
+  background: var(--cal-accent-soft);
+}
+
+.cal-shell .toolbar .view-layout-toggle {
+  border: 1px solid var(--cal-border);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.cal-shell .toolbar .mat-button-toggle {
+  background: transparent;
+  border-right-color: var(--cal-border) !important;
+}
+
+.cal-shell .toolbar .mat-button-toggle-checked {
+  background: var(--cal-accent) !important;
+  color: var(--cal-text-on-accent) !important;
+}
+
+.cal-shell .toolbar .mat-button-toggle-checked .mat-button-toggle-label-content {
+  color: var(--cal-text-on-accent) !important;
+}
+
+/* Week list filters: datepicker popup with dark/liquid contrast */
+.cdk-overlay-pane.calendar-date-panel .mat-datepicker-content,
+.calendar-date-panel .mat-datepicker-content,
+.calendar-date-panel.mat-datepicker-content {
+  --mat-datepicker-calendar-container-background-color: var(--cal-surface-elevated, #0b0e13);
+  --mat-datepicker-calendar-container-text-color: var(--cal-text, #f3f4f7);
+  --mat-datepicker-calendar-header-text-color: var(--cal-text-muted, #c8ced8);
+  --mat-datepicker-calendar-header-divider-color: var(--cal-border, rgba(255, 255, 255, 0.16));
+  --mat-datepicker-calendar-period-button-text-color: var(--cal-text, #f3f4f7);
+  --mat-datepicker-calendar-period-button-icon-color: var(--cal-text, #f3f4f7);
+  --mat-datepicker-calendar-navigation-button-icon-color: var(--cal-text, #f3f4f7);
+  --mat-datepicker-calendar-date-text-color: var(--cal-text, #f3f4f7);
+  --mat-datepicker-calendar-date-disabled-state-text-color: rgba(255, 255, 255, 0.35);
+  --mat-datepicker-calendar-date-selected-state-background-color: var(--cal-accent, #b79b55);
+  --mat-datepicker-calendar-date-selected-state-text-color: var(--cal-text-on-accent, #111111);
+  --mat-datepicker-calendar-date-hover-state-background-color: var(--cal-accent-soft, rgba(183, 155, 85, 0.16));
+  --mat-datepicker-calendar-date-focus-state-background-color: var(--cal-accent-soft, rgba(183, 155, 85, 0.16));
+  --mat-datepicker-calendar-date-outline-color: transparent;
+  --mat-datepicker-calendar-date-today-outline-color: var(--cal-border-strong, rgba(255, 255, 255, 0.3));
+  --mat-datepicker-calendar-date-today-selected-state-outline-color: var(--cal-accent, #b79b55);
+
+  background:
+    linear-gradient(160deg, rgba(183, 155, 85, 0.1), rgba(255, 255, 255, 0.01) 42%, rgba(0, 0, 0, 0.5)),
+    var(--cal-surface-elevated, #0b0e13) !important;
+  color: var(--cal-text, #f3f4f7) !important;
+  border: 1px solid var(--cal-border, rgba(255, 255, 255, 0.16));
+  box-shadow: var(--cal-glass-shadow, 0 18px 38px rgba(0, 0, 0, 0.34));
+  backdrop-filter: blur(var(--cal-glass-blur, 16px)) saturate(132%);
+  -webkit-backdrop-filter: blur(var(--cal-glass-blur, 16px)) saturate(132%);
+}
+
+.cdk-overlay-pane.calendar-date-panel .mat-calendar,
+.calendar-date-panel .mat-calendar {
+  background: transparent !important;
+  color: var(--cal-text, #f3f4f7) !important;
+}
+
+.calendar-date-panel .mat-calendar-table-header,
+.calendar-date-panel .mat-calendar-body-label,
+.calendar-date-panel .mat-calendar-period-button,
+.calendar-date-panel .mat-calendar-next-button,
+.calendar-date-panel .mat-calendar-previous-button {
+  color: var(--cal-text, #f3f4f7) !important;
+}
+
+.calendar-date-panel .mat-calendar-body-cell-content {
+  color: var(--cal-text, #f3f4f7) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.calendar-date-panel .mat-calendar-body-selected,
+.calendar-date-panel .mat-calendar-body-selected.mat-calendar-body-today {
+  background: var(--cal-accent, #b79b55) !important;
+  color: var(--cal-text-on-accent, #111111) !important;
+}
+
+.calendar-date-panel .mat-calendar-body-disabled > .mat-calendar-body-cell-content {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.calendar-date-panel .mat-calendar-body-today:not(.mat-calendar-body-selected) > .mat-calendar-body-cell-content {
+  border-color: var(--cal-border-strong, rgba(255, 255, 255, 0.3)) !important;
+}
+
+.calendar-date-panel .mat-calendar-body-selected {
+  background: var(--cal-accent, #b79b55) !important;
+  color: var(--cal-text-on-accent, #111111) !important;
+}
+
+.calendar-date-panel .mat-calendar-body-cell:not(.mat-calendar-body-disabled):hover > .mat-calendar-body-cell-content {
+  background: var(--cal-accent-soft, rgba(183, 155, 85, 0.16)) !important;
+}
+
+/* Fallback: apply same contrast to any Material datepicker popup in dark app themes */
+body.theme-public .mat-datepicker-content,
+body.theme-client .mat-datepicker-content,
+body.theme-admin .mat-datepicker-content {
+  --mat-datepicker-calendar-container-background-color: var(--cal-surface-elevated, #0b0e13);
+  --mat-datepicker-calendar-container-text-color: var(--cal-text, #f3f4f7);
+  --mat-datepicker-calendar-header-text-color: var(--cal-text-muted, #c8ced8);
+  --mat-datepicker-calendar-header-divider-color: var(--cal-border, rgba(255, 255, 255, 0.16));
+  --mat-datepicker-calendar-period-button-text-color: var(--cal-text, #f3f4f7);
+  --mat-datepicker-calendar-period-button-icon-color: var(--cal-text, #f3f4f7);
+  --mat-datepicker-calendar-navigation-button-icon-color: var(--cal-text, #f3f4f7);
+  --mat-datepicker-calendar-date-text-color: var(--cal-text, #f3f4f7);
+  --mat-datepicker-calendar-date-disabled-state-text-color: rgba(255, 255, 255, 0.35);
+  --mat-datepicker-calendar-date-selected-state-background-color: var(--cal-accent, #b79b55);
+  --mat-datepicker-calendar-date-selected-state-text-color: var(--cal-text-on-accent, #111111);
+  --mat-datepicker-calendar-date-hover-state-background-color: var(--cal-accent-soft, rgba(183, 155, 85, 0.16));
+  --mat-datepicker-calendar-date-focus-state-background-color: var(--cal-accent-soft, rgba(183, 155, 85, 0.16));
+  --mat-datepicker-calendar-date-outline-color: transparent;
+  --mat-datepicker-calendar-date-today-outline-color: var(--cal-border-strong, rgba(255, 255, 255, 0.3));
+  --mat-datepicker-calendar-date-today-selected-state-outline-color: var(--cal-accent, #b79b55);
+}
+
+body.theme-public .mat-datepicker-content .mat-calendar-body-cell-content,
+body.theme-client .mat-datepicker-content .mat-calendar-body-cell-content,
+body.theme-admin .mat-datepicker-content .mat-calendar-body-cell-content {
+  background: transparent !important;
+  color: var(--cal-text, #f3f4f7) !important;
+}
+
+/* Artist filter chips: light (whitesmoke) buttons for readability */
+.cal-shell .filters .mat-mdc-chip.mat-mdc-chip-option {
+  background: whitesmoke !important;
+  border: 1px solid rgba(17, 17, 17, 0.2) !important;
+  color: #111111 !important;
+}
+
+.cal-shell .filters .mat-mdc-chip.mat-mdc-chip-option .mdc-evolution-chip__text-label,
+.cal-shell .filters .mat-mdc-chip.mat-mdc-chip-option .mat-icon {
+  color: #111111 !important;
+}
+
+.cal-shell .filters .mat-mdc-chip.mat-mdc-chip-option:hover:not(.mdc-evolution-chip--disabled) {
+  background: #ffffff !important;
+}
+
+.cal-shell .filters .mat-mdc-chip.mat-mdc-chip-option.mat-mdc-chip-selected {
+  background: whitesmoke !important;
+  border-color: var(--cal-accent, #b79b55) !important;
+  box-shadow: inset 0 0 0 1px var(--cal-accent, #b79b55);
+}
+
+.cal-shell .filters .mat-mdc-chip.mat-mdc-chip-option.mdc-evolution-chip--disabled {
+  background: #e5e5e5 !important;
+  color: #7a7a7a !important;
+  border-color: rgba(122, 122, 122, 0.25) !important;
+}

@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { DynamicField, DynamicFormComponent } from '../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 import {
   DEFAULT_STUDIO_PROFILE,
@@ -13,7 +14,7 @@ import {
 @Component({
   selector: 'app-contatti',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, DynamicFormComponent],
   templateUrl: './contatti.component.html',
   styleUrls: ['./contatti.component.scss']
 })
@@ -25,6 +26,20 @@ export class ContattiComponent implements OnInit {
   });
 
   contactForm!: FormGroup;
+  readonly contactFields: DynamicField[] = [
+    { type: 'text', name: 'name', label: 'Nome', placeholder: 'Il tuo nome', required: true, minLength: 2 },
+    { type: 'email', name: 'email', label: 'Email', placeholder: 'nome@email.com', required: true },
+    {
+      type: 'textarea',
+      name: 'message',
+      label: 'Messaggio',
+      placeholder: 'Zona, dimensioni, idea...',
+      rows: 4,
+      required: true,
+      minLength: 10,
+      className: 'full-width'
+    }
+  ];
 
   ngOnInit(): void {
     this.contactForm = this.fb.group({
@@ -58,10 +73,6 @@ export class ContattiComponent implements OnInit {
     console.log('[CONTATTI] submit', this.contactForm.value);
     this.contactForm.reset();
     alert('Messaggio inviato. Ti risponderemo il prima possibile.');
-  }
-
-  get f() {
-    return this.contactForm.controls;
   }
 
   private normalizePhoneForWhatsApp(value: string): string {

@@ -1,7 +1,7 @@
 <mat-drawer-container class="drawer-container">
-  <!-- Drawer per creazione/modifica sessione -->
+  <!-- Drawer per creazione/modifica seduta -->
   <mat-drawer #drawer mode="side" position="end" class="drawer">
-    <h2 class="form-title">{{ editingSession ? 'Modifica' : 'Nuova' }} Seduta</h2>
+    <h2 class="form-title">{{ editingSession ? 'Modifica seduta' : 'Nuova seduta' }}</h2>
     <form [formGroup]="form" class="session-form" (ngSubmit)="save()">
       <app-dynamic-form
         [fields]="formFields"
@@ -21,7 +21,7 @@
   <!-- Contenuto principale -->
   <mat-drawer-content>
     <div class="header">
-      <h2>Sessioni collegate al progetto</h2>
+      <h2>Sedute collegate al progetto</h2>
       <button mat-icon-button color="primary" (click)="initForm(); drawer.open()">
         <mat-icon>add</mat-icon>
       </button>
@@ -50,7 +50,7 @@
     <ng-template #noSessions>
       <div class="empty-message">
         <p>Nessuna seduta registrata per questo progetto.</p>
-        <button mat-raised-button color="primary" (click)="initForm(); drawer.open()">Aggiungi Seduta</button>
+        <button mat-raised-button color="primary" (click)="initForm(); drawer.open()">Aggiungi seduta</button>
       </div>
     </ng-template>
   </mat-drawer-content>

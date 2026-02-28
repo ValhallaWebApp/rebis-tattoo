@@ -9,8 +9,8 @@
   justify-content: space-between;
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--cal-surface-muted, rgba(20, 31, 45, 0.78));
+  border: 1px solid var(--cal-border, rgba(255,255,255,0.08));
 
   .toolbar-left {
     display: flex;
@@ -34,13 +34,18 @@
     gap: 10px;
     align-items: center;
   }
+
+  .view-layout-toggle {
+    border-radius: 10px;
+    overflow: hidden;
+  }
 }
 
 .filters {
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--cal-surface, rgba(15, 23, 35, 0.78));
+  border: 1px solid var(--cal-border, rgba(255,255,255,0.07));
 
   .filters-title {
     display: flex;
@@ -55,8 +60,8 @@
 .content {
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(0,0,0,0.20);
+  border: 1px solid var(--cal-border, rgba(255,255,255,0.08));
+  background: var(--cal-bg, rgba(0,0,0,0.20));
   min-height: 520px;
 }
 
@@ -66,8 +71,8 @@
 
 .drawer {
   width: min(520px, 92vw);
-  background: rgba(14, 16, 20, 0.96);
-  border-left: 1px solid rgba(255,255,255,0.08);
+  background: var(--cal-surface-elevated, rgba(14, 16, 20, 0.96));
+  border-left: 1px solid var(--cal-border, rgba(255,255,255,0.08));
 }
 
 .loading {
@@ -77,7 +82,7 @@
 }
 .drawer-container { height: calc(100vh - 160px); } // o quello che ti serve
 .drawer { width: 420px; max-width: 92vw; }
-.mat-drawer-backdrop { background: rgba(0,0,0,.45) !important; }
+.mat-drawer-backdrop { background: rgba(0, 0, 0, 0.56) !important; }
 
 :host ::ng-deep .drawer-container .mat-drawer-backdrop.mat-drawer-shown {
   z-index: var(--z-content-raised, 1) !important;

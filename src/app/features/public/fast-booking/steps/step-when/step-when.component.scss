@@ -1,3 +1,8 @@
+:host {
+  --fb-accent: var(--accent, #b79b55);
+  --fb-danger-bg: var(--app-status-danger-bg, rgba(239, 68, 68, 0.16));
+}
+
 .step {
   max-width: 860px;
   margin: 0 auto;
@@ -30,8 +35,8 @@
 }
 
 .day.active {
-  border-color: rgba(25,118,210,.55) !important;
-  box-shadow: 0 10px 30px rgba(25, 118, 210, .10);
+  border-color: rgba(183, 155, 85, .58) !important;
+  box-shadow: 0 10px 30px rgba(183, 155, 85, .14);
 }
 
 .loading {
@@ -55,8 +60,8 @@
 }
 
 .time.active {
-  border-color: rgba(25,118,210,.7) !important;
-  background: rgba(25,118,210,.06);
+  border-color: rgba(183, 155, 85, .7) !important;
+  background: rgba(183, 155, 85, .12);
 }
 
 .ico { margin-right: 6px; opacity: .7; }
@@ -67,7 +72,7 @@
   align-items: center;
   padding: 10px;
   border-radius: 12px;
-  background: rgba(244,67,54,.08);
+  background: var(--fb-danger-bg);
   margin-top: 10px;
 }
 

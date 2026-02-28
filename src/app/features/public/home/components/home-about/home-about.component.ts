@@ -16,11 +16,11 @@ export class HomeAboutComponent {
     },
     {
       title: 'Proposta su misura',
-      text: 'Prepariamo bozza e indicazioni tecniche prima della sessione.'
+      text: 'Prepariamo bozza e indicazioni tecniche prima della seduta.'
     },
     {
-      title: 'Sessione e follow-up',
-      text: 'Sessione in studio in sicurezza e supporto post tattoo per la cura.'
+      title: 'Seduta e follow-up',
+      text: 'Seduta in studio in sicurezza e supporto post tattoo per la cura.'
     }
   ];
 

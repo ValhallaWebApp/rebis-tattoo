@@ -4,7 +4,7 @@
       <mat-icon>workspaces</mat-icon>
       <div>
         <h2>Project Manager</h2>
-        <p>Gestisci progetti, booking collegate, sessioni, pagamenti e fatture</p>
+        <p>Gestisci progetti, consulenze collegate, sedute, pagamenti e fatture</p>
       </div>
     </div>
 
@@ -106,11 +106,11 @@
         <div class="h-right">
           <div class="kpis">
             <div class="kpi">
-              <span>Booking</span>
+              <span>Consulenza</span>
               <strong>{{ row.hasBooking ? 'OK' : 'NO' }}</strong>
             </div>
             <div class="kpi">
-              <span>Sessioni</span>
+              <span>Sedute</span>
               <strong>{{ row.sessionsCount }}</strong>
             </div>
             <div class="kpi">
@@ -149,7 +149,7 @@
               [disabled]="row.isClosed || row.hasBooking"
               (click)="createBookingForProject(row.project)">
               <mat-icon>event</mat-icon>
-              Crea Booking
+              Crea consulenza
             </button>
 
             <button
@@ -175,7 +175,7 @@
               [disabled]="!row.canAddSession"
               (click)="addSessionToProject(row.project)">
               <mat-icon>add</mat-icon>
-              Aggiungi Session
+              Aggiungi seduta
             </button>
           </div>
 
@@ -193,7 +193,7 @@
           <header class="box__head">
             <div class="box__title">
               <mat-icon>event</mat-icon>
-              <span>Booking</span>
+              <span>Consulenza</span>
             </div>
 
             <button
@@ -229,12 +229,12 @@
               </div>
 
               <div class="m" *ngIf="row.booking.paidAmount != null">
-                <span>Pagato (booking)</span>
+                <span>Pagato (consulenza)</span>
                 <strong>{{ money(row.booking.paidAmount) }}</strong>
               </div>
 
               <div class="m" *ngIf="row.booking.price != null">
-                <span>Prezzo (booking)</span>
+                <span>Prezzo (consulenza)</span>
                 <strong>{{ money(row.booking.price) }}</strong>
               </div>
             </div>
@@ -244,7 +244,7 @@
             <div class="empty-mini">
               <mat-icon>event_busy</mat-icon>
               <div>
-                <strong>Nessuna booking collegata</strong>
+                <strong>Nessuna consulenza collegata</strong>
                 <div class="muted">Puoi crearla quando vuoi.</div>
               </div>
             </div>
@@ -256,7 +256,7 @@
           <header class="box__head">
             <div class="box__title">
               <mat-icon>calendar_month</mat-icon>
-              <span>Sessioni</span>
+              <span>Sedute</span>
             </div>
 
             <button mat-button type="button" (click)="downloadFullInvoice(row)" [disabled]="!row.sessions.length && !row.booking">
@@ -294,11 +294,11 @@
                     <strong>{{ money(s.paidAmount) }}</strong>
                   </div>
 
-                  <button mat-icon-button type="button" (click)="downloadSessionInvoice(row, s)" aria-label="fattura sessione">
+                  <button mat-icon-button type="button" (click)="downloadSessionInvoice(row, s)" aria-label="fattura seduta">
                     <mat-icon>receipt_long</mat-icon>
                   </button>
 
-                  <button mat-icon-button type="button" (click)="editSession(s)" aria-label="modifica sessione">
+                  <button mat-icon-button type="button" (click)="editSession(s)" aria-label="modifica seduta">
                     <mat-icon>edit</mat-icon>
                   </button>
                 </div>
@@ -310,7 +310,7 @@
             <div class="empty-mini">
               <mat-icon>playlist_add</mat-icon>
               <div>
-                <strong>Nessuna sessione</strong>
+                <strong>Nessuna seduta</strong>
                 <div class="muted">Aggiungine una dal pulsante in alto.</div>
               </div>
             </div>
@@ -361,7 +361,7 @@
                   </div>
                   <div class="muted">
                     {{ p.createdAt || '' }}
-                    <span *ngIf="p.bookingId"> - booking: {{ p.bookingId }}</span>
+                    <span *ngIf="p.bookingId"> - consulenza: {{ p.bookingId }}</span>
                   </div>
                 </div>
               </div>
@@ -386,7 +386,7 @@
                   </div>
                   <div class="muted">
                     {{ invoiceDate(inv) }}
-                    <span *ngIf="inv.bookingId"> - booking: {{ inv.bookingId }}</span>
+                    <span *ngIf="inv.bookingId"> - consulenza: {{ inv.bookingId }}</span>
                   </div>
                 </div>
               </div>

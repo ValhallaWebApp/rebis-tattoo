@@ -12,7 +12,7 @@ import {
   equalTo,
   onValue
 } from '@angular/fire/database';
-import { Observable } from 'rxjs';
+import { catchError, combineLatest, map, Observable, of } from 'rxjs';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuthService } from '../auth/auth.service';
 import { ProjectsService } from '../projects/projects.service';
@@ -102,7 +102,7 @@ export class SessionService {
   async create(session: Omit<Session, 'id' | 'createdAt' | 'updatedAt'> & Partial<Pick<Session, 'createdAt' | 'updatedAt'>>): Promise<string> {
     this.ensureStaffPermission(
       'canManageSessions',
-      'Permesso mancante: gestione sessioni.'
+      'Permesso mancante: gestione sedute.'
     );
     try {
       let projectId = String((session as any)?.projectId ?? '').trim();
@@ -114,16 +114,16 @@ export class SessionService {
       if (projectId) {
         const project = await this.projects.getProjectById(projectId);
         if (!project) {
-          this.showMessage('Progetto non trovato: impossibile creare la sessione.', true);
+          this.showMessage('Progetto non trovato: impossibile creare la seduta.', true);
           throw new Error(`PROJECT_NOT_FOUND:${projectId}`);
         }
         const { artistId: pArtistId, clientId: pClientId } = this.getProjectPartyIds(project);
         if (pArtistId && (!resolvedArtistId || pArtistId !== resolvedArtistId)) {
-          this.showMessage('Artista sessione allineato automaticamente al progetto.');
+          this.showMessage('Artista della seduta allineato automaticamente al progetto.');
           resolvedArtistId = pArtistId;
         }
         if (pClientId && (!resolvedClientId || pClientId !== resolvedClientId)) {
-          this.showMessage('Cliente sessione allineato automaticamente al progetto.');
+          this.showMessage('Cliente della seduta allineato automaticamente al progetto.');
           resolvedClientId = pClientId;
         }
       }
@@ -168,7 +168,7 @@ export class SessionService {
   async update(id: string, changes: Partial<Session>): Promise<void> {
     this.ensureStaffPermission(
       'canManageSessions',
-      'Permesso mancante: gestione sessioni.'
+      'Permesso mancante: gestione sedute.'
     );
     const normalizedChanges: Partial<Session> = { ...changes };
     try {
@@ -183,7 +183,7 @@ export class SessionService {
       if (nextProjectId) {
         const project = await this.projects.getProjectById(nextProjectId);
         if (!project) {
-          this.showMessage('Progetto non trovato: impossibile aggiornare la sessione.', true);
+          this.showMessage('Progetto non trovato: impossibile aggiornare la seduta.', true);
           throw new Error(`PROJECT_NOT_FOUND:${nextProjectId}`);
         }
         const { artistId: pArtistId, clientId: pClientId } = this.getProjectPartyIds(project);
@@ -195,11 +195,11 @@ export class SessionService {
           : this.normalizeIdCandidate((current as any)?.clientId);
 
         if (pArtistId && (!sArtistId || pArtistId !== sArtistId)) {
-          this.showMessage('Artista sessione allineato automaticamente al progetto.');
+          this.showMessage('Artista della seduta allineato automaticamente al progetto.');
           sArtistId = pArtistId;
         }
         if (pClientId && (!sClientId || pClientId !== sClientId)) {
-          this.showMessage('Cliente sessione allineato automaticamente al progetto.');
+          this.showMessage('Cliente della seduta allineato automaticamente al progetto.');
           sClientId = pClientId;
         }
         if (sArtistId) (normalizedChanges as any).artistId = sArtistId;
@@ -244,7 +244,7 @@ export class SessionService {
   async delete(id: string): Promise<void> {
     this.ensureStaffPermission(
       'canManageSessions',
-      'Permesso mancante: gestione sessioni.'
+      'Permesso mancante: gestione sedute.'
     );
     try {
       const current = await this.getSessionById(id);
@@ -262,27 +262,86 @@ export class SessionService {
   }
 
   getSessionsByArtist(artistId: string): Observable<Session[]> {
-    const q = query(ref(this.db, this.path), orderByChild('artistId'), equalTo(artistId));
+    return this.querySessionsByChild('artistId', artistId);
+  }
+
+  getSessionsByClient(clientId: string): Observable<Session[]> {
+    const cid = String(clientId ?? '').trim();
+    if (!cid) return new Observable<Session[]>(obs => { obs.next([]); obs.complete(); });
+
+    const byClientId$ = this.querySessionsByChild('clientId', cid);
+    const byLegacyClientId$ = this.querySessionsByChild('idClient', cid);
 
     return new Observable<Session[]>(obs => {
-      const unsub = onValue(
-        q,
-        snap => {
-          this.zone.run(() => {
-            const list = snap.exists()
-              ? Object.entries<any>(snap.val()).map(([key, v]) => this.fromDb({ id: key, ...v }))
-              : [];
-            obs.next(list);
-          });
+      const sub = combineLatest([byClientId$, byLegacyClientId$]).subscribe({
+        next: ([modern, legacy]) => {
+          const merged = new Map<string, Session>();
+
+          for (const s of [...modern, ...legacy]) {
+            const sid = String((s as any)?.id ?? '').trim();
+            if (!sid) continue;
+            merged.set(sid, s);
+          }
+
+          const list = Array.from(merged.values()).sort(
+            (a, b) => new Date((a as any).start).getTime() - new Date((b as any).start).getTime()
+          );
+          obs.next(list);
         },
-        err => this.zone.run(() => obs.error(err))
-      );
-      return () => unsub();
+        error: err => obs.error(err)
+      });
+
+      return () => sub.unsubscribe();
     });
   }
 
+  getSessionsByBooking(bookingId: string): Observable<Session[]> {
+    return this.querySessionsByChild('bookingId', bookingId);
+  }
+
+  getSessionsByClientWithBookingFallback(clientId: string, bookingIds: string[], projectIds: string[] = []): Observable<Session[]> {
+    const cid = String(clientId ?? '').trim();
+    const ids = Array.from(new Set((bookingIds ?? []).map(x => String(x ?? '').trim()).filter(Boolean)));
+    const pids = Array.from(new Set((projectIds ?? []).map(x => String(x ?? '').trim()).filter(Boolean)));
+    if (!cid && ids.length === 0 && pids.length === 0) return new Observable<Session[]>(obs => { obs.next([]); obs.complete(); });
+
+    const streams: Observable<Session[]>[] = [];
+    if (cid) {
+      streams.push(this.querySessionsByChild('clientId', cid).pipe(catchError(() => of([] as Session[]))));
+      streams.push(this.querySessionsByChild('idClient', cid).pipe(catchError(() => of([] as Session[]))));
+    }
+    for (const bid of ids) {
+      streams.push(this.querySessionsByChild('bookingId', bid).pipe(catchError(() => of([] as Session[]))));
+    }
+    for (const pid of pids) {
+      streams.push(this.querySessionsByChild('projectId', pid).pipe(catchError(() => of([] as Session[]))));
+    }
+
+    return combineLatest(streams).pipe(
+      map((chunks) => {
+        const merged = new Map<string, Session>();
+        for (const list of chunks) {
+          for (const s of list ?? []) {
+            const sid = String((s as any)?.id ?? '').trim();
+            if (!sid) continue;
+            merged.set(sid, s);
+          }
+        }
+        return Array.from(merged.values()).sort(
+          (a, b) => new Date((a as any).start).getTime() - new Date((b as any).start).getTime()
+        );
+      })
+    );
+  }
+
   getSessionsByProject(projectId: string): Observable<Session[]> {
-    const q = query(ref(this.db, this.path), orderByChild('projectId'), equalTo(projectId));
+    return this.querySessionsByChild('projectId', projectId);
+  }
+
+  private querySessionsByChild(child: string, value: string): Observable<Session[]> {
+    const v = String(value ?? '').trim();
+    if (!v) return new Observable<Session[]>(obs => { obs.next([]); obs.complete(); });
+    const q = query(ref(this.db, this.path), orderByChild(child), equalTo(v));
 
     return new Observable<Session[]>(obs => {
       const unsub = onValue(
@@ -314,7 +373,7 @@ export class SessionService {
   private fromDb(dbRow: any): Session {
     // supporto robusto: se in futuro migri e trovi già artistId, lo uso.
     const artistId = dbRow.artistId ?? '';
-    const clientId = dbRow.clientId ?? undefined;
+    const clientId = dbRow.clientId ?? dbRow.idClient ?? undefined;
 
     return {
       id: dbRow.id,
@@ -322,8 +381,8 @@ export class SessionService {
       clientId,
       start: this.normalizeLocalDateTime(dbRow.start),
       end: this.normalizeLocalDateTime(dbRow.end),
-      projectId: dbRow.projectId,
-      bookingId: dbRow.bookingId,
+      projectId: dbRow.projectId ?? dbRow.idProject,
+      bookingId: dbRow.bookingId ?? dbRow.idBooking,
       zone: dbRow.zone,
       sessionNumber: dbRow.sessionNumber,
       notesByAdmin: dbRow.notesByAdmin ?? dbRow.notes,

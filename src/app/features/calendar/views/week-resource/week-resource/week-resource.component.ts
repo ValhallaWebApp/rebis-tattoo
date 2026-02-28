@@ -2,11 +2,34 @@ import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, compu
 import { CommonModule } from '@angular/common';
 import { UiArtist, UiCalendarEvent } from '../../../models';
 import { addDays, toDateKey } from '../../../utils';
+import { MaterialModule } from '../../../../../core/modules/material.module';
+import type { AdminActionPayload } from '../../day-view/day-view.component';
+
+interface WeekEventListItem {
+  id: string;
+  dayKey: string;
+  dateLabel: string;
+  startLabel: string;
+  endLabel: string;
+  range: string;
+  type: 'booking' | 'session';
+  typeLabel: string;
+  status: string;
+  title: string;
+  subtitle: string;
+  artistId: string;
+  artistName: string;
+  clientId: string;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  event: UiCalendarEvent;
+}
 
 @Component({
   selector: 'app-week-resource',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MaterialModule],
   templateUrl: './week-resource.component.html',
   styleUrls: ['./week-resource.component.scss'],
 })
@@ -14,12 +37,35 @@ export class WeekResourceComponent implements OnChanges {
   @Input({ required: true }) range!: { start: Date; end: Date };
   @Input({ required: true }) artists: UiArtist[] = [];
   @Input({ required: true }) events: UiCalendarEvent[] = [];
+  @Input() clients: Array<{ id: string; fullName?: string; email?: string; phone?: string }> = [];
+  private viewLayout: 'cards' | 'list' = 'cards';
+
+  @Input()
+  set weekLayout(v: unknown) {
+    this.viewLayout = v === 'list' ? 'list' : 'cards';
+  }
+  get weekLayout(): 'cards' | 'list' {
+    return this.viewLayout;
+  }
+
+  // backward-compatible alias
+  @Input()
+  set layout(v: unknown) {
+    this.weekLayout = v;
+  }
 
   @Output() openDay = new EventEmitter<{ artistId?: string; dateKey: string }>();
+  @Output() editEvent = new EventEmitter<UiCalendarEvent>();
+  @Output() action = new EventEmitter<AdminActionPayload>();
 
   private readonly rangeSig = signal<{ start: Date; end: Date }>({ start: new Date(), end: new Date() });
   private readonly artistsSig = signal<UiArtist[]>([]);
   private readonly eventsSig = signal<UiCalendarEvent[]>([]);
+  private readonly clientsSig = signal<Array<{ id: string; fullName?: string; email?: string; phone?: string }>>([]);
+
+  readonly filterFrom = signal('');
+  readonly filterTo = signal('');
+  readonly filterQuery = signal('');
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['range'] && changes['range'].currentValue) {
@@ -30,6 +76,9 @@ export class WeekResourceComponent implements OnChanges {
     }
     if (changes['events']) {
       this.eventsSig.set(changes['events'].currentValue ?? []);
+    }
+    if (changes['clients']) {
+      this.clientsSig.set(changes['clients'].currentValue ?? []);
     }
   }
 
@@ -95,6 +144,110 @@ export class WeekResourceComponent implements OnChanges {
     });
   });
 
+  readonly weekEventItems = computed<WeekEventListItem[]>(() => {
+    const dayKeys = new Set(this.days().map(d => d.key));
+    const artistMap = new Map<string, string>(
+      (this.artistsSig() ?? []).map(a => [String(a.id), String(a.name ?? '').trim()])
+    );
+    const clientsMap = new Map(
+      (this.clientsSig() ?? []).map(c => [
+        String(c.id ?? '').trim(),
+        {
+          fullName: String(c.fullName ?? '').trim(),
+          email: String(c.email ?? '').trim(),
+          phone: String(c.phone ?? '').trim(),
+        },
+      ])
+    );
+
+    return (this.eventsSig() ?? [])
+      .map(ev => {
+        const startDate = new Date(ev.start);
+        const endDate = new Date(ev.end);
+        const dayKey = toDateKey(startDate);
+        if (!dayKeys.has(dayKey)) return null;
+
+        const artistId = String(ev.artistId ?? '');
+        const artistName = artistMap.get(artistId) ?? 'Artista';
+        const startLabel = this.formatTime(ev.start);
+        const endLabel = this.formatTime(ev.end);
+        const type = ev.type === 'session' ? 'session' : 'booking';
+        const clientId = String(ev.clientId ?? '').trim();
+        const clientRow = clientId ? clientsMap.get(clientId) : undefined;
+        const clientName =
+          String((ev as any).clientName ?? '').trim() ||
+          String((ev as any).clientLabel ?? '').trim() ||
+          String(clientRow?.fullName ?? '').trim();
+        const clientEmail =
+          String((ev as any).clientEmail ?? '').trim() ||
+          String(clientRow?.email ?? '').trim();
+        const clientPhone =
+          String((ev as any).clientPhone ?? '').trim() ||
+          String(clientRow?.phone ?? '').trim();
+        const title =
+          String((ev as any).notes ?? '').trim() ||
+          String((ev as any).title ?? '').trim() ||
+          (type === 'session' ? 'Seduta' : 'Consulenza');
+
+        const item: WeekEventListItem = {
+          id: String(ev.id ?? ''),
+          dayKey,
+          dateLabel: this.formatDate(startDate),
+          startLabel,
+          endLabel,
+          range: `${startLabel}-${endLabel}`,
+          type,
+          typeLabel: type === 'session' ? 'Seduta' : 'Consulenza',
+          status: String((ev as any).status ?? '').trim() || '-',
+          title,
+          subtitle: clientName || artistName,
+          artistId,
+          artistName,
+          clientId,
+          clientName,
+          clientEmail,
+          clientPhone,
+          event: ev,
+        };
+        return item;
+      })
+      .filter((item): item is WeekEventListItem => !!item)
+      .sort((a, b) => {
+        const aDate = new Date(`${a.dayKey}T${a.startLabel}:00`).getTime();
+        const bDate = new Date(`${b.dayKey}T${b.startLabel}:00`).getTime();
+        return aDate - bDate;
+      });
+  });
+
+  readonly filteredWeekEventItems = computed<WeekEventListItem[]>(() => {
+    const list = this.weekEventItems();
+    const fromRaw = String(this.filterFrom() ?? '').trim();
+    const toRaw = String(this.filterTo() ?? '').trim();
+    const q = String(this.filterQuery() ?? '').trim().toLowerCase();
+
+    let from = fromRaw;
+    let to = toRaw;
+    if (from && to && from > to) {
+      const tmp = from;
+      from = to;
+      to = tmp;
+    }
+
+    return list.filter(item => {
+      if (from && item.dayKey < from) return false;
+      if (to && item.dayKey > to) return false;
+      if (!q) return true;
+
+      const hay = [
+        item.clientName,
+        item.clientEmail,
+        item.clientPhone,
+      ].join(' ').toLowerCase();
+
+      return hay.includes(q);
+    });
+  });
+
   readonly legendEntries = computed(() => {
     const dayMap = this.dayArtistCountMap();
     const totalsByArtist = new Map<string, number>();
@@ -153,5 +306,77 @@ export class WeekResourceComponent implements OnChanges {
 
     const idx = Math.abs(hash) % palette.length;
     return palette[idx];
+  }
+
+  private formatTime(iso: string): string {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  private formatDate(d: Date): string {
+    return d.toLocaleDateString('it-IT', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+    });
+  }
+
+  setFilterFrom(v: string): void {
+    this.filterFrom.set(this.normalizeDateKey(v));
+  }
+
+  setFilterTo(v: string): void {
+    this.filterTo.set(this.normalizeDateKey(v));
+  }
+
+  setFilterQuery(v: string): void {
+    this.filterQuery.set(v ?? '');
+  }
+
+  resetFilters(): void {
+    this.filterFrom.set('');
+    this.filterTo.set('');
+    this.filterQuery.set('');
+  }
+
+  openEvent(ev: UiCalendarEvent): void {
+    this.editEvent.emit(ev);
+  }
+
+  edit(ev: UiCalendarEvent): void {
+    this.editEvent.emit(ev);
+    this.action.emit({ type: 'edit', event: ev });
+  }
+
+  emitAction(type: AdminActionPayload['type'], ev: UiCalendarEvent): void {
+    this.action.emit({ type, event: ev });
+  }
+
+  dateFilterToDate(value: string): Date | null {
+    const normalized = this.normalizeDateKey(value);
+    if (!normalized) return null;
+    const [y, m, d] = normalized.split('-').map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d, 0, 0, 0, 0);
+  }
+
+  onFilterFromDateChange(value: Date | null): void {
+    this.filterFrom.set(value ? toDateKey(value) : '');
+  }
+
+  onFilterToDateChange(value: Date | null): void {
+    this.filterTo.set(value ? toDateKey(value) : '');
+  }
+
+  private normalizeDateKey(value: string): string {
+    const raw = String(value ?? '').trim();
+    if (!raw) return '';
+
+    const direct = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (direct) return raw;
+
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return toDateKey(parsed);
   }
 }

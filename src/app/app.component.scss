@@ -1,3 +1,10 @@
+:host {
+  --app-toolbar-height: 64px;
+  display: block;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .notifications-wrapper {
   position: relative;
 
@@ -59,7 +66,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 8vh;
+    height: var(--app-toolbar-height);
     padding: 0 1.5rem;
     overflow: visible;
   }
@@ -174,6 +181,11 @@
   }
 
   @media (max-width: 1024px) {
+    .toolbar-container {
+      height: 56px;
+      padding: 0 1rem;
+    }
+
     .desktop-nav,
     .toolbar-actions {
       display: none;
@@ -199,8 +211,9 @@
 }
 
 .sidenav-container {
-  height: calc(100vh - 8vh);
-  overflow-y: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
   position: relative;
   z-index: var(--z-content-raised, 1);
 }
@@ -280,14 +293,43 @@
   color: var(--app-sidenav-text, #f1f1f1) !important;
 }
 
+:host ::ng-deep .mobile-sidenav .mdc-list-item__primary-text,
+:host ::ng-deep .mobile-sidenav .mat-mdc-list-item-title,
+:host ::ng-deep .mobile-sidenav .mat-content,
+:host ::ng-deep .mobile-sidenav .mat-expansion-panel-header-title,
+:host ::ng-deep .mobile-sidenav .mat-expansion-indicator::after {
+  color: var(--app-sidenav-text, #f1f1f1) !important;
+}
+
+:host ::ng-deep .mobile-sidenav .mat-expansion-panel-header:hover,
+:host ::ng-deep .mobile-sidenav .mat-expansion-panel-header:focus {
+  background: var(--app-sidenav-hover-bg, rgba(255, 255, 255, 0.08)) !important;
+}
+
+:host ::ng-deep .mobile-sidenav .logout-btn .mdc-button__label,
+:host ::ng-deep .mobile-sidenav .login-btn .mdc-button__label,
+:host ::ng-deep .mobile-sidenav .logout-btn .mat-icon,
+:host ::ng-deep .mobile-sidenav .login-btn .mat-icon {
+  color: var(--app-button-border, #c4a62d) !important;
+}
+
 .app-shell {
   background-color: var(--app-main-bg, #050508);
   color: var(--app-main-text, #ffffff);
-  min-height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 :host ::ng-deep .sidenav-container > .mat-drawer-backdrop.mat-drawer-shown {
   z-index: var(--z-drawer-backdrop, 3250) !important;
+}
+
+:host ::ng-deep .sidenav-container .mat-drawer-content {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 :host ::ng-deep .mat-mdc-menu-panel.notif-menu {

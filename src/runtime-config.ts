@@ -3,6 +3,7 @@ import { AppEnvironment, FirebaseWebConfig } from './environment.model';
 export interface AppRuntimeConfig {
   paymentApiBaseUrl: string;
   stripePublishableKey: string;
+  allowStripeTestKeyInProduction: boolean;
   firebaseConfig: FirebaseWebConfig;
 }
 
@@ -22,6 +23,8 @@ export function withRuntimeConfig(base: AppEnvironment): AppEnvironment {
     ...base,
     paymentApiBaseUrl: runtime.paymentApiBaseUrl ?? base.paymentApiBaseUrl,
     stripePublishableKey: runtime.stripePublishableKey ?? base.stripePublishableKey,
+    allowStripeTestKeyInProduction:
+      runtime.allowStripeTestKeyInProduction ?? base.allowStripeTestKeyInProduction,
     firebaseConfig: {
       ...base.firebaseConfig,
       ...(runtime.firebaseConfig ?? {})

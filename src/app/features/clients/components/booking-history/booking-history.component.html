@@ -65,10 +65,38 @@
                 <mat-icon inline>payments</mat-icon> Caparra EUR {{ dep }}
               </span>
 
-              <span class="meta-item" *ngIf="nextBooking.type">
-                <mat-icon inline>sell</mat-icon> {{ nextBooking.type }}
+              <span class="meta-item">
+                <mat-icon inline>sell</mat-icon>
+                <span class="kind-pill" [ngClass]="getBookingKindClass(nextBooking)">
+                  {{ getBookingKindLabel(nextBooking) }}
+                </span>
+              </span>
+
+              <span class="meta-item" *ngIf="getSessionCount(nextBooking) > 0">
+                <mat-icon inline>format_list_numbered</mat-icon> {{ getSessionCount(nextBooking) }} sedute
               </span>
             </div>
+
+            <ng-container *ngIf="getSessionsForBooking(nextBooking) as sessions">
+              <div class="sessions-box" *ngIf="sessions.length > 0">
+                <div class="sessions-head">
+                  <mat-icon inline>view_list</mat-icon> Sedute collegate
+                </div>
+                <div class="sessions-list">
+                  <div class="session-row" *ngFor="let s of sessions | slice:0:3">
+                    <span class="session-time">
+                      <mat-icon inline>event</mat-icon> {{ s.start | date:'short' }}
+                    </span>
+                    <span class="session-pill" [ngClass]="getSessionStatusClass(s.status)">
+                      {{ getSessionStatusLabel(s.status) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="sessions-more" *ngIf="sessions.length > 3">
+                  +{{ sessions.length - 3 }} altre sedute
+                </div>
+              </div>
+            </ng-container>
 
             <div class="card-actions">
               <button mat-flat-button class="primary" [matMenuTriggerFor]="supportMenuHero">
@@ -161,13 +189,45 @@
                 </div>
 
                 <div class="meta">
+                  <span class="meta-item">
+                    <mat-icon inline>sell</mat-icon>
+                    <span class="kind-pill" [ngClass]="getBookingKindClass(b)">
+                      {{ getBookingKindLabel(b) }}
+                    </span>
+                  </span>
+
                   <span class="meta-item" *ngIf="getDurationMinutes(b) as mins">
                     <mat-icon inline>timelapse</mat-icon> {{ mins }} min
                   </span>
                   <span class="meta-item" *ngIf="getDeposit(b) as dep">
                     <mat-icon inline>payments</mat-icon> Caparra EUR {{ dep }}
                   </span>
+
+                  <span class="meta-item" *ngIf="getSessionCount(b) > 0">
+                    <mat-icon inline>format_list_numbered</mat-icon> {{ getSessionCount(b) }} sedute
+                  </span>
                 </div>
+
+                <ng-container *ngIf="getSessionsForBooking(b) as sessions">
+                  <div class="sessions-box" *ngIf="sessions.length > 0">
+                    <div class="sessions-head">
+                      <mat-icon inline>view_list</mat-icon> Sedute collegate
+                    </div>
+                    <div class="sessions-list">
+                      <div class="session-row" *ngFor="let s of sessions | slice:0:3">
+                        <span class="session-time">
+                          <mat-icon inline>event</mat-icon> {{ s.start | date:'short' }}
+                        </span>
+                        <span class="session-pill" [ngClass]="getSessionStatusClass(s.status)">
+                          {{ getSessionStatusLabel(s.status) }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="sessions-more" *ngIf="sessions.length > 3">
+                      +{{ sessions.length - 3 }} altre sedute
+                    </div>
+                  </div>
+                </ng-container>
 
                 <div class="card-actions">
                   <button mat-stroked-button class="assist" [matMenuTriggerFor]="supportMenu">
@@ -240,6 +300,53 @@
                   </span>
                 </div>
 
+                <div class="meta">
+                  <span class="meta-item">
+                    <mat-icon inline>sell</mat-icon>
+                    <span class="kind-pill" [ngClass]="getBookingKindClass(b)">
+                      {{ getBookingKindLabel(b) }}
+                    </span>
+                  </span>
+
+                  <span class="meta-item" *ngIf="getDurationMinutes(b) as mins">
+                    <mat-icon inline>timelapse</mat-icon> {{ mins }} min
+                  </span>
+                  <span class="meta-item" *ngIf="getDeposit(b) as dep">
+                    <mat-icon inline>payments</mat-icon> Caparra EUR {{ dep }}
+                  </span>
+                  <span class="meta-item" *ngIf="getSessionCount(b) > 0">
+                    <mat-icon inline>format_list_numbered</mat-icon> {{ getSessionCount(b) }} sedute
+                  </span>
+                </div>
+
+                <ng-container *ngIf="getSessionsForBooking(b) as sessions">
+                  <div class="sessions-box" *ngIf="sessions.length > 0">
+                    <div class="sessions-head">
+                      <mat-icon inline>view_list</mat-icon> Sedute collegate
+                    </div>
+                    <div class="sessions-list">
+                      <div class="session-row" *ngFor="let s of sessions | slice:0:3">
+                        <span class="session-time">
+                          <mat-icon inline>event</mat-icon> {{ s.start | date:'short' }}
+                        </span>
+                        <span class="session-pill" [ngClass]="getSessionStatusClass(s.status)">
+                          {{ getSessionStatusLabel(s.status) }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="sessions-more" *ngIf="sessions.length > 3">
+                      +{{ sessions.length - 3 }} altre sedute
+                    </div>
+                  </div>
+                </ng-container>
+
+                <div class="available-actions">
+                  <span class="available-label">Azioni disponibili:</span>
+                  <span class="action-chip" *ngFor="let action of getAvailableActions(b)">
+                    {{ action }}
+                  </span>
+                </div>
+
                 <div class="card-actions">
                   <button mat-stroked-button class="ghost" (click)="openDetails(b)">
                     <mat-icon>info</mat-icon> Dettagli
@@ -290,6 +397,15 @@
                   </div>
 
                   <span class="status-pill cancelled">Annullata</span>
+                </div>
+
+                <div class="meta">
+                  <span class="meta-item">
+                    <mat-icon inline>sell</mat-icon>
+                    <span class="kind-pill" [ngClass]="getBookingKindClass(b)">
+                      {{ getBookingKindLabel(b) }}
+                    </span>
+                  </span>
                 </div>
 
                 <div class="card-actions">

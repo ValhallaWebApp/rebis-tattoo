@@ -44,6 +44,12 @@ export class ExternalActionsHelperService {
     const name = String(filename ?? '').trim();
     if (!name) return;
     const blob = new Blob([content], { type: mimeType });
+    this.downloadBlobFile(blob, name);
+  }
+
+  downloadBlobFile(blob: Blob, filename: string): void {
+    const name = String(filename ?? '').trim();
+    if (!name || !blob) return;
     const url = URL.createObjectURL(blob);
     const link = this.document.createElement('a');
     link.href = url;

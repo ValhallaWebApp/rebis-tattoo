@@ -18,6 +18,8 @@ export class StepArtistComponent {
   readonly artists = this.store.artists;
   readonly loading = this.store.loadingArtists;
   readonly error = this.store.error;
+  readonly depositEuro = this.store.depositEuro;
+  readonly durationMin = this.store.durationMin;
 
   readonly selectedId = computed(() => this.store.draft().artistId);
 

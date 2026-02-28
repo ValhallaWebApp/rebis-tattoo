@@ -17,6 +17,15 @@
     </div>
 
     <div class="toolbar-right">
+      <mat-button-toggle-group
+        *ngIf="view()==='week'"
+        class="view-layout-toggle"
+        [value]="weekLayout()"
+        (change)="setWeekLayout($event.value)">
+        <mat-button-toggle value="cards">Normale</mat-button-toggle>
+        <mat-button-toggle value="list">Lista</mat-button-toggle>
+      </mat-button-toggle-group>
+
       <button mat-stroked-button [matMenuTriggerFor]="viewMenu">
         <mat-icon>view_agenda</mat-icon>
         {{ view() | uppercase }}
@@ -99,7 +108,11 @@
             [range]="weekRange()"
             [artists]="selectedArtists()"
             [events]="eventsForSelectedArtists()"
+            [clients]="clientsLite"
+            [weekLayout]="weekLayout()"
             (openDay)="openDayFromWeekCell($event)"
+            (editEvent)="openEditEvent($event)"
+            (action)="onDayAction($event)"
           />
 
           <app-month-view

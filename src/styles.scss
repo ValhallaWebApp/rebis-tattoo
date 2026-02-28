@@ -5,6 +5,8 @@
 @import './styles/theme-public.scss';
 @import './styles/theme-client.scss';
 @import './styles/theme-admin.scss';
+@import './styles/booking-history.global.scss';
+@import './styles/calendar.global.scss';
 // Plus imports for other components in your app.
 
 // Include the common styles for Angular Material. We include this here so that you only
@@ -214,4 +216,22 @@ body.theme-admin {
     outline: 2px solid var(--app-focus-ring, rgba(183, 155, 85, 0.55));
     outline-offset: 2px;
   }
+}
+
+/* Drawer calendario: pannelli select/autocomplete sempre leggibili */
+.event-drawer-panel.mat-mdc-select-panel,
+.event-drawer-panel.mat-mdc-autocomplete-panel {
+  background: var(--app-surface, var(--mat-sys-surface, rgba(16, 17, 24, 0.94))) !important;
+  color: var(--app-main-text, var(--mat-sys-on-surface, #f3f4f7)) !important;
+  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.18));
+}
+
+.event-drawer-panel .mat-mdc-option,
+.event-drawer-panel .mdc-list-item__primary-text {
+  color: var(--app-main-text, var(--mat-sys-on-surface, #f3f4f7)) !important;
+}
+
+.event-drawer-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+.event-drawer-panel .mat-mdc-option.mdc-list-item--selected {
+  background: var(--app-dropdown-hover-bg, rgba(255, 255, 255, 0.12)) !important;
 }

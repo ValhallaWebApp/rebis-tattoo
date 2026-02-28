@@ -14,5 +14,6 @@ export interface AppEnvironment {
   environmentName: 'development' | 'stage' | 'production';
   paymentApiBaseUrl: string;
   stripePublishableKey: string;
+  allowStripeTestKeyInProduction?: boolean;
   firebaseConfig: FirebaseWebConfig;
 }

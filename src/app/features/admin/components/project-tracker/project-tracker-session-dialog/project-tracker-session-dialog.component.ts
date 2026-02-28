@@ -35,7 +35,7 @@ export class ProjectTrackerSessionDialogComponent {
         { label: 'Annullata', value: 'cancelled' }
       ]
     },
-    { type: 'number', name: 'paidAmount', label: 'Pagato (sessione)', min: 0 },
+    { type: 'number', name: 'paidAmount', label: 'Pagato (seduta)', min: 0 },
     { type: 'textarea', name: 'notesByAdmin', label: 'Note admin', rows: 2, className: 'full' }
   ];
 

@@ -4,17 +4,19 @@ import { MaterialModule } from '../../../../core/modules/material.module';
 
 import { Booking, BookingService } from '../../../../core/services/bookings/booking.service';
 import { StaffService } from '../../../../core/services/staff/staff.service';
+import { Session, SessionService } from '../../../../core/services/session/session.service';
 import { AuthService } from '../../../../core/services/auth/auth.service';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatDialog } from '@angular/material/dialog';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { Router } from '@angular/router';
-import { combineLatest } from 'rxjs';
+import { catchError, combineLatest, of, shareReplay, startWith, switchMap } from 'rxjs';
 import { ReviewCreateDialogComponent } from '../../../../shared/components/dialogs/review-create-dialog/review-create-dialog.component';
 import { firstValueFrom } from 'rxjs';
 import { InvoicesService, Invoice } from '../../../../core/services/invoices/invoices.service';
 import { ExternalActionsHelperService } from '../../../../core/services/helpers/external-actions-helper.service';
+import { AppointmentDetailsDialogComponent } from '../../../../shared/components/dialogs/appointment-details-dialog/appointment-details-dialog.component';
 
 @Component({
   selector: 'app-booking-history',
@@ -46,6 +48,7 @@ export class BookingHistoryComponent implements OnInit {
   private readonly injector = inject(Injector);
   private readonly invoicesService = inject(InvoicesService);
   private readonly externalActions = inject(ExternalActionsHelperService);
+  private readonly sessionService = inject(SessionService);
 
   readonly WHATSAPP_NUMBER = '393333333333';
 
@@ -65,6 +68,8 @@ export class BookingHistoryComponent implements OnInit {
   artistMap: Record<string, string> = {};
   artistPhotoMap: Record<string, string> = {};
   reviewMap: Record<string, any> = {};
+  sessionsByBookingId: Record<string, Session[]> = {};
+  sessionsByProjectId: Record<string, Session[]> = {};
 
   // ===========
   // LOAD (no service changes)
@@ -74,12 +79,31 @@ export class BookingHistoryComponent implements OnInit {
     if (!currentUser?.uid) return;
 
     this.user = currentUser;
+    const role = String((currentUser as any)?.role ?? '').toLowerCase();
+    const bookings$ = this.bookingService
+      .getBookingsByClient(currentUser.uid)
+      .pipe(shareReplay({ bufferSize: 1, refCount: true }));
+
+    const sessions$ = bookings$.pipe(
+      switchMap((bookings) => {
+        if (role === 'admin' || role === 'staff') return this.sessionService.getAll();
+        const bookingIds = (bookings ?? [])
+          .map(b => this.getBookingId(b))
+          .filter(Boolean);
+        const projectIds = (bookings ?? [])
+          .map(b => this.getProjectId(b))
+          .filter(Boolean);
+        return this.sessionService.getSessionsByClientWithBookingFallback(String(currentUser.uid), bookingIds, projectIds);
+      }),
+      startWith([] as Session[])
+    );
 
     const sub = combineLatest([
       this.staffService.getAllStaff(),
       this.reviewsService.getReviewsByUser(currentUser.uid),
-      this.bookingService.getBookingsByClient(currentUser.uid)
-    ]).subscribe(([staff, reviews, bookings]) => {
+      bookings$,
+      sessions$.pipe(catchError(() => of([] as Session[])))
+    ]).subscribe(([staff, reviews, bookings, sessions]) => {
       // staff maps
       const aMap: Record<string, string> = {};
       const pMap: Record<string, string> = {};
@@ -103,6 +127,7 @@ export class BookingHistoryComponent implements OnInit {
         (x, y) => new Date(x.start as any).getTime() - new Date(y.start as any).getTime()
       );
       this.bookings = all;
+      this.syncSessionsMap(all, sessions ?? []);
 
       const now = Date.now();
 
@@ -149,6 +174,62 @@ export class BookingHistoryComponent implements OnInit {
   // ===========
   get activeBookings(): Booking[] {
     return [this.nextBooking, ...this.otherUpcomingBookings].filter(Boolean) as Booking[];
+  }
+
+  getSessionsForBooking(b: Booking): Session[] {
+    const bookingId = this.getBookingId(b);
+    const projectId = this.getProjectId(b);
+    const byBooking = bookingId ? (this.sessionsByBookingId[bookingId] ?? []) : [];
+    const byProject = projectId ? (this.sessionsByProjectId[projectId] ?? []) : [];
+
+    if (byBooking.length === 0) return byProject;
+    if (byProject.length === 0) return byBooking;
+
+    const merged = [...byBooking];
+    const seenIds = new Set(merged.map(s => String(s?.id ?? '').trim()).filter(Boolean));
+    for (const s of byProject) {
+      const sid = String(s?.id ?? '').trim();
+      if (sid && seenIds.has(sid)) continue;
+      merged.push(s);
+    }
+    return merged;
+  }
+
+  getSessionCount(b: Booking): number {
+    return this.getSessionsForBooking(b).length;
+  }
+
+  getSessionStatusLabel(status: any): string {
+    const s = String(status ?? '').toLowerCase();
+    if (s === 'planned') return 'Pianificata';
+    if (s === 'completed') return 'Completata';
+    if (s === 'cancelled') return 'Annullata';
+    return 'Seduta';
+  }
+
+  getSessionStatusClass(status: any): string {
+    const s = String(status ?? '').toLowerCase();
+    if (s === 'planned') return 'planned';
+    if (s === 'completed') return 'done';
+    if (s === 'cancelled') return 'cancelled';
+    return '';
+  }
+
+  getAvailableActions(b: Booking): string[] {
+    const s = this.normStatus(b.status);
+    const actions: string[] = ['Dettagli'];
+
+    if (s === 'cancelled') {
+      actions.push('Riprenota', 'Apri ticket', 'WhatsApp');
+      return actions;
+    }
+
+    actions.push('Scarica fattura', 'Riprenota');
+    if (!this.reviewMap[(b as any).id]) actions.push('Lascia recensione');
+    else actions.push('Vedi recensione');
+
+    if (this.getSessionCount(b) > 0) actions.push('Vedi sedute');
+    return actions;
   }
 
   // ===========
@@ -199,8 +280,93 @@ export class BookingHistoryComponent implements OnInit {
     return `Prenotazione ${(b as any).id ?? ''}${pid}${artist}`.trim();
   }
 
+  getBookingKindLabel(b: Booking): string {
+    return this.resolveBookingKind(b) === 'session' ? 'Seduta' : 'Consulenza';
+  }
+
+  getBookingKindClass(b: Booking): string {
+    return this.resolveBookingKind(b);
+  }
+
   private normStatus(status: any): string {
     return String(status ?? '').toLowerCase();
+  }
+
+  private resolveBookingKind(b: Booking): 'consultation' | 'session' {
+    const raw = String((b as any)?.type ?? '').trim().toLowerCase();
+    if (['session', 'seduta', 'tattoo_session'].includes(raw)) return 'session';
+    if (['consultation', 'consulenza', 'consulto'].includes(raw)) return 'consultation';
+    if (this.getSessionCount(b) > 0) return 'session';
+    return 'consultation';
+  }
+
+  private getBookingId(b: Booking): string {
+    return this.firstId((b as any)?.id, (b as any)?.bookingId, (b as any)?.idBooking, (b as any)?.booking_id);
+  }
+
+  private getProjectId(b: Booking): string {
+    return this.firstId((b as any)?.projectId, (b as any)?.idProject, (b as any)?.project_id, (b as any)?.project?.id);
+  }
+
+  private getSessionBookingId(s: Session): string {
+    return this.firstId((s as any)?.bookingId, (s as any)?.idBooking, (s as any)?.booking_id);
+  }
+
+  private getSessionProjectId(s: Session): string {
+    return this.firstId((s as any)?.projectId, (s as any)?.idProject, (s as any)?.project_id);
+  }
+
+  private firstId(...values: any[]): string {
+    for (const value of values) {
+      if (Array.isArray(value)) {
+        for (const x of value) {
+          const sid = String(x ?? '').trim();
+          if (sid) return sid;
+        }
+        continue;
+      }
+      const sid = String(value ?? '').trim();
+      if (sid) return sid;
+    }
+    return '';
+  }
+
+  private syncSessionsMap(bookings: Booking[], sessions: Session[]): void {
+    const bookingIds = new Set(
+      (bookings ?? []).map(b => this.getBookingId(b)).filter(Boolean)
+    );
+    const projectIds = new Set(
+      (bookings ?? []).map(b => this.getProjectId(b)).filter(Boolean)
+    );
+
+    const related = (sessions ?? [])
+      .filter(s => {
+        const bookingId = this.getSessionBookingId(s);
+        const projectId = this.getSessionProjectId(s);
+        return bookingIds.has(bookingId) || projectIds.has(projectId);
+      })
+      .slice()
+      .sort((a, b) => new Date((a as any).start).getTime() - new Date((b as any).start).getTime());
+
+    const byBooking: Record<string, Session[]> = {};
+    const byProject: Record<string, Session[]> = {};
+
+    for (const s of related) {
+      const bookingId = this.getSessionBookingId(s);
+      const projectId = this.getSessionProjectId(s);
+
+      if (bookingId) {
+        if (!byBooking[bookingId]) byBooking[bookingId] = [];
+        byBooking[bookingId].push(s);
+      }
+      if (projectId) {
+        if (!byProject[projectId]) byProject[projectId] = [];
+        byProject[projectId].push(s);
+      }
+    }
+
+    this.sessionsByBookingId = byBooking;
+    this.sessionsByProjectId = byProject;
   }
 
   getStatusLabel(status: any): string {
@@ -231,8 +397,11 @@ export class BookingHistoryComponent implements OnInit {
   // ACTIONS (client UX)
   // ===========
   openDetails(b: Booking) {
-    // se hai gia una route dettagli, cambiala qui
-    this.snackbar.open(`Dettagli: ${this.getBookingLabel(b)}`, 'Chiudi', { duration: 2200 });
+    this.dialog.open(AppointmentDetailsDialogComponent, {
+      width: '520px',
+      maxWidth: '95vw',
+      data: b
+    });
   }
 
 
@@ -258,16 +427,40 @@ export class BookingHistoryComponent implements OnInit {
     this.router.navigateByUrl('/dashboard/ticket');
   }
 
-  addToCalendar(_: Booking) {
-    this.snackbar.open('Aggiunto al calendario. (Simulazione)', 'Chiudi', { duration: 2200 });
+  addToCalendar(b: Booking) {
+    const url = this.buildGoogleCalendarUrl(b);
+    if (!url) {
+      this.snackbar.open('Impossibile aprire Google Calendar: data/ora non valide.', 'Chiudi', { duration: 2800 });
+      return;
+    }
+    this.externalActions.openInNewTab(url);
   }
 
-  requestReschedule(_: Booking) {
-    this.snackbar.open('Richiesta cambio orario inviata. (Simulazione)', 'Chiudi', { duration: 2200 });
+  requestReschedule(b: Booking) {
+    const bookingId = String((b as any)?.id ?? '').trim();
+    void this.router.navigate(['/dashboard/ticket'], {
+      queryParams: {
+        bookingId,
+        action: 'reschedule',
+        source: 'booking-history'
+      }
+    });
+    this.snackbar.open('Aperta assistenza per richiesta cambio orario.', 'Chiudi', { duration: 2800 });
   }
 
-  cancelRequest(_: Booking) {
-    this.snackbar.open('Richiesta annullamento inviata. (Simulazione)', 'Chiudi', { duration: 2400 });
+  cancelRequest(b: Booking) {
+    const ok = window.confirm('Confermi la richiesta di annullamento?');
+    if (!ok) return;
+
+    const bookingId = String((b as any)?.id ?? '').trim();
+    void this.router.navigate(['/dashboard/ticket'], {
+      queryParams: {
+        bookingId,
+        action: 'cancel',
+        source: 'booking-history'
+      }
+    });
+    this.snackbar.open('Aperta assistenza per richiesta annullamento.', 'Chiudi', { duration: 3000 });
   }
 
   rebook(b: Booking) {
@@ -306,28 +499,38 @@ async downloadInvoice(b: Booking): Promise<void> {
   console.log('booking:', b);
 
   try {
-    // 1) Carico fatture
-    const invoices = await this.safeGetInvoicesArray();
+    // 1) Carico fatture (se non disponibili: fallback a fattura derivata dai dati live)
+    let invoices: any[] = [];
+    try {
+      invoices = await this.safeGetInvoicesArray();
+    } catch (fetchErr) {
+      console.warn('[Invoice] getInvoices fallback:', fetchErr);
+    }
     console.log('invoices count:', invoices.length);
     console.log('invoices sample:', invoices.slice(0, 3));
 
     // 2) Cerco la fattura legata al booking
     const inv = invoices.find(i => (i as any).bookingId === bookingId) || null;
     console.log('matched invoice:', inv);
+    const invoiceToPrint = inv ?? this.buildDerivedInvoiceFromBooking(b);
 
-    if (!inv) {
-      this.snackbar.open('Nessuna fattura trovata per questa prenotazione.', 'Chiudi', { duration: 3500 });
-      console.groupEnd();
-      return;
+    // 3) Creo PDF e lo scarico come file
+    const pdfBytes = this.buildInvoicePdf(invoiceToPrint, b);
+    const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+    this.externalActions.downloadBlobFile(
+      pdfBlob,
+      `fattura-${(invoiceToPrint as any).number ?? (invoiceToPrint as any).id ?? bookingId}.pdf`
+    );
+
+    if (inv) {
+      this.snackbar.open('Fattura PDF scaricata.', 'Chiudi', {
+        duration: 4500
+      });
+    } else {
+      this.snackbar.open('Fattura PDF ricavata dai dati della prenotazione e scaricata.', 'Chiudi', {
+        duration: 4500
+      });
     }
-
-    // 3) Creo HTML e lo scarico come file
-    const html = this.buildInvoiceHtml(inv, b);
-    this.downloadHtmlFile(html, `fattura-${(inv as any).number ?? (inv as any).id ?? bookingId}.html`);
-
-    this.snackbar.open('Fattura pronta: file HTML scaricato. Aprilo e stampa -> "Salva come PDF".', 'Chiudi', {
-      duration: 4500
-    });
   } catch (err) {
     console.error('[Invoice] Error:', err);
     this.snackbar.open('Errore nel recupero/generazione fattura (vedi console).', 'Chiudi', { duration: 4000 });
@@ -376,6 +579,7 @@ private buildInvoiceHtml(invoice: any, booking: any): string {
   const currency = invoice.currency || 'EUR';
   const issuedAt = invoice.issuedAt || invoice.date || new Date().toISOString();
   const date = new Date(issuedAt);
+  const clientLabel = this.resolveClientLabel(invoice, booking);
 
   // supporta sia `items` (array) sia `amount/total`
   const items = Array.isArray(invoice.items) ? invoice.items : [];
@@ -452,8 +656,8 @@ private buildInvoiceHtml(invoice: any, booking: any): string {
       <div><div class="k">Data</div><div class="v">${date.toLocaleDateString()}</div></div>
       <div><div class="k">Artista</div><div class="v">${this.escapeHtml(artistName)}</div></div>
       <div><div class="k">Appuntamento</div><div class="v">${this.escapeHtml(bookingLine)}</div></div>
-      <div><div class="k">Booking ID</div><div class="v">${this.escapeHtml(String(booking.id ?? '-'))}</div></div>
-      <div><div class="k">Cliente</div><div class="v">${this.escapeHtml(String(invoice.clientId ?? invoice.clientName ?? '-'))}</div></div>
+      <div><div class="k">Consulenza ID</div><div class="v">${this.escapeHtml(String(booking.id ?? '-'))}</div></div>
+      <div><div class="k">Cliente</div><div class="v">${this.escapeHtml(clientLabel)}</div></div>
     </div>
 
     <div class="card">
@@ -483,6 +687,291 @@ private buildInvoiceHtml(invoice: any, booking: any): string {
 </html>`;
 }
 
+private buildInvoicePdf(invoice: any, booking: any): Uint8Array {
+  const invNumber = String(invoice?.number ?? invoice?.id ?? 'FATTURA');
+  const currency = String(invoice?.currency ?? 'EUR');
+  const issuedAt = String(invoice?.issuedAt ?? invoice?.date ?? new Date().toISOString());
+  const issueDate = new Date(issuedAt);
+  const dateLabel = Number.isFinite(issueDate.getTime()) ? issueDate.toLocaleDateString('it-IT') : issuedAt;
+  const artistName = String(this.artistMap[(booking as any)?.artistId] ?? 'Rebis Tattoo');
+  const clientLabel = this.resolveClientLabel(invoice, booking);
+  const bookingStart = new Date((booking as any)?.start);
+  const bookingLine = Number.isFinite(bookingStart.getTime())
+    ? `${bookingStart.toLocaleDateString('it-IT')} ${bookingStart.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`
+    : '-';
+
+  const items = Array.isArray(invoice?.items) ? invoice.items : [];
+  const total = Number(invoice?.total ?? invoice?.amount ?? 0) || 0;
+  const paid = Number(invoice?.paid ?? 0) || 0;
+  const residual = Math.max(0, total - paid);
+  const status = String(invoice?.status ?? 'issued').toUpperCase();
+
+  const lines: string[] = [];
+  lines.push('Rebis Tattoo - Fattura / Ricevuta');
+  lines.push(`Numero: ${invNumber}`);
+  lines.push(`Data: ${dateLabel}`);
+  lines.push(`Stato: ${status}`);
+  lines.push(`Cliente: ${clientLabel}`);
+  lines.push(`Artista: ${artistName}`);
+  lines.push(`Consulenza ID: ${String((booking as any)?.id ?? '-')}`);
+  lines.push(`Appuntamento: ${bookingLine}`);
+  lines.push('');
+  lines.push('Dettaglio voci:');
+
+  if (items.length > 0) {
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i] ?? {};
+      const label = String(it?.label ?? it?.description ?? `Voce ${i + 1}`);
+      const qty = Number(it?.qty ?? it?.quantity ?? 1) || 1;
+      const unit = Number(it?.unitPrice ?? it?.price ?? 0) || 0;
+      const lineTotal = qty * unit;
+      const row = `- ${label} | Qta: ${qty} | Prezzo: ${this.moneyPlain(unit, currency)} | Totale: ${this.moneyPlain(lineTotal, currency)}`;
+      lines.push(...this.wrapPdfText(row, 95));
+    }
+  } else {
+    lines.push('- Nessuna voce dettagliata');
+  }
+
+  lines.push('');
+  lines.push(`Totale: ${this.moneyPlain(total, currency)}`);
+  lines.push(`Pagato: ${this.moneyPlain(paid, currency)}`);
+  lines.push(`Residuo: ${this.moneyPlain(residual, currency)}`);
+
+  return this.buildSimplePdf(lines);
+}
+
+private buildDerivedInvoiceFromBooking(booking: Booking): any {
+  const bookingId = String((booking as any)?.id ?? '').trim();
+  const nowIso = new Date().toISOString();
+  const sessions = this.getSessionsForBooking(booking);
+
+  const items: Array<{ description: string; quantity: number; price: number }> = [];
+  const bookingBase =
+    this.toFiniteNumber((booking as any)?.price) ??
+    this.toFiniteNumber((booking as any)?.depositRequired) ??
+    this.toFiniteNumber((booking as any)?.paidAmount) ??
+    0;
+
+  if (bookingBase > 0) {
+    items.push({
+      description: `Consulenza ${this.getBookingLabel(booking)}`,
+      quantity: 1,
+      price: bookingBase
+    });
+  }
+
+  for (const s of sessions) {
+    const amount = this.toFiniteNumber((s as any)?.price) ?? this.toFiniteNumber((s as any)?.paidAmount) ?? 0;
+    if (amount <= 0) continue;
+    const start = String((s as any)?.start ?? (s as any)?._start ?? '').trim();
+    items.push({
+      description: `Seduta ${start || '-'} (${String((s as any)?.status ?? 'planned')})`,
+      quantity: 1,
+      price: amount
+    });
+  }
+
+  if (!items.length) {
+    items.push({
+      description: `Prestazione ${this.getBookingLabel(booking)}`,
+      quantity: 1,
+      price: 0
+    });
+  }
+
+  const total = items.reduce((sum, it) => sum + ((Number(it.quantity) || 0) * (Number(it.price) || 0)), 0);
+  const bookingPaid = this.toFiniteNumber((booking as any)?.paidAmount) ?? 0;
+  const sessionsPaid = sessions.reduce((sum, s) => sum + (this.toFiniteNumber((s as any)?.paidAmount) ?? 0), 0);
+  const paid = bookingPaid + sessionsPaid;
+  const normalizedTotal = total > 0 ? total : paid;
+
+  return {
+    id: `derived-${bookingId || Date.now()}`,
+    number: `DRV-${bookingId || Date.now()}`,
+    bookingId,
+    clientName: this.resolveClientLabel({}, booking as any),
+    date: nowIso,
+    issuedAt: nowIso,
+    currency: 'EUR',
+    items,
+    amount: normalizedTotal,
+    total: normalizedTotal,
+    paid,
+    status: normalizedTotal > 0 && paid >= normalizedTotal ? 'paid' : 'pending'
+  };
+}
+
+private buildBookingIcs(booking: Booking): string {
+  const start = this.toIcsUtc((booking as any)?.start);
+  const end = this.toIcsUtc((booking as any)?.end);
+  const now = this.toIcsUtc(new Date().toISOString());
+  const bookingId = String((booking as any)?.id ?? 'booking').trim();
+  const title = this.icsEscape(this.getBookingLabel(booking));
+  const artist = this.icsEscape(this.artistMap[(booking as any)?.artistId] || 'Rebis Tattoo');
+  const description = this.icsEscape(
+    `Prenotazione ${bookingId}\\nArtista: ${artist}\\nStato: ${this.getStatusLabel((booking as any)?.status)}`
+  );
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Rebis Tattoo//Booking//IT',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:booking-${bookingId}@rebis-tattoo`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description}`,
+    'LOCATION:Rebis Tattoo',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+}
+
+private buildGoogleCalendarUrl(booking: Booking): string {
+  const start = new Date(String((booking as any)?.start ?? ''));
+  const end = new Date(String((booking as any)?.end ?? ''));
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) return '';
+
+  const bookingId = String((booking as any)?.id ?? '').trim();
+  const title = `Consulenza - ${this.getBookingLabel(booking)}`;
+  const details = [
+    bookingId ? `Codice prenotazione: ${bookingId}` : '',
+    `Stato: ${this.getStatusLabel((booking as any)?.status)}`,
+    `Artista: ${this.artistMap[(booking as any)?.artistId] || 'Rebis Tattoo'}`
+  ].filter(Boolean).join('\n');
+
+  return (
+    'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    `&text=${encodeURIComponent(title)}` +
+    `&dates=${this.toIcsUtc(start.toISOString())}/${this.toIcsUtc(end.toISOString())}` +
+    `&details=${encodeURIComponent(details)}` +
+    `&location=${encodeURIComponent('Rebis Tattoo')}`
+  );
+}
+
+private buildSimplePdf(lines: string[]): Uint8Array {
+  const contentLines: string[] = ['BT', '/F1 11 Tf', '50 800 Td'];
+  for (let i = 0; i < lines.length; i++) {
+    const raw = this.pdfAscii(lines[i] ?? '');
+    const safe = this.pdfEscape(raw);
+    contentLines.push(`(${safe}) Tj`);
+    if (i < lines.length - 1) contentLines.push('0 -14 Td');
+  }
+  contentLines.push('ET');
+  const stream = contentLines.join('\n');
+
+  const objects: string[] = [
+    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n',
+    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n',
+    '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n',
+    '4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n',
+    `5 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj\n`
+  ];
+
+  const header = '%PDF-1.4\n';
+  let body = '';
+  const offsets: number[] = [0];
+  let cursor = header.length;
+  for (const obj of objects) {
+    offsets.push(cursor);
+    body += obj;
+    cursor += obj.length;
+  }
+
+  const xrefOffset = header.length + body.length;
+  let xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (let i = 1; i <= objects.length; i++) {
+    xref += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+  }
+
+  const trailer =
+    `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\n` +
+    `startxref\n${xrefOffset}\n%%EOF`;
+
+  return new TextEncoder().encode(header + body + xref + trailer);
+}
+
+private wrapPdfText(input: string, maxLen: number): string[] {
+  const text = String(input ?? '').trim();
+  if (!text) return [''];
+  if (text.length <= maxLen) return [text];
+
+  const words = text.split(/\s+/).filter(Boolean);
+  const rows: string[] = [];
+  let current = '';
+
+  for (const w of words) {
+    const candidate = current ? `${current} ${w}` : w;
+    if (candidate.length <= maxLen) {
+      current = candidate;
+      continue;
+    }
+    if (current) rows.push(current);
+    current = w;
+  }
+  if (current) rows.push(current);
+  return rows;
+}
+
+private moneyPlain(value: number, currency: string): string {
+  const n = Number(value ?? 0);
+  const safe = Number.isFinite(n) ? n : 0;
+  return `${safe.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${String(currency || 'EUR').toUpperCase()}`;
+}
+
+private pdfEscape(value: string): string {
+  return String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)');
+}
+
+private pdfAscii(value: string): string {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\x20-\x7E]/g, '?');
+}
+
+private toIcsUtc(value: string): string {
+  const d = new Date(value);
+  if (!Number.isFinite(d.getTime())) return '';
+  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+}
+
+private icsEscape(value: string): string {
+  return String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\r?\n/g, '\\n');
+}
+
+private resolveClientLabel(invoice: any, booking: any): string {
+  const candidates = [
+    invoice?.clientName,
+    invoice?.customerName,
+    invoice?.clientEmail,
+    invoice?.email,
+    booking?.clientName,
+    booking?.customerName,
+    booking?.clientEmail,
+    this.user?.name,
+    this.user?.displayName,
+    this.user?.email
+  ];
+
+  for (const c of candidates) {
+    const value = String(c ?? '').trim();
+    if (value) return value;
+  }
+  return 'Cliente';
+}
+
 
 
 private downloadHtmlFile(html: string, filename: string): void {
@@ -494,6 +983,11 @@ private money(value: number, currency: string): string {
   } catch {
     return `${value.toFixed(2)} ${currency}`;
   }
+}
+
+private toFiniteNumber(value: any): number | null {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 

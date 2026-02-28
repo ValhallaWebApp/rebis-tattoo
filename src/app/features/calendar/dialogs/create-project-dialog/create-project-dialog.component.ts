@@ -3,6 +3,7 @@ import { Component, Inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../core/modules/material.module';
+import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 export interface CreateProjectDialogData {
   clientId: string;
@@ -19,12 +20,18 @@ export interface CreateProjectDialogResult {
 @Component({
   selector: 'app-create-project-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, DynamicFormComponent],
   templateUrl: './create-project-dialog.component.html',
   styleUrls: ['./create-project-dialog.component.scss'],
 })
 export class CreateProjectDialogComponent {
   form:any
+  readonly fields: DynamicField[] = [
+    { type: 'text', name: 'title', label: 'Titolo progetto', required: true },
+    { type: 'text', name: 'zone', label: 'Zona (opzionale)' },
+    { type: 'textarea', name: 'notes', label: 'Note (opzionali)', rows: 3, className: 'full-width' }
+  ];
+
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CreateProjectDialogComponent>,

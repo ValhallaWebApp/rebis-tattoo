@@ -53,27 +53,12 @@
         <div class="rt-formBlock">
           <h3 class="rt-formTitle">Oppure scrivici</h3>
 
-          <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="rt-form">
-            <div class="rt-grid">
-              <div class="rt-field">
-                <label>Nome</label>
-                <input type="text" formControlName="name" placeholder="Il tuo nome" />
-                <div class="rt-err" *ngIf="f['name'].touched && f['name'].invalid">Inserisci un nome valido</div>
-              </div>
-
-              <div class="rt-field">
-                <label>Email</label>
-                <input type="email" formControlName="email" placeholder="nome@email.com" />
-                <div class="rt-err" *ngIf="f['email'].touched && f['email'].invalid">Inserisci un'email valida</div>
-              </div>
-
-              <div class="rt-field rt-field--full">
-                <label>Messaggio</label>
-                <textarea rows="4" formControlName="message" placeholder="Zona, dimensioni, idea..."></textarea>
-                <div class="rt-err" *ngIf="f['message'].touched && f['message'].invalid">Scrivi almeno 10 caratteri</div>
-              </div>
-            </div>
-
+          <form (ngSubmit)="onSubmit()" class="rt-form">
+            <app-dynamic-form
+              [fields]="contactFields"
+              [formGroupInput]="contactForm"
+              [showSubmit]="false"
+            ></app-dynamic-form>
             <div class="rt-actions">
               <button class="rt-btn rt-btn--accent" type="submit" [disabled]="contactForm.invalid">INVIA</button>
             </div>

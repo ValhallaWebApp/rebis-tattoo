@@ -6,11 +6,11 @@
     <mat-chip-set class="chips" aria-label="info consulenza">
       <mat-chip>
         <mat-icon matChipAvatar>schedule</mat-icon>
-        Consulenza 60 min
+        Consulenza {{ durationMin() }} min
       </mat-chip>
       <mat-chip>
         <mat-icon matChipAvatar>payments</mat-icon>
-        Caparra EUR 50
+        Caparra EUR {{ depositEuro() }}
       </mat-chip>
     </mat-chip-set>
   </header>

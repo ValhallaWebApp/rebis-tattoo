@@ -4,11 +4,12 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { StaffMember } from '../../../../core/services/staff/staff.service';
+import { DynamicField, DynamicFormComponent } from '../../form/dynamic-form/dynamic-form.component';
 
 @Component({
   selector: 'app-staff-dialog-admin',
   standalone: true,
-  imports: [CommonModule, MaterialModule, ReactiveFormsModule],
+  imports: [CommonModule, MaterialModule, ReactiveFormsModule, DynamicFormComponent],
   templateUrl: './staff-dialog-admin.component.html',
   styleUrls: ['./staff-dialog-admin.component.scss']
 })
@@ -16,6 +17,24 @@ export class StaffDialogAdminComponent {
   form: FormGroup;
   isEditMode: boolean = false;
   imagePreview: string = '';
+  readonly fields: DynamicField[] = [
+    { type: 'text', name: 'name', label: 'Nome', required: true },
+    {
+      type: 'select',
+      name: 'role',
+      label: 'Ruolo',
+      required: true,
+      options: [
+        { label: 'Tatuatore', value: 'tatuatore' },
+        { label: 'Piercer', value: 'piercer' },
+        { label: 'Guest', value: 'guest' },
+        { label: 'Altro', value: 'altro' }
+      ]
+    },
+    { type: 'textarea', name: 'bio', label: 'Biografia', rows: 3, className: 'full-width' },
+    { type: 'text', name: 'photoUrl', label: 'URL Immagine', className: 'full-width' },
+    { type: 'toggle', name: 'isActive', label: 'Attivo', className: 'full-width' }
+  ];
 
   constructor(
     private fb: FormBuilder,

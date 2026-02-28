@@ -56,6 +56,7 @@ export interface ProjectLite {
   clientId?: string;
   artistId?: string;
   sessionIds?: string[];
+  bookingId?: string;
 }
 
 
@@ -155,6 +156,7 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
             title: p.title,
             clientId: String(raw?.clientId ?? '').trim() || undefined,
             artistId: String(raw?.artistId ?? '').trim() || undefined,
+            bookingId: String(raw?.bookingId ?? '').trim() || undefined,
             sessionIds: Array.isArray(p.sessionIds) ? p.sessionIds : [],
           };
         })

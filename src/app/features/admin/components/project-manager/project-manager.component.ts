@@ -92,7 +92,7 @@ export class ProjectManagerComponent {
 
   readonly tabs: Array<{ key: TabKey; label: string; icon: string }> = [
     { key: 'all', label: 'Tutti', icon: 'apps' },
-    { key: 'needs_booking', label: 'Senza Booking', icon: 'event_busy' },
+    { key: 'needs_booking', label: 'Senza consulenza', icon: 'event_busy' },
     { key: 'active_only', label: 'Attivi', icon: 'bolt' },
     { key: 'completed', label: 'Conclusi', icon: 'task_alt' },
   ];
@@ -478,7 +478,7 @@ export class ProjectManagerComponent {
 
   addSessionToProject(p: TattooProject) {
     if (!this.access.hasStaffPermission('canManageSessions')) {
-      this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
+      this.snackBar.open('Permesso mancante: gestione sedute.', 'OK', { duration: 2200 });
       return;
     }
     const projectId = String((p as any)?.id ?? '').trim();
@@ -502,12 +502,12 @@ export class ProjectManagerComponent {
 
   editSession(s: Session) {
     if (!this.access.hasStaffPermission('canManageSessions')) {
-      this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
+      this.snackBar.open('Permesso mancante: gestione sedute.', 'OK', { duration: 2200 });
       return;
     }
     const sessionId = String((s as any)?.id ?? '').trim();
     if (!sessionId) {
-      this.snackBar.open('Sessione non valida.', 'OK', { duration: 2200 });
+      this.snackBar.open('Seduta non valida.', 'OK', { duration: 2200 });
       return;
     }
     void this.router.navigate([this.access.getBackofficeBase() + '/calendar'], {
@@ -540,18 +540,176 @@ export class ProjectManagerComponent {
     this.snackBar.open('Nessun contatto cliente disponibile', 'OK', { duration: 2200 });
   }
 
-  // ✅ Fattura “completa” (booking + sessioni) — stub pronto
+  // ✅ Fattura “completa” (booking + Sedute) — stub pronto
   downloadFullInvoice(row: VmRow) {
-    // TODO: qui decidi se:
-    // 1) generare PDF lato client (consigliato)
-    // 2) usare/salvare su RTDB invoices con items
-    void row;
+    const html = this.buildProjectInvoiceHtml(row);
+    const projectId = String((row.project as any)?.id ?? 'progetto').trim() || 'progetto';
+    const stamp = this.fileStamp(new Date());
+    this.externalActions.downloadTextFile(html, `fattura-completa-${projectId}-${stamp}.html`, 'text/html;charset=utf-8');
+    this.snackBar.open('Fattura completa scaricata.', 'OK', { duration: 2200 });
   }
 
-  // ✅ Fattura singola sessione — stub pronto
+  // ✅ Fattura singola Seduta — stub pronto
   downloadSessionInvoice(row: VmRow, s: UiSession) {
-    void row;
-    void s;
+    const html = this.buildProjectInvoiceHtml(row, s);
+    const projectId = String((row.project as any)?.id ?? 'progetto').trim() || 'progetto';
+    const sessionId = String((s as any)?.id ?? 'seduta').trim() || 'seduta';
+    this.externalActions.downloadTextFile(html, `fattura-seduta-${projectId}-${sessionId}.html`, 'text/html;charset=utf-8');
+    this.snackBar.open('Fattura seduta scaricata.', 'OK', { duration: 2200 });
+  }
+
+  private buildProjectInvoiceHtml(row: VmRow, session?: UiSession): string {
+    const project = row.project as any;
+    const booking = row.booking as any;
+    const sessionMode = !!session;
+
+    const projectId = String(project?.id ?? '-').trim() || '-';
+    const projectTitle = this.safeText(this.titleOf(row.project), 'Progetto');
+    const clientLabel = this.safeText(row.clientLabel, 'Cliente');
+    const artistId = this.safeText(project?.artistId, '-');
+    const zone = this.safeText(this.zoneLabel(row.project), '-');
+    const now = new Date();
+
+    const items: Array<{ description: string; qty: number; unit: number }> = [];
+
+    if (!sessionMode && booking) {
+      const bookingAmount =
+        this.num(booking?.price) ??
+        this.num(booking?.depositRequired) ??
+        this.num(booking?.paidAmount) ??
+        0;
+      items.push({
+        description: `Consulenza ${this.safeText(this.bookingWhenLabel(booking), '-')}`,
+        qty: 1,
+        unit: bookingAmount
+      });
+    }
+
+    const sourceSessions = session ? [session] : (row.sessions ?? []);
+    for (const s of sourceSessions) {
+      const amount = this.num((s as any)?.price) ?? this.num((s as any)?.paidAmount) ?? 0;
+      const when = this.safeText((s as any)?._start ?? (s as any)?.start, '-');
+      const status = this.safeText((s as any)?.status, '-');
+      items.push({
+        description: `Seduta ${when} (${status})`,
+        qty: 1,
+        unit: amount
+      });
+    }
+
+    if (items.length === 0) {
+      items.push({
+        description: 'Riepilogo progetto',
+        qty: 1,
+        unit: this.num(row.expectedTotal) ?? this.num(row.paidTotal) ?? 0
+      });
+    }
+
+    const itemsTotal = items.reduce((sum, it) => sum + (it.qty * it.unit), 0);
+    const fallbackTotal = this.num(row.expectedTotal) ?? this.num(row.invoiceTotal) ?? this.num(row.paidTotal) ?? 0;
+    const total = itemsTotal > 0 ? itemsTotal : fallbackTotal;
+    const paid = sessionMode
+      ? (this.num((session as any)?.paidAmount) ?? 0)
+      : (this.num(row.paidTotal) ?? 0);
+    const residual = Math.max(0, total - paid);
+    const status = total > 0 && residual <= 0 ? 'PAID' : 'PENDING';
+
+    const rowsHtml = items.map((it) => {
+      const lineTotal = it.qty * it.unit;
+      return `
+        <tr>
+          <td>${this.escapeHtml(it.description)}</td>
+          <td class="num">${it.qty}</td>
+          <td class="num">${this.money(it.unit)}</td>
+          <td class="num">${this.money(lineTotal)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const title = sessionMode ? 'Fattura seduta' : 'Fattura completa progetto';
+    const docCode = sessionMode
+      ? `SED-${projectId}-${this.safeText((session as any)?.id, 'NA')}`
+      : `PRJ-${projectId}-${this.fileStamp(now)}`;
+    const bookingId = this.safeText(booking?.id, '-');
+    const sessionInfo = sessionMode
+      ? `<div><div class="k">Seduta ID</div><div class="v">${this.escapeHtml(this.safeText((session as any)?.id, '-'))}</div></div>`
+      : `<div><div class="k">Numero sedute</div><div class="v">${row.sessionsCount}</div></div>`;
+
+    return `
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${this.escapeHtml(title)} - ${this.escapeHtml(projectTitle)}</title>
+  <style>
+    @page { size: A4; margin: 14mm; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #fff; color: #111; }
+    .wrap { max-width: 860px; margin: 0 auto; }
+    .top { display:flex; justify-content:space-between; align-items:flex-start; margin: 10px 0 16px; }
+    .brand { font-size: 18px; font-weight: 800; }
+    .muted { color:#666; }
+    .badge { border:1px solid #dcdcdc; border-radius:10px; padding:8px 10px; font-size:12px; }
+    .card { border:1px solid #e6e6e6; border-radius:14px; padding:14px; margin-bottom:14px; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    .k { font-size:12px; color:#666; margin-bottom:4px; }
+    .v { font-size:14px; font-weight:700; }
+    table { width:100%; border-collapse: collapse; margin-top:8px; }
+    th, td { border-bottom:1px solid #e6e6e6; padding:10px 8px; text-align:left; }
+    th { font-size:12px; color:#666; text-transform: uppercase; letter-spacing:.05em; }
+    .num { text-align:right; white-space:nowrap; }
+    .tot { display:flex; justify-content:flex-end; margin-top:12px; }
+    .box { min-width:300px; border:1px solid #e6e6e6; border-radius:12px; padding:12px; }
+    .row { display:flex; justify-content:space-between; margin:5px 0; font-size:13px; }
+    .row strong { font-size:16px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="brand">Rebis Tattoo</div>
+        <div class="muted">${this.escapeHtml(title)}</div>
+      </div>
+      <div class="badge">${this.escapeHtml(status)}</div>
+    </div>
+
+    <div class="card grid">
+      <div><div class="k">Documento</div><div class="v">${this.escapeHtml(docCode)}</div></div>
+      <div><div class="k">Data emissione</div><div class="v">${now.toLocaleDateString('it-IT')}</div></div>
+      <div><div class="k">Progetto</div><div class="v">${this.escapeHtml(projectTitle)}</div></div>
+      <div><div class="k">Project ID</div><div class="v">${this.escapeHtml(projectId)}</div></div>
+      <div><div class="k">Cliente</div><div class="v">${this.escapeHtml(clientLabel)}</div></div>
+      <div><div class="k">Artista</div><div class="v">${this.escapeHtml(artistId)}</div></div>
+      <div><div class="k">Zona</div><div class="v">${this.escapeHtml(zone)}</div></div>
+      <div><div class="k">Consulenza ID</div><div class="v">${this.escapeHtml(bookingId)}</div></div>
+      ${sessionInfo}
+    </div>
+
+    <div class="card">
+      <div class="k">Dettaglio voci</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Descrizione</th>
+            <th class="num">Qta</th>
+            <th class="num">Prezzo</th>
+            <th class="num">Totale</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+
+      <div class="tot">
+        <div class="box">
+          <div class="row"><span class="muted">Totale</span><strong>${this.money(total)}</strong></div>
+          <div class="row"><span class="muted">Pagato</span><span>${this.money(paid)}</span></div>
+          <div class="row"><span class="muted">Residuo</span><span>${this.money(residual)}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
   }
 
   // -----------------------------
@@ -646,6 +804,29 @@ export class ProjectManagerComponent {
   // -----------------------------
   // internals
   // -----------------------------
+  private fileStamp(d: Date): string {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}${mm}${dd}-${hh}${mi}`;
+  }
+
+  private safeText(value: any, fallback: string = ''): string {
+    const out = String(value ?? '').trim();
+    return out || fallback;
+  }
+
+  private escapeHtml(input: string): string {
+    return String(input ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
   private clientLabel(c?: Client, fallbackId?: string): string {
     const name = `${c?.name ?? ''} ${c?.surname ?? ''}`.trim();
     return name || c?.email || c?.phone || fallbackId || '—';

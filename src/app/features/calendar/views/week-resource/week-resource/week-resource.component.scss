@@ -10,11 +10,182 @@
   gap: 10px;
 }
 
+.days-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border: 1px solid var(--cal-border, var(--app-surface-border, rgba(255, 255, 255, 0.14)));
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01) 40%, rgba(0, 0, 0, 0.36)),
+    var(--cal-surface, rgba(8, 10, 16, 0.42));
+}
+
+.filters-panel {
+  margin-bottom: 8px;
+  border: 1px solid var(--cal-border, var(--app-surface-border, rgba(255, 255, 255, 0.14)));
+  border-radius: 12px;
+  background: var(--cal-filter-panel-bg, rgba(16, 17, 24, 0.74));
+  color: var(--cal-text, var(--app-main-text, #f3f4f7));
+}
+
+.filters-panel mat-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  font-weight: 700;
+}
+
+.list-filters {
+  display: grid;
+  grid-template-columns: 160px 160px minmax(240px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 2px;
+}
+
+.search-field {
+  min-width: 220px;
+}
+
+.list-row {
+  border: 0;
+  border-bottom: 1px solid var(--cal-border, var(--app-surface-border, rgba(255, 255, 255, 0.12)));
+  background: transparent;
+  color: var(--cal-text, var(--app-main-text, #f3f4f7));
+  padding: 10px 12px 11px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  transition: background-color 0.15s ease;
+}
+
+.list-row:hover {
+  background: var(--cal-row-hover, rgba(255, 255, 255, 0.05));
+}
+
+.list-row.booking { box-shadow: inset 3px 0 0 var(--cal-event-booking, rgba(96, 165, 250, 0.8)); }
+.list-row.session { box-shadow: inset 3px 0 0 var(--cal-event-session, rgba(251, 191, 36, 0.85)); }
+
+.days-list .list-row:last-of-type {
+  border-bottom: 0;
+}
+
+.list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.list-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 210px;
+  min-width: 190px;
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.list-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1 1 220px;
+}
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  border: 1px solid var(--cal-border-strong, var(--app-surface-border, rgba(255, 255, 255, 0.18)));
+  background: rgba(0, 0, 0, 0.36);
+  color: var(--cal-text-strong, #ffffff);
+}
+
+.range {
+  font-size: 12px;
+  opacity: 0.9;
+  font-weight: 700;
+}
+
+.status {
+  font-size: 11px;
+  color: var(--cal-text-muted, #c8ced8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 800;
+  flex: 2 1 280px;
+  min-width: 220px;
+}
+
+.list-artists {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 2 1 240px;
+}
+
+.list-artist {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--cal-border-strong, var(--app-surface-border, rgba(255, 255, 255, 0.16)));
+  background: rgba(0, 0, 0, 0.3);
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.list-artist .name {
+  font-weight: 700;
+}
+
+.list-artist .count {
+  opacity: 0.85;
+}
+
+.list-more {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.list-empty {
+  border: 0;
+  padding: 14px;
+  text-align: center;
+  color: var(--cal-text-muted, var(--app-main-text-muted, #c8ced8));
+}
+
 .day-card {
+  position: relative;
+  overflow: hidden;
   border-radius: 14px;
-  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.12));
-  background: var(--app-surface, rgba(16, 17, 24, 0.68));
-  color: var(--app-main-text, #f3f4f7);
+  border: 1px solid var(--cal-border, var(--app-surface-border, rgba(255, 255, 255, 0.12)));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 42%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface, rgba(10, 11, 16, 0.64));
+  backdrop-filter: blur(16px) saturate(132%);
+  -webkit-backdrop-filter: blur(16px) saturate(132%);
+  color: var(--cal-text, var(--app-main-text, #f3f4f7));
   min-height: 130px;
   padding: 10px;
   text-align: left;
@@ -25,28 +196,47 @@
   transition: transform 0.12s ease, filter 0.2s ease, border-color 0.2s ease;
 }
 
+.day-card::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 12px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.08), transparent 48%);
+}
+
 .day-card:hover {
   transform: translateY(-1px);
-  filter: brightness(1.06);
+  filter: brightness(1.04);
+  border-color: var(--cal-border-strong, rgba(255, 255, 255, 0.24));
 }
 
 .day-card.c0 {
-  background: var(--app-surface-muted, rgba(18, 20, 28, 0.58));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 44%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface, rgba(10, 11, 16, 0.64));
 }
 
 .day-card.c1 {
-  border-color: rgba(34, 197, 94, 0.4);
-  background: linear-gradient(160deg, rgba(34, 197, 94, 0.16), rgba(16, 17, 24, 0.72));
+  border-color: rgba(134, 239, 172, 0.44);
+  background:
+    linear-gradient(145deg, rgba(134, 239, 172, 0.2) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface, rgba(10, 11, 16, 0.64));
 }
 
 .day-card.c2 {
-  border-color: rgba(251, 191, 36, 0.45);
-  background: linear-gradient(160deg, rgba(251, 191, 36, 0.18), rgba(16, 17, 24, 0.72));
+  border-color: rgba(251, 191, 36, 0.5);
+  background:
+    linear-gradient(145deg, rgba(251, 191, 36, 0.2) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface, rgba(10, 11, 16, 0.64));
 }
 
 .day-card.c3 {
-  border-color: rgba(239, 68, 68, 0.45);
-  background: linear-gradient(160deg, rgba(239, 68, 68, 0.18), rgba(16, 17, 24, 0.72));
+  border-color: rgba(239, 68, 68, 0.5);
+  background:
+    linear-gradient(145deg, rgba(239, 68, 68, 0.2) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface, rgba(10, 11, 16, 0.64));
 }
 
 .card-head {
@@ -60,7 +250,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  opacity: 0.9;
+  color: var(--cal-text-muted, #c8ced8);
   font-weight: 700;
 }
 
@@ -68,11 +258,12 @@
   font-size: 26px;
   line-height: 1;
   font-weight: 900;
+  color: var(--cal-text-strong, #ffffff);
 }
 
 .card-meta {
   font-size: 12px;
-  color: var(--app-main-text-muted, #c8ced8);
+  color: var(--cal-text-muted, var(--app-main-text-muted, #c8ced8));
 }
 
 .artists-strip {
@@ -86,15 +277,15 @@
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.16));
-  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--cal-border-strong, var(--app-surface-border, rgba(255, 255, 255, 0.16)));
+  background: rgba(0, 0, 0, 0.28);
   padding: 2px 8px 2px 6px;
   font-size: 11px;
   font-weight: 700;
 }
 
 .artist-more {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .dot {
@@ -106,9 +297,11 @@
 }
 
 .legend {
-  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.12));
+  border: 1px solid var(--cal-border, var(--app-surface-border, rgba(255, 255, 255, 0.12)));
   border-radius: 12px;
-  background: var(--app-surface, rgba(16, 17, 24, 0.68));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 42%, rgba(0, 0, 0, 0.36)),
+    var(--cal-surface, rgba(16, 17, 24, 0.68));
   padding: 10px;
 }
 
@@ -132,9 +325,9 @@
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.16));
+  border: 1px solid var(--cal-border-strong, var(--app-surface-border, rgba(255, 255, 255, 0.16)));
   padding: 4px 10px 4px 8px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.3);
   font-size: 12px;
 }
 
@@ -177,5 +370,23 @@
 
   .total {
     font-size: 22px;
+  }
+
+  .list-row {
+    padding: 9px 10px 10px;
+    gap: 6px 8px;
+  }
+
+  .list-top,
+  .list-main,
+  .title,
+  .list-artists {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+
+  .list-filters {
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 }

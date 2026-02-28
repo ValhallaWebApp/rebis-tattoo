@@ -24,7 +24,7 @@ export class AdminAppointmentDetailsDialogComponent {
   // | 'draft'            // anagrafica compilata, nessun pagamento creato
   // | 'awaiting_payment' // Payment Intent creato, in attesa
   // | 'paid'             // acconto versato
-  // | 'completed'        // sessione terminata
+  // | 'completed'        // Seduta terminata
   // | 'cancelled';
 
   confirmBooking(): void {

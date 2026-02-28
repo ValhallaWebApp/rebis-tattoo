@@ -44,15 +44,15 @@ describe('ChatService (AI-only message flow)', () => {
 
     const result = await service.replyWithPlan('chat-3', userHistory('dammi supporto'), { role: 'admin' });
 
-    expect(result.chips).toEqual(['Vai al profilo', 'Apri booking']);
+    expect(result.chips).toEqual(['Vai al profilo', 'Apri consulenza']);
   });
 
-  it('non crea action booking: la chat usa solo risposta AI', async () => {
+  it('non crea action consulenza: la chat usa solo risposta AI', async () => {
     llmSpy.generateSupportReply.and.resolveTo('Per la prenotazione ti guido passo passo.');
 
     const result = await service.replyWithPlan('chat-4', userHistory('prenota domani alle 15'), { role: 'client' });
 
     expect(llmSpy.generateSupportReply).toHaveBeenCalled();
-    expect(result.chips).toContain('Apri booking');
+    expect(result.chips).toContain('Apri consulenza');
   });
 });

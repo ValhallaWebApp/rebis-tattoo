@@ -1,21 +1,29 @@
-.shell{
+:host {
+  --fb-bg: var(--app-main-bg, #050508);
+  --fb-text: var(--app-main-text, #f3f4f7);
+  --fb-surface: var(--app-surface-strong, rgba(8, 9, 14, 0.84));
+  --fb-border: var(--app-surface-border, rgba(255, 255, 255, 0.18));
+}
+
+.shell {
   min-height: 100vh;
-  background: #fff;
-  color: #000;
+  background: var(--fb-bg);
+  color: var(--fb-text);
   display: flex;
   flex-direction: column;
 }
 
-.top{
+.top {
   height: 56px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-bottom: 1px solid #ededed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fb-surface);
+  border-bottom: 1px solid var(--fb-border);
   font-weight: 900;
   letter-spacing: .12em;
 }
 
-.main{
+.main {
   flex: 1;
 }

@@ -1,3 +1,10 @@
+:host {
+  --fb-accent: var(--accent, #b79b55);
+  --fb-accent-ink: var(--accent-ink, #111111);
+  --fb-danger-bg: var(--app-status-danger-bg, rgba(239, 68, 68, 0.16));
+  --fb-neutral-bg: var(--app-status-neutral-bg, rgba(148, 163, 184, 0.16));
+}
+
 .step {
   max-width: 860px;
   margin: 0 auto;
@@ -25,7 +32,7 @@
   align-items: flex-start;
   padding: 10px;
   border-radius: 12px;
-  background: rgba(25,118,210,.06);
+  background: rgba(183, 155, 85, .12);
 }
 
 .ico { opacity: .7; }
@@ -37,7 +44,7 @@
   align-items: center;
   padding: 10px;
   border-radius: 12px;
-  background: rgba(244,67,54,.08);
+  background: var(--fb-danger-bg);
 }
 
 .actions { margin-top: 14px; display: flex; justify-content: flex-end; }
@@ -49,8 +56,14 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(25, 118, 210, 0.08);
+  background: var(--fb-neutral-bg);
 }
 
 .stripe-box { margin-top: 14px; opacity: .95; }
 .small { font-size: 12px; margin-bottom: 6px; }
+
+.cta {
+  background: var(--fb-accent) !important;
+  color: var(--fb-accent-ink) !important;
+  font-weight: 800;
+}

@@ -25,7 +25,7 @@
         (change)="onTypeChanged($event.value)"
       >
         <mat-button-toggle *ngFor="let t of (bookingTypes || [])" [value]="t">
-          {{ t === 'booking' ? 'Consulenze' : 'Sessioni' }}
+          {{ t === 'booking' ? 'Consulenze' : 'Sedute' }}
         </mat-button-toggle>
       </mat-button-toggle-group>
 
@@ -107,52 +107,24 @@
       class="drawer-panel"
     >
       <h3>
-        {{ selectedType === 'booking' ? 'Nuova consulenza' : 'Nuova sessione' }}
+        {{ selectedType === 'booking' ? 'Nuova consulenza' : 'Nuova seduta' }}
       </h3>
 
-      <form
-        [formGroup]="bookingForm"
-        (ngSubmit)="onSubmitDrawer()"
-        class="drawer-form"
-      >
-        <mat-form-field appearance="outline">
-          <mat-label>Artista</mat-label>
-          <input matInput formControlName="artistId" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Data</mat-label>
-          <input matInput formControlName="date" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Ora</mat-label>
-          <input matInput formControlName="time" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Durata (min)</mat-label>
-          <input matInput type="number" formControlName="duration" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Descrizione</mat-label>
-          <textarea
-            matInput
-            rows="3"
-            formControlName="description"
-          ></textarea>
-        </mat-form-field>
-
+      <div class="drawer-form">
+        <app-dynamic-form
+          [fields]="drawerFields"
+          [formGroupInput]="bookingForm"
+          [showSubmit]="false"
+        ></app-dynamic-form>
         <div class="drawer-actions">
           <button mat-stroked-button type="button" (click)="closeDrawer()">
             Annulla
           </button>
-          <button mat-flat-button color="primary" type="submit">
+          <button mat-flat-button color="primary" type="button" (click)="onSubmitDrawer()">
             Salva
           </button>
         </div>
-      </form>
+      </div>
     </mat-drawer>
   </mat-drawer-container>
 </section>

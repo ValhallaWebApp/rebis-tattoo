@@ -26,7 +26,7 @@
 
     @if (!clientSecret()) {
       <div class="actions">
-        <button mat-flat-button color="primary" (click)="pay()" [disabled]="paying() || confirmingPayment()">
+        <button mat-flat-button class="cta" (click)="pay()" [disabled]="paying() || confirmingPayment()">
           <mat-icon>lock</mat-icon>
           @if (paying()) { Inizializzazione pagamento... } @else { Inizia pagamento }
         </button>
@@ -42,11 +42,11 @@
 
     @if (bookingId() && clientSecret() && !confirmingPayment() && store.isE2EMockMode) {
       <div class="stripe-box">
-        <div class="small">Booking creato: <b>{{ bookingId() }}</b></div>
+        <div class="small">Consulenza creata: <b>{{ bookingId() }}</b></div>
         <button
           data-testid="e2e-mock-payment-success"
           mat-flat-button
-          color="primary"
+          class="cta"
           (click)="onStripeSuccess()"
         >
           Simula pagamento riuscito
@@ -56,7 +56,7 @@
 
     @if (bookingId() && clientSecret() && !confirmingPayment() && !store.isE2EMockMode) {
       <div class="stripe-box">
-        <div class="small">Booking creato: <b>{{ bookingId() }}</b></div>
+        <div class="small">Consulenza creata: <b>{{ bookingId() }}</b></div>
         <app-stripe-payment
           [publishableKey]="publishableKey"
           [clientSecret]="clientSecret()!"

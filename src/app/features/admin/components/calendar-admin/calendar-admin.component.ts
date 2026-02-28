@@ -316,7 +316,7 @@ private mapSessionToEvent(session: Session): CalendarEvent[] {
 
   const start = this.normalizeLocalDateTime(rawStart || '');
   if (!start || start.length < 10) {
-    this.group('⚠️ SESSIONE senza start valido -> SKIP', {
+    this.group('⚠️ Seduta senza start valido -> SKIP', {
       id: (session as any).id,
       rawStart,
       session
@@ -326,7 +326,7 @@ private mapSessionToEvent(session: Session): CalendarEvent[] {
 
   const end = this.normalizeLocalDateTime(rawEnd || this.addMinutesLocal(start, 60));
   if (!end || end.length < 10) {
-    this.group('⚠️ SESSIONE senza end valido -> fallback +60', {
+    this.group('⚠️ Seduta senza end valido -> fallback +60', {
       id: (session as any).id,
       rawEnd
     });
@@ -434,7 +434,7 @@ handleBooking(draft: any): void {
         this.log('✅ session created -> events appended');
         this.sanityCheck();
       })
-      .catch((err: any) => console.error('❌ Errore creazione sessione:', err));
+      .catch((err: any) => console.error('❌ Errore creazione Seduta:', err));
 
     return;
   }
@@ -538,7 +538,7 @@ handleBooking(draft: any): void {
           this.log('✅ session updated');
           this.sanityCheck();
         })
-        .catch((err: any) => console.error('❌ Errore aggiornamento sessione:', err));
+        .catch((err: any) => console.error('❌ Errore aggiornamento Seduta:', err));
     } else {
       this.group('UPDATE booking payload', {
         id: event.id,

@@ -12,27 +12,27 @@
   </header>
 
   <!-- FORM -->
-  <form class="drawer__form" [formGroup]="form" (ngSubmit)="onSubmit()">
+  <form class="drawer__form" cdkScrollable [formGroup]="form" (ngSubmit)="onSubmit()">
     <!-- TYPE -->
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="col-4">
       <mat-label>Tipo</mat-label>
-      <mat-select formControlName="type">
-        <mat-option value="booking">Booking (consulenza)</mat-option>
-        <mat-option value="session">Session (seduta)</mat-option>
+      <mat-select formControlName="type" panelClass="event-drawer-panel">
+        <mat-option value="booking">Consulenza</mat-option>
+        <mat-option value="session">Seduta</mat-option>
       </mat-select>
 
       <mat-hint *ngIf="isBooking()">
-        Booking = appuntamento di consulenza (cliente obbligatorio).
+        Consulenza = appuntamento iniziale (cliente obbligatorio).
       </mat-hint>
       <mat-hint *ngIf="isSession()">
-        Session = seduta (di norma collegata a un progetto).
+        Seduta = appuntamento operativo (collegata a un progetto).
       </mat-hint>
     </mat-form-field>
 
     <!-- ARTIST -->
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="col-8">
       <mat-label>Artista *</mat-label>
-      <mat-select formControlName="artistId">
+      <mat-select formControlName="artistId" panelClass="event-drawer-panel">
         <mat-option
           *ngIf="shouldShowSelectedArtistFallback()"
           [value]="form.controls.artistId.value">
@@ -48,7 +48,7 @@
     </mat-form-field>
 
     <!-- DATE + TIME -->
-    <div class="row2">
+    <div class="row2 col-8">
       <mat-form-field appearance="outline">
         <mat-label>Data *</mat-label>
         <input matInput [matDatepicker]="picker" formControlName="day" />
@@ -61,7 +61,7 @@
 
     <mat-form-field appearance="outline">
       <mat-label>Ora *</mat-label>
-      <mat-select formControlName="time">
+      <mat-select formControlName="time" panelClass="event-drawer-panel">
         <mat-option *ngFor="let t of availableTimeOptions" [value]="t">{{ t }}</mat-option>
       </mat-select>
       <mat-error *ngIf="form.controls.time.touched && form.controls.time.hasError('required')">
@@ -71,9 +71,9 @@
     </div>
 
     <!-- DURATION -->
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="col-2">
       <mat-label>Durata (min) *</mat-label>
-      <mat-select formControlName="durationMinutes">
+      <mat-select formControlName="durationMinutes" panelClass="event-drawer-panel">
         <mat-option *ngFor="let d of durationOptions" [value]="d">{{ d }}</mat-option>
       </mat-select>
       <mat-error *ngIf="form.controls.durationMinutes.touched && form.controls.durationMinutes.hasError('min')">
@@ -82,16 +82,16 @@
     </mat-form-field>
 
     <!-- STATUS -->
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="col-2">
       <mat-label>Status</mat-label>
 
       <!-- booking statuses -->
-      <mat-select formControlName="status" *ngIf="isBooking()">
+      <mat-select formControlName="status" *ngIf="isBooking()" panelClass="event-drawer-panel">
         <mat-option *ngFor="let s of bookingStatusOptions" [value]="s.value">{{ s.label }}</mat-option>
       </mat-select>
 
       <!-- session statuses -->
-      <mat-select formControlName="status" *ngIf="isSession()">
+      <mat-select formControlName="status" *ngIf="isSession()" panelClass="event-drawer-panel">
         <mat-option *ngFor="let s of sessionStatusOptions" [value]="s.value">{{ s.label }}</mat-option>
       </mat-select>
     </mat-form-field>
@@ -100,8 +100,8 @@
       Campi bloccati: modifica consentita solo sulle note e sullo stato.
     </mat-hint>
 
-    <!-- CLIENT (autocomplete) -->
-    <mat-form-field appearance="outline">
+    <!-- CLIENT (autocomplete): solo booking -->
+    <mat-form-field appearance="outline" class="col-12" *ngIf="isBooking()">
       <mat-label>Cliente {{ isBooking() ? '*' : '' }}</mat-label>
 
       <input
@@ -125,21 +125,20 @@
 
       <mat-autocomplete
         #clientAuto="matAutocomplete"
+        class="event-drawer-panel"
         [displayWith]="displayClient"
         (optionSelected)="onClientSelected($event.option.value)">
 
         <mat-option *ngFor="let c of (filteredClients$ | async)" [value]="c">
           <div class="opt">
             <strong>{{ c.fullName }}</strong>
-            <small>{{ c.email || c.phone || c.id }}</small>
+            <small>{{ getClientOptionSubtext(c) }}</small>
           </div>
         </mat-option>
 
       </mat-autocomplete>
 
-      <mat-hint *ngIf="isBooking()">
-        Obbligatorio per booking.
-      </mat-hint>
+      <mat-hint>Obbligatorio per consulenza.</mat-hint>
 
       <mat-error *ngIf="form.controls.clientQuery.touched && form.controls.clientQuery.hasError('required')">
         Seleziona un cliente
@@ -147,7 +146,7 @@
     </mat-form-field>
 
     <!-- PROJECT (autocomplete) -->
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="col-12">
       <mat-label>{{ isSession() ? 'Progetto *' : 'Progetto (opzionale)' }}</mat-label>
 
         <input
@@ -155,7 +154,10 @@
           type="text"
           formControlName="projectQuery"
           [matAutocomplete]="projectAuto"
+          #projectTrigger="matAutocompleteTrigger"
           placeholder="Scrivi titolo progetto"
+          (focus)="projectTrigger.openPanel()"
+          (click)="projectTrigger.openPanel()"
           (blur)="onProjectBlur()"
         />
 
@@ -165,7 +167,7 @@
           type="button"
           *ngIf="form.controls.projectId.value"
           (click)="clearProject()"
-          [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()"
+          [disabled]="isAssignmentLocked()"
           aria-label="Pulisci progetto">
           <mat-icon>close</mat-icon>
         </button>
@@ -182,18 +184,26 @@
 
       <mat-autocomplete
         #projectAuto="matAutocomplete"
+        class="event-drawer-panel"
         [displayWith]="displayProject"
         (optionSelected)="onProjectSelected($event.option.value)">
 
         <mat-option *ngFor="let p of (filteredProjects$ | async)" [value]="p">
           <div class="opt">
             <strong>{{ p.title }}</strong>
-            <small>{{ (p.sessionIds?.length || 0) }} sessioni</small>
+            <small>{{ (p.sessionIds?.length || 0) }} sedute</small>
           </div>
         </mat-option>
 
+        <mat-option disabled *ngIf="(filteredProjects$ | async)?.length === 0">
+          Nessun progetto disponibile
+        </mat-option>
+
         <mat-divider></mat-divider>
-        <mat-option (click)="createProjectFromDrawer()" [disabled]="isAssignmentLocked() || isBookingAssignmentLocked()">
+        <mat-option
+          [value]="null"
+          (click)="$event.preventDefault(); $event.stopPropagation(); createProjectFromDrawer()"
+          [disabled]="isAssignmentLocked()">
           <mat-icon>add_circle</mat-icon>
           <span>Crea nuovo progetto</span>
         </mat-option>
@@ -204,11 +214,11 @@
         Crea un nuovo progetto con il + oppure selezionane uno esistente.
       </mat-hint>
       <mat-hint align="end" *ngIf="!projectCreationEnabled">
-        Solo admin o lo staff assegnato alla booking possono creare progetti da qui.
+        Solo admin o lo staff assegnato alla consulenza possono creare progetti da qui.
       </mat-hint>
 
       <mat-hint *ngIf="isSession()">
-        Selezionando un progetto, il numero sessione viene calcolato automaticamente.
+        Selezionando un progetto, il numero seduta viene calcolato automaticamente.
       </mat-hint>
       <mat-hint *ngIf="isBooking()">
         Per creare un nuovo progetto servono prima Cliente e Artista.
@@ -220,7 +230,7 @@
     </mat-form-field>
 
     <!-- ZONE -->
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="col-6">
       <mat-label>Zona</mat-label>
       <input matInput formControlName="zone" placeholder="Es. avambraccio dx" />
     </mat-form-field>
@@ -228,11 +238,11 @@
     <!-- SESSION EXTRA -->
     <ng-container *ngIf="isSession()">
       <mat-hint *ngIf="mode==='edit' && isScheduleLocked()" class="session-lock-hint">
-        Data/ora bloccate perché la sessione è completata.
+        Data/ora bloccate perche la seduta e completata.
       </mat-hint>
-      <div class="row2">
+      <div class="row2 col-8">
         <mat-form-field appearance="outline">
-          <mat-label>N° Sessione</mat-label>
+          <mat-label>N. Seduta</mat-label>
           <input matInput type="number" formControlName="sessionNumber" />
           <mat-hint>Auto: in base al progetto selezionato</mat-hint>
         </mat-form-field>
@@ -243,24 +253,24 @@
         </mat-form-field>
       </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Pagato (sessione)</mat-label>
+      <mat-form-field appearance="outline" class="col-4">
+        <mat-label>Pagato (seduta)</mat-label>
         <input matInput type="number" min="0" formControlName="paidAmount" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="col-6">
         <mat-label>Note Admin</mat-label>
         <textarea matInput rows="2" formControlName="notesByAdmin"></textarea>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="col-6">
         <mat-label>Note guarigione</mat-label>
         <textarea matInput rows="2" formControlName="healingNotes"></textarea>
       </mat-form-field>
     </ng-container>
 
     <!-- NOTES -->
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="col-12">
       <mat-label>Note</mat-label>
       <textarea matInput rows="3" formControlName="notes"></textarea>
     </mat-form-field>
@@ -272,3 +282,4 @@
     </footer>
   </form>
 </section>
+

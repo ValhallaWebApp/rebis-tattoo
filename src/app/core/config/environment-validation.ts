@@ -29,7 +29,9 @@ export function validateEnvironmentOrThrow(environment: AppEnvironment): void {
 
   if (environment.environmentName === 'production') {
     if (environment.stripePublishableKey.startsWith('pk_test_')) {
-      errors.push('Production must not use Stripe test publishable keys (pk_test_*).');
+      if (!environment.allowStripeTestKeyInProduction) {
+        errors.push('Production must not use Stripe test publishable keys (pk_test_*).');
+      }
     } else if (!environment.stripePublishableKey.startsWith('pk_live_')) {
       errors.push('Production must use a Stripe live publishable key (pk_live_*).');
     }

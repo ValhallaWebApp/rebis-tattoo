@@ -97,7 +97,7 @@ export class ChatBotComponent implements AfterViewChecked {
       if (this.messages.length === 0) {
         this.addBotMessage(
           'Ciao, sono l assistente virtuale Rebis. Scrivimi la tua richiesta.',
-          ['Accedi', 'Apri booking']
+          ['Accedi', 'Apri consulenza']
         );
       }
     });
@@ -166,7 +166,7 @@ export class ChatBotComponent implements AfterViewChecked {
       return;
     }
 
-    if (label === 'Apri booking') {
+    if (label === 'Apri consulenza') {
       void this.router.navigate(['/fast-booking']);
       return;
     }

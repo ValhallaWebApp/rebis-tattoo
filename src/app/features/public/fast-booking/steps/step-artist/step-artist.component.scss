@@ -1,3 +1,14 @@
+:host {
+  --fb-text: var(--app-main-text, #f3f4f7);
+  --fb-muted: var(--app-main-text-muted, #c8ced8);
+  --fb-border: var(--app-surface-border, rgba(255, 255, 255, 0.18));
+  --fb-accent: var(--accent, #b79b55);
+  --fb-danger-bg: var(--app-status-danger-bg, rgba(239, 68, 68, 0.16));
+  --fb-danger-text: var(--app-status-danger-text, #fca5a5);
+  --fb-neutral-bg: var(--app-status-neutral-bg, rgba(148, 163, 184, 0.16));
+  --fb-neutral-text: var(--app-status-neutral-text, #cbd5e1);
+}
+
 .step {
   max-width: 860px;
   margin: 0 auto;
@@ -37,15 +48,15 @@
 }
 
 .error {
-  color: #b91c1c;
-  background: #fee2e2;
-  border: 1px solid #fecaca;
+  color: var(--fb-danger-text);
+  background: var(--fb-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.32);
 }
 
 .empty {
-  color: #334155;
-  background: #e2e8f0;
-  border: 1px solid #cbd5e1;
+  color: var(--fb-neutral-text);
+  background: var(--fb-neutral-bg);
+  border: 1px solid rgba(148, 163, 184, 0.28);
 }
 
 .list {
@@ -61,14 +72,14 @@
   justify-content: space-between;
   align-items: center;
   transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-  border: 1px solid rgba(0,0,0,.08);
+  border: 1px solid var(--fb-border);
 }
 
 .artist:hover { transform: translateY(-1px); }
 
 .artist.active {
-  border: 2px solid rgba(25, 118, 210, .55);
-  box-shadow: 0 10px 30px rgba(25, 118, 210, .10);
+  border: 2px solid rgba(183, 155, 85, .55);
+  box-shadow: 0 10px 30px rgba(183, 155, 85, .14);
 }
 
 .left {
@@ -83,7 +94,7 @@
   height: 56px;
   border-radius: 50%;
   overflow: hidden;
-  background: rgba(25,118,210,.08);
+  background: rgba(183, 155, 85, .16);
   display: grid;
   place-items: center;
   flex: 0 0 auto;
@@ -136,13 +147,13 @@
 .radio {
   width: 18px; height: 18px;
   border-radius: 50%;
-  border: 2px solid rgba(0,0,0,.2);
+  border: 2px solid rgba(183, 155, 85, .45);
 }
 
 .badge {
   width: 34px; height: 34px;
   border-radius: 50%;
-  background: rgba(25,118,210,.12);
+  background: rgba(183, 155, 85, .18);
   display: grid;
   place-items: center;
 }

@@ -7,6 +7,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { NativeDateModule } from '@angular/material/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { MaterialModule } from '../../../../core/modules/material.module';
+import { DynamicField, DynamicFormComponent } from '../../form/dynamic-form/dynamic-form.component';
 
 export interface Project {
   id: string;
@@ -26,13 +27,23 @@ export interface Project {
 @Component({
   selector: 'app-project-dialog-admin',
   standalone:true,
-  imports:[CommonModule,ReactiveFormsModule, MaterialModule,MatDatepickerModule,NativeDateModule,FullCalendarModule],
+  imports:[CommonModule,ReactiveFormsModule, MaterialModule,MatDatepickerModule,NativeDateModule,FullCalendarModule, DynamicFormComponent],
   templateUrl: './project-dialog-admin.component.html',
   styleUrls: ['./project-dialog-admin.component.scss'],
 })
 export class ProjectDialogAdminComponent {
   form: FormGroup;
   isEditMode: boolean;
+  readonly fields: DynamicField[] = [
+    { type: 'text', name: 'name', label: 'Nome', required: true },
+    { type: 'text', name: 'genere', label: 'Genere', required: true },
+    { type: 'text', name: 'collaboratori', label: 'Collaboratori', placeholder: 'email o ID separati da virgola' },
+    { type: 'textarea', name: 'note', label: 'Note', rows: 3, className: 'full-width' },
+    { type: 'text', name: 'copertine', label: 'Copertine', placeholder: 'es. img1.jpg, img2.png' },
+    { type: 'number', name: 'numeroSedute', label: 'Numero sedute', required: true, min: 1 },
+    { type: 'date', name: 'dataProgetto', label: 'Data Progetto', required: true },
+    { type: 'toggle', name: 'show', label: 'Visibile nel portfolio', className: 'full-width' }
+  ];
 
   constructor(
     private fb: FormBuilder,

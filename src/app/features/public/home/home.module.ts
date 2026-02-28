@@ -13,6 +13,7 @@ import { HomeFaqComponent } from './components/home-faq/home-faq.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ShowcaseComponent } from './components/showcase/showcase.component';
 import { MaterialModule } from '../../../core/modules/material.module';
+import { DynamicFormComponent } from '../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 
 @NgModule({
@@ -33,6 +34,7 @@ import { MaterialModule } from '../../../core/modules/material.module';
     HomeRoutingModule,
     MaterialModule,
     ReactiveFormsModule,
+    DynamicFormComponent,
 ]
 })
 export class HomeModule { }

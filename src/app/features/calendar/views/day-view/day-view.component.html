@@ -1,4 +1,4 @@
-﻿<section class="admin-agenda">
+<section class="admin-agenda">
 
   <!-- TOP BAR -->
   <div class="topbar">
@@ -13,28 +13,6 @@
       </span>
     </div>
 
-    <div class="right">
-      <ng-container *ngIf="viewMode() as vm">
-        <mat-button-toggle-group class="view-mode-toggle" [value]="vm" (change)="setViewMode($event.value)">
-          <mat-button-toggle value="agenda">
-            <mat-icon>view_agenda</mat-icon>
-            <span class="toggle-text">Agenda</span>
-          </mat-button-toggle>
-          <mat-button-toggle value="board">
-            <mat-icon>view_kanban</mat-icon>
-            <span class="toggle-text">Board</span>
-          </mat-button-toggle>
-          <mat-button-toggle value="list">
-            <mat-icon>list</mat-icon>
-            <span class="toggle-text">Lista</span>
-          </mat-button-toggle>
-          <mat-button-toggle value="table">
-            <mat-icon>table_chart</mat-icon>
-            <span class="toggle-text">Tabella</span>
-          </mat-button-toggle>
-        </mat-button-toggle-group>
-      </ng-container>
-    </div>
   </div>
 
   <!-- FOLDERS (sections) -->
@@ -115,8 +93,8 @@
 
     <ng-container *ngIf="folder()==='legend'">
       <div class="legend">
-        <span class="legend-item"><span class="dot type-booking"></span> Booking</span>
-        <span class="legend-item"><span class="dot type-session"></span> Sessione</span>
+        <span class="legend-item"><span class="dot type-booking"></span> Consulenza</span>
+        <span class="legend-item"><span class="dot type-session"></span> Seduta</span>
         <span class="legend-item"><span class="dot st-confirmed"></span> Confermata</span>
         <span class="legend-item"><span class="dot st-pending"></span> In attesa</span>
         <span class="legend-item"><span class="dot st-inprogress"></span> In corso</span>
@@ -127,7 +105,7 @@
   </div>
 
   <!-- AGENDA -->
-  <ng-container *ngIf="viewMode()==='agenda'">
+  <ng-container *ngIf="layout !== 'list'; else listView">
     <div class="agenda">
       <div class="artist-block" *ngFor="let block of agendaBlocks(); trackBy: trackByArtist">
         <button class="artist-head" (click)="toggleArtist(block.artistId)">
@@ -187,9 +165,9 @@
                   <mat-icon>person</mat-icon>
                   <span>Cliente</span>
                 </button>
-                <button mat-menu-item *ngIf="it.type==='booking'" (click)="createSession(it)">
+                <button mat-menu-item *ngIf="it.type==='booking' && it.projectId" (click)="createSession(it)">
                   <mat-icon>post_add</mat-icon>
-                  <span>Crea sessione</span>
+                  <span>Crea seduta</span>
                 </button>
                 <button mat-menu-item *ngIf="!it.projectId" (click)="assignProject(it)">
                   <mat-icon>add_circle</mat-icon>
@@ -229,8 +207,7 @@
     </div>
   </ng-container>
 
-  <!-- LIST -->
-  <ng-container *ngIf="viewMode()==='list'">
+  <ng-template #listView>
     <div class="list">
       <div class="list-row"
            *ngFor="let it of dayItems(); trackBy: trackById"
@@ -267,9 +244,9 @@
               <mat-icon>person</mat-icon>
               <span>Cliente</span>
             </button>
-            <button mat-menu-item *ngIf="it.type==='booking'" (click)="createSession(it)">
+            <button mat-menu-item *ngIf="it.type==='booking' && it.projectId" (click)="createSession(it)">
               <mat-icon>post_add</mat-icon>
-              <span>Crea sessione</span>
+              <span>Crea seduta</span>
             </button>
             <button mat-menu-item *ngIf="!it.projectId" (click)="assignProject(it)">
               <mat-icon>add_circle</mat-icon>
@@ -304,163 +281,11 @@
         </div>
       </div>
     </div>
-  </ng-container>
-
-  <!-- TABLE (max 10 per page) -->
-  <ng-container *ngIf="viewMode()==='table'">
-    <div class="table-wrap">
-      <table mat-table [dataSource]="pagedItems()" class="mat-elevation-z0 table">
-        <ng-container matColumnDef="time">
-          <th mat-header-cell *matHeaderCellDef>Ora</th>
-          <td mat-cell *matCellDef="let it">
-            <div class="t-time">{{ it.range }}</div>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef>Tipo</th>
-          <td mat-cell *matCellDef="let it">
-            <span class="t-badge" [class.session]="it.type==='session'" [class.booking]="it.type!=='session'">
-              {{ it.type }}
-            </span>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="title">
-          <th mat-header-cell *matHeaderCellDef>Dettagli</th>
-          <td mat-cell *matCellDef="let it">
-            <div class="t-title">{{ it.titleUi }}</div>
-            <div class="t-sub">
-              {{ it.subtitleUi }}
-              <span *ngIf="!it.projectId" class="missing-badge">Progetto mancante</span>
-            </div>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Stato</th>
-          <td mat-cell *matCellDef="let it">
-            <span class="t-status">{{ it.status || '-' }}</span>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let it">
-            <div class="t-actions" (click)="$event.stopPropagation()">
-              <button mat-icon-button (click)="edit(it)" matTooltip="Modifica">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button [matMenuTriggerFor]="eventMenuTable" matTooltip="Azioni">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-
-              <mat-menu #eventMenuTable="matMenu">
-                <button mat-menu-item (click)="openDetails(it)">
-                  <mat-icon>open_in_new</mat-icon>
-                  <span>Apri</span>
-                </button>
-                <button mat-menu-item *ngIf="it.clientId" [routerLink]="['/admin/clients']" [queryParams]="{ q: it.clientId }">
-                  <mat-icon>person</mat-icon>
-                  <span>Cliente</span>
-                </button>
-                <button mat-menu-item *ngIf="it.type==='booking'" (click)="createSession(it)">
-                  <mat-icon>post_add</mat-icon>
-                  <span>Crea sessione</span>
-                </button>
-                <button mat-menu-item *ngIf="!it.projectId" (click)="assignProject(it)">
-                  <mat-icon>add_circle</mat-icon>
-                  <span>Assegna progetto</span>
-                </button>
-                <button mat-menu-item *ngIf="it.projectId" [routerLink]="['/admin/portfolio', it.projectId]">
-                  <mat-icon>folder</mat-icon>
-                  <span>Progetto</span>
-                </button>
-                <mat-divider></mat-divider>
-                <button mat-menu-item (click)="setStatus(it,'confirmed')" [disabled]="!canConfirm(it)">
-                  <mat-icon>check_circle</mat-icon>
-                  <span>Conferma</span>
-                  <mat-icon *ngIf="it.status==='confirmed'">check</mat-icon>
-                </button>
-                <button mat-menu-item (click)="setStatus(it,'in_progress')" [disabled]="!canStart(it)">
-                  <mat-icon>play_circle</mat-icon>
-                  <span>Inizia</span>
-                  <mat-icon *ngIf="it.status==='in_progress'">check</mat-icon>
-                </button>
-                <button mat-menu-item (click)="setStatus(it,'completed')" [disabled]="!canComplete(it)">
-                  <mat-icon>task_alt</mat-icon>
-                  <span>Completa</span>
-                  <mat-icon *ngIf="it.status==='completed'">check</mat-icon>
-                </button>
-                <button mat-menu-item (click)="cancel(it)">
-                  <mat-icon>cancel</mat-icon>
-                  <span>Annulla</span>
-                  <mat-icon *ngIf="it.status==='cancelled'">check</mat-icon>
-                </button>
-              </mat-menu>
-            </div>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="tableColumns"></tr>
-        <tr
-          mat-row
-          *matRowDef="let row; columns: tableColumns"
-          class="t-row"
-          (click)="openDetails(row)">
-        </tr>
-      </table>
-
-      <mat-paginator
-        [length]="dayItems().length"
-        [pageSize]="10"
-        [pageIndex]="pageIndex()"
-        [hidePageSize]="true"
-        (page)="onPage($event)">
-      </mat-paginator>
-    </div>
-  </ng-container>
-
-  <!-- BOARD -->
-  <ng-container *ngIf="viewMode()==='board'">
-    <div class="board">
-      <div class="board-col"
-           *ngFor="let col of boardColumns()"
-           [class.status-draft]="col.status==='draft'"
-           [class.status-pending]="col.status==='pending'"
-           [class.status-confirmed]="col.status==='confirmed'"
-           [class.status-inprogress]="col.status==='in_progress'"
-           [class.status-completed]="col.status==='completed'"
-           [class.status-cancelled]="col.status==='cancelled'">
-        <div class="board-head">
-          <span class="board-title">{{ col.status }}</span>
-          <span class="board-count">{{ col.items.length }}</span>
-        </div>
-
-        <div class="board-cards">
-          <button class="board-card"
-                  *ngFor="let it of col.items; trackBy: trackById"
-                  [class.session]="it.type==='session'"
-                  [class.booking]="it.type!=='session'"
-                  (click)="openDetails(it)">
-            <div class="row1">
-              <span class="badge">{{ it.type }}</span>
-              <span class="range">{{ it.range }}</span>
-            </div>
-            <div class="title">{{ it.titleUi }}</div>
-            <div class="sub">{{ it.subtitleUi }}</div>
-          </button>
-        </div>
-      </div>
-    </div>
-    <div class="board-empty" *ngIf="!hasBoardItems()">
-      Nessun evento per i filtri selezionati.
-    </div>
-  </ng-container>
+  </ng-template>
 
   <div class="admin-rules">
     <strong>Regole rapide admin:</strong>
-    <span>Per creare un progetto da booking servono Cliente + Artista.</span>
+    <span>Per creare un progetto da consulenza servono Cliente + Artista.</span>
     <span>Le azioni di stato sono sempre modificabili dall'admin.</span>
   </div>
 </section>

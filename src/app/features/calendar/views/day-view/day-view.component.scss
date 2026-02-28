@@ -311,7 +311,7 @@
 .card {
   width: 100%;
   border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.45);
+  background: var(--app-surface, rgba(16, 17, 24, 0.72));
   color: inherit;
   border-radius: 18px;
   padding: 12px;
@@ -337,9 +337,9 @@
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 5px;
-  background: #60a5fa; /* booking default */
+  background: #be9045; /* booking default */
 }
-.card.session::before { background: #fbbf24; }
+.card.session::before { background: #7dd3fc; }
 
 .timebox {
   border-radius: 16px;
@@ -437,7 +437,7 @@
   padding: 12px;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.45);
+  background: var(--app-surface, rgba(16, 17, 24, 0.72));
   box-shadow: 0 10px 24px rgba(0,0,0,.28);
   position: relative;
   overflow: hidden;
@@ -448,9 +448,9 @@
   position:absolute;
   left:0; top:0; bottom:0;
   width:5px;
-  background:#60a5fa;
+  background:#be9045;
 }
-.list-row.session::before{ background:#fbbf24; }
+.list-row.session::before{ background:#7dd3fc; }
 
 .list-row .timebox{
   border-radius: 14px;
@@ -660,7 +660,7 @@
 .board-card{
   width: 100%;
   border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.45);
+  background: var(--app-surface, rgba(16, 17, 24, 0.72));
   color: inherit;
   border-radius: 12px;
   padding: 8px;
@@ -680,9 +680,9 @@
   position:absolute;
   left:0; top:0; bottom:0;
   width:4px;
-  background:#60a5fa;
+  background:#be9045;
 }
-.board-card.session::before{ background:#fbbf24; }
+.board-card.session::before{ background:#7dd3fc; }
 .board-card .row1{ display:flex; gap:6px; flex-wrap:wrap; font-size:11px; opacity:.85; }
 .board-card .badge{
   text-transform: uppercase;
@@ -802,6 +802,23 @@
 .card:hover,
 .list-row:hover {
   background: var(--dv-surface-strong) !important;
+}
+
+.card {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03) 42%, rgba(0, 0, 0, 0.34)), rgba(10, 11, 16, 0.62) !important;
+  backdrop-filter: blur(14px) saturate(132%);
+  -webkit-backdrop-filter: blur(14px) saturate(132%);
+}
+
+.card.booking {
+  background: linear-gradient(145deg, rgba(190, 144, 69, 0.3), rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0.34)), rgba(10, 11, 16, 0.62) !important;
+}
+
+.list-row.booking,
+.board-card.booking {
+  background: #0a0b10 !important;
+  border-color: var(--dv-border) !important;
 }
 
 .table-wrap .t-badge,

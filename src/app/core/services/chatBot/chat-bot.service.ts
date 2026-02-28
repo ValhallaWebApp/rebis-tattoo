@@ -104,9 +104,9 @@ export class ChatService {
 
   private defaultSupportChips(role: ChatActorRole): string[] {
     if (role === 'guest' || role === 'public') {
-      return ['Accedi', 'Apri booking'];
+      return ['Accedi', 'Apri consulenza'];
     }
-    return ['Vai al profilo', 'Apri booking'];
+    return ['Vai al profilo', 'Apri consulenza'];
   }
 
   private ensureSubject(chatId: string): BehaviorSubject<ChatMessage[]> {

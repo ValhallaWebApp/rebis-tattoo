@@ -30,7 +30,7 @@ export class MenuService {
     { label: 'Home', route: '/home' },
     { label: 'Servizi', route: '/servizi' },
     { label: 'Progetti', route: '/progetti' },
-    { label: 'Fast Booking', route: '/fast-booking' },
+    { label: 'Fast Consulenza', route: '/fast-booking' },
     { label: 'Chi Siamo', route: '/chi-siamo' },
     { label: 'Contatti', route: '/contatti' }
   ];
@@ -41,7 +41,7 @@ export class MenuService {
     roles: ['client', 'staff', 'admin'],
     children: [
       { label: 'Profilo', route: '/dashboard' },
-      { label: 'Storico Booking', route: '/dashboard/booking-history' },
+      { label: 'Storico consulenze', route: '/dashboard/booking-history' },
       { label: 'Buoni', route: '/dashboard/buoni' },
       { label: 'Recensioni', route: '/dashboard/reviews' },
       { label: 'Chat', route: '/dashboard/chat' }
@@ -54,7 +54,7 @@ export class MenuService {
     roles: ['staff'],
     children: [
       { label: 'Profilo', route: '/dashboard' },
-      { label: 'Storico Booking', route: '/dashboard/booking-history' },
+      { label: 'Storico consulenze', route: '/dashboard/booking-history' },
       { label: 'Buoni', route: '/dashboard/buoni' },
       { label: 'Recensioni', route: '/dashboard/reviews' },
       { label: 'Chat', route: '/dashboard/chat' }

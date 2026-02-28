@@ -4,17 +4,26 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { Service } from '../../../../core/services/services/services.service';
+import { DynamicField, DynamicFormComponent } from '../../form/dynamic-form/dynamic-form.component';
 
 @Component({
   selector: 'app-services-dialog-admin',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule, DynamicFormComponent],
   templateUrl: './services-dialog-admin.component.html',
   styleUrls: ['./services-dialog-admin.component.scss']
 })
 export class ServicesDialogAdminComponent {
   form: FormGroup;
   isEditMode: boolean;
+  readonly fields: DynamicField[] = [
+    { type: 'text', name: 'name', label: 'Nome', required: true },
+    { type: 'textarea', name: 'description', label: 'Descrizione', required: true, className: 'full-width' },
+    { type: 'text', name: 'categoria', label: 'Categoria', required: true },
+    { type: 'number', name: 'prezzo', label: 'Prezzo (EUR)', required: true, min: 0 },
+    { type: 'number', name: 'durata', label: 'Durata (minuti)', required: true, min: 1 },
+    { type: 'toggle', name: 'visibile', label: 'Visibile', className: 'full-width' }
+  ];
 
   constructor(
     private fb: FormBuilder,

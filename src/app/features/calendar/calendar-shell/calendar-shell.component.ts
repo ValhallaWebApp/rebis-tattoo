@@ -13,23 +13,24 @@ import { AdminActionPayload, DayViewComponent } from '../views/day-view/day-view
 import { WeekResourceComponent } from '../views/week-resource/week-resource/week-resource.component';
 import { MonthViewComponent } from '../views/month-view/month-view.component';
 
-import { BookingLite, EventDrawerComponent, EventDrawerResult } from '../drawer/event-drawer/event-drawer.component';
+import { EventDrawerComponent } from '../drawer/event-drawer/event-drawer.component';
 import { MaterialModule } from '../../../core/modules/material.module';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmDialogComponent } from '../../../shared/components/dialogs/confirm-dialog/confirm-dialog.component';
 import { UiFeedbackService } from '../../../core/services/ui/ui-feedback.service';
 import { CreateProjectDialogComponent, CreateProjectDialogResult } from '../dialogs/create-project-dialog/create-project-dialog.component';
 import { CompleteSessionDecision, CompleteSessionDialogComponent } from '../dialogs/complete-session-dialog/complete-session-dialog.component';
-import { CreateProjectTriggerPayload } from '../drawer/event-drawer/event-drawer.component';
+import { CreateProjectTriggerPayload } from '../drawer/event-drawer/event-drawer.types';
 
 // ✅ servizi preload (adatta i path al tuo progetto)
 
 // ✅ tipi lite usati dal drawer (importali dal drawer per evitare duplicazioni)
-import { ClientLite, ProjectLite } from '../drawer/event-drawer/event-drawer.component';
+import { BookingLite, ClientLite, EventDrawerResult, ProjectLite } from '../drawer/event-drawer/event-drawer.types';
 import { ClientService } from '../../../core/services/clients/client.service';
 import { ProjectsService } from '../../../core/services/projects/projects.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { SessionService } from '../../../core/services/session/session.service';
+import { BookingService } from '../../../core/services/bookings/booking.service';
 
 type DrawerRouteAction =
   | {
@@ -81,6 +82,7 @@ export class CalendarShellComponent implements OnChanges {
   private readonly clientService = inject(ClientService);
   private readonly projectService = inject(ProjectsService);
   private readonly sessionService = inject(SessionService);
+  private readonly bookingService = inject(BookingService);
   private readonly auth = inject(AuthService);
 
   @Input({ required: true }) artists: UiArtist[] = [];
@@ -116,6 +118,7 @@ export class CalendarShellComponent implements OnChanges {
       const list = changes['events'].currentValue ?? [];
       this.eventsSig.set(list);
       this.rebuildBookingsLite(list);
+      this.hydrateAutocompleteFallbacksFromEvents(list);
       void this.consumePendingDrawerRouteAction();
     }
   }
@@ -124,6 +127,7 @@ export class CalendarShellComponent implements OnChanges {
   // View state
   // ---------------------------------------------
   readonly view = signal<CalendarViewMode>('week');
+  readonly weekLayout = signal<'cards' | 'list'>('cards');
   readonly anchorDate = signal<Date>(new Date());
 
   // default selected artists = all active
@@ -237,11 +241,14 @@ export class CalendarShellComponent implements OnChanges {
 
     if (pending.action === 'create-session') {
       const projectId = String(pending.projectId ?? '').trim();
-      const artistId = String(pending.artistId ?? '').trim();
-      if (!projectId || !artistId) return;
+      if (!projectId) {
+        this.pendingDrawerRouteAction = null;
+        this.clearDrawerRouteParams();
+        return;
+      }
       await this.openCreateSessionFromProject({
         projectId,
-        artistId,
+        artistId: pending.artistId,
         clientId: pending.clientId
       });
       this.pendingDrawerRouteAction = null;
@@ -295,12 +302,38 @@ export class CalendarShellComponent implements OnChanges {
 
     // ⚠️ Adatta ai metodi reali del tuo progetto
     this.clientService.getClientsLiteOnce().subscribe({
-      next: (list) => (this.clientsLite = list ?? []),
-      error: (err) => console.error('[CAL-SHELL] preload clientsLite error', err),
+      next: (list) => {
+        const incoming = list ?? [];
+        // Source of truth: if backend returns real clients, replace fallback-derived list.
+        if (incoming.length > 0) {
+          this.clientsLite = this.mergeClientsLite([], incoming);
+          return;
+        }
+        // If backend returns empty (or filtered out by role/rules), keep a safe fallback from events.
+        if ((this.clientsLite ?? []).length === 0) {
+          const fallbackClients = this.buildFallbackClientsFromEvents(this.eventsSig());
+          this.clientsLite = this.mergeClientsLite(this.clientsLite, fallbackClients);
+        }
+      },
+      error: (err) => {
+        console.error('[CAL-SHELL] preload clientsLite error', err);
+        if ((this.clientsLite ?? []).length === 0) {
+          const fallbackClients = this.buildFallbackClientsFromEvents(this.eventsSig());
+          this.clientsLite = this.mergeClientsLite(this.clientsLite, fallbackClients);
+        }
+      },
     });
 
     this.projectService.getProjectsLiteOnce().subscribe({
-      next: (list) => (this.projectsLite = list ?? []),
+      next: (list) => {
+        const incoming = list ?? [];
+        // Source of truth: if backend returns real projects, replace fallback-derived list.
+        if (incoming.length > 0) {
+          this.projectsLite = this.mergeProjectsLite([], incoming);
+          return;
+        }
+        this.projectsLite = this.mergeProjectsLite(this.projectsLite, incoming);
+      },
       error: (err) => {
         console.error('[CAL-SHELL] preload projectsLite error', err);
         this.preloadInFlight = false;
@@ -316,6 +349,10 @@ export class CalendarShellComponent implements OnChanges {
   // ---------------------------------------------
   setView(v: CalendarViewMode) {
     this.view.set(v);
+  }
+
+  setWeekLayout(v: unknown): void {
+    this.weekLayout.set(v === 'list' ? 'list' : 'cards');
   }
 
   goPrev() {
@@ -502,9 +539,20 @@ export class CalendarShellComponent implements OnChanges {
   }
 
   private openCreateSessionFromBooking(ev: UiCalendarEvent): void {
+    const projectId = String(ev.projectId ?? '').trim();
+    if (!projectId) {
+      this.snackBar.open('Per creare una seduta devi prima associare un progetto alla consulenza.', 'OK', {
+        duration: 2800,
+        horizontalPosition: 'right',
+        verticalPosition: 'bottom'
+      });
+      this.openEditEvent(ev);
+      return;
+    }
+
     this.preloadDrawerLists();
     const durationMinutes = this.diffMinutes(ev.start, ev.end) || 60;
-    const next = this.computeNextSessionSeed(ev.projectId, ev.end, durationMinutes);
+    const next = this.computeNextSessionSeed(projectId, ev.end, durationMinutes);
     this.drawerMode = 'create';
     this.drawerSeed = {
       type: 'session',
@@ -513,7 +561,7 @@ export class CalendarShellComponent implements OnChanges {
       end: next.end,
       durationMinutes,
       clientId: ev.clientId,
-      projectId: ev.projectId,
+      projectId,
       status: 'planned',
       sessionNumber: next.sessionNumber
     } as any;
@@ -523,7 +571,7 @@ export class CalendarShellComponent implements OnChanges {
 
   private async openCreateSessionFromProject(payload: {
     projectId: string;
-    artistId: string;
+    artistId?: string;
     clientId?: string;
     zone?: string;
   }): Promise<void> {
@@ -531,9 +579,15 @@ export class CalendarShellComponent implements OnChanges {
     const durationMinutes = 60;
     let bookingEndFallback: string | undefined;
     let zone = payload.zone ?? undefined;
+    let resolvedArtistId = String(payload.artistId ?? '').trim();
+    let resolvedClientId = String(payload.clientId ?? '').trim() || undefined;
     try {
       const project = await this.projectService.getProjectById(payload.projectId);
       if (project) {
+        const projectArtistId = String((project as any)?.artistId ?? '').trim();
+        const projectClientId = String((project as any)?.clientId ?? '').trim();
+        if (!resolvedArtistId && projectArtistId) resolvedArtistId = projectArtistId;
+        if (!resolvedClientId && projectClientId) resolvedClientId = projectClientId;
         if (!zone) {
           zone = String(project.zone ?? '').trim() || undefined;
         }
@@ -560,15 +614,24 @@ export class CalendarShellComponent implements OnChanges {
       }
     }
 
+    if (!resolvedArtistId) {
+      this.snackBar.open('Artista non disponibile: collega un artista al progetto prima di creare la seduta.', 'OK', {
+        duration: 2800,
+        horizontalPosition: 'right',
+        verticalPosition: 'bottom'
+      });
+      return;
+    }
+
     const next = this.computeNextSessionSeed(payload.projectId, bookingEndFallback, durationMinutes);
     this.drawerMode = 'create';
     this.drawerSeed = {
       type: 'session',
-      artistId: payload.artistId,
+      artistId: resolvedArtistId,
       start: next.start,
       end: next.end,
       durationMinutes,
-      clientId: payload.clientId,
+      clientId: resolvedClientId,
       projectId: payload.projectId,
       status: 'planned',
       sessionNumber: next.sessionNumber,
@@ -613,8 +676,20 @@ export class CalendarShellComponent implements OnChanges {
   async onDrawerSubmit(result: EventDrawerResult) {
     if (result.mode === 'create') {
       if (result.draft.type === 'booking' && result.draft.projectId) {
-        const ok = await this.confirmProjectOverride(result.draft.projectId);
+        const ok = await this.confirmProjectSelectionImpact({
+          projectId: result.draft.projectId,
+          selectedClientId: result.draft.clientId,
+          skipPrompt: String(result.projectWarningConfirmedId ?? '').trim() === String(result.draft.projectId ?? '').trim()
+        });
         if (!ok) return;
+      }
+      if (result.draft.type === 'session' && !String(result.draft.projectId ?? '').trim()) {
+        this.snackBar.open('Una seduta richiede un progetto di riferimento.', 'OK', {
+          duration: 2500,
+          horizontalPosition: 'right',
+          verticalPosition: 'bottom'
+        });
+        return;
       }
       if (result.draft.type === 'session' && result.draft.status === 'completed') {
         const decision = await this.askCompleteSessionDecision({
@@ -636,8 +711,26 @@ export class CalendarShellComponent implements OnChanges {
 
     if (result.mode === 'edit') {
       if (result.update?.type === 'booking' && result.update.patch?.projectId) {
-        const ok = await this.confirmProjectOverride(result.update.patch.projectId, result.update.id);
+        const ok = await this.confirmProjectSelectionImpact({
+          projectId: result.update.patch.projectId,
+          currentBookingId: result.update.id,
+          selectedClientId: String(result.update.patch.clientId ?? this.drawerEditingEvent?.clientId ?? '').trim() || undefined,
+          skipPrompt: String(result.projectWarningConfirmedId ?? '').trim() === String(result.update.patch.projectId ?? '').trim()
+        });
         if (!ok) return;
+      }
+      if (result.update?.type === 'session') {
+        const nextProjectId = String(
+          result.update.patch?.projectId ?? this.drawerEditingEvent?.projectId ?? ''
+        ).trim();
+        if (!nextProjectId) {
+          this.snackBar.open('Una seduta richiede un progetto di riferimento.', 'OK', {
+            duration: 2500,
+            horizontalPosition: 'right',
+            verticalPosition: 'bottom'
+          });
+          return;
+        }
       }
       if (result.update?.type === 'session' && result.update.patch?.status === 'completed') {
         const decision = await this.askCompleteSessionDecision({
@@ -758,7 +851,7 @@ export class CalendarShellComponent implements OnChanges {
   private async applyCompleteSessionDecision(decision: CompleteSessionDecision, ev: UiCalendarEvent): Promise<void> {
     const projectId = String(ev.projectId ?? '').trim();
     if (!projectId) {
-      this.snackBar.open('Collega un progetto prima di chiudere o creare nuove sessioni.', 'OK', {
+      this.snackBar.open('Collega un progetto prima di chiudere o creare nuove sedute.', 'OK', {
         duration: 2500,
         horizontalPosition: 'right',
         verticalPosition: 'bottom'
@@ -804,7 +897,7 @@ export class CalendarShellComponent implements OnChanges {
       durationMinutes,
       clientId: ev.clientId,
       projectId: ev.projectId,
-      bookingId: (ev as any).bookingId ?? undefined,
+      bookingId: ev.type === 'booking' ? ev.id : ((ev as any).bookingId ?? undefined),
       sessionNumber: (ev as any).sessionNumber,
       notes: ev.notes ?? (ev as any).notesByAdmin ?? undefined,
       notesByAdmin: (ev as any).notesByAdmin ?? ev.notes ?? undefined,
@@ -822,7 +915,7 @@ export class CalendarShellComponent implements OnChanges {
       .filter(e => e?.type === 'booking')
       .map(e => ({
         id: e.id,
-        title: (e as any).notes || (e as any).title || 'Booking',
+        title: (e as any).notes || (e as any).title || 'Consulenza',
         start: e.start,
         end: e.end,
         artistId: e.artistId,
@@ -832,6 +925,129 @@ export class CalendarShellComponent implements OnChanges {
       .sort((a, b) => String(a.start ?? '').localeCompare(String(b.start ?? '')));
 
     this.bookingsLite = list;
+  }
+
+  private hydrateAutocompleteFallbacksFromEvents(events: UiCalendarEvent[]): void {
+    const list = events ?? [];
+    if (list.length === 0) return;
+
+    const fallbackClients = this.buildFallbackClientsFromEvents(list);
+    const fallbackProjects: ProjectLite[] = [];
+
+    for (const ev of list) {
+      const projectId = String((ev as any)?.projectId ?? '').trim();
+      const artistId = String((ev as any)?.artistId ?? '').trim() || undefined;
+
+      if (projectId) {
+        fallbackProjects.push({
+          id: projectId,
+          title: this.extractProjectLabelFromEvent(ev, projectId),
+          clientId: String((ev as any)?.clientId ?? '').trim() || undefined,
+          artistId,
+          sessionIds: []
+        });
+      }
+    }
+
+    if ((this.clientsLite ?? []).length === 0) {
+      this.clientsLite = this.mergeClientsLite(this.clientsLite, fallbackClients);
+    }
+    if ((this.projectsLite ?? []).length === 0) {
+      this.projectsLite = this.mergeProjectsLite(this.projectsLite, fallbackProjects);
+    }
+  }
+
+  private buildFallbackClientsFromEvents(events: UiCalendarEvent[]): ClientLite[] {
+    const list = events ?? [];
+    if (list.length === 0) return [];
+
+    const staffIds = new Set(
+      (this.artistsSig() ?? [])
+        .map(a => String(a?.id ?? '').trim())
+        .filter(Boolean)
+    );
+
+    const primary: ClientLite[] = [];
+    for (const ev of list) {
+      const clientId = String((ev as any)?.clientId ?? '').trim();
+      if (!clientId) continue;
+      if (staffIds.has(clientId)) continue;
+      primary.push({
+        id: clientId,
+        fullName: this.extractClientLabelFromEvent(ev)
+      });
+    }
+    if (primary.length > 0) {
+      return this.mergeClientsLite([], primary);
+    }
+
+    // Last resort: keep ids even if they overlap staff, better than empty list.
+    const relaxed: ClientLite[] = [];
+    for (const ev of list) {
+      const clientId = String((ev as any)?.clientId ?? '').trim();
+      if (!clientId) continue;
+      relaxed.push({
+        id: clientId,
+        fullName: this.extractClientLabelFromEvent(ev)
+      });
+    }
+    return this.mergeClientsLite([], relaxed);
+  }
+
+  private mergeClientsLite(base: ClientLite[], incoming: ClientLite[]): ClientLite[] {
+    const out = new Map<string, ClientLite>();
+    for (const row of [...(base ?? []), ...(incoming ?? [])]) {
+      const id = String((row as any)?.id ?? '').trim();
+      if (!id) continue;
+      const prev = out.get(id);
+      out.set(id, {
+        id,
+        fullName: String(row?.fullName ?? prev?.fullName ?? '').trim() || 'Cliente',
+        email: String(row?.email ?? prev?.email ?? '').trim() || undefined,
+        phone: String(row?.phone ?? prev?.phone ?? '').trim() || undefined
+      });
+    }
+    return Array.from(out.values()).sort((a, b) => a.fullName.localeCompare(b.fullName, 'it'));
+  }
+
+  private mergeProjectsLite(base: ProjectLite[], incoming: ProjectLite[]): ProjectLite[] {
+    const out = new Map<string, ProjectLite>();
+    for (const row of [...(base ?? []), ...(incoming ?? [])]) {
+      const id = String((row as any)?.id ?? '').trim();
+      if (!id) continue;
+      const prev = out.get(id);
+      out.set(id, {
+        id,
+        title: String(row?.title ?? prev?.title ?? '').trim() || `Progetto ${id.slice(-6)}`,
+        clientId: String(row?.clientId ?? prev?.clientId ?? '').trim() || undefined,
+        artistId: String(row?.artistId ?? prev?.artistId ?? '').trim() || undefined,
+        bookingId: String(row?.bookingId ?? prev?.bookingId ?? '').trim() || undefined,
+        sessionIds: Array.isArray(row?.sessionIds)
+          ? row.sessionIds
+          : (Array.isArray(prev?.sessionIds) ? prev!.sessionIds : [])
+      });
+    }
+    return Array.from(out.values()).sort((a, b) => a.title.localeCompare(b.title, 'it'));
+  }
+
+  private extractProjectLabelFromEvent(ev: UiCalendarEvent, projectId: string): string {
+    const pTitle = String((ev as any)?.projectTitle ?? '').trim();
+    if (pTitle) return pTitle;
+    const title = String((ev as any)?.title ?? '').trim();
+    if (title && !/^(booking|consulenza|session|prenotazione)$/i.test(title)) return title;
+    return `Progetto ${projectId.slice(-6)}`;
+  }
+
+  private extractClientLabelFromEvent(ev: UiCalendarEvent): string {
+    const explicit = String((ev as any)?.clientName ?? (ev as any)?.clientLabel ?? '').trim();
+    if (explicit) return explicit;
+
+    const title = String((ev as any)?.title ?? '').trim();
+    if (title) {
+      const cleaned = title.replace(/\s*-\s*prenotazione$/i, '').trim();
+      if (cleaned && !/^(booking|consulenza|session|prenotazione)$/i.test(cleaned)) return cleaned;
+    }
+    return 'Cliente';
   }
 
   private mapActionToStatus(action: AdminActionPayload['type'], eventType: UiCalendarEvent['type']): string | null {
@@ -906,10 +1122,16 @@ export class CalendarShellComponent implements OnChanges {
       return;
     }
 
+    const effectiveBookingId =
+      String(payload.bookingId ?? '').trim() ||
+      String(this.drawerSeed?.bookingId ?? '').trim() ||
+      (this.drawerEditingEvent?.type === 'booking' ? String(this.drawerEditingEvent.id ?? '').trim() : '') ||
+      String((this.drawerEditingEvent as any)?.bookingId ?? '').trim();
+
     const canCreate =
-      this.userCanManageProjects() || this.canStaffCreateProjectForBooking(payload.bookingId);
+      this.userCanManageProjects() || this.canStaffCreateProjectForBooking(effectiveBookingId || undefined);
     if (!canCreate) {
-      this.snackBar.open('Permesso mancante: crea progetti solo da admin o dal booking assegnato a te.', 'OK', {
+      this.snackBar.open('Permesso mancante: crea progetti solo da admin o dalla consulenza assegnata a te.', 'OK', {
         duration: 2500,
         horizontalPosition: 'right',
         verticalPosition: 'bottom'
@@ -933,7 +1155,7 @@ export class CalendarShellComponent implements OnChanges {
         zone: res.zone ?? undefined,
         notes: res.notes ?? undefined,
         status: 'scheduled',
-        bookingId: payload.bookingId ?? undefined
+        bookingId: effectiveBookingId || undefined
       } as any);
     } catch (err: any) {
       if (String(err?.message ?? '').startsWith('PERMISSION_DENIED:')) {
@@ -978,6 +1200,13 @@ export class CalendarShellComponent implements OnChanges {
     if (seedBookingId) {
       return this.canStaffCreateProjectForBooking(seedBookingId);
     }
+    const editingBookingEventId =
+      this.drawerEditingEvent?.type === 'booking'
+        ? String(this.drawerEditingEvent.id ?? '').trim()
+        : '';
+    if (editingBookingEventId) {
+      return this.canStaffCreateProjectForBooking(editingBookingEventId);
+    }
     const editingBookingId = String(((this.drawerEditingEvent as any)?.bookingId ?? '')).trim();
     if (editingBookingId) {
       return this.canStaffCreateProjectForBooking(editingBookingId);
@@ -994,27 +1223,78 @@ export class CalendarShellComponent implements OnChanges {
     );
   }
 
-  private async confirmProjectOverride(projectId: string, bookingId?: string): Promise<boolean> {
+  private getClientLabel(clientId?: string): string {
+    const id = String(clientId ?? '').trim();
+    if (!id) return 'cliente non specificato';
+    const row = (this.clientsLite ?? []).find(c => String(c.id ?? '').trim() === id);
+    return String(row?.fullName ?? '').trim() || id;
+  }
+
+  private getBookingLabel(bookingId?: string): string {
+    const id = String(bookingId ?? '').trim();
+    if (!id) return 'nuova prenotazione';
+    const row = (this.bookingsLite ?? []).find(b => String(b.id ?? '').trim() === id);
+    if (!row) return id;
+    const title = String(row.title ?? '').trim();
+    const when = String(row.start ?? '').trim();
+    if (title && when) return `${title} (${when})`;
+    if (title) return title;
+    return id;
+  }
+
+  private async confirmProjectSelectionImpact(params: {
+    projectId: string;
+    currentBookingId?: string;
+    selectedClientId?: string;
+    skipPrompt?: boolean;
+  }): Promise<boolean> {
+    const projectId = String(params.projectId ?? '').trim();
+    const currentBookingId = String(params.currentBookingId ?? '').trim();
+    const selectedClientId = String(params.selectedClientId ?? '').trim();
+    if (!projectId) return true;
+
     try {
       const project = await this.projectService.getProjectById(projectId);
-      const existing = project?.bookingId;
-      if (existing && existing !== bookingId) {
+      const existingBookingId = String(project?.bookingId ?? '').trim();
+      const projectClientId = String(project?.clientId ?? '').trim();
+
+      const bookingWillBeReplaced = !!existingBookingId && existingBookingId !== currentBookingId;
+      const clientWillBeReplaced = !!projectClientId && !!selectedClientId && projectClientId !== selectedClientId;
+
+      if (!bookingWillBeReplaced && !clientWillBeReplaced) {
+        return true;
+      }
+
+      const warnings: string[] = [];
+      if (bookingWillBeReplaced) {
+        warnings.push(
+          `Il progetto e gia collegato alla consulenza "${this.getBookingLabel(existingBookingId)}". Continuando, quella consulenza verra scollegata e sostituita.`
+        );
+      }
+      if (clientWillBeReplaced) {
+        warnings.push(
+          `Il progetto e associato al cliente "${this.getClientLabel(projectClientId)}". Continuando, il cliente selezionato "${this.getClientLabel(selectedClientId)}" verra sostituito da quello del progetto.`
+        );
+      }
+
+      if (!params.skipPrompt) {
         const ref = this.dialog.open(ConfirmDialogComponent, {
-          width: '420px',
+          width: '520px',
           data: {
-            title: 'Progetto già associato',
-            message: 'Questo progetto è già collegato a un’altra prenotazione. Vuoi riassegnarlo a questa?',
-            confirmText: 'Riassegna',
+            title: 'Conferma riallineamento progetto',
+            message: warnings.join('\n\n'),
+            confirmText: 'Continua',
             cancelText: 'Annulla'
           }
         });
         const ok = await firstValueFrom(ref.afterClosed());
         if (!ok) return false;
-
-        if (bookingId) {
-          await this.projectService.updateProject(projectId, { bookingId });
-        }
       }
+
+      if (bookingWillBeReplaced && existingBookingId) {
+        await this.bookingService.updateBooking(existingBookingId, { projectId: undefined });
+      }
+
       return true;
     } catch (e) {
       this.snackBar.open('Impossibile verificare il progetto. Riprova.', 'OK', {
@@ -1040,7 +1320,7 @@ export class CalendarShellComponent implements OnChanges {
     const canCreate =
       this.userCanManageProjects() || this.canStaffCreateProjectForBooking(ev.type === 'booking' ? ev.id : undefined);
     if (!canCreate) {
-      this.snackBar.open('Permesso mancante: crea progetti solo da admin o dal booking assegnato a te.', 'OK', {
+      this.snackBar.open('Permesso mancante: crea progetti solo da admin o dalla consulenza assegnata a te.', 'OK', {
         duration: 2500,
         horizontalPosition: 'right',
         verticalPosition: 'bottom'
@@ -1118,5 +1398,6 @@ export class CalendarShellComponent implements OnChanges {
     return fallback;
   }
 }
+
 
 

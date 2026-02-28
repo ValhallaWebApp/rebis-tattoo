@@ -1,0 +1,1242 @@
+# Audit Completo Repository - gestionale-tattuaggi
+
+Data analisi: 2026-02-28 11:45:52
+
+## Copertura
+- File totali analizzati: 635
+- Inclusi file nascosti del repo.
+- Esclusi solo artefatti/caches/deps: .git, node_modules, .angular, dist, storybook-static, test-results, .firebase-cache.
+
+## Conteggi per area
+- src: 450 file
+- public: 76 file
+- [root]: 44 file
+- docs: 24 file
+- .agents: 21 file
+- functions: 4 file
+- scripts: 4 file
+- e2e: 4 file
+- .storybook: 3 file
+- .vscode: 3 file
+- .github: 1 file
+- infra: 1 file
+
+## Documentazione (docs)
+- docs/01-architettura-frontend.md
+  - headings: # 01 - Architettura Frontend | ## Obiettivo applicativo | ## Stack reale | ## Bootstrap applicazione | ## Struttura codice | ## Routing principale | ## Pattern reattivi | ## Flusso critico: fast-booking + pagamento | ## Vincoli architetturali attuali
+- docs/02-catalogo-servizi.md
+  - headings: # 02 - Catalogo Servizi | ## Panoramica | ## Servizi per dominio | ### Auth e sessione | ### Utenti, ruoli, profili | ### Booking, progetto, sessione | ### Catalogo e recensioni | ### Pagamenti e fatture | ### Messaggistica e notifiche | ### Altri servizi business | ## Dipendenze trasversali rilevanti | ## Nota operativa
+- docs/03-gestione-utenti-e-ruoli.md
+  - headings: # 03 - Gestione Utenti e Ruoli | ## Ruoli applicativi | ## Permessi staff granulari | ## Guard e controllo route | ## Flusso account | ### Register | ### Login | ## Vincoli business gia implementati | ## Nodi dati coinvolti | ## Redirect post-login
+- docs/04-ui-ux-mappa.md
+  - headings: # 04 - UI/UX Mappa | ## Mappa navigazione | ### Pubblico | ### Cliente (`/dashboard`) | ### Staff/Admin (`/staff`, `/admin`) | ## Shell globale | ## Temi visual | ## Fast booking UX | ## Qualita UX osservata
+- docs/05-interfacce-e-contratti.md
+  - headings: # 05 - Interfacce e Contratti | ## Modelli principali (`src/app/core/models`) | ## Contratto pagamenti FE -> API | ### Create Payment Intent | ## Contratto runtime config | ## Contratto RTDB (principali nodi) | ## Booking: schema canonico attuale
+- docs/06-librerie-e-configurazioni.md
+  - headings: # 06 - Librerie e Configurazioni | ## Dipendenze framework | ## UI e rendering | ## Integrazioni esterne | ## Build/test/tooling | ## Script npm principali | ## Config Angular (`angular.json`) | ## Config runtime | ## SSR
+- docs/07-firebase-uso-e-dati.md
+  - headings: # 07 - Firebase: uso e dati | ## Servizi Firebase usati | ## Dove viene usato | ## Regole RTDB (`database.rules.json`) | ## Nodi business principali | ## Funzioni cloud correlate | ## Note operative
+- docs/08-stato-progetto-e-cosa-fatto.md
+  - headings: # 08 - Stato Progetto e Cosa e stato fatto | ## Stato attuale (As-Is) | ## Punti consolidati | ## Debito tecnico aperto | ## Rischi principali | ## Priorita consigliate
+- docs/09-hld-chat-flow-ruoli-simulazioni.md
+  - headings: # 09 - HLD Chat: Flow, Ruoli e Simulazioni | ## Scope reale | ## 1) Chatbot assistente | ## 2) Messaging ticket | ## Ruoli e accesso | ## Simulazioni utili | ### A - Guest chiede prenotazione | ### B - Client apre ticket | ### C - Staff non assegnato prova accesso | ## Rischi da monitorare
+- docs/10-chatbot-frontend-ai-micro-modelli.md
+  - headings: # 10 - Chatbot Frontend AI e Micro Modelli | ## Implementazione corrente | ### Modello attuale | ### Modalita esecuzione | ## Vantaggi | ## Limiti | ## Best practice operative | ## Evoluzioni consigliate
+- docs/11-checklist-valutazione-angular.md
+  - headings: # 11 - Checklist Valutazione Angular | ## Valutazione sintetica | ## Checklist prioritaria | ### P0 - Bloccanti o ad alto rischio | ### P1 - Alta priorita (qualita e manutenibilita) | ### P2 - Miglioramenti strutturali | ## Checklist per skill | ### angular-tooling | ### angular-routing | ### angular-signals | ### angular-http | ### angular-testing | ## Piano consigliato in 3 sprint | ### Sprint 1 (stabilita) | ### Sprint 2 (qualita codice) | ### Sprint 3 (modernizzazione Angular)
+- docs/admin-01-overview-operativo.md
+  - headings: # Admin 01 - Overview Operativo | ## Scopo | ## Cosa gestisci nel gestionale | ## Aree principali da menu | ### Frontoffice pubblico | ### Area cliente (`/dashboard`) | ### Backoffice (`/admin` e `/staff`) | ## Flusso business principale | ## KPI giornalieri consigliati
+- docs/admin-02-runbook-amministratore.md
+  - headings: # Admin 02 - Runbook Amministratore | ## Apertura giornata (10 min) | ## Gestione prenotazioni | ## Gestione utenti e ruoli | ## Gestione incidenti comuni | ### Pagamento non confermato | ### Utente non accede | ### Messaggi non visibili | ## Chiusura giornata
+- docs/admin-03-checklist-go-live-e-controlli.md
+  - headings: # Admin 03 - Checklist Go-Live e Controlli | ## A. Config ambiente | ## B. Flussi critici | ## C. Backoffice | ## D. Qualita tecnica minima | ## E. Rollback readiness
+- docs/admin-client-angular-enterprise-checklist.md
+  - headings: # Admin/Client Angular Enterprise Checklist | ## Scope | ## Current architecture snapshot | ## Main findings (from code) | ## Target architecture (enterprise-friendly) | ## Implementation checklist | ### P0 - High impact, low risk | ### P1 - Component reuse | ### P2 - State/facade reorganization | ### P3 - Forms and dialogs | ### P4 - Testing and quality gates | ## Recommended execution order | ## Progress log | ## Product decisions (dashboard IA)
+- docs/angular-upgrade-plan.md
+  - headings: # Piano Upgrade Angular (18 -> 20+) | ## Obiettivo | ## Strategia | ## Fase 0 - Preparazione | ## Fase 1 - Angular 19 | ## Fase 2 - Angular 20 | ## Fase 3 - Hardening post-upgrade | ## Rischi principali | ## Mitigazioni
+- docs/project-logic-checklist.md
+  - headings: # Checklist Logiche Progetto | ## Sicurezza regole RTDB | ## Coerenza dati dominio | ## Messaggistica | ## Affidabilita frontend
+- docs/reactive-state-guideline.md
+  - headings: # Reactive State Guideline
+- docs/README.md
+  - headings: # Documentazione Frontend - Rebis Tattoo | ## Baseline tecnica (snapshot 2026-02-25) | ## Indice documenti | ## Fonte di verita
+- docs/tasks-simulazione/01-task-rebuild-completo.md
+  - headings: # Task Simulazione 01 - Rebuild Completo (stato attuale + delta) | ## Obiettivo | ## Stato sintetico | ## Workstream | ### WS1 - Architettura frontend | ### WS2 - Dominio dati | ### WS3 - Qualita | ### WS4 - Operativita
+- docs/tasks-simulazione/02-task-roadmap-per-release.md
+  - headings: # Task Simulazione 02 - Roadmap per Release | ## Release plan proposto | ### Fase 1 - Stabilita tecnica | ### Fase 2 - Qualita flussi core | ### Fase 3 - Security e governance | ### Fase 4 - Performance e UX | ### Fase 5 - Go-live controllato
+- docs/tasks-simulazione/03-task-qa-udo-e-accettazione.md
+  - headings: # Task Simulazione 03 - QA, UAT e Accettazione | ## Ambito test minimo obbligatorio | ### 1) Funzionale utente | ### 2) Funzionale backoffice | ### 3) Messaging e notifiche | ### 4) Tecnico | ## Criteri di accettazione release | ## Evidenze richieste
+- docs/test-dataset-simulazione.md
+  - headings: # Dataset Test Simulazione | ## Origine | ## Contenuto mock (versione script attuale) | ## Credenziali demo (mock playbook) | ## Comandi utili | ## Attenzione su coerenza schema
+- docs/todo-list.md
+  - headings: # TODO Progetto
+
+## Services e Guards
+- src/app/core/guards/admin.guard.ts -> AdminGuard
+  - metodi: canActivate
+- src/app/core/guards/admin-only.guard.ts -> AdminOnlyGuard
+  - metodi: canActivate
+- src/app/core/guards/auth.guard.ts -> AuthGuard
+- src/app/core/guards/role-management.guard.ts -> RoleManagementGuard
+  - metodi: canActivate
+- src/app/core/guards/staff-permission.guard.ts -> StaffPermissionGuard
+  - metodi: canActivate
+- src/app/core/services/audit/audit-log.service.ts -> AuditLogService
+  - metodi: log, stream, pruneOlderThan
+- src/app/core/services/auth/auth.service.ts -> AuthService
+  - metodi: flowLog, flowError, isPermissionDeniedError, authState, defaultPermissions, toStringValue, toBooleanValue, sleep, buildRegisterPayload, hasCompleteUserRecord, getMissingUserFields, normalizeProfile, loadUserProfile, waitForAuthUid, setUserRecordWithRetry, register, login, logout, getUser, canManageRoles, resolveCurrentUser, updateCurrentUserProfile, consumeProfileWarning, waitForUserRecord
+- src/app/core/services/bonus/bonus.service.ts -> BonusService
+  - metodi: streamPromoCodes, streamGiftCards, streamWallet, streamWalletLedger, createPromoCode, setPromoActive, createGiftCard, setGiftCardActive, applyPromoCodeForCurrentUser, redeemGiftCardForCurrentUser, getBackendAuthHeaders, applyPromoCodeViaBackend, redeemGiftCardViaBackend, mapBonusBackendErrorToMessage, requireLogged, requireManager, ensureCodeNotUsed, findPromoByCode, findGiftCardByCode, assertPromoAvailable, assertGiftCardAvailable, readWallet, toPromo, toGiftCard, toWallet, toLedger, normalizeCode, normalizeDate, randomCode, roundMoney, t
+- src/app/core/services/bookings/booking.service.ts -> BookingDraftService
+  - metodi: setDraft, patchDraft, consume, reset, toRecord, ensureStaffPermission, isPermissionDeniedError, getErrorMessage, assertNoLegacyBookingKeys, toCanonical, toDbPatch, normalizeIdCandidate, getProjectPartyIds, buildBookingProjectLinkPatch, snapshotToList, getFreeSlotsInDay, getBookingsByArtistAndDayRange, ref, orderByChild, startAt, endAt, getAllBookings, getBookingsByClient, queryBookingsByChild, getBookingsByArtist, getBookingsByDate, getBookingById, watchBooking, addDraft, createBooking, updateBooking, deleteBooking, isValidTransition, safeSetStatus, safeSetStatusSafe, rescheduleBooking, getTotalRevenueThisMonth, buildDraftPayloadFromChat, addDraftFromChat, addDraftFromChatSafe, pad, formatLocal, addMinutesLocal, normalizeDateOnly, normalizeLocalDateTime, overlapsLocal, notifyBookingCreated, notifyBookingUpdated, notifyBookingDeleted, notifyUsers, formatNotificationDate, getAdminUserIds, get
+- src/app/core/services/chatBot/chat-bot.service.ts -> ChatService
+  - metodi: createOrReuseChatByEmail, getMessages, addMessage, replyWithPlan, defaultSupportChips, ensureSubject, normalizeChatKey, buildChatId, loadState, persistState, safeStorageGet, safeStorageSet
+- src/app/core/services/chatBot/local-llm.service.ts -> LocalLlmService
+  - metodi: generateSupportReply, ensureWorker, disableWorker, generateWithWorker, generateOnMainThread, generator, getGenerator, loadGenerator, setStatus, pickDevice, isWindowsBrowser, buildPrompt, roleGuide, renderHistory, extractGeneratedText, cleanAnswer, buildRequestId, isTimeoutError
+- src/app/core/services/clients/client.service.ts -> ClientService
+  - metodi: getClients, getAllUsersOnce, get, getClientsLiteOnce, searchClients, buildFullName, toClientsLite, isClientRole, isSelectable, dedupeByContact, clientLiteScore
+- src/app/core/services/helpers/backoffice-access.service.ts -> BackofficeAccessService
+  - metodi: getBackofficeBase, hasStaffPermission
+- src/app/core/services/helpers/currency-helper.service.ts -> CurrencyHelperService
+  - metodi: formatEur
+- src/app/core/services/helpers/date-time-helper.service.ts -> DateTimeHelperService
+  - metodi: normalizeLocalDateTime, formatLocalDateTime, toTimestamp, toLocalDateTime
+- src/app/core/services/helpers/external-actions-helper.service.ts -> ExternalActionsHelperService
+  - metodi: openInNewTab, openInSameTab, openMailTo, openWhatsApp, downloadTextFile, setTimeout
+- src/app/core/services/helpers/status-helper.service.ts -> StatusHelperService
+  - metodi: bookingStatusKey, bookingLabel, bookingTone, reviewStatusKey, reviewLabel, reviewTone, projectStatusKey, projectLabel, sessionStatusKey, sessionLabel, normalize
+- src/app/core/services/invoices/invoices.service.ts -> InvoicesService
+  - metodi: getInvoices, getInvoicesByClient, ref, orderByChild, equalTo, getInvoiceById, normalizeString, resolveBookingClientId, addInvoice, query, updateInvoice, deleteInvoice, getTotalRevenue
+- src/app/core/services/language/language.service.ts -> LanguageService
+  - metodi: computed, setLanguage, getCurrentLanguage, t, ensureDbSync, normalizeLang, getStoredActiveLang, storeActiveLang, bundleKey, hydrateBundlesFromLocalStorage, storeBundle, getByPath, deepMerge
+- src/app/core/services/menu/menu.service.ts -> MenuService
+  - metodi: getMenuByRole, getMenuByUser, buildPublicMenu, buildClientMenu, buildAdminMenu, buildStaffMenu, buildStaffAdminMenu, normalizeRole, cloneMenu
+- src/app/core/services/messaging/messaging.service.ts -> MessagingService
+  - metodi: toRecord, isPermissionDeniedReason, normalizeParticipantRole, toParticipants, toUnreadBy, roleOf, isAdminLike, canStaffAccessConversation, streamConversationsForUser, streamAllConversations, streamMessages, createConversationForClient, sendMessage, setConversationStatus, markAsRead, archiveConversationForUser, touchParticipants, toConversation, toMessage
+- src/app/core/services/notifications/notification.service.ts -> NotificationService
+  - metodi: isPermissionDenied, getUserNotifications, getUnreadCount, createForUser, createForUserViaBackend, markAsRead, markAllAsRead, delete, resolveNotificationLink, getDefaultLinkByTypeAndRole, toNotification
+- src/app/core/services/payments/payment-api.service.ts -> PaymentApiService
+  - metodi: createPaymentIntent, withCriticalHttpPolicy, catchError, createPaymentIntentSafe, validateCreatePayload, mapCreatePaymentResponse, logDevPaymentIntent
+- src/app/core/services/projects/projects.service.ts -> ProjectsService
+  - metodi: ensureStaffPermission, ensureProjectCreateAccess, ensureProjectUpdateAccess, ensureBookingOwnedByStaff, getProjects, getProjectsLiteOnce, getProjectById, getProjectsByClient, createProject, updateProject, deleteProject, clearProjectLinks, query, attachBooking, detachBookingIfMatch, addSession, removeSession, toast, pad, formatLocal
+- src/app/core/services/reviews/reviews.service.ts -> ReviewsService
+  - metodi: addReview, deleteReview, updateReview, getAllReviews, getRecentReviews, getReviewById, getReviewsByUser, ref, orderByChild, equalTo, getReviewsByBookingId, getReviewsByArtist, checkIfAlreadyReviewed
+- src/app/core/services/services/services.service.ts -> ServicesService
+  - metodi: assertAdminAction, isPermissionDeniedError, normalizeServiceInput, addService, deleteService, updateService, getServices, getServiceById
+- src/app/core/services/session/session.service.ts -> SessionService
+  - metodi: ensureStaffPermission, getAll, create, update, delete, getSessionsByArtist, getSessionsByClient, getSessionsByBooking, getSessionsByClientWithBookingFallback, getSessionsByProject, querySessionsByChild, getSessionById, fromDb, toDb, toDbPatch, normalizeIdCandidate, getProjectPartyIds, ensureSessionStartsAfterProjectBooking, showMessage, pad, formatLocal, normalizeLocalDateTime
+- src/app/core/services/staff/staff.service.ts -> StaffService
+  - metodi: assertAdminAction, normalizeDeletedAt, normalizeBoolean, isPermissionDeniedError, streamNode, getAllStaff, addStaff, update, set, updateStaff, deleteStaff, revokeStaff, remove, hardDeleteStaff, getStaffById, get, getStaffCandidates, getCalendarSettings, catchError, updateCalendarSettings, getAvailability, of, setAvailability, backfillPublicStaffFromCurrentData
+- src/app/core/services/studio/studio-profile.service.ts -> StudioProfileService
+  - metodi: getProfile, saveProfile, mergeWithDefault, sanitizePatch
+- src/app/core/services/ui/confirm-action.service.ts -> ConfirmActionService
+  - metodi: confirm
+- src/app/core/services/ui/ui-feedback.service.ts -> UiFeedbackService
+  - metodi: open, success, error, info, warn, openTone
+- src/app/core/services/users/user.service.ts -> UserService
+  - metodi: normalizePermissions, normalizeDeletedAt, normalizeTemporal, normalizeOptionalString, isVisibleAndNotDeleted, normalizeUser, streamRtdbUsers, getCurrentUserId, getCurrentUserRole, isCurrentUserAdmin, getAssignableRolesForCurrentUser, assertAdminAction, isPermissionDeniedError, buildUpdateSuccessMessage, confirmUpdateAction, getClients, getManageableUsers, isVisibleUser, syncStaffProfileForRoleChange, syncStaffProfileForRoleChangeViaBackend, shouldSyncStaffProfile, getVisibleAdminCount, updateUser, String, deleteUser, getErrorMessage
+- src/app/features/calendar/availability.service.ts -> AvailabilityService
+  - metodi: getAvailableTimesByDate, getAvailableDatesByTime
+- src/app/features/calendar/calendar.service.ts -> CalendarService
+  - metodi: shareReplay, setView, setDate, setEvents, add, update, remove, next, prev, shift, toLocalDateKey, startOfWeekMonday, computeVisibleDays, groupByArtist, formatTitle
+- src/app/features/public/fast-booking/state/fast-booking-store.service.ts -> FastBookingStore
+  - metodi: effect, queueMicrotask, back, next, go, setArtist, setDate, setWhen, setDetails, fetchArtists, fetchSlots, startPayment, confirmPaymentSuccess, resetAll, seedFromHome, hydrateFromHomeSeed, applyHomeSeed, getErrorMessage
+- src/app/shared/components/calendar-v2/state/calendar-state/calendar-state.service.ts -> CalendarStateService
+  - metodi: setView, setDate, setToday, setEvents, next, prev, shiftDate, buildTitle
+
+## Models e Contratti
+- src/app/core/models/api/payment-bridge.dto.ts
+  - export: PaymentCurrencyDto, NotificationPriorityDto, CreatePaymentIntentRequestDto, CreatePaymentIntentResponseDto, NotificationCreateRequestDto, NotificationCreateResponseDto, StaffSyncProfileRequestDto, StaffSyncProfileResponseDto, BonusRedeemRequestDto, BonusRedeemResponseDto
+- src/app/core/models/booking.model.ts
+  - export: BookingStatus, BookingChatDraft, Booking
+- src/app/core/models/calendar.model.ts
+  - export: CalendarEvent
+- src/app/core/models/chat.model.ts
+  - export: ChatMessage, ChatThread
+- src/app/core/models/client.model.ts
+  - export: Client
+- src/app/core/models/common.model.ts
+  - export: Timestamped
+- src/app/core/models/invoice.model.ts
+  - export: Invoice
+- src/app/core/models/messaging.model.ts
+  - export: ConversationStatus, MessageKind, ParticipantRole, Conversation, ConversationMessage
+- src/app/core/models/notification.model.ts
+  - export: NotificationType, NotificationPriority, AppNotification
+- src/app/core/models/project.model.ts
+  - export: ProjectStatus, Project
+- src/app/core/models/service.model.ts
+  - export: TattooService
+- src/app/core/models/staff-member.model.ts
+  - export: StaffMember
+- src/app/core/models/user.model.ts
+  - export: UserRole, UserPermissions, AppUser
+- src/app/shared/components/calendar-v2/models/calendar.ts
+  - export: CalendarView, CalendarEventType, CalendarEventStatus, CalendarEvent, BookingDraftPayload, CalendarDragUpdate
+- src/environment.model.ts
+  - export: FirebaseWebConfig, AppEnvironment
+
+## Features (src/app/features)
+- admin: 90 file
+- auth: 4 file
+- calendar: 63 file
+- clients: 26 file
+- public: 91 file
+
+### File feature (tutti)
+- src/app/features/admin/admin.module.ts
+- src/app/features/admin/admin-dashboard/admin-dashboard.component.html
+- src/app/features/admin/admin-dashboard/admin-dashboard.component.scss
+- src/app/features/admin/admin-dashboard/admin-dashboard.component.spec.ts
+- src/app/features/admin/admin-dashboard/admin-dashboard.component.ts
+- src/app/features/admin/admin-routing.module.ts
+- src/app/features/admin/components/admin-detail/admin-detail.component.html
+- src/app/features/admin/components/admin-detail/admin-detail.component.scss
+- src/app/features/admin/components/admin-detail/admin-detail.component.spec.ts
+- src/app/features/admin/components/admin-detail/admin-detail.component.ts
+- src/app/features/admin/components/admin-list/admin-list.component.html
+- src/app/features/admin/components/admin-list/admin-list.component.scss
+- src/app/features/admin/components/admin-list/admin-list.component.spec.ts
+- src/app/features/admin/components/admin-list/admin-list.component.ts
+- src/app/features/admin/components/analytics/analytics.component.html
+- src/app/features/admin/components/analytics/analytics.component.scss
+- src/app/features/admin/components/analytics/analytics.component.spec.ts
+- src/app/features/admin/components/analytics/analytics.component.ts
+- src/app/features/admin/components/audit-logs/audit-logs.component.html
+- src/app/features/admin/components/audit-logs/audit-logs.component.scss
+- src/app/features/admin/components/audit-logs/audit-logs.component.ts
+- src/app/features/admin/components/billing/billing.component.html
+- src/app/features/admin/components/billing/billing.component.scss
+- src/app/features/admin/components/billing/billing.component.spec.ts
+- src/app/features/admin/components/billing/billing.component.ts
+- src/app/features/admin/components/bonus-admin/bonus-admin.component.html
+- src/app/features/admin/components/bonus-admin/bonus-admin.component.scss
+- src/app/features/admin/components/bonus-admin/bonus-admin.component.ts
+- src/app/features/admin/components/calendar-admin/calendar-admin.component.html
+- src/app/features/admin/components/calendar-admin/calendar-admin.component.scss
+- src/app/features/admin/components/calendar-admin/calendar-admin.component.spec.ts
+- src/app/features/admin/components/calendar-admin/calendar-admin.component.ts
+- src/app/features/admin/components/documents/documents.component.html
+- src/app/features/admin/components/documents/documents.component.scss
+- src/app/features/admin/components/documents/documents.component.spec.ts
+- src/app/features/admin/components/documents/documents.component.ts
+- src/app/features/admin/components/messaging-dashboard/messaging-dashboard.component.html
+- src/app/features/admin/components/messaging-dashboard/messaging-dashboard.component.scss
+- src/app/features/admin/components/messaging-dashboard/messaging-dashboard.component.spec.ts
+- src/app/features/admin/components/messaging-dashboard/messaging-dashboard.component.ts
+- src/app/features/admin/components/permissions-admin/permissions-admin.component.html
+- src/app/features/admin/components/permissions-admin/permissions-admin.component.scss
+- src/app/features/admin/components/permissions-admin/permissions-admin.component.ts
+- src/app/features/admin/components/project-manager/project-manager.component.html
+- src/app/features/admin/components/project-manager/project-manager.component.scss
+- src/app/features/admin/components/project-manager/project-manager.component.spec.ts
+- src/app/features/admin/components/project-manager/project-manager.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker.component.html
+- src/app/features/admin/components/project-tracker/project-tracker.component.scss
+- src/app/features/admin/components/project-tracker/project-tracker.component.spec.ts
+- src/app/features/admin/components/project-tracker/project-tracker.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker-booking-dialog/project-tracker-booking-dialog.component.html
+- src/app/features/admin/components/project-tracker/project-tracker-booking-dialog/project-tracker-booking-dialog.component.scss
+- src/app/features/admin/components/project-tracker/project-tracker-booking-dialog/project-tracker-booking-dialog.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker-project-dialog/project-tracker-project-dialog.component.html
+- src/app/features/admin/components/project-tracker/project-tracker-project-dialog/project-tracker-project-dialog.component.scss
+- src/app/features/admin/components/project-tracker/project-tracker-project-dialog/project-tracker-project-dialog.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker-session-dialog/project-tracker-session-dialog.component.html
+- src/app/features/admin/components/project-tracker/project-tracker-session-dialog/project-tracker-session-dialog.component.scss
+- src/app/features/admin/components/project-tracker/project-tracker-session-dialog/project-tracker-session-dialog.component.ts
+- src/app/features/admin/components/review-list-admin/review-list-admin.component.html
+- src/app/features/admin/components/review-list-admin/review-list-admin.component.scss
+- src/app/features/admin/components/review-list-admin/review-list-admin.component.spec.ts
+- src/app/features/admin/components/review-list-admin/review-list-admin.component.ts
+- src/app/features/admin/components/services-admin/service-editor-dialog/service-editor-dialog.component.html
+- src/app/features/admin/components/services-admin/service-editor-dialog/service-editor-dialog.component.scss
+- src/app/features/admin/components/services-admin/service-editor-dialog/service-editor-dialog.component.ts
+- src/app/features/admin/components/services-admin/services-admin.component.html
+- src/app/features/admin/components/services-admin/services-admin.component.scss
+- src/app/features/admin/components/services-admin/services-admin.component.spec.ts
+- src/app/features/admin/components/services-admin/services-admin.component.ts
+- src/app/features/admin/components/session-manager/session-manager.component.html
+- src/app/features/admin/components/session-manager/session-manager.component.scss
+- src/app/features/admin/components/session-manager/session-manager.component.spec.ts
+- src/app/features/admin/components/session-manager/session-manager.component.ts
+- src/app/features/admin/components/staff-detail-admin/staff-detail-admin.component.html
+- src/app/features/admin/components/staff-detail-admin/staff-detail-admin.component.scss
+- src/app/features/admin/components/staff-detail-admin/staff-detail-admin.component.ts
+- src/app/features/admin/components/studio-settings/studio-settings.component.html
+- src/app/features/admin/components/studio-settings/studio-settings.component.scss
+- src/app/features/admin/components/studio-settings/studio-settings.component.spec.ts
+- src/app/features/admin/components/studio-settings/studio-settings.component.ts
+- src/app/features/admin/components/users-management/user-edit-dialog.component.ts
+- src/app/features/admin/components/users-management/users-management.component.html
+- src/app/features/admin/components/users-management/users-management.component.scss
+- src/app/features/admin/components/users-management/users-management.component.ts
+- src/app/features/admin/components/waitlist/waitlist.component.html
+- src/app/features/admin/components/waitlist/waitlist.component.scss
+- src/app/features/admin/components/waitlist/waitlist.component.spec.ts
+- src/app/features/admin/components/waitlist/waitlist.component.ts
+- src/app/features/auth/login/login.component.html
+- src/app/features/auth/login/login.component.scss
+- src/app/features/auth/login/login.component.spec.ts
+- src/app/features/auth/login/login.component.ts
+- src/app/features/calendar/availability.service.ts
+- src/app/features/calendar/calendar.component.html
+- src/app/features/calendar/calendar.component.scss
+- src/app/features/calendar/calendar.component.spec.ts
+- src/app/features/calendar/calendar.component.ts
+- src/app/features/calendar/calendar.service.spec.ts
+- src/app/features/calendar/calendar.service.ts
+- src/app/features/calendar/calendar-shell/calendar-shell.component.html
+- src/app/features/calendar/calendar-shell/calendar-shell.component.scss
+- src/app/features/calendar/calendar-shell/calendar-shell.component.spec.ts
+- src/app/features/calendar/calendar-shell/calendar-shell.component.ts
+- src/app/features/calendar/dialogs/availability-sheet/availability-sheet/availability-sheet.component.html
+- src/app/features/calendar/dialogs/availability-sheet/availability-sheet/availability-sheet.component.scss
+- src/app/features/calendar/dialogs/availability-sheet/availability-sheet/availability-sheet.component.spec.ts
+- src/app/features/calendar/dialogs/availability-sheet/availability-sheet/availability-sheet.component.ts
+- src/app/features/calendar/dialogs/complete-session-dialog/complete-session-dialog.component.html
+- src/app/features/calendar/dialogs/complete-session-dialog/complete-session-dialog.component.scss
+- src/app/features/calendar/dialogs/complete-session-dialog/complete-session-dialog.component.ts
+- src/app/features/calendar/dialogs/create-project-dialog/create-project-dialog.component.html
+- src/app/features/calendar/dialogs/create-project-dialog/create-project-dialog.component.scss
+- src/app/features/calendar/dialogs/create-project-dialog/create-project-dialog.component.ts
+- src/app/features/calendar/dialogs/new-event-dialog/new-event-dialog/new-event-dialog.component.html
+- src/app/features/calendar/dialogs/new-event-dialog/new-event-dialog/new-event-dialog.component.scss
+- src/app/features/calendar/dialogs/new-event-dialog/new-event-dialog/new-event-dialog.component.spec.ts
+- src/app/features/calendar/dialogs/new-event-dialog/new-event-dialog/new-event-dialog.component.ts
+- src/app/features/calendar/drawer/event-drawer/event-drawer.component.html
+- src/app/features/calendar/drawer/event-drawer/event-drawer.component.scss
+- src/app/features/calendar/drawer/event-drawer/event-drawer.component.spec.ts
+- src/app/features/calendar/drawer/event-drawer/event-drawer.component.ts
+- src/app/features/calendar/models.ts
+- src/app/features/calendar/shared/calendar-drawer/calendar-drawer.component.html
+- src/app/features/calendar/shared/calendar-drawer/calendar-drawer.component.scss
+- src/app/features/calendar/shared/calendar-drawer/calendar-drawer.component.spec.ts
+- src/app/features/calendar/shared/calendar-drawer/calendar-drawer.component.ts
+- src/app/features/calendar/shared/calendar-grid/calendar-grid.component.html
+- src/app/features/calendar/shared/calendar-grid/calendar-grid.component.scss
+- src/app/features/calendar/shared/calendar-grid/calendar-grid.component.spec.ts
+- src/app/features/calendar/shared/calendar-grid/calendar-grid.component.ts
+- src/app/features/calendar/shared/calendar-slot/calendar-slot.component.html
+- src/app/features/calendar/shared/calendar-slot/calendar-slot.component.scss
+- src/app/features/calendar/shared/calendar-slot/calendar-slot.component.spec.ts
+- src/app/features/calendar/shared/calendar-slot/calendar-slot.component.ts
+- src/app/features/calendar/shared/calendar-toolbar/calendar-toolbar.component.html
+- src/app/features/calendar/shared/calendar-toolbar/calendar-toolbar.component.scss
+- src/app/features/calendar/shared/calendar-toolbar/calendar-toolbar.component.spec.ts
+- src/app/features/calendar/shared/calendar-toolbar/calendar-toolbar.component.ts
+- src/app/features/calendar/utils.ts
+- src/app/features/calendar/views/day-view/day-view.component.html
+- src/app/features/calendar/views/day-view/day-view.component.scss
+- src/app/features/calendar/views/day-view/day-view.component.spec.ts
+- src/app/features/calendar/views/day-view/day-view.component.ts
+- src/app/features/calendar/views/month-view/month-view.component.html
+- src/app/features/calendar/views/month-view/month-view.component.scss
+- src/app/features/calendar/views/month-view/month-view.component.spec.ts
+- src/app/features/calendar/views/month-view/month-view.component.ts
+- src/app/features/calendar/views/week-resource/week-resource/week-resource.component.html
+- src/app/features/calendar/views/week-resource/week-resource/week-resource.component.scss
+- src/app/features/calendar/views/week-resource/week-resource/week-resource.component.spec.ts
+- src/app/features/calendar/views/week-resource/week-resource/week-resource.component.ts
+- src/app/features/calendar/views/week-view/week-view.component.html
+- src/app/features/calendar/views/week-view/week-view.component.scss
+- src/app/features/calendar/views/week-view/week-view.component.spec.ts
+- src/app/features/calendar/views/week-view/week-view.component.ts
+- src/app/features/clients/clients.module.ts
+- src/app/features/clients/clients-routing.module.ts
+- src/app/features/clients/components/booking-history/booking-history.component.html
+- src/app/features/clients/components/booking-history/booking-history.component.scss
+- src/app/features/clients/components/booking-history/booking-history.component.spec.ts
+- src/app/features/clients/components/booking-history/booking-history.component.ts
+- src/app/features/clients/components/client-detail/client-detail.component.html
+- src/app/features/clients/components/client-detail/client-detail.component.scss
+- src/app/features/clients/components/client-detail/client-detail.component.spec.ts
+- src/app/features/clients/components/client-detail/client-detail.component.ts
+- src/app/features/clients/components/messaging/messaging.component.html
+- src/app/features/clients/components/messaging/messaging.component.scss
+- src/app/features/clients/components/messaging/messaging.component.spec.ts
+- src/app/features/clients/components/messaging/messaging.component.ts
+- src/app/features/clients/components/profile/profile.component.html
+- src/app/features/clients/components/profile/profile.component.scss
+- src/app/features/clients/components/profile/profile.component.spec.ts
+- src/app/features/clients/components/profile/profile.component.ts
+- src/app/features/clients/components/promo-referral/promo-referral.component.html
+- src/app/features/clients/components/promo-referral/promo-referral.component.scss
+- src/app/features/clients/components/promo-referral/promo-referral.component.spec.ts
+- src/app/features/clients/components/promo-referral/promo-referral.component.ts
+- src/app/features/clients/components/reviews/reviews.component.html
+- src/app/features/clients/components/reviews/reviews.component.scss
+- src/app/features/clients/components/reviews/reviews.component.spec.ts
+- src/app/features/clients/components/reviews/reviews.component.ts
+- src/app/features/public/chi-siamo/chi-siamo.component.html
+- src/app/features/public/chi-siamo/chi-siamo.component.scss
+- src/app/features/public/chi-siamo/chi-siamo.component.spec.ts
+- src/app/features/public/chi-siamo/chi-siamo.component.ts
+- src/app/features/public/contatti/contatti.component.html
+- src/app/features/public/contatti/contatti.component.scss
+- src/app/features/public/contatti/contatti.component.spec.ts
+- src/app/features/public/contatti/contatti.component.ts
+- src/app/features/public/fast-booking/pages/fast-booking-page/fast-booking-page.component.html
+- src/app/features/public/fast-booking/pages/fast-booking-page/fast-booking-page.component.scss
+- src/app/features/public/fast-booking/pages/fast-booking-page/fast-booking-page.component.ts
+- src/app/features/public/fast-booking/state/fast-booking-store.service.ts
+- src/app/features/public/fast-booking/steps/step-artist/step-artist.component.html
+- src/app/features/public/fast-booking/steps/step-artist/step-artist.component.scss
+- src/app/features/public/fast-booking/steps/step-artist/step-artist.component.ts
+- src/app/features/public/fast-booking/steps/step-details/step-details.component.html
+- src/app/features/public/fast-booking/steps/step-details/step-details.component.scss
+- src/app/features/public/fast-booking/steps/step-details/step-details.component.ts
+- src/app/features/public/fast-booking/steps/step-intro/step-intro.component.html
+- src/app/features/public/fast-booking/steps/step-intro/step-intro.component.scss
+- src/app/features/public/fast-booking/steps/step-intro/step-intro.component.ts
+- src/app/features/public/fast-booking/steps/step-payment/step-payment.component.html
+- src/app/features/public/fast-booking/steps/step-payment/step-payment.component.scss
+- src/app/features/public/fast-booking/steps/step-payment/step-payment.component.ts
+- src/app/features/public/fast-booking/steps/step-success/step-success.component.html
+- src/app/features/public/fast-booking/steps/step-success/step-success.component.scss
+- src/app/features/public/fast-booking/steps/step-success/step-success.component.ts
+- src/app/features/public/fast-booking/steps/step-summary/step-summary.component.html
+- src/app/features/public/fast-booking/steps/step-summary/step-summary.component.scss
+- src/app/features/public/fast-booking/steps/step-summary/step-summary.component.ts
+- src/app/features/public/fast-booking/steps/step-when/step-when.component.html
+- src/app/features/public/fast-booking/steps/step-when/step-when.component.scss
+- src/app/features/public/fast-booking/steps/step-when/step-when.component.ts
+- src/app/features/public/fast-booking/ui/fast-booking-layout/fast-booking-layout.component.html
+- src/app/features/public/fast-booking/ui/fast-booking-layout/fast-booking-layout.component.scss
+- src/app/features/public/fast-booking/ui/fast-booking-layout/fast-booking-layout.component.ts
+- src/app/features/public/home/components/home/home.component.html
+- src/app/features/public/home/components/home/home.component.scss
+- src/app/features/public/home/components/home/home.component.spec.ts
+- src/app/features/public/home/components/home/home.component.ts
+- src/app/features/public/home/components/home-about/home-about.component.html
+- src/app/features/public/home/components/home-about/home-about.component.scss
+- src/app/features/public/home/components/home-about/home-about.component.spec.ts
+- src/app/features/public/home/components/home-about/home-about.component.ts
+- src/app/features/public/home/components/home-contact/home-contact.component.html
+- src/app/features/public/home/components/home-contact/home-contact.component.scss
+- src/app/features/public/home/components/home-contact/home-contact.component.spec.ts
+- src/app/features/public/home/components/home-contact/home-contact.component.ts
+- src/app/features/public/home/components/home-faq/home-faq.component.html
+- src/app/features/public/home/components/home-faq/home-faq.component.scss
+- src/app/features/public/home/components/home-faq/home-faq.component.spec.ts
+- src/app/features/public/home/components/home-faq/home-faq.component.ts
+- src/app/features/public/home/components/home-featured-artists/home-featured-artists.component.html
+- src/app/features/public/home/components/home-featured-artists/home-featured-artists.component.scss
+- src/app/features/public/home/components/home-featured-artists/home-featured-artists.component.spec.ts
+- src/app/features/public/home/components/home-featured-artists/home-featured-artists.component.ts
+- src/app/features/public/home/components/home-hero/home-hero.component.html
+- src/app/features/public/home/components/home-hero/home-hero.component.scss
+- src/app/features/public/home/components/home-hero/home-hero.component.spec.ts
+- src/app/features/public/home/components/home-hero/home-hero.component.ts
+- src/app/features/public/home/components/home-projects/home-projects.component.html
+- src/app/features/public/home/components/home-projects/home-projects.component.scss
+- src/app/features/public/home/components/home-projects/home-projects.component.spec.ts
+- src/app/features/public/home/components/home-projects/home-projects.component.ts
+- src/app/features/public/home/components/home-services/home-services.component.html
+- src/app/features/public/home/components/home-services/home-services.component.scss
+- src/app/features/public/home/components/home-services/home-services.component.spec.ts
+- src/app/features/public/home/components/home-services/home-services.component.ts
+- src/app/features/public/home/components/showcase/showcase.component.html
+- src/app/features/public/home/components/showcase/showcase.component.scss
+- src/app/features/public/home/components/showcase/showcase.component.spec.ts
+- src/app/features/public/home/components/showcase/showcase.component.ts
+- src/app/features/public/home/home.module.ts
+- src/app/features/public/home/home-routing.module.ts
+- src/app/features/public/projects/components/project-detail/project-detail.component.html
+- src/app/features/public/projects/components/project-detail/project-detail.component.scss
+- src/app/features/public/projects/components/project-detail/project-detail.component.spec.ts
+- src/app/features/public/projects/components/project-detail/project-detail.component.ts
+- src/app/features/public/projects/components/project-list/project-list.component.html
+- src/app/features/public/projects/components/project-list/project-list.component.scss
+- src/app/features/public/projects/components/project-list/project-list.component.spec.ts
+- src/app/features/public/projects/components/project-list/project-list.component.ts
+- src/app/features/public/projects/projects-routing.module.ts
+- src/app/features/public/services/components/service-detail/service-detail.component.html
+- src/app/features/public/services/components/service-detail/service-detail.component.scss
+- src/app/features/public/services/components/service-detail/service-detail.component.spec.ts
+- src/app/features/public/services/components/service-detail/service-detail.component.ts
+- src/app/features/public/services/service-list/service-list.component.html
+- src/app/features/public/services/service-list/service-list.component.scss
+- src/app/features/public/services/service-list/service-list.component.spec.ts
+- src/app/features/public/services/service-list/service-list.component.ts
+
+## Componenti (.component.ts)
+- Totale componenti TS: 96
+- src/app/app.component.ts
+- src/app/features/admin/admin-dashboard/admin-dashboard.component.ts
+- src/app/features/admin/components/admin-detail/admin-detail.component.ts
+- src/app/features/admin/components/admin-list/admin-list.component.ts
+- src/app/features/admin/components/analytics/analytics.component.ts
+- src/app/features/admin/components/audit-logs/audit-logs.component.ts
+- src/app/features/admin/components/billing/billing.component.ts
+- src/app/features/admin/components/bonus-admin/bonus-admin.component.ts
+- src/app/features/admin/components/calendar-admin/calendar-admin.component.ts
+- src/app/features/admin/components/documents/documents.component.ts
+- src/app/features/admin/components/messaging-dashboard/messaging-dashboard.component.ts
+- src/app/features/admin/components/permissions-admin/permissions-admin.component.ts
+- src/app/features/admin/components/project-manager/project-manager.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker-booking-dialog/project-tracker-booking-dialog.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker-project-dialog/project-tracker-project-dialog.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker-session-dialog/project-tracker-session-dialog.component.ts
+- src/app/features/admin/components/review-list-admin/review-list-admin.component.ts
+- src/app/features/admin/components/services-admin/service-editor-dialog/service-editor-dialog.component.ts
+- src/app/features/admin/components/services-admin/services-admin.component.ts
+- src/app/features/admin/components/session-manager/session-manager.component.ts
+- src/app/features/admin/components/staff-detail-admin/staff-detail-admin.component.ts
+- src/app/features/admin/components/studio-settings/studio-settings.component.ts
+- src/app/features/admin/components/users-management/user-edit-dialog.component.ts
+- src/app/features/admin/components/users-management/users-management.component.ts
+- src/app/features/admin/components/waitlist/waitlist.component.ts
+- src/app/features/auth/login/login.component.ts
+- src/app/features/calendar/calendar.component.ts
+- src/app/features/calendar/calendar-shell/calendar-shell.component.ts
+- src/app/features/calendar/dialogs/availability-sheet/availability-sheet/availability-sheet.component.ts
+- src/app/features/calendar/dialogs/complete-session-dialog/complete-session-dialog.component.ts
+- src/app/features/calendar/dialogs/create-project-dialog/create-project-dialog.component.ts
+- src/app/features/calendar/dialogs/new-event-dialog/new-event-dialog/new-event-dialog.component.ts
+- src/app/features/calendar/drawer/event-drawer/event-drawer.component.ts
+- src/app/features/calendar/shared/calendar-drawer/calendar-drawer.component.ts
+- src/app/features/calendar/shared/calendar-grid/calendar-grid.component.ts
+- src/app/features/calendar/shared/calendar-slot/calendar-slot.component.ts
+- src/app/features/calendar/shared/calendar-toolbar/calendar-toolbar.component.ts
+- src/app/features/calendar/views/day-view/day-view.component.ts
+- src/app/features/calendar/views/month-view/month-view.component.ts
+- src/app/features/calendar/views/week-resource/week-resource/week-resource.component.ts
+- src/app/features/calendar/views/week-view/week-view.component.ts
+- src/app/features/clients/components/booking-history/booking-history.component.ts
+- src/app/features/clients/components/client-detail/client-detail.component.ts
+- src/app/features/clients/components/messaging/messaging.component.ts
+- src/app/features/clients/components/profile/profile.component.ts
+- src/app/features/clients/components/promo-referral/promo-referral.component.ts
+- src/app/features/clients/components/reviews/reviews.component.ts
+- src/app/features/public/chi-siamo/chi-siamo.component.ts
+- src/app/features/public/contatti/contatti.component.ts
+- src/app/features/public/fast-booking/pages/fast-booking-page/fast-booking-page.component.ts
+- src/app/features/public/fast-booking/steps/step-artist/step-artist.component.ts
+- src/app/features/public/fast-booking/steps/step-details/step-details.component.ts
+- src/app/features/public/fast-booking/steps/step-intro/step-intro.component.ts
+- src/app/features/public/fast-booking/steps/step-payment/step-payment.component.ts
+- src/app/features/public/fast-booking/steps/step-success/step-success.component.ts
+- src/app/features/public/fast-booking/steps/step-summary/step-summary.component.ts
+- src/app/features/public/fast-booking/steps/step-when/step-when.component.ts
+- src/app/features/public/fast-booking/ui/fast-booking-layout/fast-booking-layout.component.ts
+- src/app/features/public/home/components/home/home.component.ts
+- src/app/features/public/home/components/home-about/home-about.component.ts
+- src/app/features/public/home/components/home-contact/home-contact.component.ts
+- src/app/features/public/home/components/home-faq/home-faq.component.ts
+- src/app/features/public/home/components/home-featured-artists/home-featured-artists.component.ts
+- src/app/features/public/home/components/home-hero/home-hero.component.ts
+- src/app/features/public/home/components/home-projects/home-projects.component.ts
+- src/app/features/public/home/components/home-services/home-services.component.ts
+- src/app/features/public/home/components/showcase/showcase.component.ts
+- src/app/features/public/projects/components/project-detail/project-detail.component.ts
+- src/app/features/public/projects/components/project-list/project-list.component.ts
+- src/app/features/public/services/components/service-detail/service-detail.component.ts
+- src/app/features/public/services/service-list/service-list.component.ts
+- src/app/shared/components/access-denied/access-denied.component.ts
+- src/app/shared/components/calendar-v2/calendar/calendar.component.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-drawer/calendar-drawer.component.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-grid/calendar-grid.component.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-slot/calendar-slot.component.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-toolbar/calendar-toolbar.component.ts
+- src/app/shared/components/calendar-v2/calendar/views/day-view/day-view.component.ts
+- src/app/shared/components/calendar-v2/calendar/views/month-view/month-view.component.ts
+- src/app/shared/components/calendar-v2/calendar/views/week-view/week-view.component.ts
+- src/app/shared/components/chat-bot/chat-bot.component.ts
+- src/app/shared/components/chat-bot/chat-bot-popup.component.ts
+- src/app/shared/components/dialogs/admin-appointment-details-dialog/admin-appointment-details-dialog.component.ts
+- src/app/shared/components/dialogs/appointment-details-dialog/appointment-details-dialog.component.ts
+- src/app/shared/components/dialogs/booking-dialog/booking-dialog.component.ts
+- src/app/shared/components/dialogs/chat-actions-dialog/chat-actions-dialog.component.ts
+- src/app/shared/components/dialogs/confirm-dialog/confirm-dialog.component.ts
+- src/app/shared/components/dialogs/payment-confirmation-dialog/payment-confirmation-dialog.component.ts
+- src/app/shared/components/dialogs/project-dialog-admin/project-dialog-admin.component.ts
+- src/app/shared/components/dialogs/review-create-dialog/review-create-dialog.component.ts
+- src/app/shared/components/dialogs/services-dialog-admin/services-dialog-admin.component.ts
+- src/app/shared/components/dialogs/staff-dialog-admin/staff-dialog-admin.component.ts
+- src/app/shared/components/form/dynamic-form/dynamic-form.component.ts
+- src/app/shared/components/stripe-payment/stripe-payment.component.ts
+- src/app/shared/components/tattoo-avatar/tattoo-avatar.component.ts
+
+## File root
+- .codex_components.txt
+- .codex_docs_snippets.txt
+- .codex_features.txt
+- .codex_features_files.txt
+- .codex_filelist.txt
+- .codex_filelist_hidden.txt
+- .codex_guards.txt
+- .codex_models.txt
+- .codex_service_public_methods.json
+- .codex_service_refs.json
+- .codex_services.txt
+- .codex_services_index.json
+- .codex_services_methods_clean.json
+- .codex_shared_files.txt
+- .codex_src_files.txt
+- .codex_tests.txt
+- .codex_ts_index.json
+- .editorconfig
+- .firebaserc
+- .gitignore
+- angular.json
+- auditlogs.bootstrap.json
+- auth-export-admin-fix.json
+- auth-export-check.json
+- auth-import.clients.json
+- database.rules.json
+- eslint.config.js
+- firebase.json
+- firebase-rtdb-export.mock.json
+- firebase-rtdb-export.mock.safe.json
+- firebase-unified.mock.json
+- firestore-users.mock.json
+- mock-demo-playbook.json
+- package.json
+- package-lock.json
+- patch.ps1
+- playwright.config.ts
+- skills-lock.json
+- tsconfig.app.json
+- tsconfig.json
+- tsconfig.spec.json
+- tsconfig.storybook.json
+- tsconfig.worker.json
+- uid users.jpg
+
+## Inventario completo file-per-file
+- .agents/skills/angular-component/references/component-patterns.md
+- .agents/skills/angular-component/SKILL.md
+- .agents/skills/angular-di/references/di-patterns.md
+- .agents/skills/angular-di/SKILL.md
+- .agents/skills/angular-directives/references/directive-patterns.md
+- .agents/skills/angular-directives/SKILL.md
+- .agents/skills/angular-forms/references/form-patterns.md
+- .agents/skills/angular-forms/references/formvalueControl-patterns.md
+- .agents/skills/angular-forms/SKILL.md
+- .agents/skills/angular-http/references/http-patterns.md
+- .agents/skills/angular-http/SKILL.md
+- .agents/skills/angular-routing/references/routing-patterns.md
+- .agents/skills/angular-routing/SKILL.md
+- .agents/skills/angular-signals/references/signal-patterns.md
+- .agents/skills/angular-signals/SKILL.md
+- .agents/skills/angular-ssr/references/ssr-patterns.md
+- .agents/skills/angular-ssr/SKILL.md
+- .agents/skills/angular-testing/references/testing-patterns.md
+- .agents/skills/angular-testing/SKILL.md
+- .agents/skills/angular-tooling/references/tooling-patterns.md
+- .agents/skills/angular-tooling/SKILL.md
+- .codex_components.txt
+- .codex_docs_snippets.txt
+- .codex_features.txt
+- .codex_features_files.txt
+- .codex_filelist.txt
+- .codex_filelist_hidden.txt
+- .codex_guards.txt
+- .codex_models.txt
+- .codex_service_public_methods.json
+- .codex_service_refs.json
+- .codex_services.txt
+- .codex_services_index.json
+- .codex_services_methods_clean.json
+- .codex_shared_files.txt
+- .codex_src_files.txt
+- .codex_tests.txt
+- .codex_ts_index.json
+- .editorconfig
+- .firebaserc
+- .github/workflows/ci.yml
+- .gitignore
+- .storybook/main.ts
+- .storybook/preview.ts
+- .storybook/settings.json
+- .vscode/extensions.json
+- .vscode/launch.json
+- .vscode/tasks.json
+- angular.json
+- auditlogs.bootstrap.json
+- auth-export-admin-fix.json
+- auth-export-check.json
+- auth-import.clients.json
+- database.rules.json
+- docs/01-architettura-frontend.md
+- docs/02-catalogo-servizi.md
+- docs/03-gestione-utenti-e-ruoli.md
+- docs/04-ui-ux-mappa.md
+- docs/05-interfacce-e-contratti.md
+- docs/06-librerie-e-configurazioni.md
+- docs/07-firebase-uso-e-dati.md
+- docs/08-stato-progetto-e-cosa-fatto.md
+- docs/09-hld-chat-flow-ruoli-simulazioni.md
+- docs/10-chatbot-frontend-ai-micro-modelli.md
+- docs/11-checklist-valutazione-angular.md
+- docs/admin-01-overview-operativo.md
+- docs/admin-02-runbook-amministratore.md
+- docs/admin-03-checklist-go-live-e-controlli.md
+- docs/admin-client-angular-enterprise-checklist.md
+- docs/angular-upgrade-plan.md
+- docs/project-logic-checklist.md
+- docs/reactive-state-guideline.md
+- docs/README.md
+- docs/tasks-simulazione/01-task-rebuild-completo.md
+- docs/tasks-simulazione/02-task-roadmap-per-release.md
+- docs/tasks-simulazione/03-task-qa-udo-e-accettazione.md
+- docs/test-dataset-simulazione.md
+- docs/todo-list.md
+- e2e/ui/fast-booking.flow.spec.ts
+- e2e/ui/home.visual.spec.ts
+- e2e/ui/home.visual.spec.ts-snapshots/home-page-chromium-win32.png
+- e2e/ui/route-guards.spec.ts
+- eslint.config.js
+- firebase.json
+- firebase-rtdb-export.mock.json
+- firebase-rtdb-export.mock.safe.json
+- firebase-unified.mock.json
+- firestore-users.mock.json
+- functions/.env.example
+- functions/index.js
+- functions/package.json
+- functions/package-lock.json
+- infra/scripts/001_init.sql
+- mock-demo-playbook.json
+- package.json
+- package-lock.json
+- patch.ps1
+- playwright.config.ts
+- public/app-config.template.js
+- public/bg/1.jpg
+- public/bg/2.jpg
+- public/bg/3.jpg
+- public/bg/3.png
+- public/bg/4.png
+- public/bg/4-bis.png
+- public/bg/5.png
+- public/bg/6.png
+- public/bg/rebis-bg.jpg
+- public/bg/texture-1.jpg
+- public/bg/texture-2.png
+- public/favicon.ico
+- public/general png/arrow-godic-1.png
+- public/general png/arrow-godic-2.png
+- public/home/gallery-1-570x570.jpg
+- public/home/gallery-2-570x570.jpg
+- public/home/gallery-3-570x570.jpg
+- public/home/gallery-4-570x570.jpg
+- public/home/gallery-5-570x570.jpg
+- public/home/home-01-1920x662.jpg
+- public/home/home-1-10-90x90.jpg
+- public/home/home-1-11-90x90.jpg
+- public/home/home-1-12-90x90.jpg
+- public/home/home-1-4-549x422.jpg
+- public/home/home-1-5-549x422.jpg
+- public/home/home-1-6-549x422.jpg
+- public/home/home-1-7-534x406.jpg
+- public/home/home-1-8-541x369.jpg
+- public/home/home-1-9-541x369.jpg
+- public/home/icon-01-80x80.png
+- public/home/icon-02-80x80.png
+- public/home/icon-03-80x80.png
+- public/home/icon-04-80x80.png
+- public/home/icon-05-80x80.png
+- public/home/icon-06-80x80.png
+- public/home/icon-07-80x80.png
+- public/home/rebis-bg.jpg
+- public/home/slide-1-1920x879.jpg
+- public/home/slide-2-1920x879.jpg
+- public/home/slide-3-1920x879.jpg
+- public/home/team-1-370x370.jpg
+- public/home/team-2-370x370.jpg
+- public/home/team-3-370x370.jpg
+- public/home/team-4-370x370.jpg
+- public/ink/man-1.webp
+- public/ink/man-2.webp
+- public/ink/woman-1.webp
+- public/ink/woman-2.webp
+- public/ink/woman-3.webp
+- public/loghi/logo.jpg
+- public/loghi/logo.png
+- public/loghi/logo-white.jpg
+- public/loghi/qr-code.png
+- public/personale/1.jpg
+- public/personale/2.jpg
+- public/personale/3.jpg
+- public/projects/1.webp
+- public/projects/2.webp
+- public/projects/3.webp
+- public/projects/astratto-colori.webp
+- public/projects/coverup-nome.webp
+- public/projects/coverup-rosa.webp
+- public/projects/fine-line.webp
+- public/projects/floreale-braccio.webp
+- public/projects/geometrico.webp
+- public/projects/giapponese-mezzamanica.webp
+- public/projects/gotico-lettering.webp
+- public/projects/mandala-schiena.webp
+- public/projects/maori-bracciale.webp
+- public/projects/neotrad-serpente.webp
+- public/projects/ornamental.webp
+- public/projects/realismo-animale.webp
+- public/projects/realismo-volto.webp
+- public/projects/sketch-matita.webp
+- public/projects/trad-americana.webp
+- scripts/firebase-rtdb-export.ps1
+- scripts/firebase-rtdb-import.ps1
+- scripts/firestore-users-import.ps1
+- scripts/generate-rich-mock-dataset.js
+- skills-lock.json
+- src/app/app.component.html
+- src/app/app.component.scss
+- src/app/app.component.spec.ts
+- src/app/app.component.ts
+- src/app/app.config.ts
+- src/app/app.routes.ts
+- src/app/core/config/environment-validation.ts
+- src/app/core/data/language/en.ts
+- src/app/core/data/language/it.ts
+- src/app/core/guards/admin.guard.ts
+- src/app/core/guards/admin-only.guard.ts
+- src/app/core/guards/auth.guard.ts
+- src/app/core/guards/role-management.guard.ts
+- src/app/core/guards/staff-permission.guard.ts
+- src/app/core/helpers/firestore-converter.ts
+- src/app/core/http/http-error.mapper.ts
+- src/app/core/http/http-policy.ts
+- src/app/core/interceptors/auth-http.interceptor.ts
+- src/app/core/models/api/payment-bridge.dto.ts
+- src/app/core/models/booking.model.ts
+- src/app/core/models/calendar.model.ts
+- src/app/core/models/chat.model.ts
+- src/app/core/models/client.model.ts
+- src/app/core/models/common.model.ts
+- src/app/core/models/invoice.model.ts
+- src/app/core/models/messaging.model.ts
+- src/app/core/models/notification.model.ts
+- src/app/core/models/project.model.ts
+- src/app/core/models/service.model.ts
+- src/app/core/models/staff-member.model.ts
+- src/app/core/models/user.model.ts
+- src/app/core/modules/material.module.ts
+- src/app/core/services/audit/audit-log.service.ts
+- src/app/core/services/auth/auth.service.ts
+- src/app/core/services/bonus/bonus.service.ts
+- src/app/core/services/bookings/booking.service.ts
+- src/app/core/services/chatBot/chat-bot.service.spec.ts
+- src/app/core/services/chatBot/chat-bot.service.ts
+- src/app/core/services/chatBot/local-llm.service.ts
+- src/app/core/services/chatBot/local-llm.worker.ts
+- src/app/core/services/clients/client.service.ts
+- src/app/core/services/helpers/backoffice-access.service.ts
+- src/app/core/services/helpers/currency-helper.service.ts
+- src/app/core/services/helpers/date-time-helper.service.ts
+- src/app/core/services/helpers/external-actions-helper.service.ts
+- src/app/core/services/helpers/status-helper.service.ts
+- src/app/core/services/invoices/invoices.service.ts
+- src/app/core/services/language/language.service.ts
+- src/app/core/services/menu/menu.service.spec.ts
+- src/app/core/services/menu/menu.service.ts
+- src/app/core/services/messaging/messaging.service.ts
+- src/app/core/services/notifications/notification.service.ts
+- src/app/core/services/payments/payment-api.service.ts
+- src/app/core/services/projects/projects.service.ts
+- src/app/core/services/reviews/reviews.service.spec.ts
+- src/app/core/services/reviews/reviews.service.ts
+- src/app/core/services/services/services.service.spec.ts
+- src/app/core/services/services/services.service.ts
+- src/app/core/services/session/session.service.spec.ts
+- src/app/core/services/session/session.service.ts
+- src/app/core/services/staff/staff.service.spec.ts
+- src/app/core/services/staff/staff.service.ts
+- src/app/core/services/studio/studio-profile.service.ts
+- src/app/core/services/ui/confirm-action.service.ts
+- src/app/core/services/ui/ui-feedback.service.ts
+- src/app/core/services/users/user.service.spec.ts
+- src/app/core/services/users/user.service.ts
+- src/app/features/admin/admin.module.ts
+- src/app/features/admin/admin-dashboard/admin-dashboard.component.html
+- src/app/features/admin/admin-dashboard/admin-dashboard.component.scss
+- src/app/features/admin/admin-dashboard/admin-dashboard.component.spec.ts
+- src/app/features/admin/admin-dashboard/admin-dashboard.component.ts
+- src/app/features/admin/admin-routing.module.ts
+- src/app/features/admin/components/admin-detail/admin-detail.component.html
+- src/app/features/admin/components/admin-detail/admin-detail.component.scss
+- src/app/features/admin/components/admin-detail/admin-detail.component.spec.ts
+- src/app/features/admin/components/admin-detail/admin-detail.component.ts
+- src/app/features/admin/components/admin-list/admin-list.component.html
+- src/app/features/admin/components/admin-list/admin-list.component.scss
+- src/app/features/admin/components/admin-list/admin-list.component.spec.ts
+- src/app/features/admin/components/admin-list/admin-list.component.ts
+- src/app/features/admin/components/analytics/analytics.component.html
+- src/app/features/admin/components/analytics/analytics.component.scss
+- src/app/features/admin/components/analytics/analytics.component.spec.ts
+- src/app/features/admin/components/analytics/analytics.component.ts
+- src/app/features/admin/components/audit-logs/audit-logs.component.html
+- src/app/features/admin/components/audit-logs/audit-logs.component.scss
+- src/app/features/admin/components/audit-logs/audit-logs.component.ts
+- src/app/features/admin/components/billing/billing.component.html
+- src/app/features/admin/components/billing/billing.component.scss
+- src/app/features/admin/components/billing/billing.component.spec.ts
+- src/app/features/admin/components/billing/billing.component.ts
+- src/app/features/admin/components/bonus-admin/bonus-admin.component.html
+- src/app/features/admin/components/bonus-admin/bonus-admin.component.scss
+- src/app/features/admin/components/bonus-admin/bonus-admin.component.ts
+- src/app/features/admin/components/calendar-admin/calendar-admin.component.html
+- src/app/features/admin/components/calendar-admin/calendar-admin.component.scss
+- src/app/features/admin/components/calendar-admin/calendar-admin.component.spec.ts
+- src/app/features/admin/components/calendar-admin/calendar-admin.component.ts
+- src/app/features/admin/components/documents/documents.component.html
+- src/app/features/admin/components/documents/documents.component.scss
+- src/app/features/admin/components/documents/documents.component.spec.ts
+- src/app/features/admin/components/documents/documents.component.ts
+- src/app/features/admin/components/messaging-dashboard/messaging-dashboard.component.html
+- src/app/features/admin/components/messaging-dashboard/messaging-dashboard.component.scss
+- src/app/features/admin/components/messaging-dashboard/messaging-dashboard.component.spec.ts
+- src/app/features/admin/components/messaging-dashboard/messaging-dashboard.component.ts
+- src/app/features/admin/components/permissions-admin/permissions-admin.component.html
+- src/app/features/admin/components/permissions-admin/permissions-admin.component.scss
+- src/app/features/admin/components/permissions-admin/permissions-admin.component.ts
+- src/app/features/admin/components/project-manager/project-manager.component.html
+- src/app/features/admin/components/project-manager/project-manager.component.scss
+- src/app/features/admin/components/project-manager/project-manager.component.spec.ts
+- src/app/features/admin/components/project-manager/project-manager.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker.component.html
+- src/app/features/admin/components/project-tracker/project-tracker.component.scss
+- src/app/features/admin/components/project-tracker/project-tracker.component.spec.ts
+- src/app/features/admin/components/project-tracker/project-tracker.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker-booking-dialog/project-tracker-booking-dialog.component.html
+- src/app/features/admin/components/project-tracker/project-tracker-booking-dialog/project-tracker-booking-dialog.component.scss
+- src/app/features/admin/components/project-tracker/project-tracker-booking-dialog/project-tracker-booking-dialog.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker-project-dialog/project-tracker-project-dialog.component.html
+- src/app/features/admin/components/project-tracker/project-tracker-project-dialog/project-tracker-project-dialog.component.scss
+- src/app/features/admin/components/project-tracker/project-tracker-project-dialog/project-tracker-project-dialog.component.ts
+- src/app/features/admin/components/project-tracker/project-tracker-session-dialog/project-tracker-session-dialog.component.html
+- src/app/features/admin/components/project-tracker/project-tracker-session-dialog/project-tracker-session-dialog.component.scss
+- src/app/features/admin/components/project-tracker/project-tracker-session-dialog/project-tracker-session-dialog.component.ts
+- src/app/features/admin/components/review-list-admin/review-list-admin.component.html
+- src/app/features/admin/components/review-list-admin/review-list-admin.component.scss
+- src/app/features/admin/components/review-list-admin/review-list-admin.component.spec.ts
+- src/app/features/admin/components/review-list-admin/review-list-admin.component.ts
+- src/app/features/admin/components/services-admin/service-editor-dialog/service-editor-dialog.component.html
+- src/app/features/admin/components/services-admin/service-editor-dialog/service-editor-dialog.component.scss
+- src/app/features/admin/components/services-admin/service-editor-dialog/service-editor-dialog.component.ts
+- src/app/features/admin/components/services-admin/services-admin.component.html
+- src/app/features/admin/components/services-admin/services-admin.component.scss
+- src/app/features/admin/components/services-admin/services-admin.component.spec.ts
+- src/app/features/admin/components/services-admin/services-admin.component.ts
+- src/app/features/admin/components/session-manager/session-manager.component.html
+- src/app/features/admin/components/session-manager/session-manager.component.scss
+- src/app/features/admin/components/session-manager/session-manager.component.spec.ts
+- src/app/features/admin/components/session-manager/session-manager.component.ts
+- src/app/features/admin/components/staff-detail-admin/staff-detail-admin.component.html
+- src/app/features/admin/components/staff-detail-admin/staff-detail-admin.component.scss
+- src/app/features/admin/components/staff-detail-admin/staff-detail-admin.component.ts
+- src/app/features/admin/components/studio-settings/studio-settings.component.html
+- src/app/features/admin/components/studio-settings/studio-settings.component.scss
+- src/app/features/admin/components/studio-settings/studio-settings.component.spec.ts
+- src/app/features/admin/components/studio-settings/studio-settings.component.ts
+- src/app/features/admin/components/users-management/user-edit-dialog.component.ts
+- src/app/features/admin/components/users-management/users-management.component.html
+- src/app/features/admin/components/users-management/users-management.component.scss
+- src/app/features/admin/components/users-management/users-management.component.ts
+- src/app/features/admin/components/waitlist/waitlist.component.html
+- src/app/features/admin/components/waitlist/waitlist.component.scss
+- src/app/features/admin/components/waitlist/waitlist.component.spec.ts
+- src/app/features/admin/components/waitlist/waitlist.component.ts
+- src/app/features/auth/login/login.component.html
+- src/app/features/auth/login/login.component.scss
+- src/app/features/auth/login/login.component.spec.ts
+- src/app/features/auth/login/login.component.ts
+- src/app/features/calendar/availability.service.ts
+- src/app/features/calendar/calendar.component.html
+- src/app/features/calendar/calendar.component.scss
+- src/app/features/calendar/calendar.component.spec.ts
+- src/app/features/calendar/calendar.component.ts
+- src/app/features/calendar/calendar.service.spec.ts
+- src/app/features/calendar/calendar.service.ts
+- src/app/features/calendar/calendar-shell/calendar-shell.component.html
+- src/app/features/calendar/calendar-shell/calendar-shell.component.scss
+- src/app/features/calendar/calendar-shell/calendar-shell.component.spec.ts
+- src/app/features/calendar/calendar-shell/calendar-shell.component.ts
+- src/app/features/calendar/dialogs/availability-sheet/availability-sheet/availability-sheet.component.html
+- src/app/features/calendar/dialogs/availability-sheet/availability-sheet/availability-sheet.component.scss
+- src/app/features/calendar/dialogs/availability-sheet/availability-sheet/availability-sheet.component.spec.ts
+- src/app/features/calendar/dialogs/availability-sheet/availability-sheet/availability-sheet.component.ts
+- src/app/features/calendar/dialogs/complete-session-dialog/complete-session-dialog.component.html
+- src/app/features/calendar/dialogs/complete-session-dialog/complete-session-dialog.component.scss
+- src/app/features/calendar/dialogs/complete-session-dialog/complete-session-dialog.component.ts
+- src/app/features/calendar/dialogs/create-project-dialog/create-project-dialog.component.html
+- src/app/features/calendar/dialogs/create-project-dialog/create-project-dialog.component.scss
+- src/app/features/calendar/dialogs/create-project-dialog/create-project-dialog.component.ts
+- src/app/features/calendar/dialogs/new-event-dialog/new-event-dialog/new-event-dialog.component.html
+- src/app/features/calendar/dialogs/new-event-dialog/new-event-dialog/new-event-dialog.component.scss
+- src/app/features/calendar/dialogs/new-event-dialog/new-event-dialog/new-event-dialog.component.spec.ts
+- src/app/features/calendar/dialogs/new-event-dialog/new-event-dialog/new-event-dialog.component.ts
+- src/app/features/calendar/drawer/event-drawer/event-drawer.component.html
+- src/app/features/calendar/drawer/event-drawer/event-drawer.component.scss
+- src/app/features/calendar/drawer/event-drawer/event-drawer.component.spec.ts
+- src/app/features/calendar/drawer/event-drawer/event-drawer.component.ts
+- src/app/features/calendar/models.ts
+- src/app/features/calendar/shared/calendar-drawer/calendar-drawer.component.html
+- src/app/features/calendar/shared/calendar-drawer/calendar-drawer.component.scss
+- src/app/features/calendar/shared/calendar-drawer/calendar-drawer.component.spec.ts
+- src/app/features/calendar/shared/calendar-drawer/calendar-drawer.component.ts
+- src/app/features/calendar/shared/calendar-grid/calendar-grid.component.html
+- src/app/features/calendar/shared/calendar-grid/calendar-grid.component.scss
+- src/app/features/calendar/shared/calendar-grid/calendar-grid.component.spec.ts
+- src/app/features/calendar/shared/calendar-grid/calendar-grid.component.ts
+- src/app/features/calendar/shared/calendar-slot/calendar-slot.component.html
+- src/app/features/calendar/shared/calendar-slot/calendar-slot.component.scss
+- src/app/features/calendar/shared/calendar-slot/calendar-slot.component.spec.ts
+- src/app/features/calendar/shared/calendar-slot/calendar-slot.component.ts
+- src/app/features/calendar/shared/calendar-toolbar/calendar-toolbar.component.html
+- src/app/features/calendar/shared/calendar-toolbar/calendar-toolbar.component.scss
+- src/app/features/calendar/shared/calendar-toolbar/calendar-toolbar.component.spec.ts
+- src/app/features/calendar/shared/calendar-toolbar/calendar-toolbar.component.ts
+- src/app/features/calendar/utils.ts
+- src/app/features/calendar/views/day-view/day-view.component.html
+- src/app/features/calendar/views/day-view/day-view.component.scss
+- src/app/features/calendar/views/day-view/day-view.component.spec.ts
+- src/app/features/calendar/views/day-view/day-view.component.ts
+- src/app/features/calendar/views/month-view/month-view.component.html
+- src/app/features/calendar/views/month-view/month-view.component.scss
+- src/app/features/calendar/views/month-view/month-view.component.spec.ts
+- src/app/features/calendar/views/month-view/month-view.component.ts
+- src/app/features/calendar/views/week-resource/week-resource/week-resource.component.html
+- src/app/features/calendar/views/week-resource/week-resource/week-resource.component.scss
+- src/app/features/calendar/views/week-resource/week-resource/week-resource.component.spec.ts
+- src/app/features/calendar/views/week-resource/week-resource/week-resource.component.ts
+- src/app/features/calendar/views/week-view/week-view.component.html
+- src/app/features/calendar/views/week-view/week-view.component.scss
+- src/app/features/calendar/views/week-view/week-view.component.spec.ts
+- src/app/features/calendar/views/week-view/week-view.component.ts
+- src/app/features/clients/clients.module.ts
+- src/app/features/clients/clients-routing.module.ts
+- src/app/features/clients/components/booking-history/booking-history.component.html
+- src/app/features/clients/components/booking-history/booking-history.component.scss
+- src/app/features/clients/components/booking-history/booking-history.component.spec.ts
+- src/app/features/clients/components/booking-history/booking-history.component.ts
+- src/app/features/clients/components/client-detail/client-detail.component.html
+- src/app/features/clients/components/client-detail/client-detail.component.scss
+- src/app/features/clients/components/client-detail/client-detail.component.spec.ts
+- src/app/features/clients/components/client-detail/client-detail.component.ts
+- src/app/features/clients/components/messaging/messaging.component.html
+- src/app/features/clients/components/messaging/messaging.component.scss
+- src/app/features/clients/components/messaging/messaging.component.spec.ts
+- src/app/features/clients/components/messaging/messaging.component.ts
+- src/app/features/clients/components/profile/profile.component.html
+- src/app/features/clients/components/profile/profile.component.scss
+- src/app/features/clients/components/profile/profile.component.spec.ts
+- src/app/features/clients/components/profile/profile.component.ts
+- src/app/features/clients/components/promo-referral/promo-referral.component.html
+- src/app/features/clients/components/promo-referral/promo-referral.component.scss
+- src/app/features/clients/components/promo-referral/promo-referral.component.spec.ts
+- src/app/features/clients/components/promo-referral/promo-referral.component.ts
+- src/app/features/clients/components/reviews/reviews.component.html
+- src/app/features/clients/components/reviews/reviews.component.scss
+- src/app/features/clients/components/reviews/reviews.component.spec.ts
+- src/app/features/clients/components/reviews/reviews.component.ts
+- src/app/features/public/chi-siamo/chi-siamo.component.html
+- src/app/features/public/chi-siamo/chi-siamo.component.scss
+- src/app/features/public/chi-siamo/chi-siamo.component.spec.ts
+- src/app/features/public/chi-siamo/chi-siamo.component.ts
+- src/app/features/public/contatti/contatti.component.html
+- src/app/features/public/contatti/contatti.component.scss
+- src/app/features/public/contatti/contatti.component.spec.ts
+- src/app/features/public/contatti/contatti.component.ts
+- src/app/features/public/fast-booking/pages/fast-booking-page/fast-booking-page.component.html
+- src/app/features/public/fast-booking/pages/fast-booking-page/fast-booking-page.component.scss
+- src/app/features/public/fast-booking/pages/fast-booking-page/fast-booking-page.component.ts
+- src/app/features/public/fast-booking/state/fast-booking-store.service.ts
+- src/app/features/public/fast-booking/steps/step-artist/step-artist.component.html
+- src/app/features/public/fast-booking/steps/step-artist/step-artist.component.scss
+- src/app/features/public/fast-booking/steps/step-artist/step-artist.component.ts
+- src/app/features/public/fast-booking/steps/step-details/step-details.component.html
+- src/app/features/public/fast-booking/steps/step-details/step-details.component.scss
+- src/app/features/public/fast-booking/steps/step-details/step-details.component.ts
+- src/app/features/public/fast-booking/steps/step-intro/step-intro.component.html
+- src/app/features/public/fast-booking/steps/step-intro/step-intro.component.scss
+- src/app/features/public/fast-booking/steps/step-intro/step-intro.component.ts
+- src/app/features/public/fast-booking/steps/step-payment/step-payment.component.html
+- src/app/features/public/fast-booking/steps/step-payment/step-payment.component.scss
+- src/app/features/public/fast-booking/steps/step-payment/step-payment.component.ts
+- src/app/features/public/fast-booking/steps/step-success/step-success.component.html
+- src/app/features/public/fast-booking/steps/step-success/step-success.component.scss
+- src/app/features/public/fast-booking/steps/step-success/step-success.component.ts
+- src/app/features/public/fast-booking/steps/step-summary/step-summary.component.html
+- src/app/features/public/fast-booking/steps/step-summary/step-summary.component.scss
+- src/app/features/public/fast-booking/steps/step-summary/step-summary.component.ts
+- src/app/features/public/fast-booking/steps/step-when/step-when.component.html
+- src/app/features/public/fast-booking/steps/step-when/step-when.component.scss
+- src/app/features/public/fast-booking/steps/step-when/step-when.component.ts
+- src/app/features/public/fast-booking/ui/fast-booking-layout/fast-booking-layout.component.html
+- src/app/features/public/fast-booking/ui/fast-booking-layout/fast-booking-layout.component.scss
+- src/app/features/public/fast-booking/ui/fast-booking-layout/fast-booking-layout.component.ts
+- src/app/features/public/home/components/home/home.component.html
+- src/app/features/public/home/components/home/home.component.scss
+- src/app/features/public/home/components/home/home.component.spec.ts
+- src/app/features/public/home/components/home/home.component.ts
+- src/app/features/public/home/components/home-about/home-about.component.html
+- src/app/features/public/home/components/home-about/home-about.component.scss
+- src/app/features/public/home/components/home-about/home-about.component.spec.ts
+- src/app/features/public/home/components/home-about/home-about.component.ts
+- src/app/features/public/home/components/home-contact/home-contact.component.html
+- src/app/features/public/home/components/home-contact/home-contact.component.scss
+- src/app/features/public/home/components/home-contact/home-contact.component.spec.ts
+- src/app/features/public/home/components/home-contact/home-contact.component.ts
+- src/app/features/public/home/components/home-faq/home-faq.component.html
+- src/app/features/public/home/components/home-faq/home-faq.component.scss
+- src/app/features/public/home/components/home-faq/home-faq.component.spec.ts
+- src/app/features/public/home/components/home-faq/home-faq.component.ts
+- src/app/features/public/home/components/home-featured-artists/home-featured-artists.component.html
+- src/app/features/public/home/components/home-featured-artists/home-featured-artists.component.scss
+- src/app/features/public/home/components/home-featured-artists/home-featured-artists.component.spec.ts
+- src/app/features/public/home/components/home-featured-artists/home-featured-artists.component.ts
+- src/app/features/public/home/components/home-hero/home-hero.component.html
+- src/app/features/public/home/components/home-hero/home-hero.component.scss
+- src/app/features/public/home/components/home-hero/home-hero.component.spec.ts
+- src/app/features/public/home/components/home-hero/home-hero.component.ts
+- src/app/features/public/home/components/home-projects/home-projects.component.html
+- src/app/features/public/home/components/home-projects/home-projects.component.scss
+- src/app/features/public/home/components/home-projects/home-projects.component.spec.ts
+- src/app/features/public/home/components/home-projects/home-projects.component.ts
+- src/app/features/public/home/components/home-services/home-services.component.html
+- src/app/features/public/home/components/home-services/home-services.component.scss
+- src/app/features/public/home/components/home-services/home-services.component.spec.ts
+- src/app/features/public/home/components/home-services/home-services.component.ts
+- src/app/features/public/home/components/showcase/showcase.component.html
+- src/app/features/public/home/components/showcase/showcase.component.scss
+- src/app/features/public/home/components/showcase/showcase.component.spec.ts
+- src/app/features/public/home/components/showcase/showcase.component.ts
+- src/app/features/public/home/home.module.ts
+- src/app/features/public/home/home-routing.module.ts
+- src/app/features/public/projects/components/project-detail/project-detail.component.html
+- src/app/features/public/projects/components/project-detail/project-detail.component.scss
+- src/app/features/public/projects/components/project-detail/project-detail.component.spec.ts
+- src/app/features/public/projects/components/project-detail/project-detail.component.ts
+- src/app/features/public/projects/components/project-list/project-list.component.html
+- src/app/features/public/projects/components/project-list/project-list.component.scss
+- src/app/features/public/projects/components/project-list/project-list.component.spec.ts
+- src/app/features/public/projects/components/project-list/project-list.component.ts
+- src/app/features/public/projects/projects-routing.module.ts
+- src/app/features/public/services/components/service-detail/service-detail.component.html
+- src/app/features/public/services/components/service-detail/service-detail.component.scss
+- src/app/features/public/services/components/service-detail/service-detail.component.spec.ts
+- src/app/features/public/services/components/service-detail/service-detail.component.ts
+- src/app/features/public/services/service-list/service-list.component.html
+- src/app/features/public/services/service-list/service-list.component.scss
+- src/app/features/public/services/service-list/service-list.component.spec.ts
+- src/app/features/public/services/service-list/service-list.component.ts
+- src/app/shared/components/access-denied/access-denied.component.stories.ts
+- src/app/shared/components/access-denied/access-denied.component.ts
+- src/app/shared/components/calendar-v2/calendar/calendar.component.html
+- src/app/shared/components/calendar-v2/calendar/calendar.component.scss
+- src/app/shared/components/calendar-v2/calendar/calendar.component.spec.ts
+- src/app/shared/components/calendar-v2/calendar/calendar.component.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-drawer/calendar-drawer.component.html
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-drawer/calendar-drawer.component.scss
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-drawer/calendar-drawer.component.spec.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-drawer/calendar-drawer.component.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-grid/calendar-grid.component.html
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-grid/calendar-grid.component.scss
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-grid/calendar-grid.component.spec.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-grid/calendar-grid.component.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-slot/calendar-slot.component.html
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-slot/calendar-slot.component.scss
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-slot/calendar-slot.component.spec.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-slot/calendar-slot.component.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-toolbar/calendar-toolbar.component.html
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-toolbar/calendar-toolbar.component.scss
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-toolbar/calendar-toolbar.component.spec.ts
+- src/app/shared/components/calendar-v2/calendar/shared/calendar-toolbar/calendar-toolbar.component.ts
+- src/app/shared/components/calendar-v2/calendar/views/day-view/day-view.component.html
+- src/app/shared/components/calendar-v2/calendar/views/day-view/day-view.component.scss
+- src/app/shared/components/calendar-v2/calendar/views/day-view/day-view.component.spec.ts
+- src/app/shared/components/calendar-v2/calendar/views/day-view/day-view.component.ts
+- src/app/shared/components/calendar-v2/calendar/views/month-view/month-view.component.html
+- src/app/shared/components/calendar-v2/calendar/views/month-view/month-view.component.scss
+- src/app/shared/components/calendar-v2/calendar/views/month-view/month-view.component.spec.ts
+- src/app/shared/components/calendar-v2/calendar/views/month-view/month-view.component.ts
+- src/app/shared/components/calendar-v2/calendar/views/week-view/week-view.component.html
+- src/app/shared/components/calendar-v2/calendar/views/week-view/week-view.component.scss
+- src/app/shared/components/calendar-v2/calendar/views/week-view/week-view.component.spec.ts
+- src/app/shared/components/calendar-v2/calendar/views/week-view/week-view.component.ts
+- src/app/shared/components/calendar-v2/models/calendar.ts
+- src/app/shared/components/calendar-v2/state/calendar-state/calendar-state.service.spec.ts
+- src/app/shared/components/calendar-v2/state/calendar-state/calendar-state.service.ts
+- src/app/shared/components/chat-bot/chat-bot.component.html
+- src/app/shared/components/chat-bot/chat-bot.component.scss
+- src/app/shared/components/chat-bot/chat-bot.component.spec.ts
+- src/app/shared/components/chat-bot/chat-bot.component.ts
+- src/app/shared/components/chat-bot/chat-bot-popup.component.html
+- src/app/shared/components/chat-bot/chat-bot-popup.component.scss
+- src/app/shared/components/chat-bot/chat-bot-popup.component.ts
+- src/app/shared/components/dialogs/admin-appointment-details-dialog/admin-appointment-details-dialog.component.html
+- src/app/shared/components/dialogs/admin-appointment-details-dialog/admin-appointment-details-dialog.component.scss
+- src/app/shared/components/dialogs/admin-appointment-details-dialog/admin-appointment-details-dialog.component.spec.ts
+- src/app/shared/components/dialogs/admin-appointment-details-dialog/admin-appointment-details-dialog.component.ts
+- src/app/shared/components/dialogs/appointment-details-dialog/appointment-details-dialog.component.html
+- src/app/shared/components/dialogs/appointment-details-dialog/appointment-details-dialog.component.scss
+- src/app/shared/components/dialogs/appointment-details-dialog/appointment-details-dialog.component.spec.ts
+- src/app/shared/components/dialogs/appointment-details-dialog/appointment-details-dialog.component.ts
+- src/app/shared/components/dialogs/booking-dialog/booking-dialog.component.html
+- src/app/shared/components/dialogs/booking-dialog/booking-dialog.component.scss
+- src/app/shared/components/dialogs/booking-dialog/booking-dialog.component.spec.ts
+- src/app/shared/components/dialogs/booking-dialog/booking-dialog.component.ts
+- src/app/shared/components/dialogs/chat-actions-dialog/chat-actions-dialog.component.html
+- src/app/shared/components/dialogs/chat-actions-dialog/chat-actions-dialog.component.scss
+- src/app/shared/components/dialogs/chat-actions-dialog/chat-actions-dialog.component.spec.ts
+- src/app/shared/components/dialogs/chat-actions-dialog/chat-actions-dialog.component.ts
+- src/app/shared/components/dialogs/confirm-dialog/confirm-dialog.component.html
+- src/app/shared/components/dialogs/confirm-dialog/confirm-dialog.component.scss
+- src/app/shared/components/dialogs/confirm-dialog/confirm-dialog.component.spec.ts
+- src/app/shared/components/dialogs/confirm-dialog/confirm-dialog.component.ts
+- src/app/shared/components/dialogs/payment-confirmation-dialog/payment-confirmation-dialog.component.html
+- src/app/shared/components/dialogs/payment-confirmation-dialog/payment-confirmation-dialog.component.scss
+- src/app/shared/components/dialogs/payment-confirmation-dialog/payment-confirmation-dialog.component.spec.ts
+- src/app/shared/components/dialogs/payment-confirmation-dialog/payment-confirmation-dialog.component.ts
+- src/app/shared/components/dialogs/project-dialog-admin/project-dialog-admin.component.html
+- src/app/shared/components/dialogs/project-dialog-admin/project-dialog-admin.component.scss
+- src/app/shared/components/dialogs/project-dialog-admin/project-dialog-admin.component.spec.ts
+- src/app/shared/components/dialogs/project-dialog-admin/project-dialog-admin.component.ts
+- src/app/shared/components/dialogs/review-create-dialog/review-create-dialog.component.html
+- src/app/shared/components/dialogs/review-create-dialog/review-create-dialog.component.scss
+- src/app/shared/components/dialogs/review-create-dialog/review-create-dialog.component.spec.ts
+- src/app/shared/components/dialogs/review-create-dialog/review-create-dialog.component.ts
+- src/app/shared/components/dialogs/services-dialog-admin/services-dialog-admin.component.html
+- src/app/shared/components/dialogs/services-dialog-admin/services-dialog-admin.component.scss
+- src/app/shared/components/dialogs/services-dialog-admin/services-dialog-admin.component.spec.ts
+- src/app/shared/components/dialogs/services-dialog-admin/services-dialog-admin.component.ts
+- src/app/shared/components/dialogs/staff-dialog-admin/staff-dialog-admin.component.html
+- src/app/shared/components/dialogs/staff-dialog-admin/staff-dialog-admin.component.scss
+- src/app/shared/components/dialogs/staff-dialog-admin/staff-dialog-admin.component.spec.ts
+- src/app/shared/components/dialogs/staff-dialog-admin/staff-dialog-admin.component.ts
+- src/app/shared/components/form/dynamic-form/dynamic-form.component.html
+- src/app/shared/components/form/dynamic-form/dynamic-form.component.scss
+- src/app/shared/components/form/dynamic-form/dynamic-form.component.spec.ts
+- src/app/shared/components/form/dynamic-form/dynamic-form.component.ts
+- src/app/shared/components/stripe-payment/stripe-payment.component.html
+- src/app/shared/components/stripe-payment/stripe-payment.component.scss
+- src/app/shared/components/stripe-payment/stripe-payment.component.ts
+- src/app/shared/components/tattoo-avatar/tattoo-avatar.component.html
+- src/app/shared/components/tattoo-avatar/tattoo-avatar.component.scss
+- src/app/shared/components/tattoo-avatar/tattoo-avatar.component.spec.ts
+- src/app/shared/components/tattoo-avatar/tattoo-avatar.component.ts
+- src/environment.model.ts
+- src/environment.prod.ts
+- src/environment.stage.ts
+- src/environment.template.ts
+- src/environment.ts
+- src/index.html
+- src/main.ts
+- src/runtime-config.ts
+- src/stories/ux-review-card.stories.ts
+- src/styles.scss
+- src/styles/booking-history.global.scss
+- src/styles/theme-admin.scss
+- src/styles/theme-client.scss
+- src/styles/theme-public.scss
+- tsconfig.app.json
+- tsconfig.json
+- tsconfig.spec.json
+- tsconfig.storybook.json
+- tsconfig.worker.json
+- uid users.jpg

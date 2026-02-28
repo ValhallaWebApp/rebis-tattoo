@@ -1,34 +1,67 @@
-.content{
+:host {
+  --fb-bg: var(--app-main-bg, #050508);
+  --fb-surface: var(--app-surface-strong, rgba(8, 9, 14, 0.84));
+  --fb-border: var(--app-surface-border, rgba(255, 255, 255, 0.18));
+  --fb-text: var(--app-main-text, #f3f4f7);
+  --fb-muted: var(--app-main-text-muted, #c8ced8);
+  --fb-accent: var(--accent, #b79b55);
+  --fb-accent-ink: var(--accent-ink, #111111);
+}
+
+.content {
   padding: 18px 16px 110px;
   max-width: 520px;
   margin: 0 auto;
 }
 
-.footer{
+.footer {
   position: fixed;
   left: 0; right: 0; bottom: 0;
-  background: #fff;
-  border-top: 1px solid #ededed;
+  background: var(--fb-surface);
+  border-top: 1px solid var(--fb-border);
   padding: 12px 16px;
   display: flex;
   gap: 10px;
   align-items: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 10;
 }
 
-.footer.hidden{ display:none; }
+.footer.hidden { display:none; }
 
-.ghost{
-  border: 1px solid #e5e5e5;
-  background: #fff;
-  color: #000;
+.ghost {
+  border: 1px solid var(--fb-border) !important;
+  background: transparent !important;
+  color: var(--fb-text) !important;
   border-radius: 12px;
   padding: 12px 14px;
 }
 
-.primary{
+.primary {
   flex: 1;
-  background: #000 !important;
-  color: #fff !important;
+  background: var(--fb-accent) !important;
+  color: var(--fb-accent-ink) !important;
   border-radius: 12px;
   padding: 12px 14px;
+  font-weight: 800;
+}
+
+:host ::ng-deep .progress.mdc-linear-progress {
+  --mdc-linear-progress-active-indicator-color: var(--fb-accent);
+  --mdc-linear-progress-track-color: rgba(255, 255, 255, 0.14);
+}
+
+:host ::ng-deep .progress .mdc-linear-progress__bar-inner {
+  border-color: var(--fb-accent) !important;
+}
+
+:host ::ng-deep .progress .mdc-linear-progress__buffer-bar {
+  background-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.ghost:disabled,
+.primary:disabled {
+  opacity: .55;
+  cursor: not-allowed;
 }

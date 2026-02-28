@@ -5,15 +5,12 @@ import { map } from 'rxjs';
 import { CalendarShellComponent } from './calendar-shell/calendar-shell.component';
 import { CreateDraft, UiArtist, UiCalendarEvent, UpdatePatch } from './models';
 import { StaffService, StaffMember } from '../../core/services/staff/staff.service';
-import { BookingService } from '../../core/services/bookings/booking.service';
-import { SessionService } from '../../core/services/session/session.service';
+import { Booking, BookingService, BookingStatus } from '../../core/services/bookings/booking.service';
+import { Session, SessionService } from '../../core/services/session/session.service';
 import { MaterialModule } from '../../core/modules/material.module';
 import { UiFeedbackService } from '../../core/services/ui/ui-feedback.service';
 import { ProjectsService } from '../../core/services/projects/projects.service';
 
-// ✅ Adatta questi tipi alle tue interfacce reali se differiscono
-type Booking = any;
-type Session = any;
 
 @Component({
   selector: 'app-calendar-admin-v2',
@@ -66,58 +63,37 @@ export class CalendarComponent {
       });
 
     // 2) bookings + sessions
-    // ⚠️ QUI devi adeguare i nomi dei metodi se nel tuo servizio sono diversi.
-    // Esempio: this.bookingService.getAllBookings() / getBookings() / listBookings() ecc.
 
-    const bookings$ =
-      (this.bookingService as any).getAllBookings?.() ??
-      (this.bookingService as any).getAllBookings$?.() ??
-      (this.bookingService as any).getBookings?.();
-
-    const sessions$ =
-      (this.sessionService as any).getAll?.() ??               // ✅ IL TUO METODO REALE
-      (this.sessionService as any).getAllSessions$?.() ??
-      (this.sessionService as any).getAllSessions?.() ??
-      (this.sessionService as any).getSessions?.();
-
-    // ✅ NON BLOCCARE TUTTO: se manca uno stream, carica l’altro
-    if (!bookings$ && !sessions$) {
-      console.warn('[CAL-ADMIN-V2] ⚠️ Nessuno stream trovato: bookings/sessions');
-      this.loading.set(false);
-      return;
-    }
+    const bookings$ = this.bookingService.getAllBookings();
+    const sessions$ = this.sessionService.getAll();
 
     // merge manuale senza combineLatest per evitare import aggiuntivi
     let lastBookings: Booking[] = [];
     let lastSessions: Session[] = [];
 
-    if (bookings$) {
-      bookings$.subscribe({
-        next: (b: Booking[]) => {
-          lastBookings = b ?? [];
-          this.rebuildEvents(lastBookings, lastSessions);
-        },
-        error: (e: any) => {
-          console.error('[CAL-ADMIN-V2] bookings error', e);
-          lastBookings = [];
-          this.rebuildEvents(lastBookings, lastSessions);
-        },
-      });
-    }
+    bookings$.subscribe({
+      next: (bookings: Booking[]) => {
+        lastBookings = bookings ?? [];
+        this.rebuildEvents(lastBookings, lastSessions);
+      },
+      error: (error: unknown) => {
+        console.error('[CAL-ADMIN-V2] bookings error', error);
+        lastBookings = [];
+        this.rebuildEvents(lastBookings, lastSessions);
+      },
+    });
 
-    if (sessions$) {
-      sessions$.subscribe({
-        next: (s: Session[]) => {
-          lastSessions = s ?? [];
-          this.rebuildEvents(lastBookings, lastSessions);
-        },
-        error: (e: any) => {
-          console.error('[CAL-ADMIN-V2] sessions error', e);
-          lastSessions = [];
-          this.rebuildEvents(lastBookings, lastSessions);
-        },
-      });
-    }
+    sessions$.subscribe({
+      next: (sessions: Session[]) => {
+        lastSessions = sessions ?? [];
+        this.rebuildEvents(lastBookings, lastSessions);
+      },
+      error: (error: unknown) => {
+        console.error('[CAL-ADMIN-V2] sessions error', error);
+        lastSessions = [];
+        this.rebuildEvents(lastBookings, lastSessions);
+      },
+    });
   }
 
   private rebuildEvents(bookings: Booking[], sessions: Session[]) {
@@ -130,7 +106,8 @@ export class CalendarComponent {
         const end = this.formatLocal(new Date(b.end));
         const durationMinutes = this.diffMinutes(start, end);
         const a = staffMap.get(String(b.artistId));
-        const createdById = String(b.createdById ?? b.createdBy ?? b.creatorId ?? b.creator ?? '').trim() || undefined;
+        const createdById = String(b.createdById ?? '').trim() || undefined;
+        const zone = String((b as Booking & { zone?: string }).zone ?? '').trim() || undefined;
         return {
           id: String(b.id),
           type: 'booking',
@@ -142,21 +119,19 @@ export class CalendarComponent {
           projectId: b.projectId ? String(b.projectId) : undefined,
           status: b.status ? String(b.status) : undefined,
           notes: b.notes ? String(b.notes) : undefined,
-          zone: String((b as any).zone ?? '').trim() || undefined,
+          zone,
           createdById,
-          title: 'Booking',
+          title: 'Consulenza',
           subtitle: a?.name,
         } satisfies UiCalendarEvent;
       });
 
     const mappedSessions: UiCalendarEvent[] = (sessions ?? [])
-      .filter(s => s?.id && s?.artistId && (s?.start || s?.date) && (s?.end || s?.durationMinutes))
+      .filter(s => s?.id && s?.artistId && s?.start && s?.end)
       .map(s => {
-        const start = this.formatLocal(new Date(String(s.start ?? s.date)));
-        const duration = s.durationMinutes
-          ? Number(s.durationMinutes ?? 0)
-          : this.diffMinutes(start, String(s.end ?? ''));
-        const end = s.end ? this.formatLocal(new Date(s.end)) : this.buildEndFromStart(start, duration);
+        const start = this.formatLocal(new Date(String(s.start)));
+        const end = this.formatLocal(new Date(String(s.end)));
+        const duration = this.diffMinutes(start, end);
 
         const a = staffMap.get(String(s.artistId));
         return {
@@ -171,25 +146,19 @@ export class CalendarComponent {
           projectId: s.projectId ? String(s.projectId) : undefined,
           bookingId: s.bookingId ? String(s.bookingId) : undefined,
           status: s.status ? String(s.status) : undefined,
-          notes: s.notes ? String(s.notes) : (s.notesByAdmin ? String(s.notesByAdmin) : undefined),
-          notesByAdmin: s.notesByAdmin ? String(s.notesByAdmin) : (s.notes ? String(s.notes) : undefined),
+          notes: s.notesByAdmin ? String(s.notesByAdmin) : undefined,
+          notesByAdmin: s.notesByAdmin ? String(s.notesByAdmin) : undefined,
           healingNotes: s.healingNotes ? String(s.healingNotes) : undefined,
           painLevel: s.painLevel != null ? Number(s.painLevel) : undefined,
           paidAmount: s.paidAmount != null ? Number(s.paidAmount) : undefined,
           zone: s.zone ? String(s.zone).trim() || undefined : undefined,
-          title: 'Session',
+          title: 'Seduta',
           subtitle: a?.name,
         } satisfies UiCalendarEvent;
       });
 
     this.events.set([...mappedBookings, ...mappedSessions]);
     this.loading.set(false);
-  }
-
-  private buildEndFromStart(startISO: string, durationMinutes: number): string {
-    const d = new Date(startISO);
-    d.setMinutes(d.getMinutes() + (durationMinutes || 0));
-    return this.formatLocal(d);
   }
 
   private diffMinutes(startISO: string, endISO: string): number {
@@ -228,9 +197,8 @@ export class CalendarComponent {
         if (projectId) {
           const project = await this.projectService.getProjectById(projectId);
           if (project) {
-            const raw: any = project as any;
-            const projectArtistId = String(raw?.artistId ?? '').trim();
-            const projectClientId = String(raw?.clientId ?? '').trim();
+            const projectArtistId = String(project.artistId ?? '').trim();
+            const projectClientId = String(project.clientId ?? '').trim();
             if (projectArtistId) resolvedArtistId = projectArtistId;
             if (projectClientId) resolvedClientId = projectClientId;
           }
@@ -247,7 +215,7 @@ export class CalendarComponent {
         }
 
         // ⚠️ adatta al tuo BookingService
-        const payload = {
+        const payload: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
           artistId: resolvedArtistId,
           clientId: resolvedClientId,
           title: 'Prenotazione',
@@ -255,24 +223,30 @@ export class CalendarComponent {
           end: draft.end,
           projectId: projectId || undefined,
           notes: draft.notes ?? undefined,
-          status: (draft.status as any) ?? 'confirmed',
-          type: 'session',
+          status: this.toBookingStatus(draft.status),
+          type: 'consultation',
         };
 
-        const fn = (this.bookingService as any).createBooking ?? (this.bookingService as any).addBooking ?? (this.bookingService as any).create;
-        if (!fn) throw new Error('BookingService.createBooking non trovato');
-        await fn.call(this.bookingService, payload);
+        await this.bookingService.createBooking(payload);
 
         // BookingService already syncs project.bookingId when projectId is provided.
       }
 
       if (draft.type === 'session') {
         const projectId = String(draft.projectId ?? '').trim();
+        if (!projectId) {
+          this.snackBar.open('Una seduta richiede un progetto di riferimento.', 'OK', {
+            duration: 2800,
+            horizontalPosition: 'right',
+            verticalPosition: 'bottom'
+          });
+          return;
+        }
         if (projectId) {
           const guard = this.validateSessionSequence({
             projectId,
             start: draft.start,
-            sessionNumber: (draft as any).sessionNumber
+            sessionNumber: draft.sessionNumber
           });
           if (!guard.ok) {
             this.snackBar.open(guard.message, 'OK', {
@@ -285,32 +259,27 @@ export class CalendarComponent {
         }
 
         // ⚠️ adatta al tuo SessionService
-        const rawStatus = String(draft.status ?? '').trim();
-        const sessionStatus =
-          rawStatus === 'planned' || rawStatus === 'completed' || rawStatus === 'cancelled'
-            ? (rawStatus as any)
-            : 'planned';
+        
 
-        const payload = {
+        const payload: Omit<Session, 'id' | 'createdAt' | 'updatedAt'> = {
           artistId: draft.artistId,
           start: draft.start,
           end: draft.end,
           clientId: draft.clientId ?? undefined,
           projectId: draft.projectId ?? undefined,
-          bookingId: (draft as any).bookingId ?? undefined,
-          sessionNumber: (draft as any).sessionNumber ?? undefined,
-          painLevel: (draft as any).painLevel ?? undefined,
-          healingNotes: (draft as any).healingNotes ?? undefined,
-          zone: (draft as any).zone ?? undefined,
-          notesByAdmin: (draft as any).notesByAdmin ?? (draft.notes ?? undefined),
-          paidAmount: (draft as any).paidAmount ?? undefined,
-          status: sessionStatus,
+          bookingId: draft.bookingId ?? undefined,
+          sessionNumber: draft.sessionNumber ?? undefined,
+          painLevel: draft.painLevel ?? undefined,
+          healingNotes: draft.healingNotes ?? undefined,
+          zone: draft.zone ?? undefined,
+          notesByAdmin: draft.notesByAdmin ?? (draft.notes ?? undefined),
+          paidAmount: draft.paidAmount ?? undefined,
+          status: this.toSessionStatus(draft.status),
         };
 
-        const fn = (this.sessionService as any).createSession ?? (this.sessionService as any).addSession ?? (this.sessionService as any).create;
-        if (!fn) throw new Error('SessionService.createSession non trovato');
-        await fn.call(this.sessionService, payload);
+        await this.sessionService.create(payload);
       }
+
     } catch (e) {
       console.error('[CAL-ADMIN-V2] create failed', e);
       this.showOpError(e, 'Errore creazione evento.');
@@ -322,12 +291,24 @@ export class CalendarComponent {
 
     try {
       const current = this.findEventById(upd.id);
-      const nextStart = String((upd.patch as any)?.start ?? '');
-      const nextEnd = String((upd.patch as any)?.end ?? '');
-      const nextArtistId = String((upd.patch as any)?.artistId ?? current?.artistId ?? '');
-      const currentStart = String((current as any)?.start ?? '');
-      const currentEnd = String((current as any)?.end ?? '');
-      const currentArtistId = String((current as any)?.artistId ?? '');
+      const nextStart = String(upd.patch.start ?? '');
+      const nextEnd = String(upd.patch.end ?? '');
+      const nextArtistId = String(upd.patch.artistId ?? current?.artistId ?? '');
+      const currentStart = String(current?.start ?? '');
+      const currentEnd = String(current?.end ?? '');
+      const currentArtistId = String(current?.artistId ?? '');
+
+      if (upd.type === 'session') {
+        const nextProjectId = String(upd.patch.projectId ?? current?.projectId ?? '').trim();
+        if (!nextProjectId) {
+          this.snackBar.open('Una seduta richiede un progetto di riferimento.', 'OK', {
+            duration: 2800,
+            horizontalPosition: 'right',
+            verticalPosition: 'bottom'
+          });
+          return;
+        }
+      }
 
       const scheduleChanged =
         this.changedAtMinutePrecision(nextStart, currentStart) ||
@@ -349,20 +330,30 @@ export class CalendarComponent {
       const patch = this.stripUndef({ ...upd.patch, updatedAt: new Date().toISOString() });
 
       if (upd.type === 'booking') {
-        const nextStatusRaw = (patch as any)?.status;
-        const nextStatus =
-          typeof nextStatusRaw === 'string' ? nextStatusRaw.trim() : '';
-        const currentStatus = String((current as any)?.status ?? '').trim();
-        const hasStatusChange = nextStatus.length > 0 && nextStatus !== currentStatus;
+        const bookingPatch = this.toBookingPatch(patch);
+        const requestedStatusRaw = typeof patch.status === 'string'
+          ? patch.status.trim()
+          : '';
+        const currentStatus = String(current?.status ?? '').trim();
+        const hasStatusChange = requestedStatusRaw.length > 0 && requestedStatusRaw !== currentStatus;
 
         if (hasStatusChange) {
-          const extra = this.stripUndef({ ...patch });
-          delete (extra as any).status;
+          const nextStatus = this.parseBookingStatus(requestedStatusRaw);
+          if (!nextStatus) {
+            this.snackBar.open('Stato consulenza non valido.', 'OK', {
+              duration: 2800,
+              horizontalPosition: 'right',
+              verticalPosition: 'bottom'
+            });
+            return;
+          }
+          const extra = this.stripUndef({ ...bookingPatch });
+          delete extra.status;
 
           const res = await this.bookingService.safeSetStatusSafe(
             upd.id,
-            nextStatus as any,
-            extra as any
+            nextStatus,
+            extra
           );
           if (!res.ok) {
             this.snackBar.open(res.error, 'OK', {
@@ -373,26 +364,23 @@ export class CalendarComponent {
             return;
           }
         } else {
-          const fn = (this.bookingService as any).updateBooking ?? (this.bookingService as any).update;
-          if (!fn) throw new Error('BookingService.updateBooking non trovato');
-          await fn.call(this.bookingService, upd.id, patch);
+          await this.bookingService.updateBooking(upd.id, bookingPatch);
         }
       }
 
       if (upd.type === 'session') {
-        const patchAny = upd.patch as any;
-        const currentAny = current as any;
-        const currentProjectId = String(currentAny?.projectId ?? '').trim();
-        const nextProjectId = String(patchAny?.projectId ?? currentAny?.projectId ?? '').trim();
+        const sessionPatch = this.toSessionPatch(patch);
+        const currentProjectId = String(current?.projectId ?? '').trim();
+        const nextProjectId = String(sessionPatch.projectId ?? current?.projectId ?? '').trim();
         const projectChanged = nextProjectId !== currentProjectId;
         const startChanged = this.changedAtMinutePrecision(
-          String(patchAny?.start ?? currentAny?.start ?? ''),
-          String(currentAny?.start ?? '')
+          String(sessionPatch.start ?? current?.start ?? ''),
+          String(current?.start ?? '')
         );
         const currentSessionNumber =
-          currentAny?.sessionNumber == null ? null : Number(currentAny?.sessionNumber);
+          current?.sessionNumber == null ? null : Number(current.sessionNumber);
         const nextSessionNumber =
-          patchAny?.sessionNumber == null ? currentSessionNumber : Number(patchAny?.sessionNumber);
+          sessionPatch.sessionNumber == null ? currentSessionNumber : Number(sessionPatch.sessionNumber);
         const sessionNumberChanged =
           nextSessionNumber != null &&
           currentSessionNumber != null &&
@@ -403,7 +391,7 @@ export class CalendarComponent {
         if (needsSequenceCheck) {
           const projectId = String(nextProjectId ?? '').trim();
           if (projectId) {
-            const start = String(patchAny?.start ?? currentAny?.start ?? '');
+            const start = String(sessionPatch.start ?? current?.start ?? '');
             const sessionNumber = nextSessionNumber ?? undefined;
             const guard = this.validateSessionSequence({
               projectId,
@@ -422,18 +410,79 @@ export class CalendarComponent {
           }
         }
 
-        const fn = (this.sessionService as any).updateSession ?? (this.sessionService as any).update;
-        if (!fn) throw new Error('SessionService.updateSession non trovato');
-        await fn.call(this.sessionService, upd.id, patch);
+        await this.sessionService.update(upd.id, sessionPatch);
       }
+
     } catch (e) {
       console.error('[CAL-ADMIN-V2] update failed', e);
       this.showOpError(e, 'Errore aggiornamento evento.');
     }
   }
 
-  private showOpError(err: any, fallback: string): void {
-    const raw = String(err?.message ?? '').trim();
+  private parseBookingStatus(value: unknown): BookingStatus | undefined {
+    const raw = String(value ?? '').trim();
+    const allowed: BookingStatus[] = [
+      'draft',
+      'pending',
+      'confirmed',
+      'paid',
+      'in_progress',
+      'completed',
+      'cancelled',
+      'no_show'
+    ];
+    return (allowed as string[]).includes(raw) ? (raw as BookingStatus) : undefined;
+  }
+
+  private toBookingStatus(value: unknown): BookingStatus {
+    return this.parseBookingStatus(value) ?? 'confirmed';
+  }
+
+  private toSessionStatus(value: unknown): Session['status'] {
+    const raw = String(value ?? '').trim();
+    if (raw === 'planned' || raw === 'completed' || raw === 'cancelled') {
+      return raw;
+    }
+    return 'planned';
+  }
+
+  private toBookingPatch(patch: UpdatePatch['patch'] & { updatedAt?: string }): Partial<Booking> {
+    return this.stripUndef({
+      artistId: patch.artistId,
+      clientId: patch.clientId,
+      projectId: patch.projectId,
+      start: patch.start,
+      end: patch.end,
+      notes: patch.notes,
+      status: this.parseBookingStatus(patch.status),
+      updatedAt: patch.updatedAt,
+    });
+  }
+
+  private toSessionPatch(patch: UpdatePatch['patch'] & { updatedAt?: string }): Partial<Session> {
+    return this.stripUndef({
+      artistId: patch.artistId,
+      clientId: patch.clientId,
+      projectId: patch.projectId,
+      bookingId: patch.bookingId,
+      start: patch.start,
+      end: patch.end,
+      sessionNumber: patch.sessionNumber,
+      notesByAdmin: patch.notesByAdmin ?? patch.notes,
+      healingNotes: patch.healingNotes,
+      painLevel: patch.painLevel,
+      paidAmount: patch.paidAmount,
+      zone: patch.zone,
+      status: patch.status ? this.toSessionStatus(patch.status) : undefined,
+      updatedAt: patch.updatedAt,
+    });
+  }
+
+  private showOpError(err: unknown, fallback: string): void {
+    const messageFromError = err instanceof Error
+      ? err.message
+      : String((err as { message?: unknown } | null)?.message ?? '');
+    const raw = messageFromError.trim();
     let msg = fallback;
 
     if (raw.startsWith('PERMISSION_DENIED:')) {
@@ -447,16 +496,16 @@ export class CalendarComponent {
     } else if (raw.startsWith('PROJECT_NOT_FOUND:')) {
       msg = 'Progetto non trovato.';
     } else if (raw.startsWith('SESSION_BOOKING_REQUIRED:')) {
-      msg = 'Prima di creare una sessione devi collegare una booking di consulenza al progetto.';
+      msg = 'Prima di creare una seduta devi collegare una consulenza al progetto.';
     } else if (raw.startsWith('SESSION_BOOKING_NOT_FOUND:')) {
-      msg = 'Booking collegata al progetto non trovata.';
+      msg = 'Consulenza collegata al progetto non trovata.';
     } else if (raw.startsWith('SESSION_BOOKING_END_INVALID:')) {
-      msg = 'Data fine booking non valida: impossibile pianificare la sessione.';
+      msg = 'Data fine consulenza non valida: impossibile pianificare la seduta.';
     } else if (raw.startsWith('SESSION_BEFORE_BOOKING_END:')) {
       const endIso = raw.split(':').slice(1).join(':').trim();
       const endDate = new Date(endIso);
       const when = Number.isNaN(endDate.getTime()) ? endIso : this.formatLocal(endDate);
-      msg = `La sessione non puo iniziare prima della fine consulenza (${when}).`;
+      msg = `La seduta non puo iniziare prima della fine consulenza (${when}).`;
     } else if (raw) {
       // fallback to message if it's readable (avoid dumping big objects)
       msg = raw.length > 160 ? fallback : raw;
@@ -469,12 +518,12 @@ export class CalendarComponent {
     });
   }
 
-  private stripUndef<T extends Record<string, any>>(obj: T): T {
-    const out: any = {};
+  private stripUndef<T extends Record<string, unknown>>(obj: T): T {
+    const out: Record<string, unknown> = {};
     for (const key of Object.keys(obj)) {
       if (obj[key] !== undefined) out[key] = obj[key];
     }
-    return out;
+    return out as T;
   }
 
   private hasConflict(artistId: string, startISO: string, endISO: string, excludeId?: string): boolean {
@@ -483,10 +532,13 @@ export class CalendarComponent {
     const end = new Date(endISO);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false;
 
+    const nonBlockingStatuses = new Set(['cancelled', 'no_show']);
     const events = this.events();
     return events.some(ev => {
       if (excludeId && ev.id === excludeId) return false;
       if (String(ev.artistId) !== String(artistId)) return false;
+      const status = String(ev.status ?? '').trim().toLowerCase();
+      if (nonBlockingStatuses.has(status)) return false;
       const evStart = new Date(ev.start);
       const evEnd = new Date(ev.end);
       if (Number.isNaN(evStart.getTime()) || Number.isNaN(evEnd.getTime())) return false;
@@ -541,7 +593,7 @@ export class CalendarComponent {
     if (sessionNumber != null && Number(sessionNumber) !== expectedNumber) {
       return {
         ok: false,
-        message: `Numero sessione non valido. Deve essere ${expectedNumber}.`
+        message: `Numero seduta non valido. Deve essere ${expectedNumber}.`
       };
     }
 
@@ -549,7 +601,7 @@ export class CalendarComponent {
     if (lastEnd && !Number.isNaN(nextStart.getTime()) && nextStart.getTime() <= lastEnd.getTime()) {
       return {
         ok: false,
-        message: `La sessione deve iniziare dopo l’ultima (${this.formatLocal(lastEnd)}).`
+        message: `La seduta deve iniziare dopo l’ultima (${this.formatLocal(lastEnd)}).`
       };
     }
 
@@ -564,17 +616,20 @@ export class CalendarComponent {
     if (!bookingForProject) {
       return {
         ok: false,
-        message: 'Collega prima una booking di consulenza al progetto.'
+        message: 'Collega prima una consulenza al progetto.'
       };
     }
 
     if (!Number.isNaN(nextStart.getTime()) && nextStart.getTime() < bookingForProject.getTime()) {
       return {
         ok: false,
-        message: `La sessione deve iniziare dalla fine consulenza (${this.formatLocal(bookingForProject)}).`
+        message: `La seduta deve iniziare dalla fine consulenza (${this.formatLocal(bookingForProject)}).`
       };
     }
 
     return { ok: true, message: '' };
   }
 }
+
+
+

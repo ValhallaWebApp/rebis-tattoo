@@ -363,7 +363,7 @@ export class ProjectTrackerComponent {
 
   async addSession() {
     if (!this.access.hasStaffPermission('canManageSessions')) {
-      this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
+      this.snackBar.open('Permesso mancante: gestione sedute.', 'OK', { duration: 2200 });
       return;
     }
     const project = await this.getCurrentProjectForCalendarSeed();
@@ -382,7 +382,7 @@ export class ProjectTrackerComponent {
 
   editSession(s: UiSession) {
     if (!this.access.hasStaffPermission('canManageSessions')) {
-      this.snackBar.open('Permesso mancante: gestione sessioni.', 'OK', { duration: 2200 });
+      this.snackBar.open('Permesso mancante: gestione sedute.', 'OK', { duration: 2200 });
       return;
     }
     const sessionId = String((s as any)?.id ?? '').trim();

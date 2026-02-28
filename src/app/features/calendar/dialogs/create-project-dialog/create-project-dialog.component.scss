@@ -2,3 +2,7 @@
   display: grid;
   gap: 12px;
 }
+
+h2[mat-dialog-title] {
+  color: var(--app-main-text, #f3f4f7);
+}

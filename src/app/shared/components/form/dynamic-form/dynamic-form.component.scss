@@ -1,4 +1,49 @@
+:host {
+  display: block;
+
+  --df-field-bg: #ffffff;
+  --df-field-bg-hover: #f8fafc;
+  --df-field-bg-focus: #f1f5f9;
+  --df-field-text: #0f172a;
+  --df-field-label: #475569;
+  --df-field-hint: #64748b;
+  --df-field-border: rgba(15, 23, 42, 0.24);
+  --df-field-border-focus: rgba(183, 155, 85, 0.85);
+  --df-field-icon: #475569;
+  --df-error: #dc2626;
+}
+
+:host-context(body.theme-client),
+:host-context(body.theme-admin),
+:host-context(.calendar-shell.dark),
+:host-context(.theme-dark) {
+  --df-field-bg: rgba(255, 255, 255, 0.06);
+  --df-field-bg-hover: rgba(255, 255, 255, 0.09);
+  --df-field-bg-focus: rgba(255, 255, 255, 0.12);
+  --df-field-text: rgba(255, 255, 255, 0.92);
+  --df-field-label: rgba(255, 255, 255, 0.7);
+  --df-field-hint: rgba(255, 255, 255, 0.62);
+  --df-field-border: rgba(255, 255, 255, 0.24);
+  --df-field-border-focus: rgba(183, 155, 85, 0.95);
+  --df-field-icon: rgba(255, 255, 255, 0.78);
+  --df-error: #fca5a5;
+}
+
 .dynamic-form {
+  --mdc-filled-text-field-input-text-color: var(--df-field-text);
+  --mdc-filled-text-field-label-text-color: var(--df-field-label);
+  --mdc-filled-text-field-focus-label-text-color: var(--df-field-label);
+  --mdc-filled-text-field-hover-label-text-color: var(--df-field-label);
+  --mdc-outlined-text-field-input-text-color: var(--df-field-text);
+  --mdc-outlined-text-field-label-text-color: var(--df-field-label);
+  --mdc-outlined-text-field-focus-label-text-color: var(--df-field-label);
+  --mdc-outlined-text-field-hover-label-text-color: var(--df-field-label);
+  --mdc-outlined-text-field-outline-color: var(--df-field-border);
+  --mdc-outlined-text-field-hover-outline-color: var(--df-field-border);
+  --mdc-outlined-text-field-focus-outline-color: var(--df-field-border-focus);
+  --mat-select-enabled-trigger-text-color: var(--df-field-text);
+  --mat-select-enabled-arrow-color: var(--df-field-icon);
+
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
@@ -23,4 +68,92 @@
     margin-top: 0.5rem;
     grid-column: 1 / -1;
   }
+}
+
+.dynamic-form ::ng-deep .mat-mdc-form-field {
+  width: 100%;
+}
+
+.dynamic-form ::ng-deep .mdc-text-field--filled,
+.dynamic-form ::ng-deep .mdc-text-field--outlined {
+  background: var(--df-field-bg) !important;
+  border-radius: 10px !important;
+}
+
+.dynamic-form ::ng-deep .mdc-text-field--filled:hover,
+.dynamic-form ::ng-deep .mdc-text-field--outlined:hover {
+  background: var(--df-field-bg-hover) !important;
+}
+
+.dynamic-form ::ng-deep .mdc-text-field--focused {
+  background: var(--df-field-bg-focus) !important;
+}
+
+.dynamic-form ::ng-deep .mat-mdc-input-element,
+.dynamic-form ::ng-deep .mat-mdc-select-value-text,
+.dynamic-form ::ng-deep .mat-mdc-select-arrow,
+.dynamic-form ::ng-deep .mat-datepicker-toggle-default-icon,
+.dynamic-form ::ng-deep .mat-mdc-form-field-icon-prefix,
+.dynamic-form ::ng-deep .mat-mdc-form-field-icon-suffix {
+  color: var(--df-field-text) !important;
+}
+
+.dynamic-form ::ng-deep .mdc-text-field--disabled,
+.dynamic-form ::ng-deep .mat-mdc-select-disabled .mat-mdc-select-value-text,
+.dynamic-form ::ng-deep .mat-mdc-select-disabled .mat-mdc-select-arrow {
+  color: var(--df-field-text) !important;
+  opacity: 0.82 !important;
+}
+
+.dynamic-form ::ng-deep .mat-mdc-input-element:disabled {
+  -webkit-text-fill-color: var(--df-field-text) !important;
+  color: var(--df-field-text) !important;
+  opacity: 0.82 !important;
+}
+
+.dynamic-form ::ng-deep .mat-mdc-floating-label,
+.dynamic-form ::ng-deep .mdc-floating-label,
+.dynamic-form ::ng-deep .mat-mdc-form-field-required-marker {
+  color: var(--df-field-label) !important;
+}
+
+.dynamic-form ::ng-deep .mat-mdc-form-field-hint {
+  color: var(--df-field-hint) !important;
+}
+
+.dynamic-form ::ng-deep .mat-mdc-input-element::placeholder,
+.dynamic-form ::ng-deep textarea.mat-mdc-input-element::placeholder {
+  color: var(--df-field-hint) !important;
+  opacity: 1 !important;
+}
+
+.dynamic-form ::ng-deep .mat-mdc-form-field-error {
+  color: var(--df-error) !important;
+}
+
+.dynamic-form ::ng-deep .mdc-notched-outline__leading,
+.dynamic-form ::ng-deep .mdc-notched-outline__notch,
+.dynamic-form ::ng-deep .mdc-notched-outline__trailing {
+  border-color: var(--df-field-border) !important;
+}
+
+.dynamic-form ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+.dynamic-form ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+.dynamic-form ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--df-field-border-focus) !important;
+}
+
+.dynamic-form ::ng-deep .mat-mdc-checkbox .mdc-form-field > label,
+.dynamic-form ::ng-deep .mat-mdc-slide-toggle .mdc-label,
+.dynamic-form ::ng-deep .mat-button-toggle-label-content {
+  color: var(--df-field-text) !important;
+}
+
+.dynamic-form ::ng-deep .mat-button-toggle-standalone,
+.dynamic-form ::ng-deep .mat-button-toggle-group {
+  border-color: var(--df-field-border) !important;
+}
+
+.dynamic-form ::ng-deep .mat-button-toggle-checked {
+  background: var(--df-field-bg-focus) !important;
 }

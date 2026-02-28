@@ -1,35 +1,163 @@
 <div class="week-wrap">
-  <section class="days-grid">
-    <button
-      class="day-card"
-      *ngFor="let day of daySummaries()"
-      [ngClass]="intensityClass(day.total)"
-      (click)="openDay.emit({ dateKey: day.key })"
-      type="button"
-    >
-      <div class="card-head">
-        <span class="label">{{ day.label }}</span>
-        <span class="total">{{ day.total || '-' }}</span>
-      </div>
+  <ng-container *ngIf="weekLayout !== 'list'; else weekListView">
+    <section class="days-grid">
+      <button
+        class="day-card"
+        *ngFor="let day of daySummaries()"
+        [ngClass]="intensityClass(day.total)"
+        (click)="openDay.emit({ dateKey: day.key })"
+        type="button"
+      >
+        <div class="card-head">
+          <span class="label">{{ day.label }}</span>
+          <span class="total">{{ day.total || '-' }}</span>
+        </div>
 
-      <div class="card-meta" *ngIf="day.total > 0; else freeSlot">
-        {{ day.total }} eventi
-      </div>
-      <ng-template #freeSlot>
-        <div class="card-meta">libero</div>
-      </ng-template>
+        <div class="card-meta" *ngIf="day.total > 0; else freeSlot">
+          {{ day.total }} eventi
+        </div>
+        <ng-template #freeSlot>
+          <div class="card-meta">libero</div>
+        </ng-template>
 
-      <div class="artists-strip" *ngIf="day.visibleArtistCounts.length > 0">
-        <span class="artist-chip" *ngFor="let artist of day.visibleArtistCounts">
-          <span class="dot" [style.backgroundColor]="artistColor(artist.artistId)"></span>
-          <span class="chip-count">{{ artist.count }}</span>
-        </span>
-        <span class="artist-chip artist-more" *ngIf="day.hiddenArtistsCount > 0">
-          +{{ day.hiddenArtistsCount }}
-        </span>
+        <div class="artists-strip" *ngIf="day.visibleArtistCounts.length > 0">
+          <span class="artist-chip" *ngFor="let artist of day.visibleArtistCounts">
+            <span class="dot" [style.backgroundColor]="artistColor(artist.artistId)"></span>
+            <span class="chip-count">{{ artist.count }}</span>
+          </span>
+          <span class="artist-chip artist-more" *ngIf="day.hiddenArtistsCount > 0">
+            +{{ day.hiddenArtistsCount }}
+          </span>
+        </div>
+      </button>
+    </section>
+  </ng-container>
+
+  <ng-template #weekListView>
+    <mat-expansion-panel class="filters-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>filter_list</mat-icon>
+          Filtri
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <section class="list-filters">
+        <mat-form-field appearance="outline">
+          <mat-label>Da</mat-label>
+          <input
+            matInput
+            [matDatepicker]="fromPicker"
+            [value]="dateFilterToDate(filterFrom())"
+            (dateChange)="onFilterFromDateChange($event.value)">
+          <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+          <mat-datepicker #fromPicker panelClass="calendar-date-panel"></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>A</mat-label>
+          <input
+            matInput
+            [matDatepicker]="toPicker"
+            [value]="dateFilterToDate(filterTo())"
+            (dateChange)="onFilterToDateChange($event.value)">
+          <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+          <mat-datepicker #toPicker panelClass="calendar-date-panel"></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-icon matPrefix>search</mat-icon>
+          <mat-label>Cerca cliente</mat-label>
+          <input
+            matInput
+            placeholder="Nome, email, telefono"
+            [value]="filterQuery()"
+            (input)="setFilterQuery($any($event.target).value)">
+        </mat-form-field>
+
+        <button mat-stroked-button type="button" (click)="resetFilters()">
+          Reset
+        </button>
+      </section>
+    </mat-expansion-panel>
+
+    <section class="days-list">
+      <button
+        class="list-row"
+        *ngFor="let item of filteredWeekEventItems()"
+        [class.session]="item.type==='session'"
+        [class.booking]="item.type==='booking'"
+        (click)="openEvent(item.event)"
+        type="button"
+      >
+        <div class="list-top">
+          <div class="list-head">
+            <span class="label">{{ item.dateLabel }}</span>
+            <span class="total">{{ item.startLabel }}</span>
+          </div>
+
+          <div class="actions" (click)="$event.stopPropagation()">
+            <button mat-icon-button (click)="edit(item.event)" matTooltip="Modifica">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button [matMenuTriggerFor]="eventMenu" matTooltip="Azioni">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+
+            <mat-menu #eventMenu="matMenu">
+              <button mat-menu-item *ngIf="item.type==='booking' && item.event.projectId" (click)="emitAction('create_session', item.event)">
+                <mat-icon>post_add</mat-icon>
+                <span>Crea seduta</span>
+              </button>
+              <button mat-menu-item *ngIf="!item.event.projectId" (click)="emitAction('assign_project', item.event)">
+                <mat-icon>add_circle</mat-icon>
+                <span>Assegna progetto</span>
+              </button>
+              <mat-divider></mat-divider>
+              <button mat-menu-item (click)="emitAction('confirm', item.event)">
+                <mat-icon>check_circle</mat-icon>
+                <span>Conferma</span>
+              </button>
+              <button mat-menu-item (click)="emitAction('start', item.event)">
+                <mat-icon>play_circle</mat-icon>
+                <span>Inizia</span>
+              </button>
+              <button mat-menu-item (click)="emitAction('complete', item.event)">
+                <mat-icon>task_alt</mat-icon>
+                <span>Completa</span>
+              </button>
+              <button mat-menu-item (click)="emitAction('cancel', item.event)">
+                <mat-icon>cancel</mat-icon>
+                <span>Annulla</span>
+              </button>
+            </mat-menu>
+          </div>
+        </div>
+
+        <div class="list-main">
+          <span class="type-badge">{{ item.typeLabel }}</span>
+          <span class="range">{{ item.range }}</span>
+          <span class="status">{{ item.status }}</span>
+        </div>
+
+        <div class="title">{{ item.title }}</div>
+
+        <div class="list-artists">
+          <span class="list-artist">
+            <span class="dot" [style.backgroundColor]="artistColor(item.artistId)"></span>
+            <span class="name">{{ item.artistName }}</span>
+          </span>
+          <span class="list-artist list-more" *ngIf="item.subtitle && item.subtitle !== item.artistName">
+            {{ item.subtitle }}
+          </span>
+        </div>
+      </button>
+
+      <div class="list-empty" *ngIf="filteredWeekEventItems().length === 0">
+        Nessuna consulenza o seduta nella settimana selezionata.
       </div>
-    </button>
-  </section>
+    </section>
+  </ng-template>
 
   <section class="legend" *ngIf="legendEntries().length > 0">
     <div class="legend-title">Legenda artisti</div>

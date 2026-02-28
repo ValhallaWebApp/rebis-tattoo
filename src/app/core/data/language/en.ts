@@ -39,7 +39,7 @@ export const dataEn = {
     faq: [
       {
         question: 'How can I book an appointment?',
-        answer: 'Use the booking button on the homepage or the form at the bottom of the page.'
+        answer: 'Use the consultation button on the homepage or the form at the bottom of the page.'
       },
       {
         question: 'How old do I need to be?',

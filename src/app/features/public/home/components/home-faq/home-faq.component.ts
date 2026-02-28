@@ -32,7 +32,7 @@ export class HomeFaqComponent {
     },
     {
       question: 'Come devo prendermi cura del mio tatuaggio?',
-      answer: 'Ti forniremo istruzioni dettagliate post-sessione. In generale: mantieni pulito, idrata e proteggi il tatuaggio.'
+      answer: 'Ti forniremo istruzioni dettagliate post-seduta. In generale: mantieni pulito, idrata e proteggi il tatuaggio.'
     },
     {
       question: 'Posso proporre i miei disegni allo studio?',

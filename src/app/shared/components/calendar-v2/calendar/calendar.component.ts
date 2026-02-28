@@ -17,6 +17,7 @@ import { WeekViewComponent } from './views/week-view/week-view.component';
 import { MonthViewComponent } from './views/month-view/month-view.component';
 import { BookingDraftPayload, CalendarDragUpdate, CalendarEvent, CalendarEventType, CalendarView } from '../models/calendar';
 import { CalendarStateService } from '../state/calendar-state/calendar-state.service';
+import { DynamicField, DynamicFormComponent } from '../../form/dynamic-form/dynamic-form.component';
 
 
 @Component({
@@ -26,6 +27,7 @@ import { CalendarStateService } from '../state/calendar-state/calendar-state.ser
     CommonModule,
     MaterialModule,
     ReactiveFormsModule,
+    DynamicFormComponent,
     DayViewComponent,
     WeekViewComponent,
     MonthViewComponent,
@@ -34,6 +36,14 @@ import { CalendarStateService } from '../state/calendar-state/calendar-state.ser
   styleUrls: ['./calendar.component.scss'],
 })
 export class CalendarComponentV2 implements OnInit, OnChanges {
+  readonly drawerFields: DynamicField[] = [
+    { type: 'text', name: 'artistId', label: 'Artista', required: true },
+    { type: 'date-native', name: 'date', label: 'Data', required: true },
+    { type: 'time', name: 'time', label: 'Ora', required: true },
+    { type: 'number', name: 'duration', label: 'Durata (min)', required: true, min: 1 },
+    { type: 'textarea', name: 'description', label: 'Descrizione', rows: 3, className: 'full-width' }
+  ];
+
   // ========= INPUT DAL CONTAINER (Admin / Client) =========
 
   /** Ruolo: decide cosa può fare (drag&drop, azioni, ecc.) */
@@ -131,7 +141,7 @@ this.theme = this.initialTheme;
   // ---------------------------------------------------------
 
   /**
-   * Apertura drawer per nuova prenotazione/sessione.
+   * Apertura drawer per nuova prenotazione/seduta.
    * Lo slot viene dalla view (day/week/month) con data/orario/artista.
    */
   openCreate(slot?: { date: string; time: string; artistId?: string }): void {

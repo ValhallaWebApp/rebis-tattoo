@@ -4,7 +4,7 @@
       <mat-icon>check_circle</mat-icon>
     </div>
     <h2>Prenotazione confermata</h2>
-    <p>Perfetto! La tua consulenza è stata confermata.</p>
+    <p>Perfetto! La tua consulenza e stata confermata.</p>
   </mat-card>
 
   <mat-card class="card">
@@ -14,7 +14,7 @@
     </div>
     <div class="row">
       <div class="k">Data</div>
-      <div class="v">{{ draft().date }} • {{ draft().time }}</div>
+      <div class="v">{{ draft().date }} - {{ draft().time }}</div>
     </div>
 
     @if (bookingId()) {
@@ -25,8 +25,17 @@
   </mat-card>
 
   <div class="actions">
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="saveToGoogleCalendar()"
+      [disabled]="!draft().date || !draft().time">
+      <mat-icon>event_available</mat-icon>
+      Salva appuntamento (Google Calendar)
+    </button>
+
     <button mat-stroked-button (click)="again()">
-      Prenota un’altra consulenza
+      Prenota un'altra consulenza
     </button>
   </div>
 </section>

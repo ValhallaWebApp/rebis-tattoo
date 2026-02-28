@@ -416,7 +416,7 @@ effect(() => {
       const payRes = await this.paymentApi.createPaymentIntentSafe({
         amount: amountCents,
         currency: 'eur',
-        description: `Caparra consulenza Rebis Tattoo - booking ${bookingId}`,
+        description: `Caparra consulenza Rebis Tattoo - consulenza ${bookingId}`,
         bookingId,
       });
 
@@ -461,15 +461,15 @@ effect(() => {
       this.confirmingPayment.set(true);
       const id = this.bookingId();
       if (!id) {
-        this.error.set('Booking non trovato.');
+        this.error.set('Consulenza non trovata.');
         return;
       }
 
       const paid = this.depositEuro();
       const booking = await this.bookingService.getBookingById(id);
       if (!booking) {
-        this.error.set('Booking non trovato.');
-        this.ui.error('Booking non trovato.');
+        this.error.set('Consulenza non trovata.');
+        this.ui.error('Consulenza non trovata.');
         return;
       }
 
@@ -479,7 +479,7 @@ effect(() => {
       }
 
       if (booking.status === 'cancelled' || booking.status === 'completed' || booking.status === 'no_show') {
-        const msg = `Stato booking non valido per conferma pagamento: ${booking.status}`;
+        const msg = `Stato consulenza non valido per conferma pagamento: ${booking.status}`;
         this.error.set(msg);
         this.ui.error(msg);
         return;
@@ -516,7 +516,7 @@ effect(() => {
       this.ui.success('Pagamento registrato con successo.');
     } catch (e: unknown) {
       console.error(e);
-      const msg = 'Pagamento registrato? Non riesco ad aggiornare lo stato booking.';
+      const msg = 'Pagamento registrato? Non riesco ad aggiornare lo stato consulenza.';
       this.error.set(msg);
       this.ui.error(msg);
     } finally {
