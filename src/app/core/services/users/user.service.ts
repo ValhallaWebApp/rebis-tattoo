@@ -22,6 +22,7 @@ export interface UserPermissions {
   canManageRoles?: boolean;
   canManageBookings?: boolean;
   canManageProjects?: boolean;
+  canManageEvents?: boolean;
   canManageSessions?: boolean;
   canReassignProjectArtist?: boolean;
   canReassignProjectClient?: boolean;

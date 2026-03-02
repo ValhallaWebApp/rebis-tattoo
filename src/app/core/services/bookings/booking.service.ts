@@ -21,6 +21,7 @@ import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuditLogService } from '../audit/audit-log.service';
 import { AuthService } from '../auth/auth.service';
 import { ProjectsService } from '../projects/projects.service';
+import { EventsService, StudioEventOccurrence } from '../events/events.service';
 
 /** Stati booking (nuovi + realistici) */
 export type BookingStatus =
@@ -146,7 +147,8 @@ export class BookingService {
     private ui: UiFeedbackService,
     private auth: AuthService,
     private audit: AuditLogService,
-    private projects: ProjectsService
+    private projects: ProjectsService,
+    private eventsService: EventsService
   ) {}
 
   private toRecord(value: unknown): Record<string, unknown> {
@@ -312,6 +314,7 @@ export class BookingService {
     const dayEndLocal = `${day}T23:59:59`;
 
     const existing = await this.getBookingsByArtistAndDayRange(artistId, dayStartLocal, dayEndLocal);
+    const eventBlocks = await this.getEventBlockingWindowsForDay(day);
 
     const slots: { time: string }[] = [];
     const minutesStart = openingHour * 60;
@@ -325,11 +328,47 @@ export class BookingService {
       const slotStart = `${day}T${time}:00`;
       const slotEnd = this.addMinutesLocal(slotStart, duration);
 
-      const overlaps = existing.some(b => this.overlapsLocal(slotStart, slotEnd, b.start, b.end));
-      if (!overlaps) slots.push({ time });
+      const overlapsBooking = existing.some((b) => this.overlapsLocal(slotStart, slotEnd, b.start, b.end));
+      const overlapsEvent = eventBlocks.some((w) => this.overlapsLocal(slotStart, slotEnd, w.start, w.end));
+      if (!overlapsBooking && !overlapsEvent) slots.push({ time });
     }
 
     return slots;
+  }
+
+  private async getEventBlockingWindowsForDay(day: string): Promise<Array<{ start: string; end: string }>> {
+    try {
+      const occurrences = await this.eventsService.getBlockingOccurrencesForDate(day);
+      return occurrences
+        .map((occ) => this.toEventWindowForDay(occ, day))
+        .filter((win): win is { start: string; end: string } => Boolean(win));
+    } catch (err) {
+      if (this.isPermissionDeniedError(err)) return [];
+      console.warn('[BookingService] getEventBlockingWindowsForDay failed', err);
+      return [];
+    }
+  }
+
+  private toEventWindowForDay(
+    occurrence: StudioEventOccurrence,
+    day: string
+  ): { start: string; end: string } | null {
+    if (day < occurrence.startDate || day > occurrence.endDate) return null;
+
+    const startTime = this.normalizeTime(occurrence.startDate === day ? occurrence.startTime : '00:00', '00:00');
+    const endTime = this.normalizeTime(occurrence.endDate === day ? occurrence.endTime : '23:59', '23:59');
+
+    let start = `${day}T${startTime}:00`;
+    let end = `${day}T${endTime}:59`;
+
+    const startTs = new Date(this.normalizeLocalDateTime(start)).getTime();
+    const endTs = new Date(this.normalizeLocalDateTime(end)).getTime();
+    if (!Number.isFinite(startTs) || !Number.isFinite(endTs) || endTs <= startTs) {
+      start = `${day}T00:00:00`;
+      end = `${day}T23:59:59`;
+    }
+
+    return { start, end };
   }
 
   private async getBookingsByArtistAndDayRange(
@@ -807,7 +846,9 @@ export class BookingService {
     if (!booking) throw new Error('Prenotazione non trovata');
 
     const current = booking.status ?? 'draft';
-    if (!this.isValidTransition(current, newStatus)) {
+    const actorRole = String(this.auth.userSig()?.role ?? '').trim().toLowerCase();
+    const canBypassTransitionRules = actorRole === 'admin';
+    if (!canBypassTransitionRules && !this.isValidTransition(current, newStatus)) {
       throw new Error(`Transizione non valida da ${current} a ${newStatus}`);
     }
 
@@ -989,6 +1030,12 @@ export class BookingService {
   private normalizeDateOnly(input: string): string {
     if (!input) return '';
     return input.slice(0, 10);
+  }
+
+  private normalizeTime(input: string, fallback: string): string {
+    const text = String(input ?? '').trim();
+    if (/^([01]\d|2[0-3]):([0-5]\d)$/.test(text)) return text;
+    return fallback;
   }
 
   /**

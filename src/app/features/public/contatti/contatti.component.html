@@ -1,74 +1,110 @@
-<section class="rt-contacts">
-  <header class="rt-hero">
-    <div class="rt-container">
-      <h1 class="rt-title">CONTATTI</h1>
-      <p class="rt-subtitle">{{ profile.studioName }} - {{ profile.tagline }}</p>
+<section class="contact-page">
+  <header class="contact-hero">
+    <div class="container">
+      <p class="hero-kicker">{{ profile.publicContattiHeroKicker }}</p>
+      <h1 class="hero-title">{{ profile.publicContattiHeroTitle }}</h1>
+      <p class="hero-subtitle">
+        {{ profile.publicContattiHeroSubtitle }}
+      </p>
+      <div class="hero-tags" aria-hidden="true">
+        <span class="tag">{{ profile.publicContattiTag1 }}</span>
+        <span class="tag">{{ profile.publicContattiTag2 }}</span>
+        <span class="tag">{{ profile.publicContattiTag3 }}</span>
+      </div>
     </div>
   </header>
 
-  <main class="rt-container">
-    <div class="rt-split">
-      <section class="rt-paper">
-        <h2 class="rt-brand">{{ profile.studioName }}</h2>
+  <main class="container body">
+    <div class="top-grid">
+      <section class="panel panel--contacts">
+        <h2 class="panel-title">{{ profile.studioName }}</h2>
+        <p class="panel-subtitle">{{ profile.tagline }}</p>
 
-        <div class="rt-lines">
-          <div class="rt-line">
-            <span class="rt-ico">[ADDR]</span>
-            <span class="rt-text">{{ profile.address }}</span>
-          </div>
-
-          <div class="rt-line">
-            <span class="rt-ico">[TEL]</span>
-            <a class="rt-link" [href]="'tel:' + profile.phoneDisplay.replaceAll(' ', '')">
+        <ul class="contact-list">
+          <li>
+            <span class="badge">Indirizzo</span>
+            <span class="value">{{ profile.address }}</span>
+          </li>
+          <li>
+            <span class="badge">Telefono</span>
+            <a class="value link" [href]="'tel:' + profile.phoneDisplay.replaceAll(' ', '')">
               {{ profile.phoneDisplay }}
             </a>
-            <span class="rt-dot">-</span>
-            <a class="rt-link" [href]="'https://wa.me/' + whatsappNumber" target="_blank" rel="noopener">
-              WhatsApp
-            </a>
-          </div>
-
-          <div class="rt-line">
-            <span class="rt-ico">[MAIL]</span>
-            <a class="rt-link" [href]="'mailto:' + profile.email">{{ profile.email }}</a>
-          </div>
-
-          <div class="rt-line">
-            <span class="rt-ico">[IG]</span>
-            <a class="rt-link" [href]="profile.instagramUrl" target="_blank" rel="noopener">
+          </li>
+          <li>
+            <span class="badge">Email</span>
+            <a class="value link" [href]="'mailto:' + profile.email">{{ profile.email }}</a>
+          </li>
+          <li>
+            <span class="badge">Instagram</span>
+            <a class="value link" [href]="profile.instagramUrl" target="_blank" rel="noopener">
               {{ profile.instagramHandle }}
             </a>
-          </div>
-        </div>
+          </li>
+          <li>
+            <span class="badge">Disponibilita</span>
+            <span class="value">Solo su appuntamento</span>
+          </li>
+        </ul>
 
-        <div class="rt-cta">
-          <a class="rt-btn rt-btn--primary" routerLink="/fast-booking">PRENOTA UNA CONSULENZA</a>
-          <button class="rt-btn rt-btn--accent" type="button" (click)="openChat()">APRI LA CHAT</button>
-        </div>
-
-        <div class="rt-mini">
-          Disponibilita: su appuntamento (scrivici per confermare)
-        </div>
-
-        <div class="rt-formBlock">
-          <h3 class="rt-formTitle">Oppure scrivici</h3>
-
-          <form (ngSubmit)="onSubmit()" class="rt-form">
-            <app-dynamic-form
-              [fields]="contactFields"
-              [formGroupInput]="contactForm"
-              [showSubmit]="false"
-            ></app-dynamic-form>
-            <div class="rt-actions">
-              <button class="rt-btn rt-btn--accent" type="submit" [disabled]="contactForm.invalid">INVIA</button>
-            </div>
-          </form>
+        <div class="action-row">
+          <a class="btn btn--primary" routerLink="/fast-booking">{{ profile.publicContattiButtonBook }}</a>
+          <button class="btn btn--ghost" type="button" (click)="openChat()">{{ profile.publicContattiButtonChat }}</button>
+          <a
+            class="btn btn--accent"
+            [href]="'https://wa.me/' + whatsappNumber"
+            target="_blank"
+            rel="noopener">
+            {{ profile.publicContattiButtonWhatsapp }}
+          </a>
         </div>
       </section>
 
-      <aside class="rt-image" aria-hidden="true">
+      <aside class="panel panel--media" aria-hidden="true">
         <img [src]="heroImageUrl" [alt]="'Dettaglio tatuaggio ' + profile.studioName" />
+        <div class="media-overlay">
+          <p class="overlay-title">{{ profile.publicContattiMediaOverlayTitle }}</p>
+          <p class="overlay-sub">{{ profile.publicContattiMediaOverlaySubtitle }}</p>
+        </div>
       </aside>
+    </div>
+
+    <div class="bottom-grid">
+      <section class="panel panel--form">
+        <h3 class="panel-title">{{ profile.publicContattiPanelFormTitle }}</h3>
+        <p class="panel-subtitle">{{ profile.publicContattiPanelFormSubtitle }}</p>
+
+        <form (ngSubmit)="onSubmit()" class="contact-form">
+          <app-dynamic-form
+            [fields]="contactFields"
+            [formGroupInput]="contactForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+
+          <div class="form-actions">
+            <button class="btn btn--accent" type="submit" [disabled]="contactForm.invalid">Invia</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel panel--collab">
+        <h3 class="panel-title">{{ profile.publicContattiPanelCollabTitle }}</h3>
+        <p class="panel-subtitle">{{ profile.publicContattiPanelCollabSubtitle }}</p>
+
+        <ul class="collab-list">
+          <li>{{ profile.publicContattiCollabItem1 }}</li>
+          <li>{{ profile.publicContattiCollabItem2 }}</li>
+          <li>{{ profile.publicContattiCollabItem3 }}</li>
+          <li>{{ profile.publicContattiCollabItem4 }}</li>
+        </ul>
+
+        <div class="action-row action-row--stack">
+          <a class="btn btn--primary" [href]="collabMailto">{{ profile.publicContattiSendCandidaturaLabel }}</a>
+          <a class="btn btn--ghost" [href]="profile.instagramUrl" target="_blank" rel="noopener">
+            {{ profile.publicContattiInstagramCtaLabel }}
+          </a>
+        </div>
+      </section>
     </div>
   </main>
 </section>

@@ -1,16 +1,23 @@
+@use '../../styles/home-typography' as homeTypography;
+
 .showcase-container {
-  background-color: #0a0a0a;
-  color: whitesmoke;
-  padding: 2rem 1.5rem;
+  color: var(--home-text);
+  padding: clamp(var(--home-space-6), 3vw, var(--home-space-10));
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .showcase-content {
-  max-width: 1200px;
+  width: min(1200px, 100%);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  font-family: 'Barlow Semi Condensed', sans-serif;
+  gap: clamp(var(--home-space-5), 3vw, var(--home-space-10));
+  @include homeTypography.font-base();
 
   @media (min-width: 960px) {
     flex-direction: row;
@@ -20,45 +27,58 @@
 
 .showcase-text {
   flex: 1;
-  font-family: 'Barlow Semi Condensed', sans-serif;
 
   h2 {
-    font-size: 2.5rem;
-    color: whitesmoke;
-    margin-bottom: 1rem;
+    @include homeTypography.section-title(clamp(2rem, 3.8vw, 3.5rem));
+    margin-bottom: var(--home-space-4);
+    line-height: 0.98;
   }
 
   h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: whitesmoke;
-    margin-bottom: 1rem;
+    @include homeTypography.section-subtitle(clamp(1rem, 1.3vw, 1.12rem));
+    font-weight: 400;
+    color: var(--home-text);
+    margin-bottom: var(--home-space-3);
   }
 
   p {
-    font-size: 1rem;
-    color: #ccc;
-    margin-bottom: 2rem;
+    @include homeTypography.body-text(clamp(0.95rem, 1.1vw, 1.08rem));
+    margin-bottom: var(--home-space-5);
   }
 
   .showcase-link {
-    font-weight: 700;
-    color: #BE9045;
+    display: inline-flex;
+    font-weight: 400;
+    color: var(--home-text);
     text-decoration: none;
     text-transform: uppercase;
-    font-size: 0.875rem;
+    font-size: clamp(0.76rem, 1vw, 0.86rem);
+    border: 1px solid var(--home-glass-border-soft);
+    border-radius: var(--home-radius-2);
+    padding: 10px 14px;
+    background: rgba(var(--home-white-rgb), 0.06);
+    transition:
+      border-color var(--home-motion-fast) var(--home-ease-standard),
+      background-color var(--home-motion-fast) var(--home-ease-standard),
+      transform var(--home-motion-fast) var(--home-ease-standard);
 
     &:hover {
-      text-decoration: underline;
+      transform: translateY(-1px);
+      border-color: var(--home-glass-border);
+      background: rgba(var(--home-accent-rgb), 0.2);
     }
   }
 }
 
 .showcase-image {
   flex: 1;
+
   img {
     width: 100%;
-    border: 1rem solid #0a0a0a;
-    box-shadow: 0 0 0 2px #333;
+    border-radius: var(--home-radius-3);
+    border: 1px solid var(--home-glass-border-soft);
+    box-shadow: var(--home-shadow-image);
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
   }
 }

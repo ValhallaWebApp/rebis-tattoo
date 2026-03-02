@@ -1,7 +1,6 @@
 import {
-  Component, ViewChild, ElementRef, AfterViewChecked, DestroyRef, inject
+  Component, ViewChild, ElementRef, AfterViewChecked
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,7 +8,7 @@ import { Router } from '@angular/router';
 import { MaterialModule } from '../../../core/modules/material.module';
 import { ChatService, ChatMessage } from '../../../core/services/chatBot/chat-bot.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
-import { LocalLlmService, LlmRuntimeStatus } from '../../../core/services/chatBot/local-llm.service';
+import { MessagingService } from '../../../core/services/messaging/messaging.service';
 
 @Component({
   selector: 'app-chat-bot',
@@ -20,13 +19,13 @@ import { LocalLlmService, LlmRuntimeStatus } from '../../../core/services/chatBo
 })
 export class ChatBotComponent implements AfterViewChecked {
   private readonly guestChatIdentityKey = 'rebis.chat.guest.identity';
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly preferredConversationStorageKey = 'rebis.messaging.preferredConversation';
 
   messages: { text: string; from: 'user' | 'bot'; chips?: string[] | null }[] = [];
   inputCtrl = new FormControl<string>('', { nonNullable: true });
   typing = false;
   isUserAtBottom = true;
-  loadingLabel = 'Elaboro la risposta...';
+  loadingLabel = 'Sto preparando la risposta...';
 
   chatId: string | null = null;
   userId: string | null = null;
@@ -39,14 +38,8 @@ export class ChatBotComponent implements AfterViewChecked {
     private chatService: ChatService,
     private auth: AuthService,
     private router: Router,
-    private localLlm: LocalLlmService
+    private messaging: MessagingService
   ) {
-    this.localLlm.status$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((status) => {
-        this.loadingLabel = this.mapLoadingLabel(status);
-      });
-
     this.startConversation();
   }
 
@@ -96,8 +89,8 @@ export class ChatBotComponent implements AfterViewChecked {
 
       if (this.messages.length === 0) {
         this.addBotMessage(
-          'Ciao, sono l assistente virtuale Rebis. Scrivimi la tua richiesta.',
-          ['Accedi', 'Apri consulenza']
+          'Ciao, sono l assistente Rebis. Ti aiuto con consulenze, contatti e chat con lo studio.',
+          this.defaultChipsForCurrentRole()
         );
       }
     });
@@ -151,8 +144,8 @@ export class ChatBotComponent implements AfterViewChecked {
 
       this.addBotMessage(plan.message, plan.chips);
     } catch (err) {
-      console.error('Errore chat AI:', err);
-      this.addBotMessage('Errore durante la risposta AI. Riprova tra qualche secondo.');
+      console.error('Errore chatbot:', err);
+      this.addBotMessage('Errore durante la risposta. Riprova tra qualche secondo.');
     } finally {
       this.typing = false;
     }
@@ -161,18 +154,28 @@ export class ChatBotComponent implements AfterViewChecked {
   onChipClick(label: string): void {
     if (this.typing) return;
 
-    if (label === 'Accedi' || label === 'Registrati') {
-      void this.router.navigate(['/login']);
+    if (label === 'Apri chat studio') {
+      void this.openStudioChat();
       return;
     }
 
-    if (label === 'Apri consulenza') {
+    if (label === 'Accedi' || label === 'Registrati' || label === 'Accedi per chat studio') {
+      this.openLoginForStudioChat();
+      return;
+    }
+
+    if (label === 'Prenota consulenza' || label === 'Apri consulenza') {
       void this.router.navigate(['/fast-booking']);
       return;
     }
 
-    if (label === 'Vai al profilo') {
-      void this.router.navigate(['/dashboard']);
+    if (label === 'Contatti studio' || label === 'Orari studio') {
+      void this.router.navigate(['/contatti']);
+      return;
+    }
+
+    if (label === 'Vai al profilo' || label === 'Stato prenotazione') {
+      void this.openStudioChat();
       return;
     }
 
@@ -205,11 +208,109 @@ export class ChatBotComponent implements AfterViewChecked {
     }
   }
 
-  private mapLoadingLabel(status: LlmRuntimeStatus): string {
-    if (status === 'loading-model') return 'Sto caricando il modello AI...';
-    if (status === 'generating') return 'Sto generando la risposta...';
-    if (status === 'error') return 'Recupero servizio AI...';
-    return 'Elaboro la risposta...';
+  private defaultChipsForCurrentRole(): string[] {
+    const role = this.auth.userSig()?.role ?? 'guest';
+    if (role === 'client' || role === 'user' || role === 'staff' || role === 'admin') {
+      return ['Apri chat studio', 'Prenota consulenza', 'Contatti studio'];
+    }
+    return ['Accedi per chat studio', 'Prenota consulenza', 'Contatti studio'];
+  }
+
+  private async openStudioChat(): Promise<void> {
+    const role = this.auth.userSig()?.role ?? 'guest';
+    if (role === 'admin') {
+      await this.router.navigate(['/admin/messaging']);
+      return;
+    }
+    if (role === 'staff') {
+      await this.router.navigate(['/staff/messaging']);
+      return;
+    }
+    if (role === 'client' || role === 'user') {
+      const user = this.auth.userSig();
+      const clientId = String(user?.uid ?? '').trim();
+      if (!clientId) {
+        this.openLoginForStudioChat();
+        return;
+      }
+
+      try {
+        const firstUserMessage = this.latestUserMessage();
+        const firstBotReply = this.latestBotMessage();
+        const summary = firstUserMessage
+          ? `Ticket: ${firstUserMessage.slice(0, 64)}`
+          : 'Ticket assistenza da chatbot';
+        const initialMessage = this.buildHandoffMessage(firstUserMessage, firstBotReply);
+
+        const conversationId = await this.messaging.createOrOpenSupportTicketForClient({
+          clientId,
+          summary,
+          category: this.inferCategory(firstUserMessage),
+          type: this.inferType(firstUserMessage),
+          priority: 'normal',
+          source: 'chatbot',
+          tags: ['chatbot', 'handoff'],
+          initialMessage
+        });
+
+        this.safeStorageSet(this.preferredConversationStorageKey, conversationId);
+        await this.router.navigate(['/dashboard/chat'], {
+          queryParams: { conversationId }
+        });
+      } catch (err) {
+        console.warn('[ChatBot] handoff ticket fallito, fallback su chat dashboard', err);
+        await this.router.navigate(['/dashboard/chat']);
+      }
+      return;
+    }
+
+    this.openLoginForStudioChat();
+  }
+
+  private openLoginForStudioChat(): void {
+    this.safeStorageSet('pre-log', '/dashboard/chat');
+    void this.router.navigate(['/login']);
+  }
+
+  private latestUserMessage(): string {
+    const item = [...this.messages].reverse().find((m) => m.from === 'user' && m.text.trim().length > 0);
+    return item?.text?.trim() ?? '';
+  }
+
+  private latestBotMessage(): string {
+    const item = [...this.messages].reverse().find((m) => m.from === 'bot' && m.text.trim().length > 0);
+    return item?.text?.trim() ?? '';
+  }
+
+  private buildHandoffMessage(latestUserMessage: string, latestBotMessage: string): string {
+    const recent = this.messages.slice(-4).map((m) => `${m.from === 'user' ? 'Cliente' : 'Assistente'}: ${m.text}`);
+    const lines = [
+      '[handoff-chatbot]',
+      latestUserMessage ? `Richiesta cliente: ${latestUserMessage}` : 'Richiesta cliente: supporto generale',
+      latestBotMessage ? `Ultima risposta assistente: ${latestBotMessage}` : '',
+      recent.length ? 'Contesto breve:' : '',
+      ...recent
+    ].filter(Boolean);
+
+    return lines.join('\n').slice(0, 1400);
+  }
+
+  private inferCategory(text: string): 'booking' | 'billing' | 'aftercare' | 'tattoo-advice' | 'technical' | 'generic' {
+    const normalized = String(text ?? '').toLowerCase();
+    if (normalized.includes('prenot') || normalized.includes('consulenza') || normalized.includes('appuntamento')) return 'booking';
+    if (normalized.includes('pagament') || normalized.includes('fattura') || normalized.includes('prezzo') || normalized.includes('costo')) return 'billing';
+    if (normalized.includes('cura') || normalized.includes('guarig') || normalized.includes('aftercare')) return 'aftercare';
+    if (normalized.includes('stile') || normalized.includes('soggetto') || normalized.includes('tattoo') || normalized.includes('tatuaggio')) return 'tattoo-advice';
+    if (normalized.includes('errore') || normalized.includes('bug') || normalized.includes('accesso') || normalized.includes('login')) return 'technical';
+    return 'generic';
+  }
+
+  private inferType(text: string): 'support' | 'booking' | 'info' | 'advice' {
+    const normalized = String(text ?? '').toLowerCase();
+    if (normalized.includes('prenot') || normalized.includes('consulenza') || normalized.includes('appuntamento')) return 'booking';
+    if (normalized.includes('consiglio') || normalized.includes('stile') || normalized.includes('idea')) return 'advice';
+    if (normalized.includes('orari') || normalized.includes('contatt') || normalized.includes('dove') || normalized.includes('indirizzo')) return 'info';
+    return 'support';
   }
 
   private async flushUi(): Promise<void> {

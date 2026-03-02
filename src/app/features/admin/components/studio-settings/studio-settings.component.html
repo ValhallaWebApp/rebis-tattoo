@@ -6,29 +6,163 @@
     </div>
 
     <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="settings-form">
-      <h3>Identita studio</h3>
-      <app-dynamic-form
-        class="full"
-        [fields]="identityFields"
-        [formGroupInput]="settingsForm"
-        [showSubmit]="false"
-      ></app-dynamic-form>
+      <mat-accordion class="settings-accordion" multi>
+        <mat-expansion-panel [expanded]="true">
+          <mat-expansion-panel-header>
+            <mat-panel-title>Dati studio base</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="identityFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
 
-      <h3>Titolare</h3>
-      <app-dynamic-form
-        class="full"
-        [fields]="ownerFields"
-        [formGroupInput]="settingsForm"
-        [showSubmit]="false"
-      ></app-dynamic-form>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Titolare e contatti</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="ownerFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+          <app-dynamic-form
+            class="full"
+            [fields]="contactsFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
 
-      <h3>Contatti pubblici</h3>
-      <app-dynamic-form
-        class="full"
-        [fields]="contactsFields"
-        [formGroupInput]="settingsForm"
-        [showSubmit]="false"
-      ></app-dynamic-form>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Home - Hero</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="homeHeroFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Home - About</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="homeAboutFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Home - Servizi</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="homeServicesFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Home - Progetti</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="homeProjectsFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Home - Showcase</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="homeShowcaseFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Home - Collab ed eventi</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="homeUpdatesFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Home - FAQ e Contact</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="homeFaqFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+          <app-dynamic-form
+            class="full"
+            [fields]="homeContactFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Public - Chi siamo</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="chiSiamoFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Public - Contatti</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="contattiPageFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>Public - Eventi</mat-panel-title>
+          </mat-expansion-panel-header>
+          <app-dynamic-form
+            class="full"
+            [fields]="eventiPageFields"
+            [formGroupInput]="settingsForm"
+            [showSubmit]="false"
+          ></app-dynamic-form>
+        </mat-expansion-panel>
+      </mat-accordion>
 
       <div class="actions">
         <button mat-flat-button color="primary" type="submit" [disabled]="settingsForm.invalid || saving">

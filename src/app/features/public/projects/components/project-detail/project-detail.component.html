@@ -1,6 +1,4 @@
-<section class="page">
-
-  <!-- TOP BAR -->
+<section class="project-detail-page">
   <div class="topbar">
     <a mat-stroked-button [routerLink]="goBackToProjects()">
       <mat-icon>arrow_back</mat-icon>
@@ -9,33 +7,38 @@
 
     <span class="spacer"></span>
 
-    <a mat-button [routerLink]="goToArtistProjects()">
+    <a mat-stroked-button [routerLink]="goToArtistProjects()">
       <mat-icon>person</mat-icon>
       {{ artistName() }}
     </a>
   </div>
 
-  <!-- LOADING -->
   <div class="state" *ngIf="loading">
     <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
     <div class="state__text">Caricamento progetto...</div>
   </div>
 
-  <!-- NOT FOUND -->
   <div class="state" *ngIf="!loading && notFound">
     <mat-icon class="state__icon">search_off</mat-icon>
     <div class="state__text">Progetto non trovato.</div>
-    <a mat-stroked-button routerLink="/progetti">
-      Vai ai progetti
-    </a>
+    <a mat-stroked-button routerLink="/progetti">Vai ai progetti</a>
   </div>
 
-  <!-- CONTENT -->
   <ng-container *ngIf="!loading && !notFound && project as p">
-    <div class="layout">
+    <header class="detail-hero panel">
+      <p class="kicker">Progetto completato</p>
+      <h1>{{ p.title }}</h1>
 
-      <!-- GALLERY -->
-      <div class="gallery">
+      <div class="hero-meta">
+        <span class="chip">{{ statusLabel() }}</span>
+        <span class="chip" *ngIf="p.style">{{ p.style }}</span>
+        <span class="chip" *ngIf="colorTypeLabel() !== '-'">{{ colorTypeLabel() }}</span>
+        <span class="chip" *ngIf="createdAtOf()">{{ createdAtOf() | date:'dd/MM/yyyy' }}</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <article class="gallery panel">
         <div class="gallery__hero">
           <button *ngIf="hasMultipleImages()" mat-icon-button class="nav left" (click)="prev()" aria-label="precedente">
             <mat-icon>chevron_left</mat-icon>
@@ -54,110 +57,81 @@
             *ngFor="let url of imageUrls(); let i = index"
             (click)="setActive(i)"
             [class.active]="i === activeIndex"
-            [attr.aria-label]="'immagine ' + (i+1)"
+            [attr.aria-label]="'immagine ' + (i + 1)"
             type="button"
           >
-            <img [src]="url" [alt]="p.title + ' - ' + (i+1)" loading="lazy" decoding="async" (error)="onImgError($event)" />
+            <img [src]="url" [alt]="p.title + ' - ' + (i + 1)" loading="lazy" decoding="async" (error)="onImgError($event)" />
           </button>
         </div>
-      </div>
+      </article>
 
-      <!-- DETAILS -->
-      <div class="details">
-
-        <div class="head">
-          <div>
-            <h1 class="title">{{ p.title }}</h1>
-
-            <div class="meta">
-              <mat-chip-set>
-                <mat-chip>{{ statusLabel() }}</mat-chip>
-
-                <mat-chip *ngIf="p.style">{{ p.style }}</mat-chip>
-
-                <mat-chip *ngIf="colorTypeLabel() !== '-'">
-                  {{ colorTypeLabel() }}
-                </mat-chip>
-              </mat-chip-set>
+      <article class="details">
+        <section class="panel card">
+          <h2>Informazioni principali</h2>
+          <div class="grid">
+            <div class="row">
+              <div class="k">Artista</div>
+              <div class="v">{{ artistName() }}</div>
+            </div>
+            <div class="row" *ngIf="zoneLabel()">
+              <div class="k">Zona</div>
+              <div class="v">{{ zoneLabel() }}</div>
+            </div>
+            <div class="row" *ngIf="projectId()">
+              <div class="k">ID progetto</div>
+              <div class="v">{{ projectId() }}</div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <mat-card class="card">
-          <mat-card-content>
-            <div class="grid">
-              <div class="row">
-                <div class="k">Artista</div>
-                <div class="v">{{ artistName() }}</div>
-              </div>
+        <section class="panel card">
+          <h2>Dettagli tecnici</h2>
 
-              <div class="row" *ngIf="zoneLabel()">
-                <div class="k">Zona</div>
-                <div class="v">{{ zoneLabel() }}</div>
-              </div>
+          <p class="desc" *ngIf="p.description">{{ p.description }}</p>
 
-              <div class="row" *ngIf="createdAtOf()">
-                <div class="k">Data progetto</div>
-                <div class="v">{{ createdAtOf() | date:'dd/MM/yyyy' }}</div>
-              </div>
+          <div class="grid">
+            <div class="row" *ngIf="p.bodyPart">
+              <div class="k">Parte del corpo</div>
+              <div class="v">{{ p.bodyPart }}</div>
             </div>
-          </mat-card-content>
-        </mat-card>
 
-        <mat-card class="card">
-          <mat-card-content>
-            <div class="desc" *ngIf="p.description">{{ p.description }}</div>
-
-            <div class="grid">
-              <div class="row" *ngIf="p.bodyPart">
-                <div class="k">Parte del corpo</div>
-                <div class="v">{{ p.bodyPart }}</div>
-              </div>
-
-              <div class="row" *ngIf="p.placement">
-                <div class="k">Posizione</div>
-                <div class="v">{{ p.placement }}</div>
-              </div>
-
-              <div class="row" *ngIf="p.size">
-                <div class="k">Dimensione</div>
-                <div class="v">{{ p.size }}</div>
-              </div>
-
-              <div class="row" *ngIf="p.subject">
-                <div class="k">Soggetto</div>
-                <div class="v">{{ p.subject }}</div>
-              </div>
-
-              <div class="row" *ngIf="p.estimatedSessions">
-                <div class="k">Sedute stimate</div>
-                <div class="v">{{ p.estimatedSessions }}</div>
-              </div>
-
-              <div class="row" *ngIf="p.estimatedPrice">
-                <div class="k">Prezzo stimato</div>
-                <div class="v">{{ p.estimatedPrice | currency:'EUR':'symbol':'1.0-0' }}</div>
-              </div>
-
-              <div class="row" *ngIf="p.deposit">
-                <div class="k">Acconto</div>
-                <div class="v">{{ p.deposit | currency:'EUR':'symbol':'1.0-0' }}</div>
-              </div>
+            <div class="row" *ngIf="p.placement">
+              <div class="k">Posizione</div>
+              <div class="v">{{ p.placement }}</div>
             </div>
-          </mat-card-content>
-        </mat-card>
 
-        <mat-card class="card" *ngIf="p.clientNotes">
-          <mat-card-header>
-            <mat-card-title>Note per il cliente</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="notes">{{ p.clientNotes }}</div>
-          </mat-card-content>
-        </mat-card>
+            <div class="row" *ngIf="p.size">
+              <div class="k">Dimensione</div>
+              <div class="v">{{ p.size }}</div>
+            </div>
 
-      </div>
-    </div>
+            <div class="row" *ngIf="p.subject">
+              <div class="k">Soggetto</div>
+              <div class="v">{{ p.subject }}</div>
+            </div>
+
+            <div class="row" *ngIf="p.estimatedSessions">
+              <div class="k">Sedute stimate</div>
+              <div class="v">{{ p.estimatedSessions }}</div>
+            </div>
+
+            <div class="row" *ngIf="p.estimatedPrice">
+              <div class="k">Prezzo stimato</div>
+              <div class="v">{{ p.estimatedPrice | currency:'EUR':'symbol':'1.0-0' }}</div>
+            </div>
+
+            <div class="row" *ngIf="p.deposit">
+              <div class="k">Acconto</div>
+              <div class="v">{{ p.deposit | currency:'EUR':'symbol':'1.0-0' }}</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel card" *ngIf="p.clientNotes">
+          <h2>Note per il cliente</h2>
+          <div class="notes">{{ p.clientNotes }}</div>
+        </section>
+      </article>
+    </section>
   </ng-container>
-
 </section>

@@ -97,6 +97,7 @@ export class AuthService {
       canManageRoles: false,
       canManageBookings: false,
       canManageProjects: false,
+      canManageEvents: false,
       canManageSessions: false,
       canReassignProjectArtist: false,
       canReassignProjectClient: false,
@@ -376,7 +377,7 @@ export class AuthService {
     const current = this._userSig();
     if (!current) throw new Error('auth/not-logged-in');
 
-    const patch: Partial<AppUser> = {
+    const rawPatch: Partial<AppUser> = {
       name: data.name !== undefined ? this.toStringValue(data.name) : undefined,
       phone: data.phone !== undefined ? this.toStringValue(data.phone) : undefined,
       avatar: data.avatar !== undefined ? this.toStringValue(data.avatar) : undefined,
@@ -388,6 +389,12 @@ export class AuthService {
       country: data.country !== undefined ? this.toStringValue(data.country) : undefined,
       updatedAt: new Date().toISOString(),
     };
+
+    const patch = Object.fromEntries(
+      Object.entries(rawPatch).filter(([, value]) => value !== undefined)
+    ) as Partial<AppUser>;
+
+    if (!Object.keys(patch).length) return;
 
     await updateDb(dbRef(this.db, `users/${current.uid}`), patch as any);
     this._userSig.set({ ...current, ...patch } as AppUser);

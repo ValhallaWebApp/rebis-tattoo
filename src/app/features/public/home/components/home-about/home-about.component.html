@@ -1,14 +1,14 @@
 ﻿<section class="about-section">
   <div class="about-wrapper">
     <div class="about-image">
-      <img src="/ink/woman-1.webp" alt="Tattoo in corso" />
+      <img src="/personale/ink.webp" [alt]="lang.t('home.about.imageAlt')" />
     </div>
     <div class="about-text">
       <h2 class="title">
-        {{ lang.t('home.about.title') }}
+        {{ profile().homeAboutTitle || lang.t('home.about.title') }}
       </h2>
       <p>
-        {{ lang.t('home.about.paragraph1') }}
+        {{ profile().homeAboutParagraph1 || lang.t('home.about.paragraph1') }}
       </p>
       <!-- <p class="cta">
         {{ lang.t('home.about.paragraph2') }}
@@ -17,7 +17,7 @@
       <div class="approach-box">
 
         <ul>
-          <li *ngFor="let item of clientApproach">
+          <li *ngFor="let item of clientApproach()">
             <strong>{{ item.title }}</strong>
             <span>{{ item.text }}</span>
           </li>
@@ -25,7 +25,7 @@
       </div>
 
       <a routerLink="/chi-siamo" class="read-more">
-        {{ lang.t('home.about.cta') }}
+        {{ profile().homeAboutCta || lang.t('home.about.cta') }}
         <span class="arrow">-></span>
       </a>
     </div>

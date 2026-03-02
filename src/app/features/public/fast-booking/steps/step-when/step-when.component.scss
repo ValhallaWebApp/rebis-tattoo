@@ -32,9 +32,13 @@
 .day {
   border-radius: 999px !important;
   height: 38px;
+  color: #f5f4f2 !important;
+  border-color: rgba(245, 244, 242, .28) !important;
 }
 
 .day.active {
+  color: #111111 !important;
+  background: var(--fb-accent) !important;
   border-color: rgba(183, 155, 85, .58) !important;
   box-shadow: 0 10px 30px rgba(183, 155, 85, .14);
 }
@@ -57,14 +61,28 @@
 .time {
   border-radius: 12px !important;
   height: 42px;
+  color: #f5f4f2 !important;
+  border-color: rgba(245, 244, 242, .28) !important;
 }
 
 .time.active {
+  color: #111111 !important;
+  background: var(--fb-accent) !important;
   border-color: rgba(183, 155, 85, .7) !important;
-  background: rgba(183, 155, 85, .12);
+  box-shadow: 0 10px 30px rgba(183, 155, 85, .18);
 }
 
 .ico { margin-right: 6px; opacity: .7; }
+
+:host ::ng-deep .day .mdc-button__label,
+:host ::ng-deep .time .mdc-button__label {
+  color: inherit !important;
+}
+
+:host ::ng-deep .time .mat-icon,
+:host ::ng-deep .day .mat-icon {
+  color: inherit !important;
+}
 
 .error {
   display: flex;
@@ -79,4 +97,18 @@
 .empty {
   padding: 12px 0;
   opacity: .7;
+}
+
+.availability-note {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: rgba(245, 244, 242, 0.88);
+}
+
+.event-link {
+  margin-left: 8px;
+  color: var(--fb-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }

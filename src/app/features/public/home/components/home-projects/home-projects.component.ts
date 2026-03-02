@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Subscription, map } from 'rxjs';
 import { LanguageService } from '../../../../../core/services/language/language.service';
 import { ProjectsService, TattooProject } from '../../../../../core/services/projects/projects.service';
+import {
+  DEFAULT_STUDIO_PROFILE,
+  StudioProfileService
+} from '../../../../../core/services/studio/studio-profile.service';
 
 type HomeProjectCard = {
   id: string;
@@ -19,33 +24,27 @@ type HomeProjectCard = {
 })
 export class HomeProjectsComponent implements OnInit, OnDestroy {
   private readonly projectsService = inject(ProjectsService);
+  private readonly studioProfile = inject(StudioProfileService);
+  private readonly profileSig = toSignal(this.studioProfile.getProfile(), {
+    initialValue: DEFAULT_STUDIO_PROFILE
+  });
   private sub?: Subscription;
-
-  readonly fallbackCover = `data:image/svg+xml;utf8,${encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">' +
-      '<defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1">' +
-      '<stop offset="0" stop-color="#151515"/><stop offset="1" stop-color="#2a2a2a"/>' +
-      '</linearGradient></defs>' +
-      '<rect width="1200" height="800" fill="url(#g)"/>' +
-      '<rect x="80" y="80" width="1040" height="640" fill="none" stroke="#3a3a3a" stroke-width="6" rx="28"/>' +
-      '<path d="M360 520l140-160 120 120 180-220 220 260" fill="none" stroke="#8a8a8a" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>' +
-      '<circle cx="460" cy="320" r="46" fill="#8a8a8a"/>' +
-      '<text x="600" y="680" fill="#9a9a9a" font-size="32" text-anchor="middle" font-family="Arial, sans-serif">No photo</text>' +
-    '</svg>'
-  )}`;
+  readonly fallbackCover: string;
 
   loading = true;
   projects: HomeProjectCard[] = [];
 
-  constructor(public lang: LanguageService) {}
+  constructor(public lang: LanguageService) {
+    this.fallbackCover = this.buildFallbackCover();
+  }
 
   ngOnInit(): void {
-    this.sub = this.projectsService.getProjects().pipe(
+    this.sub = this.projectsService.getPublicProjects().pipe(
       map(list =>
         (list ?? [])
           .filter(p =>
             (p as any).isPublic !== false &&
-            String((p as any).status ?? '').trim() === 'completed'
+            this.isCompletedStatus((p as any).status)
           )
           .sort((a, b) => this.createdAtOf(b).localeCompare(this.createdAtOf(a)))
           .slice(0, 6)
@@ -68,12 +67,42 @@ export class HomeProjectsComponent implements OnInit, OnDestroy {
     });
   }
 
+  private isCompletedStatus(status: unknown): boolean {
+    const normalized = String(status ?? '').trim().toLowerCase();
+    return normalized === 'completed'
+      || normalized === 'complete'
+      || normalized === 'concluso'
+      || normalized === 'done'
+      || normalized === 'finished';
+  }
+
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
   }
 
+  featuredProject(): HomeProjectCard | null {
+    return this.projects.length ? this.projects[0] : null;
+  }
+
+  secondaryProjects(): HomeProjectCard[] {
+    return this.projects.length > 1 ? this.projects.slice(1) : [];
+  }
+
+  railProjects(): HomeProjectCard[] {
+    return this.secondaryProjects().slice(0, 2);
+  }
+
+  stripProjects(): HomeProjectCard[] {
+    return this.secondaryProjects().slice(2);
+  }
+
+  displayOrder(position: number): string {
+    const n = Math.max(1, position);
+    return n < 10 ? `0${n}` : String(n);
+  }
+
   private titleOf(p: TattooProject): string {
-    return String((p as any).title ?? (p as any).name ?? '').trim() || 'Progetto';
+    return String((p as any).title ?? (p as any).name ?? '').trim() || this.lang.t('home.projects.fallbackTitle');
   }
 
   private descriptionOf(p: TattooProject): string {
@@ -81,7 +110,7 @@ export class HomeProjectsComponent implements OnInit, OnDestroy {
     const subject = String((p as any).subject ?? '').trim();
     const notes = String((p as any).notes ?? '').trim();
     const line = [style, subject].filter(Boolean).join(' - ');
-    return line || notes || 'Progetto realizzato in studio.';
+    return line || notes || this.lang.t('home.projects.fallbackDescription');
   }
 
   private createdAtOf(p: TattooProject): string {
@@ -113,6 +142,38 @@ export class HomeProjectsComponent implements OnInit, OnDestroy {
     if (img && img.src !== this.fallbackCover) {
       img.src = this.fallbackCover;
     }
+  }
+
+  private buildFallbackCover(): string {
+    const noPhotoLabel = this.lang.t('home.projects.noPhotoLabel');
+    return `data:image/svg+xml;utf8,${encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">' +
+        '<defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1">' +
+        '<stop offset="0" stop-color="#151515"/><stop offset="1" stop-color="#2a2a2a"/>' +
+        '</linearGradient></defs>' +
+        '<rect width="1200" height="800" fill="url(#g)"/>' +
+        '<rect x="80" y="80" width="1040" height="640" fill="none" stroke="#3a3a3a" stroke-width="6" rx="28"/>' +
+        '<path d="M360 520l140-160 120 120 180-220 220 260" fill="none" stroke="#8a8a8a" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<circle cx="460" cy="320" r="46" fill="#8a8a8a"/>' +
+        `<text x="600" y="680" fill="#9a9a9a" font-size="32" text-anchor="middle" font-family="Arial, sans-serif">${noPhotoLabel}</text>` +
+      '</svg>'
+    )}`;
+  }
+
+  titleText(): string {
+    return this.profileSig().homeProjectsTitle || this.lang.t('home.projects.title');
+  }
+
+  subtitleText(): string {
+    return this.profileSig().homeProjectsSubtitle || this.lang.t('home.projects.subtitle');
+  }
+
+  emptyText(): string {
+    return this.profileSig().homeProjectsEmpty || this.lang.t('home.projects.empty');
+  }
+
+  viewAllLabel(): string {
+    return this.profileSig().homeProjectsViewAll || this.lang.t('home.projects.viewAll');
   }
 }
 

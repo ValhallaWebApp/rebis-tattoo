@@ -96,6 +96,14 @@
     gap: 0.4rem;
   }
 
+  .thread-chips {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
   .thread-title {
     font-weight: 700;
     font-size: 0.95rem;
@@ -118,6 +126,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
     font-size: 0.76rem;
     color: var(--text-muted);
   }
@@ -159,6 +169,45 @@
 
   &.closed {
     background: color-mix(in srgb, #f08a8a 20%, transparent);
+  }
+}
+
+.ticket-chip {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.66rem;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  padding: 0.08rem 0.45rem;
+  background: color-mix(in srgb, #6ea8ff 16%, transparent);
+}
+
+.ticket-priority {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.66rem;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  padding: 0.08rem 0.45rem;
+  background: color-mix(in srgb, #8ea1b8 18%, transparent);
+  color: var(--app-main-text);
+
+  &.low {
+    background: color-mix(in srgb, #81c995 20%, transparent);
+  }
+
+  &.normal {
+    background: color-mix(in srgb, #8ea1b8 18%, transparent);
+  }
+
+  &.high {
+    background: color-mix(in srgb, #ffb366 24%, transparent);
+  }
+
+  &.urgent {
+    background: color-mix(in srgb, #ff7a7a 28%, transparent);
   }
 }
 
@@ -210,6 +259,8 @@
     display: flex;
     align-items: center;
     gap: 0.45rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .messages {

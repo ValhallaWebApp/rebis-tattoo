@@ -1,3 +1,11 @@
+@use '../../styles/home-typography' as homeTypography;
+
+:host {
+  display: block;
+  width: min(1200px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
 .spinner-wrapper {
   display: flex;
   justify-content: center;
@@ -5,34 +13,42 @@
 }
 
 .booking-form-section {
-  padding: 0rem 1rem;
-  color: white;
-  text-align: center;
+  padding: clamp(var(--home-space-6), 3vw, var(--home-space-10));
+  color: var(--home-text);
+  text-align: left;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 
   .section-title {
-    font-size: 2rem;
-    font-family: 'Barlow Semi Condensed', sans-serif;
-    color: #787878;
+    @include homeTypography.section-title(clamp(2rem, 3.8vw, 3.2rem));
+    margin-bottom: var(--home-space-4);
 
     span {
-      color: #000000;
+      color: var(--home-accent);
     }
   }
 
-  // ✅ Banner login/registrazione
   .auth-banner {
     max-width: 900px;
-    margin: 1.2rem auto 0;
-    padding: 14px;
-    border-radius: 14px;
+    margin: 0 0 var(--home-space-5);
+    padding: var(--home-space-4);
+    border-radius: var(--home-radius-3);
     text-align: left;
     display: flex;
     justify-content: space-between;
-    gap: 14px;
+    gap: var(--home-space-3);
     align-items: center;
+    border: 1px solid var(--home-glass-border-soft);
+    background: rgba(var(--home-panel-rgb), 0.8);
+    color: var(--home-text);
 
     &.ok {
       opacity: 0.95;
+      border-color: rgba(var(--home-accent-rgb), 0.48);
     }
 
     &__left {
@@ -43,7 +59,8 @@
     }
 
     .auth-ico {
-      opacity: 0.8;
+      opacity: 0.9;
+      color: var(--home-accent);
     }
 
     .auth-text {
@@ -51,22 +68,20 @@
     }
 
     .auth-title {
-      font-weight: 800;
-      font-size: 14px;
-      color: #111;
+      @include homeTypography.body-strong(clamp(0.84rem, 1.2vw, 0.92rem));
     }
 
     .auth-sub {
       margin-top: 2px;
-      font-size: 12px;
-      color: #444;
-      opacity: 0.9;
+      @include homeTypography.body-text(clamp(0.76rem, 1.05vw, 0.84rem));
+      color: var(--home-text-muted);
+      opacity: 0.95;
       line-height: 1.35;
     }
 
     &__actions {
       display: flex;
-      gap: 10px;
+      gap: var(--home-space-2);
       flex-wrap: wrap;
       justify-content: flex-end;
     }
@@ -74,28 +89,28 @@
 
   .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: 1fr;
+    gap: var(--home-space-5);
+    width: min(100%, 900px);
     max-width: 900px;
-    margin: auto;
-    margin-top: 2rem;
+    margin: 0;
 
     app-dynamic-form {
-      --df-field-bg: rgba(255, 255, 255, 0.05);
-      --df-field-bg-hover: rgba(255, 255, 255, 0.07);
-      --df-field-bg-focus: rgba(255, 255, 255, 0.09);
-      --df-field-text: #787878;
-      --df-field-label: #787878;
-      --df-field-hint: #a4a4a4;
-      --df-field-border: rgba(190, 144, 69, 0.34);
-      --df-field-border-focus: #be9045;
-      --df-field-icon: #787878;
+      --df-field-bg: rgba(var(--home-white-rgb), 0.07);
+      --df-field-bg-hover: rgba(var(--home-white-rgb), 0.1);
+      --df-field-bg-focus: rgba(var(--home-white-rgb), 0.13);
+      --df-field-text: var(--home-text);
+      --df-field-label: var(--home-text-muted);
+      --df-field-hint: var(--home-text-soft);
+      --df-field-border: var(--home-glass-border-soft);
+      --df-field-border-focus: var(--home-accent);
+      --df-field-icon: var(--home-text-muted);
     }
 
     app-dynamic-form ::ng-deep .mat-mdc-form-field .mat-mdc-floating-label,
     app-dynamic-form ::ng-deep .mat-mdc-form-field .mdc-floating-label,
     app-dynamic-form ::ng-deep .mat-mdc-form-field .mat-mdc-form-field-required-marker {
-      color: #787878 !important;
+      color: var(--home-text-muted) !important;
     }
 
     app-dynamic-form ::ng-deep .mat-mdc-input-element,
@@ -105,35 +120,17 @@
     app-dynamic-form ::ng-deep .mat-mdc-form-field-icon-prefix,
     app-dynamic-form ::ng-deep .mat-mdc-form-field-icon-suffix,
     app-dynamic-form ::ng-deep .mat-mdc-form-field-hint {
-      color: #787878 !important;
+      color: var(--home-text) !important;
     }
 
     app-dynamic-form ::ng-deep .mat-mdc-input-element::placeholder,
     app-dynamic-form ::ng-deep textarea.mat-mdc-input-element::placeholder {
-      color: #a4a4a4 !important;
+      color: var(--home-text-soft) !important;
       opacity: 1 !important;
     }
-  }
 
-  .form-group {
-    width: 100%;
-
-    ::ng-deep .mat-form-field-flex {
-      background-color: rgba(255, 255, 255, 0.05);
-    }
-
-    ::ng-deep .mat-form-field-underline {
-      background-color: #BE9045;
-    }
-
-    ::ng-deep .mat-form-field-label {
-      color: #787878;
-    }
-
-    ::ng-deep .mat-select-value,
-    ::ng-deep input,
-    ::ng-deep textarea {
-      color: #787878;
+    app-dynamic-form ::ng-deep .dynamic-form {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -145,22 +142,32 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: var(--home-space-4);
 
     mat-checkbox {
       label {
-        color: white !important;
+        color: var(--home-text) !important;
       }
-      color: white !important;
-      font-weight: 500;
+      color: var(--home-text) !important;
+      font-weight: 400;
     }
 
     button {
-      background-color: #000000;
-      color: whitesmoke;
-      font-weight: bold;
-      padding: 0.7rem 2rem;
-      border-radius: 4px;
+      @include homeTypography.font-base();
+      background-color: rgba(var(--home-accent-rgb), 0.88);
+      color: var(--home-accent-ink);
+      font-weight: 400;
+      padding: 12px 24px;
+      border-radius: var(--home-radius-2);
+      min-height: 48px;
+      transition:
+        transform var(--home-motion-fast) var(--home-ease-standard),
+        filter var(--home-motion-fast) var(--home-ease-standard);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        filter: brightness(1.02);
+      }
     }
   }
 }
@@ -173,6 +180,20 @@
 
       &__actions {
         justify-content: flex-start;
+      }
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  :host {
+    width: min(1200px, calc(100% - 20px));
+  }
+
+  .booking-form-section {
+    .form-grid {
+      app-dynamic-form ::ng-deep .dynamic-form {
+        grid-template-columns: 1fr;
       }
     }
   }

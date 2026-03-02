@@ -1,0 +1,134 @@
+@mixin apply-home-palette() {
+  /* Backgrounds */
+  --home-bg-base: #f5f0e7;
+  --home-bg-alt: #eae2d6;
+  --home-bg-inverse: #0f0b0c;
+  --home-bg-deep: #080607;
+  --home-bg-start: #0f0b0c;
+  --home-bg-mid: #130f10;
+  --home-bg-end: #080607;
+
+  /* Surfaces */
+  --home-surface-1: #171214;
+  --home-surface-2: #221b1d;
+  --home-surface-3: #fff9f2;
+  --home-surface-4: #d8ccbc;
+  --home-surface-overlay: rgba(8, 6, 7, 0.72);
+
+  /* Text */
+  --home-text-strong: #120f10;
+  --home-text-primary: #1e1819;
+  --home-text-secondary: #5b5051;
+  --home-text-inverse: #f8f1e8;
+  --home-text-muted-inverse: #c6baae;
+  --home-text-accent: #8d6a3c;
+
+  /* Accent */
+  --home-accent-primary: #b2874f;
+  --home-accent-primary-hover: #8d6a3c;
+  --home-accent-secondary: #b2874f;
+  --home-accent-soft: #e4d4be;
+  --home-accent-ink: #2b0f14;
+
+  /* Borders */
+  --home-border-subtle: #d8ccbc;
+  --home-border-strong: #2e2527;
+  --home-border-contrast: #120f10;
+  --home-border-inverse: #4a3d3f;
+
+  /* States */
+  --home-state-success: #3e7a57;
+  --home-state-warning: #a66a1f;
+  --home-state-danger: #8a2330;
+  --home-state-info: #5e6b8a;
+  --home-state-focus: #b2874f;
+
+  /* Spacing */
+  --home-space-0: 0;
+  --home-space-1: 4px;
+  --home-space-2: 8px;
+  --home-space-3: 12px;
+  --home-space-4: 16px;
+  --home-space-5: 20px;
+  --home-space-6: 24px;
+  --home-space-8: 32px;
+  --home-space-10: 40px;
+  --home-space-12: 48px;
+  --home-space-16: 64px;
+  --home-space-20: 80px;
+  --home-space-24: 96px;
+  --home-space-32: 128px;
+
+  /* Radius */
+  --home-radius-0: 0;
+  --home-radius-1: 2px;
+  --home-radius-2: 4px;
+  --home-radius-3: 8px;
+  --home-radius-4: 12px;
+  --home-radius-round: 999px;
+
+  /* Motion */
+  --home-motion-instant: 80ms;
+  --home-motion-fast: 140ms;
+  --home-motion-base: 220ms;
+  --home-motion-slow: 320ms;
+  --home-motion-emphasis: 480ms;
+  --home-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --home-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --home-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --home-ease-emphasis: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Shadows */
+  --home-shadow-0: none;
+  --home-shadow-1: 0 1px 0 rgba(0, 0, 0, 0.12);
+  --home-shadow-2: 0 8px 24px -16px rgba(0, 0, 0, 0.18);
+  --home-shadow-3: 0 16px 40px -22px rgba(0, 0, 0, 0.24);
+  --home-shadow-4: 0 24px 64px -30px rgba(0, 0, 0, 0.32);
+  --home-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --home-shadow-soft: var(--home-shadow-2);
+  --home-shadow-medium: var(--home-shadow-3);
+  --home-shadow-strong: var(--home-shadow-4);
+  --home-shadow-image: 0 18px 30px rgba(0, 0, 0, 0.28);
+  --home-shadow-glass: 0 24px 48px rgba(0, 0, 0, 0.3);
+
+  /* Legacy-compatible aliases (keep existing components working) */
+  --home-black: var(--home-bg-deep);
+  --home-black-soft: var(--home-bg-inverse);
+  --home-black-deep: var(--home-bg-deep);
+  --home-black-elevated: var(--home-surface-1);
+  --home-ink: var(--home-text-inverse);
+  --home-ink-soft: #dfd2c5;
+  --home-ink-mid: #bfb3a6;
+  --home-white: #ffffff;
+  --home-whitesmoke: var(--home-text-inverse);
+  --home-gray-700: #9f9387;
+  --home-gray-650: #94887d;
+  --home-gray-600: #857a70;
+  --home-gray-560: #746a62;
+  --home-gray-500: #665d56;
+  --home-gray-420: #564f49;
+  --home-gray-400: #4c4540;
+  --home-gray-320: #b6ab9f;
+  --home-gray-280: #c7bcb0;
+  --home-gray-250: #d9cfc3;
+  --home-faq-bg: rgba(23, 18, 20, 0.7);
+  --home-accent: var(--home-accent-primary);
+  --home-accent-strong: var(--home-accent-secondary);
+
+  --home-white-rgb: 255, 255, 255;
+  --home-black-rgb: 8, 6, 7;
+  --home-accent-rgb: 178, 135, 79;
+  --home-panel-rgb: 23, 18, 20;
+
+  --home-text: var(--home-text-inverse);
+  --home-text-muted: rgba(198, 186, 174, 0.86);
+  --home-text-soft: rgba(198, 186, 174, 0.72);
+
+  --home-glass-surface: rgba(23, 18, 20, 0.72);
+  --home-glass-panel: rgba(34, 27, 29, 0.82);
+  --home-glass-border: rgba(74, 61, 63, 0.7);
+  --home-glass-border-soft: rgba(74, 61, 63, 0.42);
+  --home-glass-bg: linear-gradient(165deg, rgba(255, 249, 242, 0.08), rgba(255, 249, 242, 0.02));
+  --home-glass-highlight: radial-gradient(circle at 85% 8%, rgba(178, 135, 79, 0.2), transparent 32%);
+  --home-glass-blur: 14px;
+}

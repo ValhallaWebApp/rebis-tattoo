@@ -63,18 +63,25 @@ export class LanguageService {
    * 4) path stesso (missing key)
    */
   t(path: string): string {
-    const lang = this.currentLangSig();
-    const fromRuntime = this.getByPath(this.runtimeBundles[lang], path);
-    if (typeof fromRuntime === 'string') return fromRuntime;
-
-    const fromFallback = this.getByPath(this.localFallback[lang], path);
-    if (typeof fromFallback === 'string') return fromFallback;
-
-    const fromIt = this.getByPath(this.runtimeBundles.it, path) ?? this.getByPath(this.localFallback.it, path);
-    if (typeof fromIt === 'string') return fromIt;
+    const value = this.get<unknown>(path);
+    if (typeof value === 'string') return value;
 
     console.warn(`[LanguageService] Translation missing: ${path}`);
     return path;
+  }
+
+  get<T = unknown>(path: string): T | undefined {
+    const lang = this.currentLangSig();
+    const fromRuntime = this.getByPath(this.runtimeBundles[lang], path);
+    if (fromRuntime !== undefined) return fromRuntime as T;
+
+    const fromFallback = this.getByPath(this.localFallback[lang], path);
+    if (fromFallback !== undefined) return fromFallback as T;
+
+    const fromIt = this.getByPath(this.runtimeBundles.it, path) ?? this.getByPath(this.localFallback.it, path);
+    if (fromIt !== undefined) return fromIt as T;
+
+    return undefined;
   }
 
   private ensureDbSync(lang: LangCode): void {

@@ -8,13 +8,14 @@
       class="cell"
       *ngFor="let c of gridDays()"
       [class.dim]="!c.inMonth"
+      [ngClass]="intensityClass(countForDay(c.key))"
       (click)="openDay.emit({ dateKey: c.key })"
     >
       <div class="top">
         <span class="day">{{ c.date.getDate() }}</span>
         <span class="badge" *ngIf="countForDay(c.key) > 0">{{ countForDay(c.key) }}</span>
       </div>
-      <div class="hint" *ngIf="countForDay(c.key) === 0">—</div>
+      <div class="hint" *ngIf="countForDay(c.key) === 0">-</div>
       <div class="hint" *ngIf="countForDay(c.key) > 0">eventi</div>
     </button>
   </div>

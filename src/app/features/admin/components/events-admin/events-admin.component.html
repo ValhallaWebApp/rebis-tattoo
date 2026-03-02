@@ -1,0 +1,85 @@
+<section class="events-admin">
+  <header class="events-admin__header">
+    <div>
+      <h2>Eventi</h2>
+      <p>Gestione guest spot e open day con stato, ricorrenza e priorita.</p>
+    </div>
+    <button mat-mini-fab color="primary" type="button" (click)="openCreate()">
+      <mat-icon>add</mat-icon>
+    </button>
+  </header>
+
+  <mat-accordion class="events-admin__filters">
+    <mat-expansion-panel [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title>Filtri eventi</mat-panel-title>
+        <mat-panel-description>Ricerca, tipo, stato e in evidenza</mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <app-dynamic-form
+        [fields]="filterFields"
+        [formGroupInput]="filterForm"
+        [showSubmit]="false"
+      ></app-dynamic-form>
+    </mat-expansion-panel>
+  </mat-accordion>
+
+  <mat-card *ngIf="loading" class="events-admin__state">
+    <mat-card-content>Caricamento eventi...</mat-card-content>
+  </mat-card>
+
+  <mat-card *ngIf="!loading && !filteredEvents.length" class="events-admin__state">
+    <mat-card-content>Nessun evento disponibile con i filtri correnti.</mat-card-content>
+  </mat-card>
+
+  <div class="events-admin__list" *ngIf="!loading && filteredEvents.length">
+    <mat-card class="event-card" *ngFor="let event of filteredEvents; trackBy: trackById">
+      <div class="event-card__media" *ngIf="event.imageUrl">
+        <img [src]="event.imageUrl" [alt]="event.title" />
+      </div>
+
+      <mat-card-header class="event-card__header">
+        <div class="event-head">
+          <div class="event-head__title">
+            <mat-card-title>{{ event.title }}</mat-card-title>
+            <mat-card-subtitle>{{ event.guestName || event.location || 'Senza dettaglio guest/location' }}</mat-card-subtitle>
+          </div>
+          <div class="chips">
+            <span class="chip">{{ typeLabel(event.type) }}</span>
+            <span class="chip chip--status">{{ statusLabel(event.status) }}</span>
+            <span class="chip" *ngIf="event.featured">In evidenza</span>
+            <span class="chip" *ngIf="event.walkInOnly">Senza prenotazione</span>
+          </div>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content class="event-card__content">
+        <p class="event-description">{{ event.description || 'Nessuna descrizione.' }}</p>
+
+        <div class="event-meta">
+          <span>{{ event.startDate }}<ng-container *ngIf="event.endDate && event.endDate !== event.startDate"> -> {{ event.endDate }}</ng-container></span>
+          <span *ngIf="event.startTime">{{ event.startTime }}<ng-container *ngIf="event.endTime"> - {{ event.endTime }}</ng-container></span>
+          <span>{{ recurrenceLabel(event) }}</span>
+          <span *ngIf="event.capacityEnabled">Capienza: {{ event.capacity }}</span>
+          <span *ngIf="event.priority > 0">Pin: {{ event.priority }}</span>
+        </div>
+      </mat-card-content>
+
+      <mat-divider></mat-divider>
+
+      <mat-card-actions class="event-actions">
+        <button mat-stroked-button type="button" (click)="quickSetStatus(event, 'draft')">Bozza</button>
+        <button mat-flat-button color="primary" type="button" (click)="quickSetStatus(event, 'published')">Pubblica</button>
+        <button mat-stroked-button type="button" (click)="quickSetStatus(event, 'completed')">Concludi</button>
+        <button mat-stroked-button color="warn" type="button" (click)="quickSetStatus(event, 'cancelled')">Annulla</button>
+        <span class="spacer"></span>
+        <button mat-icon-button type="button" (click)="openEdit(event)" aria-label="Modifica evento">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" type="button" (click)="deleteEvent(event)" aria-label="Elimina evento">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</section>

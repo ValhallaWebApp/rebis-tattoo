@@ -1,59 +1,258 @@
 <section class="analytics-container">
-  <mat-card class="analytics-header">
-    <mat-card-title>Dashboard Statistiche</mat-card-title>
+  <mat-toolbar class="analytics-toolbar">
+    <span class="toolbar-title">Dashboard Statistiche</span>
+    <span class="toolbar-spacer"></span>
 
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="toolbar-field">
       <mat-label>Periodo</mat-label>
-      <mat-select (selectionChange)="onPeriodChange($event)">
-        <mat-option value="monthly" selected>Mensile</mat-option>
-        <mat-option value="annually">Annuale</mat-option>
+      <mat-select panelClass="analytics-select-panel" [value]="vm().period" (selectionChange)="onPeriodChange($event)">
+        @for (period of periodOptions; track period.value) {
+          <mat-option [value]="period.value">{{ period.label }}</mat-option>
+        }
       </mat-select>
     </mat-form-field>
 
-    <button mat-flat-button color="primary" (click)="exportToExcel()">Esporta Excel</button>
-  </mat-card>
+    <mat-form-field appearance="outline" class="toolbar-field">
+      <mat-label>Sezione</mat-label>
+      <mat-select panelClass="analytics-select-panel" [value]="selectedSection()" (selectionChange)="onSectionChange($event)">
+        @for (section of sectionOptions; track section.value) {
+          <mat-option [value]="section.value">{{ section.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
 
-  <div class="analytics-grid">
+    <mat-form-field appearance="outline" class="toolbar-field toolbar-field-export">
+      <mat-label>Export</mat-label>
+      <mat-select
+        panelClass="analytics-select-panel"
+        [value]="selectedExportScopes()"
+        (selectionChange)="onExportScopesChange($event)"
+        multiple>
+        <mat-select-trigger>{{ exportSelectionLabel() }}</mat-select-trigger>
+        @for (item of exportOptions; track item.value) {
+          <mat-option [value]="item.value">{{ item.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-stroked-button class="toolbar-export" (click)="exportToExcel()">Esporta</button>
+  </mat-toolbar>
+
+  <section class="panel-shell" [ngSwitch]="selectedSection()">
+    <div class="analytics-grid" *ngSwitchCase="'overview'">
+      <ng-container [ngTemplateOutlet]="kpiCards"></ng-container>
+      <ng-container [ngTemplateOutlet]="revenueCard"></ng-container>
+      <ng-container [ngTemplateOutlet]="appointmentsCard"></ng-container>
+      <ng-container [ngTemplateOutlet]="statusRatesCard"></ng-container>
+    </div>
+
+    <div class="analytics-grid" *ngSwitchCase="'revenue'">
+      <ng-container [ngTemplateOutlet]="kpiCards"></ng-container>
+      <ng-container [ngTemplateOutlet]="revenueCard"></ng-container>
+    </div>
+
+    <div class="analytics-grid" *ngSwitchCase="'bookings'">
+      <ng-container [ngTemplateOutlet]="kpiCards"></ng-container>
+      <ng-container [ngTemplateOutlet]="appointmentsCard"></ng-container>
+      <ng-container [ngTemplateOutlet]="artistVolumeCard"></ng-container>
+      <ng-container [ngTemplateOutlet]="utilizationCard"></ng-container>
+    </div>
+
+    <div class="analytics-grid" *ngSwitchCase="'clients'">
+      <ng-container [ngTemplateOutlet]="kpiCards"></ng-container>
+      <ng-container [ngTemplateOutlet]="clientGrowthCard"></ng-container>
+    </div>
+
+    <div class="analytics-grid" *ngSwitchCase="'quality'">
+      <ng-container [ngTemplateOutlet]="kpiCards"></ng-container>
+      <ng-container [ngTemplateOutlet]="reviewsCard"></ng-container>
+    </div>
+
+    <div class="analytics-grid" *ngSwitchCase="'styles'">
+      <ng-container [ngTemplateOutlet]="stylesCard"></ng-container>
+    </div>
+
+    <div class="analytics-grid" *ngSwitchCase="'operations'">
+      <ng-container [ngTemplateOutlet]="kpiCards"></ng-container>
+      <ng-container [ngTemplateOutlet]="statusRatesCard"></ng-container>
+      <ng-container [ngTemplateOutlet]="utilizationCard"></ng-container>
+    </div>
+
+    <div class="analytics-grid" *ngSwitchDefault>
+      <ng-container [ngTemplateOutlet]="kpiCards"></ng-container>
+      <ng-container [ngTemplateOutlet]="revenueCard"></ng-container>
+      <ng-container [ngTemplateOutlet]="appointmentsCard"></ng-container>
+      <ng-container [ngTemplateOutlet]="statusRatesCard"></ng-container>
+    </div>
+  </section>
+
+  <ng-template #kpiCards>
+    <div class="kpi-grid">
+      <button type="button" class="kpi-card kpi-card-btn" (click)="goToSection('revenue')">
+        <span class="kpi-label">Fatturato</span>
+        <strong class="kpi-value">{{ vm().kpis.totalRevenue | number:'1.0-0' }} EUR</strong>
+      </button>
+      <button type="button" class="kpi-card kpi-card-btn" (click)="goToSection('bookings')">
+        <span class="kpi-label">Consulenze</span>
+        <strong class="kpi-value">{{ vm().kpis.consultationsCount }}</strong>
+      </button>
+      <button type="button" class="kpi-card kpi-card-btn" (click)="goToSection('revenue')">
+        <span class="kpi-label">Ticket Medio</span>
+        <strong class="kpi-value">{{ vm().kpis.averageTicket | number:'1.0-0' }} EUR</strong>
+      </button>
+      <button type="button" class="kpi-card kpi-card-btn" (click)="goToSection('operations')">
+        <span class="kpi-label">No-show</span>
+        <strong class="kpi-value">{{ vm().kpis.noShowRate | number:'1.0-1' }}%</strong>
+      </button>
+      <button type="button" class="kpi-card kpi-card-btn" (click)="goToSection('operations')">
+        <span class="kpi-label">Cancellazioni</span>
+        <strong class="kpi-value">{{ vm().kpis.cancellationRate | number:'1.0-1' }}%</strong>
+      </button>
+      <button type="button" class="kpi-card kpi-card-btn" (click)="goToSection('operations')">
+        <span class="kpi-label">Attesa Media</span>
+        <strong class="kpi-value">{{ vm().kpis.averageWaitHours | number:'1.0-1' }} h</strong>
+      </button>
+      <button type="button" class="kpi-card kpi-card-btn" (click)="goToSection('quality')">
+        <span class="kpi-label">Media Recensioni</span>
+        <strong class="kpi-value">{{ vm().kpis.averageReview | number:'1.0-2' }} / 5</strong>
+      </button>
+      <button type="button" class="kpi-card kpi-card-btn" (click)="goToSection('quality')">
+        <span class="kpi-label">Recensioni Approvate</span>
+        <strong class="kpi-value">{{ vm().kpis.approvedReviews }}</strong>
+      </button>
+    </div>
+  </ng-template>
+
+  <ng-template #revenueCard>
     <mat-card class="chart-card">
-      <mat-card-title>Fatturato per Mese</mat-card-title>
-      <ngx-charts-bar-vertical [scheme]="colorScheme" [results]="revenueData" [gradient]="false" [xAxis]="true"
-        [yAxis]="true" [legend]="false" [showXAxisLabel]="true" [showYAxisLabel]="true" xAxisLabel="Mese"
-        yAxisLabel="€ Totale">
+      <mat-card-title>Fatturato</mat-card-title>
+      <ngx-charts-bar-vertical
+        [scheme]="colorScheme"
+        [results]="vm().revenueData"
+        [gradient]="false"
+        [xAxis]="true"
+        [yAxis]="true"
+        [legend]="false"
+        [showXAxisLabel]="true"
+        [showYAxisLabel]="true"
+        xAxisLabel="Periodo"
+        yAxisLabel="EUR Totale">
       </ngx-charts-bar-vertical>
     </mat-card>
+  </ng-template>
 
+  <ng-template #appointmentsCard>
     <mat-card class="chart-card">
-      <mat-card-title>Appuntamenti</mat-card-title>
-      <ngx-charts-line-chart [scheme]="colorScheme" [results]="appointmentData" [xAxis]="true" [yAxis]="true"
-        [legend]="false" [showXAxisLabel]="true" [showYAxisLabel]="true" xAxisLabel="Mese" yAxisLabel="N. Appuntamenti">
+      <mat-card-title>Consulenze</mat-card-title>
+      <ngx-charts-line-chart
+        [scheme]="colorScheme"
+        [results]="vm().appointmentData"
+        [xAxis]="true"
+        [yAxis]="true"
+        [legend]="false"
+        [showXAxisLabel]="true"
+        [showYAxisLabel]="true"
+        xAxisLabel="Periodo"
+        yAxisLabel="N. consulenze">
       </ngx-charts-line-chart>
     </mat-card>
+  </ng-template>
 
+  <ng-template #artistVolumeCard>
     <mat-card class="chart-card">
-      <mat-card-title>Recensioni per Stelle</mat-card-title>
-      <ngx-charts-pie-chart [results]="reviewStars" [scheme]="colorScheme" [legend]="true" [labels]="true">
-      </ngx-charts-pie-chart>
-    </mat-card>
-    <mat-card class="chart-card">
-      <mat-card-title>Distribuzione Tipi di Tatuaggi</mat-card-title>
-      <ngx-charts-advanced-pie-chart [view]="view" [scheme]="colorScheme" [results]="tattooTypesData" [gradient]="false"
-        legend="true" labels="true">
-      </ngx-charts-advanced-pie-chart>
-    </mat-card>
-
-    <mat-card class="chart-card">
-      <mat-card-title>Appuntamenti per Artista</mat-card-title>
-      <ngx-charts-bar-horizontal [view]="view" [scheme]="colorScheme" [results]="appointmentsByArtist" [xAxis]="true"
-        [yAxis]="true" [legend]="false" [showXAxisLabel]="true" [showYAxisLabel]="true" xAxisLabel="Appuntamenti"
+      <mat-card-title>Consulenze per Artista</mat-card-title>
+      <ngx-charts-bar-horizontal
+        [scheme]="colorScheme"
+        [results]="vm().appointmentsByArtist"
+        [xAxis]="true"
+        [yAxis]="true"
+        [legend]="false"
+        [showXAxisLabel]="true"
+        [showYAxisLabel]="true"
+        xAxisLabel="Consulenze"
         yAxisLabel="Artista">
       </ngx-charts-bar-horizontal>
     </mat-card>
+  </ng-template>
 
+  <ng-template #utilizationCard>
+    <mat-card class="chart-card">
+      <mat-card-title>Utilizzo Artisti</mat-card-title>
+      <ngx-charts-bar-horizontal
+        [scheme]="colorScheme"
+        [results]="vm().artistUtilizationData"
+        [xAxis]="true"
+        [yAxis]="true"
+        [legend]="false"
+        [showXAxisLabel]="true"
+        [showYAxisLabel]="true"
+        xAxisLabel="Utilizzo %"
+        yAxisLabel="Artista">
+      </ngx-charts-bar-horizontal>
+    </mat-card>
+  </ng-template>
+
+  <ng-template #statusRatesCard>
+    <mat-card class="chart-card">
+      <mat-card-title>Tassi Operativi</mat-card-title>
+      <ngx-charts-bar-vertical
+        [scheme]="colorScheme"
+        [results]="vm().statusRatesData"
+        [gradient]="false"
+        [xAxis]="true"
+        [yAxis]="true"
+        [legend]="false"
+        [showXAxisLabel]="true"
+        [showYAxisLabel]="true"
+        xAxisLabel="Indicatore"
+        yAxisLabel="%">
+      </ngx-charts-bar-vertical>
+    </mat-card>
+  </ng-template>
+
+  <ng-template #reviewsCard>
+    <mat-card class="chart-card">
+      <mat-card-title>Recensioni per Stelle</mat-card-title>
+      <ngx-charts-pie-chart
+        [results]="vm().reviewStars"
+        [scheme]="colorScheme"
+        [legend]="true"
+        [labels]="true">
+      </ngx-charts-pie-chart>
+    </mat-card>
+  </ng-template>
+
+  <ng-template #stylesCard>
+    <mat-card class="chart-card">
+      <mat-card-title>Top 5 Stili Tattoo</mat-card-title>
+      <ngx-charts-bar-horizontal
+        [scheme]="colorScheme"
+        [results]="vm().tattooTypesData"
+        [xAxis]="true"
+        [yAxis]="true"
+        [legend]="false"
+        [showXAxisLabel]="true"
+        [showYAxisLabel]="true"
+        xAxisLabel="Progetti"
+        yAxisLabel="Stile">
+      </ngx-charts-bar-horizontal>
+    </mat-card>
+  </ng-template>
+
+  <ng-template #clientGrowthCard>
     <mat-card class="chart-card">
       <mat-card-title>Crescita Clienti</mat-card-title>
-      <ngx-charts-line-chart [scheme]="colorScheme" [results]="clientGrowth" [xAxis]="true" [yAxis]="true"
-        [legend]="false" [showXAxisLabel]="true" [showYAxisLabel]="true" xAxisLabel="Mese" yAxisLabel="Clienti">
+      <ngx-charts-line-chart
+        [scheme]="colorScheme"
+        [results]="vm().clientGrowth"
+        [xAxis]="true"
+        [yAxis]="true"
+        [legend]="false"
+        [showXAxisLabel]="true"
+        [showYAxisLabel]="true"
+        xAxisLabel="Periodo"
+        yAxisLabel="Clienti">
       </ngx-charts-line-chart>
     </mat-card>
-  </div>
+  </ng-template>
 </section>

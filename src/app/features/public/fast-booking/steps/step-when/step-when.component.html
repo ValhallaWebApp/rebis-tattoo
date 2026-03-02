@@ -13,6 +13,7 @@
           mat-stroked-button
           class="day"
           [class.active]="selectedDate() === d.value"
+          [attr.aria-pressed]="selectedDate() === d.value"
           (click)="pickDate(d.value)">
           {{ d.label }}
         </button>
@@ -36,9 +37,29 @@
         </div>
       }
 
-      @if (slots().length === 0 && selectedDate()) {
+      @if (slots().length === 0 && selectedDate() && !error()) {
         <div class="empty">
-          Nessuno slot disponibile per questo giorno.
+          {{ hasEventBlock() ? 'Occupato per evento in corso.' : 'Nessuno slot disponibile per questo giorno.' }}
+          <a
+            class="event-link"
+            *ngIf="hasEventBlock() && blockingEventId()"
+            [routerLink]="['/eventi', blockingEventId()]"
+          >
+            Vedi evento
+          </a>
+        </div>
+      }
+
+      @if (slotsInfoText()) {
+        <div class="availability-note">
+          {{ slotsInfoText() }}
+          <a
+            class="event-link"
+            *ngIf="hasEventBlock() && blockingEventId() && slots().length > 0"
+            [routerLink]="['/eventi', blockingEventId()]"
+          >
+            Vedi evento
+          </a>
         </div>
       }
 
@@ -48,6 +69,7 @@
             mat-stroked-button
             class="time"
             [class.active]="draft().time === s.time"
+            [attr.aria-pressed]="draft().time === s.time"
             (click)="pickTime(s.time)">
             <mat-icon class="ico">schedule</mat-icon>
             {{ s.time }}

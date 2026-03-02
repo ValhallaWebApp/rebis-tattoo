@@ -14,10 +14,11 @@
 
   .toolbar-left {
     display: flex;
+    justify-content: center;
     align-items: center;
     gap: 8px;
 
-    .today-btn {
+    .today-btn-icon {
       margin-left: 6px;
     }
 
@@ -35,12 +36,56 @@
     align-items: center;
   }
 
+  .view-btn-select {
+    min-width: 0;
+    height: 36px;
+    padding: 0 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    .view-btn-select-content {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      line-height: 1;
+    }
+
+    .lead-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+      color: whitesmoke;
+    }
+
+    .caret-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      opacity: 0.9;
+      color: whitesmoke;
+    }
+  }
+
+  .new-btn-icon {
+    transform: scale(0.95);
+  }
+
   .view-layout-toggle {
     border-radius: 10px;
     overflow: hidden;
   }
 }
-
+button{
+  span{
+    text-align: center;
+    display: flex;
+    justify-content: center;
+  }
+}
 .filters {
   padding: 10px 12px;
   border-radius: 14px;

@@ -1,8 +1,10 @@
 :host{display:block;height:100%}
 .drawer{
   height:100%;
-  display:flex;
-  flex-direction:column;
+  display:grid;
+  grid-template-rows:auto minmax(0, 1fr) auto;
+  container-type:inline-size;
+  container-name:event-drawer;
   background:
     linear-gradient(160deg, rgba(183, 155, 85, 0.1), rgba(255, 255, 255, 0.02) 34%, rgba(0, 0, 0, 0.5)),
     var(--cal-surface-elevated, #0b0e13);
@@ -31,7 +33,14 @@
   font-size:12px;
   line-height:1.35
 }
-.drawer__form{flex:1;overflow:auto;padding:18px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
+.drawer__form{
+  min-height:0;
+  overflow:auto;
+  padding:18px;
+  display:grid;
+  grid-template-columns:repeat(12,minmax(0,1fr));
+  gap:12px
+}
 .drawer__form>*{min-width:0}
 .drawer__footer{
   display:flex;
@@ -40,7 +49,10 @@
   padding:14px 18px;
   border-top:1px solid var(--cal-border, rgba(255,255,255,.1));
   background:rgba(0,0,0,.46);
-  grid-column:1/-1
+  position:relative;
+  z-index:1;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
 }
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .session-lock-hint{grid-column:1/-1}
@@ -58,6 +70,18 @@
 @media (max-width:1100px){.drawer__form{grid-template-columns:repeat(6,minmax(0,1fr));padding:17px}.col-12,.col-8{grid-column:span 6}.col-6,.col-4,.col-2{grid-column:span 3}}
 @media (max-width:768px){.drawer__form{grid-template-columns:1fr;padding:16px}.col-12,.col-8,.col-6,.col-4,.col-2,.row2{grid-column:1/-1}.row2{grid-template-columns:1fr}}
 
+@container event-drawer (max-width:760px){
+  .drawer__form{grid-template-columns:repeat(6,minmax(0,1fr));padding:17px}
+  .col-12,.col-8{grid-column:span 6}
+  .col-6,.col-4,.col-2{grid-column:span 3}
+}
+
+@container event-drawer (max-width:520px){
+  .drawer__form{grid-template-columns:1fr;padding:16px}
+  .col-12,.col-8,.col-6,.col-4,.col-2,.row2{grid-column:1/-1}
+  .row2{grid-template-columns:1fr}
+}
+
 
 /* ------------------------------------------
    FIX Angular Material form fields in dark UI
@@ -66,6 +90,9 @@
 
 .drawer ::ng-deep .mat-mdc-form-field {
   width: 100%;
+  --drawer-field-min-height: 56px;
+  --drawer-label-font-size: 13px;
+  --drawer-input-font-size: 14px;
   --mdc-filled-text-field-container-color: rgba(0, 0, 0, 0.34);
   --mdc-filled-text-field-label-text-color: var(--cal-text-muted, rgba(255, 255, 255, 0.72));
   --mdc-filled-text-field-input-text-color: var(--cal-text, rgba(255, 255, 255, 0.94));
@@ -84,6 +111,14 @@
   border-radius: 12px !important;
 }
 
+.drawer ::ng-deep .mat-mdc-text-field-wrapper {
+  min-height: var(--drawer-field-min-height);
+}
+
+.drawer ::ng-deep .mat-mdc-form-field-infix {
+  min-height: var(--drawer-field-min-height);
+}
+
 /* Hover/focus */
 .drawer ::ng-deep .mdc-text-field--filled:hover {
   background: rgba(255, 255, 255, 0.1) !important;
@@ -96,11 +131,23 @@
 .drawer ::ng-deep .mat-mdc-input-element,
 .drawer ::ng-deep .mat-mdc-select-value {
   color: var(--cal-text, rgba(255, 255, 255, 0.94)) !important;
+  font-size: var(--drawer-input-font-size) !important;
 }
 
 /* Label */
 .drawer ::ng-deep .mat-mdc-floating-label {
   color: var(--cal-text-muted, rgba(255, 255, 255, 0.74)) !important;
+  font-size: var(--drawer-label-font-size) !important;
+  line-height: 1.2;
+}
+
+.drawer ::ng-deep .mat-mdc-select-trigger {
+  min-height: calc(var(--drawer-field-min-height) - 12px);
+  align-items: center;
+}
+
+.drawer ::ng-deep .mat-mdc-select-placeholder {
+  font-size: var(--drawer-input-font-size) !important;
 }
 
 /* Placeholder */

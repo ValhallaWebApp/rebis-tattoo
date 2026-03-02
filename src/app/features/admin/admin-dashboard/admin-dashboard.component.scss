@@ -1,9 +1,9 @@
 .admin-dashboard {
-  background: var(--app-main-bg);
-  color: var(--app-main-text);
+  background: #030203;
+  color: #f9f7f3;
   padding: 8vh 2rem;
-  font-family: var(--font-base, "Inter", "Segoe UI", Arial, sans-serif);
-  min-height: 100vh;
+  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+  min-height: 100dvh;
   display: grid;
   gap: 1.2rem;
 }
@@ -24,11 +24,18 @@
     margin: 0.35rem 0 0;
     color: var(--app-main-text-muted);
   }
+
+  .head-actions {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
 }
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.9rem;
 }
 
@@ -229,6 +236,14 @@
 
   .dashboard-head {
     flex-direction: column;
+
+    .head-actions {
+      width: 100%;
+
+      button {
+        flex: 1;
+      }
+    }
   }
 
   .kpi-grid {

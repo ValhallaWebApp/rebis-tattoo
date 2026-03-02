@@ -25,11 +25,15 @@
     >
       <div class="thread-main">
         <div class="thread-title">{{ conversationTitle(thread) }}</div>
-        <span class="status-chip" [ngClass]="statusChipClass(thread.status)">{{ labelStatus(thread.status) }}</span>
+        <div class="thread-chips">
+          <span class="status-chip" [ngClass]="statusChipClass(thread.status)">{{ labelStatus(thread.status) }}</span>
+          <span class="ticket-chip">{{ ticketStatusLabel(thread.ticketStatus) }}</span>
+        </div>
       </div>
       <div class="thread-preview">{{ conversationPreview(thread) }}</div>
       <div class="thread-meta">
         <span>{{ lastActivityDate(thread) | date:'short' }}</span>
+        <span class="ticket-priority" [ngClass]="ticketPriorityClass(thread.ticketPriority)">{{ ticketPriorityLabel(thread.ticketPriority) }}</span>
         <span class="unread-pill" *ngIf="unreadCount(thread) > 0">{{ unreadCount(thread) }}</span>
       </div>
     </li>
@@ -50,12 +54,23 @@
         <h3>{{ conversationTitle(activeThread) }}</h3>
         <div class="chat-subtitle">
           <span class="status-chip" [ngClass]="statusChipClass(activeThread.status)">{{ labelStatus(activeThread.status) }}</span>
-          <span>Ultima attività: {{ lastActivityDate(activeThread) | date:'short' }}</span>
+          <span class="ticket-chip">{{ ticketStatusLabel(activeThread.ticketStatus) }}</span>
+          <span class="ticket-priority" [ngClass]="ticketPriorityClass(activeThread.ticketPriority)">{{ ticketPriorityLabel(activeThread.ticketPriority) }}</span>
+          <span>Ultima attivita: {{ lastActivityDate(activeThread) | date:'short' }}</span>
         </div>
       </div>
     </div>
 
     <div class="status-actions">
+      <button mat-stroked-button color="primary" (click)="setTicketStatus('in_progress')">
+        In lavorazione
+      </button>
+      <button mat-stroked-button color="primary" (click)="setTicketStatus('waiting_client')">
+        Attesa cliente
+      </button>
+      <button mat-stroked-button color="primary" (click)="setTicketStatus('resolved')">
+        Risolto
+      </button>
       <button mat-stroked-button color="primary" *ngIf="activeThread.status !== 'closed'" (click)="setStatus('chiuso')">
         Chiudi
       </button>

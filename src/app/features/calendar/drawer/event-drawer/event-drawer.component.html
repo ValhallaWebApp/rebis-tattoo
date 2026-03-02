@@ -12,7 +12,7 @@
   </header>
 
   <!-- FORM -->
-  <form class="drawer__form" cdkScrollable [formGroup]="form" (ngSubmit)="onSubmit()">
+  <form id="eventDrawerForm" class="drawer__form" cdkScrollable [formGroup]="form" (ngSubmit)="onSubmit()">
     <!-- TYPE -->
     <mat-form-field appearance="outline" class="col-4">
       <mat-label>Tipo</mat-label>
@@ -275,11 +275,12 @@
       <textarea matInput rows="3" formControlName="notes"></textarea>
     </mat-form-field>
 
-    <!-- FOOTER -->
-    <footer class="drawer__footer">
-      <button mat-stroked-button type="button" (click)="close.emit()">Annulla</button>
-      <button mat-raised-button color="primary" type="submit">Salva</button>
-    </footer>
   </form>
+
+  <!-- FOOTER -->
+  <footer class="drawer__footer">
+    <button mat-stroked-button type="button" (click)="close.emit()">Annulla</button>
+    <button mat-raised-button color="primary" type="submit" form="eventDrawerForm">Salva</button>
+  </footer>
 </section>
 

@@ -1,7 +1,7 @@
 <section class="services">
   <header class="services__head">
-    <h2 class="services__title">{{ lang.t('home.services.title') }}</h2>
-    <p class="services__subtitle">{{ lang.t('home.services.subtitle') }}</p>
+    <h2 class="services__title">{{ titleText() }}</h2>
+    <p class="services__subtitle">{{ subtitleText() }}</p>
   </header>
 
   <ng-container *ngIf="services$ | async as services">
@@ -9,17 +9,17 @@
       <article class="service-card" *ngFor="let service of services">
         <div class="preview">
           <div class="icon">
-            <img [src]="iconFor(service)" [alt]="titleOf(service) + ' icon'" loading="lazy" decoding="async" />
+            <img [src]="iconFor(service)" [alt]="iconAltOf(service)" loading="lazy" decoding="async" />
           </div>
           <div class="content">
             <h3>{{ titleOf(service) }}</h3>
             <p>{{ descOf(service) }}</p>
             <div class="meta">
               <span class="pill">
-                {{ service.prezzoDaConcordare ? 'Prezzo su richiesta' : ('€' + service.prezzo) }}
+                {{ service.prezzoDaConcordare ? lang.t('home.services.priceOnRequest') : (service.prezzo + ' ' + lang.t('home.services.currencySuffix')) }}
               </span>
               <span class="pill">
-                {{ service.durataDaConcordare ? 'Durata su richiesta' : (service.durata + ' min') }}
+                {{ service.durataDaConcordare ? lang.t('home.services.durationOnRequest') : (service.durata + ' ' + lang.t('home.services.durationUnitMinutes')) }}
               </span>
             </div>
           </div>
@@ -32,8 +32,8 @@
     <div class="empty">
       <mat-icon>search_off</mat-icon>
       <div>
-        <strong>Nessun servizio disponibile</strong>
-        <div class="muted">Torna a trovarci presto.</div>
+        <strong>{{ emptyTitleText() }}</strong>
+        <div class="muted">{{ emptySubtitleText() }}</div>
       </div>
     </div>
   </ng-template>

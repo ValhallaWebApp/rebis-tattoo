@@ -1,95 +1,55 @@
-<section class="portfolio-page">
-  <header class="portfolio-header">
-    <div class="title-row">
+<section class="projects-page">
+  <header class="projects-hero">
+    <div class="hero-main">
+      <p class="hero-kicker">Rebis Tattoo</p>
       <h1>{{ lang.t('portfolio.title') }}</h1>
-      <span class="count-badge">{{ filteredProjects.length }} progetti</span>
+      <p>{{ lang.t('portfolio.subtitle') }}</p>
     </div>
-    <p>{{ lang.t('portfolio.subtitle') }}</p>
+    <span class="count-badge">{{ filteredProjects.length }} progetti</span>
   </header>
 
-  <!-- FILTRI -->
-  <mat-accordion class="portfolio-filter-panel" multi>
+  <mat-accordion class="projects-filter-panel" multi>
     <mat-expansion-panel>
       <mat-expansion-panel-header>
         <mat-panel-title>{{ lang.t('portfolio.filtersTitle') }}</mat-panel-title>
       </mat-expansion-panel-header>
 
       <div class="filters">
-        <!-- ARTISTA -->
-        <mat-form-field appearance="fill">
+        <mat-form-field appearance="outline">
           <mat-label>Artista</mat-label>
           <mat-select [(value)]="selectedArtistId" (selectionChange)="onArtistChange()">
             <mat-option value="all">Tutti</mat-option>
-            <mat-option *ngFor="let a of artists" [value]="a.id">
-              {{ a.name }}
-            </mat-option>
+            <mat-option *ngFor="let a of artists" [value]="a.id">{{ a.name }}</mat-option>
           </mat-select>
         </mat-form-field>
 
-        <!-- STILE -->
-        <div class="chip-group" *ngIf="styles.length">
-          <div class="chip-label">Stile</div>
-          <div class="chip-row">
-            <button type="button" class="chip" [class.active]="isStyleActive('all')" (click)="setStyle('all')" [attr.aria-pressed]="isStyleActive('all')">
-              Tutti
-            </button>
-            <button
-              *ngFor="let s of styles"
-              type="button"
-              class="chip"
-              [class.active]="isStyleActive(s)"
-              (click)="setStyle(s)"
-              [attr.aria-pressed]="isStyleActive(s)"
-            >
-              {{ s }}
-            </button>
-          </div>
-        </div>
-
-        <!-- SOGGETTO -->
-        <div class="chip-group" *ngIf="subjects.length">
-          <div class="chip-label">Soggetto</div>
-          <div class="chip-row">
-            <button type="button" class="chip" [class.active]="isSubjectActive('all')" (click)="setSubject('all')" [attr.aria-pressed]="isSubjectActive('all')">
-              Tutti
-            </button>
-            <button
-              *ngFor="let s of subjects"
-              type="button"
-              class="chip"
-              [class.active]="isSubjectActive(s)"
-              (click)="setSubject(s)"
-              [attr.aria-pressed]="isSubjectActive(s)"
-            >
-              {{ s }}
-            </button>
-          </div>
-        </div>
-
-        <!-- ZONA -->
-        <div class="chip-group" *ngIf="zones.length">
-          <div class="chip-label">Zona</div>
-          <div class="chip-row">
-            <button type="button" class="chip" [class.active]="isZoneActive('all')" (click)="setZone('all')" [attr.aria-pressed]="isZoneActive('all')">
-              Tutti
-            </button>
-            <button
-              *ngFor="let z of zones"
-              type="button"
-              class="chip"
-              [class.active]="isZoneActive(z)"
-              (click)="setZone(z)"
-              [attr.aria-pressed]="isZoneActive(z)"
-            >
-              {{ z }}
-            </button>
-          </div>
-        </div>
-
-        <!-- SOLO CON IMMAGINI -->
         <button type="button" class="chip toggle" [class.active]="onlyWithImages" (click)="toggleOnlyImages()" [attr.aria-pressed]="onlyWithImages">
           Solo con immagini
         </button>
+
+        <div class="chip-group" *ngIf="styles.length">
+          <div class="chip-label">Stile</div>
+          <div class="chip-row">
+            <button type="button" class="chip" [class.active]="isStyleActive('all')" (click)="setStyle('all')" [attr.aria-pressed]="isStyleActive('all')">Tutti</button>
+            <button *ngFor="let s of styles" type="button" class="chip" [class.active]="isStyleActive(s)" (click)="setStyle(s)" [attr.aria-pressed]="isStyleActive(s)">{{ s }}</button>
+          </div>
+        </div>
+
+        <div class="chip-group" *ngIf="subjects.length">
+          <div class="chip-label">Soggetto</div>
+          <div class="chip-row">
+            <button type="button" class="chip" [class.active]="isSubjectActive('all')" (click)="setSubject('all')" [attr.aria-pressed]="isSubjectActive('all')">Tutti</button>
+            <button *ngFor="let s of subjects" type="button" class="chip" [class.active]="isSubjectActive(s)" (click)="setSubject(s)" [attr.aria-pressed]="isSubjectActive(s)">{{ s }}</button>
+          </div>
+        </div>
+
+        <div class="chip-group" *ngIf="zones.length">
+          <div class="chip-label">Zona</div>
+          <div class="chip-row">
+            <button type="button" class="chip" [class.active]="isZoneActive('all')" (click)="setZone('all')" [attr.aria-pressed]="isZoneActive('all')">Tutti</button>
+            <button *ngFor="let z of zones" type="button" class="chip" [class.active]="isZoneActive(z)" (click)="setZone(z)" [attr.aria-pressed]="isZoneActive(z)">{{ z }}</button>
+          </div>
+        </div>
 
         <button mat-stroked-button class="reset-btn" type="button" (click)="resetFilters()">
           <mat-icon>restart_alt</mat-icon>
@@ -99,23 +59,13 @@
     </mat-expansion-panel>
   </mat-accordion>
 
-  <!-- GRID -->
-  <section class="portfolio-grid" *ngIf="filteredProjects.length; else empty">
-    <mat-card class="project-card" *ngFor="let p of filteredProjects; trackBy: trackById">
-      <a class="card-link" [routerLink]="p.id ? ['/progetto', p.id] : null">
+  <section class="projects-grid" *ngIf="filteredProjects.length; else empty">
+    <article class="project-card" *ngFor="let p of filteredProjects; trackBy: trackById">
+      <a class="card-link" [routerLink]="p.id ? ['/progetto', p.id] : ['/progetti']">
         <div class="cover">
-          <img [src]="coverOf(p)" [alt]="p.title" loading="lazy" decoding="async" (error)="onImgError($event)" />
+          <img [src]="coverOf(p)" [alt]="titleOf(p)" loading="lazy" decoding="async" (error)="onImgError($event)" />
           <div class="overlay"></div>
 
-          <!-- badge stile -->
-          <!-- <div class="badge" *ngIf="p.style as st">{{ st }}</div>
-
-           pill visibilita' (undefined = visibile)
-          <div class="pill" [class.is-hidden]="p.isPublic === false">
-            {{ p.isPublic === false ? 'Nascosto' : 'Visibile' }}
-          </div> -->
-
-          <!-- badge foto -->
           <div class="photo-count" *ngIf="imagesCount(p) > 1">
             <mat-icon>collections</mat-icon>
             {{ imagesCount(p) }}
@@ -125,21 +75,23 @@
         <div class="meta">
           <h3 class="title">{{ titleOf(p) }}</h3>
 
-          <p class="sub">
+          <div class="meta-row">
             <span class="artist">{{ artistNameById(p.artistId) }}</span>
-            <span class="dot">-</span>
-            <span class="date">
-              {{ createdAtOf(p) ? (createdAtOf(p) | date:'dd/MM/yyyy') : '-' }}
-            </span>
-          </p>
+            <span class="dot">•</span>
+            <span class="date">{{ createdAtOf(p) ? (createdAtOf(p) | date:'dd/MM/yyyy') : '-' }}</span>
+          </div>
 
-          <span class="details">Dettagli -></span>
+          <span class="details">Apri progetto</span>
         </div>
       </a>
-    </mat-card>
+    </article>
   </section>
 
   <ng-template #empty>
-    <p class="empty">Nessun progetto trovato.</p>
+    <div class="empty">
+      <mat-icon>search_off</mat-icon>
+      <p>Nessun progetto trovato con i filtri selezionati.</p>
+      <button mat-stroked-button type="button" (click)="resetFilters()">Reset filtri</button>
+    </div>
   </ng-template>
 </section>

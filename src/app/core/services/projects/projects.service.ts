@@ -123,7 +123,15 @@ export class ProjectsService {
   // -----------------------------
   getProjects(opts: { onlyOnce?: boolean } = {}): Observable<TattooProject[]> {
     const projectsRef = ref(this.db, this.path);
+    return this.streamProjects(projectsRef, opts);
+  }
 
+  getPublicProjects(opts: { onlyOnce?: boolean } = {}): Observable<TattooProject[]> {
+    const publicProjectsRef = query(ref(this.db, this.path), orderByChild('isPublic'), equalTo(true));
+    return this.streamProjects(publicProjectsRef, opts);
+  }
+
+  private streamProjects(projectsRef: any, opts: { onlyOnce?: boolean } = {}): Observable<TattooProject[]> {
     return new Observable<TattooProject[]>(obs => {
       const unsub = onValue(
         projectsRef,

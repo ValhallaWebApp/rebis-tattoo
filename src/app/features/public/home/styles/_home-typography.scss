@@ -1,0 +1,53 @@
+$home-font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+
+@mixin font-base() {
+  font-family: $home-font-family;
+}
+
+@mixin display($size: clamp(3rem, 7vw, 7rem)) {
+  @include font-base();
+  margin: 0;
+  font-size: $size;
+  font-weight: 400;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  color: var(--home-text);
+}
+
+@mixin section-title($size: clamp(30px, 5vw, 44px), $uppercase: true) {
+  @include font-base();
+  margin: 0;
+  font-size: $size;
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  color: var(--home-text);
+  @if $uppercase {
+    text-transform: uppercase;
+  }
+}
+
+@mixin section-subtitle($size: clamp(0.95rem, 1.6vw, 1.1rem)) {
+  @include font-base();
+  margin: 8px 0 0;
+  font-size: $size;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--home-text-muted);
+}
+
+@mixin body-text($size: 15px, $weight: 400) {
+  @include font-base();
+  font-size: $size;
+  font-weight: $weight;
+  line-height: 1.6;
+  color: var(--home-text-muted);
+}
+
+@mixin body-strong($size: 16px) {
+  @include font-base();
+  font-size: $size;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--home-text);
+}

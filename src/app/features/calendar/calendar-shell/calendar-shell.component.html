@@ -9,8 +9,13 @@
         <mat-icon>chevron_right</mat-icon>
       </button>
 
-      <button mat-stroked-button class="today-btn" (click)="goToday()">
-        Oggi
+      <button
+        mat-icon-button
+        class="today-btn-icon"
+        (click)="goToday()"
+        matTooltip="Oggi"
+        aria-label="Vai a oggi">
+        <mat-icon>today</mat-icon>
       </button>
 
       <div class="range">{{ headerLabel }}</div>
@@ -22,14 +27,22 @@
         class="view-layout-toggle"
         [value]="weekLayout()"
         (change)="setWeekLayout($event.value)">
-        <mat-button-toggle value="cards">Normale</mat-button-toggle>
+        <mat-button-toggle value="cards">Agenda</mat-button-toggle>
         <mat-button-toggle value="list">Lista</mat-button-toggle>
       </mat-button-toggle-group>
 
-      <button mat-stroked-button [matMenuTriggerFor]="viewMenu">
-        <mat-icon>view_agenda</mat-icon>
-        {{ view() | uppercase }}
-        <mat-icon>expand_more</mat-icon>
+      <button
+        mat-stroked-button
+        class="view-btn-select"
+        [matMenuTriggerFor]="viewMenu"
+        [matTooltip]="'Vista: ' + (view() | uppercase)"
+        aria-label="Seleziona vista calendario">
+        <span class="view-btn-select-content" aria-hidden="true">
+          <mat-icon class="lead-icon">
+            {{ view()==='day' ? 'today' : (view()==='week' ? 'date_range' : 'calendar_month') }}
+          </mat-icon>
+          <mat-icon class="caret-icon">expand_more</mat-icon>
+        </span>
       </button>
 
       <mat-menu #viewMenu="matMenu">
@@ -38,9 +51,14 @@
         <button mat-menu-item (click)="setView('month')"><mat-icon>calendar_month</mat-icon> Mese</button>
       </mat-menu>
 
-      <button mat-raised-button color="primary" (click)="onToolbarNew()">
+      <button
+        mat-mini-fab
+        color="primary"
+        class="new-btn-icon"
+        (click)="onToolbarNew()"
+        matTooltip="Nuovo"
+        aria-label="Crea nuovo appuntamento">
         <mat-icon>add</mat-icon>
-        Nuovo
       </button>
     </div>
   </div>

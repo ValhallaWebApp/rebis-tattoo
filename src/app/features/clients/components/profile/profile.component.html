@@ -2,8 +2,34 @@
   <aside class="left-pane">
     <mat-card class="profile-card">
       <div class="avatar-wrapper">
-        <img [src]="profileForm.get('avatar')?.value" alt="Avatar" />
-        <input type="file" accept="image/*" *ngIf="isEditing" (change)="onAvatarSelected($event)" />
+        <img [src]="avatarPreview()" (error)="onAvatarError($event)" alt="Avatar utente" />
+      </div>
+
+      <div class="avatar-picker" *ngIf="isEditing">
+        <div class="avatar-picker__actions">
+          <input
+            #avatarInput
+            class="avatar-file-input"
+            type="file"
+            accept="image/*"
+            (change)="onAvatarSelected($event)"
+          />
+          <button mat-stroked-button type="button" color="primary" (click)="avatarInput.click()">Carica avatar</button>
+          <button mat-button type="button" (click)="resetAvatar()">Avatar neutro</button>
+        </div>
+        <p class="avatar-picker__title">Scegli avatar</p>
+        <div class="avatar-picker__grid">
+          <button
+            type="button"
+            class="avatar-picker__item"
+            *ngFor="let avatar of presetAvatars"
+            [class.is-selected]="profileForm.get('avatar')?.value === avatar"
+            (click)="selectPresetAvatar(avatar)"
+            [attr.aria-label]="'Seleziona ' + avatar"
+          >
+            <img [src]="avatar" (error)="onAvatarError($event)" alt="Avatar preset" />
+          </button>
+        </div>
       </div>
 
       <h2>{{ profileForm.value.name }}</h2>

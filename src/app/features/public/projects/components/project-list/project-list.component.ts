@@ -62,8 +62,8 @@ export class ProjectListComponent implements OnInit, OnDestroy {
       map(staff => (staff ?? []).filter(s => s?.isActive !== false))
     );
 
-    const projects$ = this.projectsService.getProjects().pipe(
-      map(list => (list ?? []).filter(p => (p as any).isPublic !== false && String((p as any).status ?? '').trim() === 'completed'))
+    const projects$ = this.projectsService.getPublicProjects().pipe(
+      map(list => (list ?? []).filter(p => (p as any).isPublic !== false && this.isCompletedStatus((p as any).status)))
     );
     const routeArtistId$ = this.route.paramMap.pipe(map(pm => pm.get('artistId')));
     const queryParams$ = this.route.queryParamMap;
@@ -296,6 +296,15 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     if (img && img.src !== this.fallbackCover) {
       img.src = this.fallbackCover;
     }
+  }
+
+  private isCompletedStatus(status: unknown): boolean {
+    const normalized = String(status ?? '').trim().toLowerCase();
+    return normalized === 'completed'
+      || normalized === 'complete'
+      || normalized === 'concluso'
+      || normalized === 'done'
+      || normalized === 'finished';
   }
 
   trackById = (_: number, p: TattooProject) => p.id ?? `${p.artistId}-${p.clientId}-${p.title}`;

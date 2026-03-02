@@ -2,8 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DynamicField, DynamicFormComponent } from '../../../shared/components/form/dynamic-form/dynamic-form.component';
+import { AuthService } from '../../../core/services/auth/auth.service';
 
 import {
   DEFAULT_STUDIO_PROFILE,
@@ -20,6 +21,8 @@ import {
 })
 export class ContattiComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
   private readonly studioProfileService = inject(StudioProfileService);
   private readonly profileSig = toSignal(this.studioProfileService.getProfile(), {
     initialValue: DEFAULT_STUDIO_PROFILE
@@ -55,14 +58,29 @@ export class ContattiComponent implements OnInit {
   }
 
   get heroImageUrl(): string {
-    return this.profile.ownerPhotoUrl || '/personale/1.jpg';
+    return'/personale/sara.webp';
   }
 
   get whatsappNumber(): string {
     return this.normalizePhoneForWhatsApp(this.profile.phoneDisplay);
   }
 
-  openChat(): void {}
+  get collabMailto(): string {
+    const subject = encodeURIComponent('Candidatura collaborazione - Rebis Tattoo');
+    const body = encodeURIComponent(
+      'Ciao Rebis Tattoo,\n\nmi piacerebbe collaborare con il vostro studio.\nVi lascio una breve presentazione:\n\n- Nome:\n- Portfolio/IG:\n- Esperienza:\n- Disponibilita:\n\nGrazie.'
+    );
+    return `mailto:${this.profile.email}?subject=${subject}&body=${body}`;
+  }
+
+  openChat(): void {
+    if (this.auth.userSig()) {
+      void this.router.navigate(['/dashboard/chat']);
+      return;
+    }
+    sessionStorage.setItem('returnUrl', '/contatti');
+    void this.router.navigate(['/login']);
+  }
 
   onSubmit(): void {
     if (this.contactForm.invalid) {

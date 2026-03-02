@@ -7,6 +7,7 @@ import { AppUser, AuthService } from '../../../../core/services/auth/auth.servic
 import { BookingService } from '../../../../core/services/bookings/booking.service';
 import { ProjectStatus, ProjectsService, TattooProject } from '../../../../core/services/projects/projects.service';
 import { StatusHelperService } from '../../../../core/services/helpers/status-helper.service';
+import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
 
 type DashboardLink = {
@@ -24,6 +25,20 @@ type DashboardLink = {
   styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent implements OnInit {
+  readonly defaultAvatar = '/personale/avatar_01.jpg';
+  readonly avatar404Placeholder = `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+      <rect width="240" height="240" fill="#111"/>
+      <circle cx="120" cy="92" r="40" fill="#2b2b2b"/>
+      <path d="M48 206c12-34 36-54 72-54s60 20 72 54" fill="#2b2b2b"/>
+      <text x="120" y="226" text-anchor="middle" fill="#f1f1f1" font-size="18" font-family="Arial, sans-serif">404</text>
+    </svg>`
+  )}`;
+  readonly presetAvatars: string[] = Array.from({ length: 20 }, (_, index) => {
+    const n = String(index + 1).padStart(2, '0');
+    return `/personale/avatar_${n}.jpg`;
+  });
+
   user: AppUser | null = null;
   profileForm!: FormGroup;
   isEditing = false;
@@ -69,6 +84,7 @@ export class ProfileComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly projectsService = inject(ProjectsService);
   private readonly status = inject(StatusHelperService);
+  private readonly ui = inject(UiFeedbackService);
   private readonly injector = inject(Injector);
 
   get profileFields(): DynamicField[] {
@@ -102,7 +118,7 @@ export class ProfileComponent implements OnInit {
           name: user.name || '',
           email: user.email || '',
           phone: user.phone || '',
-          avatar: user.avatar || 'https://i.pravatar.cc/150?img=3',
+          avatar: this.resolveUserAvatar(user),
           dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth) : null,
           address: user.address || '',
           city: user.city || '',
@@ -176,42 +192,87 @@ export class ProfileComponent implements OnInit {
     if (!this.isEditing && this.user) {
       this.profileForm.patchValue({
         ...this.user,
+        avatar: this.resolveUserAvatar(this.user),
         dateOfBirth: this.user.dateOfBirth ? new Date(this.user.dateOfBirth) : null
       });
     }
   }
 
-  saveProfile(): void {
-    if (this.profileForm.invalid || !this.user) return;
-    const updated = this.profileForm.getRawValue();
-    this.user = { ...this.user, ...updated };
+  async saveProfile(): Promise<void> {
+    if (!this.user) {
+      this.ui.error('Utente non disponibile. Ricarica la pagina.');
+      return;
+    }
+    if (this.profileForm.invalid) {
+      this.profileForm.markAllAsTouched();
+      this.ui.warn('Compila correttamente i campi obbligatori.');
+      return;
+    }
 
-    this.authService.updateCurrentUserProfile({
-      name: updated.name,
-      avatar: updated.avatar,
-      phone: updated.phone,
-      dateOfBirth: updated.dateOfBirth,
-      address: updated.address,
-      city: updated.city,
-      postalCode: updated.postalCode,
-      country: updated.country
-    }).then(() => {
+    const updated = this.profileForm.getRawValue();
+    const normalizedAvatar = this.normalizeAvatarUrl(updated.avatar) || this.defaultAvatar;
+    this.profileForm.patchValue({ avatar: normalizedAvatar });
+
+    try {
+      await this.authService.updateCurrentUserProfile({
+        name: updated.name,
+        avatar: normalizedAvatar,
+        phone: updated.phone,
+        dateOfBirth: this.toDateOnlyString(updated.dateOfBirth),
+        address: updated.address,
+        city: updated.city,
+        postalCode: updated.postalCode,
+        country: updated.country
+      });
+
+      this.user = { ...this.user, ...updated, avatar: normalizedAvatar, urlAvatar: normalizedAvatar };
       this.toggleEdit();
-    }).catch(err => {
+      this.ui.success('Profilo aggiornato con successo.');
+    } catch (err) {
       console.error('Errore aggiornamento profilo:', err);
-    });
+      this.ui.error('Salvataggio non riuscito. Verifica i permessi e riprova.');
+    }
   }
 
   onAvatarSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
     const file = input.files[0];
+    if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
       this.profileForm.patchValue({ avatar: base64 });
     };
     reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  selectPresetAvatar(avatarUrl: string): void {
+    this.profileForm.patchValue({ avatar: avatarUrl });
+  }
+
+  resetAvatar(): void {
+    this.profileForm.patchValue({ avatar: this.defaultAvatar });
+  }
+
+  avatarPreview(): string {
+    return this.normalizeAvatarUrl(this.profileForm.get('avatar')?.value) || this.defaultAvatar;
+  }
+
+  onAvatarError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (!img) return;
+
+    const current = String(img.getAttribute('src') ?? '').trim();
+    if (current && current !== this.defaultAvatar && current !== this.avatar404Placeholder) {
+      img.setAttribute('src', this.defaultAvatar);
+      return;
+    }
+
+    if (current !== this.avatar404Placeholder) {
+      img.setAttribute('src', this.avatar404Placeholder);
+    }
   }
 
   checkIfBookingIsSoon(): void {
@@ -256,5 +317,27 @@ export class ProfileComponent implements OnInit {
   private toTimestamp(value: unknown): number {
     const date = new Date(String(value ?? ''));
     return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+  }
+
+  private toDateOnlyString(value: unknown): string {
+    if (!value) return '-';
+    const date = value instanceof Date ? value : new Date(String(value));
+    if (Number.isNaN(date.getTime())) return '-';
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private resolveUserAvatar(user: AppUser): string {
+    return this.normalizeAvatarUrl(user.avatar) || this.normalizeAvatarUrl(user.urlAvatar) || this.defaultAvatar;
+  }
+
+  private normalizeAvatarUrl(value: unknown): string {
+    const raw = String(value ?? '').trim();
+    if (!raw) return '';
+    const normalized = raw.toLowerCase();
+    if (normalized === '-' || normalized === 'null' || normalized === 'undefined') return '';
+    return raw;
   }
 }

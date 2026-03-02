@@ -1,9 +1,9 @@
 ﻿<section class="faq-section">
   <h2 class="faq-title">
-    {{ lang.t('home.faqTitle') }}
+    {{ titleText() }}
   </h2>
 
-  <div class="faq-item" *ngFor="let faq of faqs; let i = index" [class.active]="activeIndex === i">
+  <div class="faq-item" *ngFor="let faq of faqs(); let i = index" [class.active]="activeIndex === i">
     <button type="button" class="question" (click)="toggle(i)" [attr.aria-expanded]="activeIndex === i">
       <span>{{ faq.question }}</span>
       <span class="toggle-icon" [class.open]="activeIndex === i">+</span>

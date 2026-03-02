@@ -1,5 +1,15 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { LanguageService } from '../../../../../core/services/language/language.service';
+import {
+  DEFAULT_STUDIO_PROFILE,
+  StudioProfileService
+} from '../../../../../core/services/studio/studio-profile.service';
+
+type ApproachItem = {
+  title: string;
+  text: string;
+};
 
 @Component({
   selector: 'app-home-about',
@@ -9,20 +19,24 @@ import { LanguageService } from '../../../../../core/services/language/language.
   styleUrl: './home-about.component.scss'
 })
 export class HomeAboutComponent {
-  readonly clientApproach = [
-    {
-      title: 'Ascolto e consulenza',
-      text: 'Partiamo da idea, stile, zona e budget per definire un progetto realistico.'
-    },
-    {
-      title: 'Proposta su misura',
-      text: 'Prepariamo bozza e indicazioni tecniche prima della seduta.'
-    },
-    {
-      title: 'Seduta e follow-up',
-      text: 'Seduta in studio in sicurezza e supporto post tattoo per la cura.'
-    }
-  ];
+  private readonly studioProfile = inject(StudioProfileService);
+  private readonly profileSig = toSignal(this.studioProfile.getProfile(), {
+    initialValue: DEFAULT_STUDIO_PROFILE
+  });
+
+  readonly profile = computed(() => this.profileSig());
+
+  readonly clientApproach = computed<readonly ApproachItem[]>(() => {
+    const rows = this.lang.get<unknown[]>('home.about.approach');
+    if (!Array.isArray(rows)) return [];
+
+    return rows
+      .map((entry) => ({
+        title: String((entry as { title?: unknown })?.title ?? '').trim(),
+        text: String((entry as { text?: unknown })?.text ?? '').trim()
+      }))
+      .filter((entry) => entry.title.length > 0 || entry.text.length > 0);
+  });
 
   constructor(public lang: LanguageService) {}
 

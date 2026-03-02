@@ -146,6 +146,13 @@ body.theme-admin {
   color: var(--cal-text) !important;
 }
 
+.cal-shell .toolbar .mat-mdc-mini-fab.mat-primary {
+  --mdc-fab-container-color: var(--cal-accent, #b79b55);
+  --mdc-fab-icon-color: var(--cal-text-on-accent, #111111);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
 .cal-shell .toolbar .mat-mdc-stroked-button:not(:disabled) {
   border-color: var(--cal-border-strong);
   background: rgba(255, 255, 255, 0.02);

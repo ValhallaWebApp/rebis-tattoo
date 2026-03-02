@@ -30,18 +30,31 @@
 
 .settings-form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(220px, 1fr));
   gap: 12px;
-}
-
-.settings-form h3 {
-  grid-column: 1 / -1;
-  margin: 0.8rem 0 0.2rem;
-  color: var(--accent);
 }
 
 .full {
   grid-column: 1 / -1;
+}
+
+.settings-accordion {
+  display: grid;
+  gap: 10px;
+}
+
+:host ::ng-deep .settings-accordion .mat-expansion-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: none;
+}
+
+:host ::ng-deep .settings-accordion .mat-expansion-panel-header-title {
+  color: var(--app-main-text) !important;
+  font-weight: 600;
+}
+
+:host ::ng-deep .settings-accordion .mat-expansion-indicator::after {
+  color: var(--app-main-text) !important;
 }
 
 .actions {

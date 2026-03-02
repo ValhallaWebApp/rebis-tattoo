@@ -5,13 +5,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterLink } from '@angular/router';
 
 import { FastBookingStore } from '../../state/fast-booking-store.service';
 
 @Component({
   selector: 'app-step-when',
   standalone: true,
-  imports: [CommonModule, MaterialModule,  MatButtonModule, MatProgressSpinnerModule, MatChipsModule, MatIconModule],
+  imports: [CommonModule, RouterLink, MaterialModule, MatButtonModule, MatProgressSpinnerModule, MatChipsModule, MatIconModule],
   templateUrl: './step-when.component.html',
   styleUrl: './step-when.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +25,27 @@ export class StepWhenComponent {
   readonly slots = this.store.slots;
   readonly loading = this.store.loadingSlots;
   readonly error = this.store.error;
+  readonly hasEventBlock = this.store.hasEventBlock;
+  readonly blockingEventId = this.store.blockingEventId;
+
+  readonly slotsInfoText = computed(() => {
+    if (this.loading()) return '';
+    if (!this.selectedDate()) return '';
+    if (this.error()) return '';
+
+    const count = this.slots().length;
+    const base = count === 1 ? '1 slot libero.' : `${count} slot liberi.`;
+
+    if (this.hasEventBlock() && count === 0) {
+      return 'Occupato per evento in corso. 0 slot liberi.';
+    }
+
+    if (this.hasEventBlock()) {
+      return `${base} Alcuni orari sono occupati per evento in corso.`;
+    }
+
+    return base;
+  });
 
   // 7 giorni (oggi + 6), no date passate
   readonly days = computed(() => {

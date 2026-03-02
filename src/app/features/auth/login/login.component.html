@@ -2,16 +2,16 @@
   <div class="bg-orb orb-a"></div>
   <div class="bg-orb orb-b"></div>
 
-  <mat-card class="auth-card mat-elevation-z12">
+  <mat-card class="auth-card">
     <section class="brand-panel">
-      <p class="eyebrow">Ingresso pubblico</p>
-      <h1>Accedi</h1>
+      <p class="eyebrow">{{ isLoginMode ? 'Ingresso pubblico' : 'Nuovo account' }}</p>
+      <h1>{{ isLoginMode ? 'Accedi' : 'Registrati' }}</h1>
       <p class="lead">
-        Inserisci email e password per entrare.
+        {{ isLoginMode ? 'Inserisci email e password per entrare.' : 'Crea il tuo account e completa la registrazione.' }}
       </p>
       <div class="chips">
-        <span>Login sicuro</span>
-        <span>Accesso account</span>
+        <span>{{ isLoginMode ? 'Login sicuro' : 'Registrazione rapida' }}</span>
+        <span>{{ isLoginMode ? 'Accesso account' : 'Accesso immediato' }}</span>
       </div>
     </section>
 
@@ -75,7 +75,7 @@
 
         <button mat-raised-button color="primary" class="cta" type="submit" [disabled]="loginForm.invalid || isLoading">
           <ng-container *ngIf="!isLoading; else loadingTpl">
-            {{ isLoginMode ? 'Accedi' : 'Accedi' }}
+            {{ isLoginMode ? 'Accedi' : 'Registrati' }}
           </ng-container>
         </button>
         <ng-template #loadingTpl>

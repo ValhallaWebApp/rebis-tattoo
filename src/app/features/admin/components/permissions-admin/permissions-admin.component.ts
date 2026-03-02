@@ -7,6 +7,7 @@ type ManagedPermissionKey =
   | 'canManageRoles'
   | 'canManageBookings'
   | 'canManageProjects'
+  | 'canManageEvents'
   | 'canManageSessions'
   | 'canReassignProjectArtist'
   | 'canReassignProjectClient';
@@ -49,6 +50,11 @@ export class PermissionsAdminComponent implements OnInit {
       description: 'Consente creazione/modifica progetti.',
     },
     {
+      key: 'canManageEvents',
+      label: 'Gestione Eventi',
+      description: 'Consente creazione/modifica eventi public.',
+    },
+    {
       key: 'canManageSessions',
       label: 'Gestione Sedute',
       description: 'Consente gestione sedute di lavoro.',
@@ -70,6 +76,7 @@ export class PermissionsAdminComponent implements OnInit {
       canManageRoles: false,
       canManageBookings: true,
       canManageProjects: false,
+      canManageEvents: false,
       canManageSessions: false,
       canReassignProjectArtist: false,
       canReassignProjectClient: false
@@ -78,6 +85,7 @@ export class PermissionsAdminComponent implements OnInit {
       canManageRoles: false,
       canManageBookings: true,
       canManageProjects: true,
+      canManageEvents: true,
       canManageSessions: true,
       canReassignProjectArtist: false,
       canReassignProjectClient: false
@@ -86,6 +94,7 @@ export class PermissionsAdminComponent implements OnInit {
       canManageRoles: false,
       canManageBookings: true,
       canManageProjects: true,
+      canManageEvents: true,
       canManageSessions: true,
       canReassignProjectArtist: true,
       canReassignProjectClient: true
@@ -94,6 +103,7 @@ export class PermissionsAdminComponent implements OnInit {
       canManageRoles: true,
       canManageBookings: true,
       canManageProjects: true,
+      canManageEvents: true,
       canManageSessions: true,
       canReassignProjectArtist: true,
       canReassignProjectClient: true
@@ -212,7 +222,7 @@ export class PermissionsAdminComponent implements OnInit {
     const p = user.permissions ?? {};
     if (p.canManageRoles === true) return 'manager';
     if (p.canReassignProjectArtist === true || p.canReassignProjectClient === true) return 'senior';
-    if (p.canManageProjects === true || p.canManageSessions === true) return 'operator';
+    if (p.canManageProjects === true || p.canManageEvents === true || p.canManageSessions === true) return 'operator';
     return 'junior';
   }
 

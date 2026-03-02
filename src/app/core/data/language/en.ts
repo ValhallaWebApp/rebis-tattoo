@@ -7,17 +7,44 @@ export const dataEn = {
       description: 'Afraid of pain? Everyone is. Then they walk into Rebis and realize...',
       cta: 'Book now',
       ctaLine1: 'BOOK NOW',
-      ctaLine2: 'YOUR TATTOO'
+      ctaLine2: 'YOUR TATTOO',
+      logoAlt: 'Rebis logo'
     },
     about: {
       title: 'CLIENT APPROACH',
       paragraph1: 'At Rebis Tattoo every tattoo is a unique artwork.',
       paragraph2: 'Book your free consultation now.',
-      cta: 'Learn more'
+      cta: 'Learn more',
+      imageAlt: 'Tattoo in progress',
+      approach: [
+        {
+          title: 'Listening and consultation',
+          text: 'We start from idea, style, area and budget to define a realistic project.'
+        },
+        {
+          title: 'Custom proposal',
+          text: 'We prepare concept and technical notes before the session.'
+        },
+        {
+          title: 'Session and follow-up',
+          text: 'Safe in-studio session and aftercare support for healing.'
+        }
+      ]
     },
     services: {
       title: 'Our Services',
       subtitle: 'Discover different styles and artistic approaches',
+      fallbackTitle: 'Service',
+      iconAltSuffix: 'icon',
+      priceOnRequest: 'Price on request',
+      durationOnRequest: 'Duration on request',
+      currencySuffix: 'EUR',
+      durationUnitMinutes: 'min',
+      flipAction: 'Details',
+      flipBackAction: 'Close',
+      flipHint: 'Tap for details',
+      emptyTitle: 'No service available',
+      emptySubtitle: 'Please check back soon.',
       items: [
         { title: 'Cover-up', desc: 'We cover unwanted old tattoos' },
         { title: 'Fine Line', desc: 'Thin and detailed lines' },
@@ -27,13 +54,62 @@ export const dataEn = {
     },
     projects: {
       title: 'Recent Projects',
-      subtitle: 'A selection of our most representative works.'
+      subtitle: 'A selection of our most representative works.',
+      empty: 'No public projects available at the moment.',
+      viewAll: 'See all projects',
+      fallbackTitle: 'Project',
+      fallbackDescription: 'Project completed in our studio.',
+      noPhotoLabel: 'No photo'
     },
     showcase: {
       title: 'Our Artistic Showcase',
       subtitle: 'Rebis Tattoo is where top artists show their work.<strong>Discover our best creations.</strong>',
       description: 'Our studio gives each artist space to express unique talent and ideas. Browse our gallery and get inspired for your next tattoo.',
-      cta: 'SEE ALL WORKS ->'
+      cta: 'SEE ALL WORKS ->',
+      imageAlt: 'Tattoo gallery'
+    },
+    collabEvents: {
+      fallbackHighlight: 'More details coming soon.'
+    },
+    contactSection: {
+      titlePrefix: 'Book',
+      titleSuffix: 'an Appointment',
+      auth: {
+        guestTitle: 'Want to speed things up?',
+        guestText: 'Sign in or register to auto-fill Name and Email.',
+        login: 'Sign in',
+        register: 'Register',
+        loggedTitle: 'You are signed in',
+        loggedText: 'Name and Email have been auto-filled from your account'
+      },
+      form: {
+        noArtistAvailable: 'No artist available',
+        prefilledHint: 'Pre-filled field',
+        submit: 'Choose the Date',
+        fields: {
+          fullNameLabel: 'Full name',
+          fullNamePlaceholder: 'Enter full name',
+          emailLabel: 'Email',
+          emailPlaceholder: 'name@email.com',
+          phoneLabel: 'Phone',
+          phonePlaceholder: '+39 ...',
+          procedureLabel: 'Procedure',
+          procedurePlaceholder: 'Select a procedure',
+          artistLabel: 'Artist',
+          artistPlaceholder: 'Select an artist',
+          commentsLabel: 'Comments',
+          commentsPlaceholder: 'Tell us about your idea',
+          privacyConsentLabel: 'I consent to personal data processing'
+        },
+        procedures: {
+          permanentTattoo: 'Permanent Tattoo',
+          temporaryTattoo: 'Temporary Tattoo',
+          sketchDesign: 'Sketch and Design',
+          coverCorrection: 'Cover-up and Correction',
+          tattooRemoval: 'Tattoo Removal',
+          piercing: 'Piercing'
+        }
+      }
     },
     faqTitle: 'FREQUENT QUESTIONS',
     faq: [
@@ -48,6 +124,18 @@ export const dataEn = {
       {
         question: 'Does it hurt?',
         answer: 'Pain depends on area and sensitivity, but it is generally manageable.'
+      },
+      {
+        question: 'How should I take care of my tattoo?',
+        answer: 'We provide full aftercare instructions. Keep it clean, moisturized, and protected.'
+      },
+      {
+        question: 'Can I bring my own design ideas?',
+        answer: 'Yes. Artists like to work from personal ideas and references.'
+      },
+      {
+        question: 'How much does a tattoo cost?',
+        answer: 'It depends on size, style and duration. Base prices start from 49 EUR.'
       }
     ]
   },

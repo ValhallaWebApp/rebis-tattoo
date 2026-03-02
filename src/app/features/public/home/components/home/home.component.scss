@@ -1,36 +1,153 @@
+@use '../../styles/home-palette' as homePalette;
+@use '../../styles/home-typography' as homeTypography;
 
-.section-divider {
-  line-height: 0;
-  overflow: hidden;
-  background: #000; /* Colore della sezione sopra */
-}
-
-.section-divider svg {
+:host {
   display: block;
-  width: 100%;
-  height: 60px;
-}
-.angled-divider {
-  height: 60px;
-  overflow: hidden;
-  background: #000; /* Colore sezione sopra */
+  min-height: calc(100dvh - var(--app-toolbar-height, 64px));
+  background: var(--home-bg-deep, #080607);
 }
 
-.angled-divider svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
 .home-container {
-  // background-image: url('../../../../../../../public/bg/texture-2.png');
-  background-repeat: repeat;
-  background-size: 300px; /* o auto per default, puoi testare */
-  background-blend-mode: multiply; /* migliora la fusione con nero */
-  overflow-x: hidden;
-  max-width: 1280px;
-  margin: auto;
-
+  @include homePalette.apply-home-palette();
+  @include homeTypography.font-base();
+  position: relative;
+  overflow: clip;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  color: var(--home-text);
+  background: transparent;
 }
-section{
-  padding: 3.5rem 0px;
+
+.home-container::before {
+  content: none;
+}
+
+.home-section {
+  position: relative;
+  padding: clamp(64px, 8vw, 128px) 0;
+  --home-accent: var(--home-accent-primary);
+  --home-accent-rgb: 178, 135, 79;
+  --home-accent-ink: var(--home-text-inverse);
+  --home-white: #ffffff;
+  --home-whitesmoke: var(--home-text-strong);
+  --home-text: var(--home-text-primary);
+  --home-text-muted: var(--home-text-secondary);
+  --home-text-soft: var(--home-text-secondary);
+  --home-gray-320: #746a62;
+  --home-gray-250: #5b5051;
+  --home-panel-rgb: 255, 249, 242;
+  --home-glass-surface: rgba(255, 249, 242, 0.86);
+  --home-glass-bg: linear-gradient(165deg, rgba(18, 15, 16, 0.04), rgba(18, 15, 16, 0.015));
+  --home-glass-highlight: radial-gradient(circle at 88% 10%, rgba(178, 135, 79, 0.14), transparent 34%);
+  --home-glass-border: rgba(216, 204, 188, 0.9);
+  --home-glass-border-soft: rgba(216, 204, 188, 0.62);
+  --home-shadow-glass: 0 18px 36px rgba(0, 0, 0, 0.14);
+  --home-shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --home-shadow-strong: 0 14px 30px rgba(0, 0, 0, 0.14);
+  --home-shadow-image: 0 12px 26px rgba(0, 0, 0, 0.18);
+}
+
+.home-section--about,
+.home-section--projects,
+.home-section--faq {
+  background: var(--home-bg-inverse);
+  --home-accent: var(--home-accent-secondary);
+  --home-accent-rgb: 178, 135, 79;
+  --home-accent-ink: var(--home-text-strong);
+  --home-white: #ffffff;
+  --home-whitesmoke: var(--home-text-inverse);
+  --home-text: var(--home-text-inverse);
+  --home-text-muted: var(--home-text-muted-inverse);
+  --home-text-soft: var(--home-text-muted-inverse);
+  --home-panel-rgb: 34, 27, 29;
+  --home-glass-surface: rgba(23, 18, 20, 0.72);
+  --home-glass-bg: linear-gradient(165deg, rgba(255, 249, 242, 0.08), rgba(255, 249, 242, 0.02));
+  --home-glass-highlight: radial-gradient(circle at 88% 10%, rgba(178, 135, 79, 0.16), transparent 34%);
+  --home-glass-border: rgba(74, 61, 63, 0.72);
+  --home-glass-border-soft: rgba(74, 61, 63, 0.4);
+}
+
+.home-section--services,
+.home-section--showcase {
+  background: var(--home-bg-base);
+}
+
+.home-section--studio-updates {
+  background: var(--home-surface-3);
+}
+
+.home-section.home-section--hero {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-top: clamp(16px, 4vw, 28px);
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  background: #ffffff;
+
+  --home-accent: #000000;
+  --home-accent-rgb: 0, 0, 0;
+  --home-accent-ink: #ffffff;
+  --home-white: #ffffff;
+  --home-whitesmoke: #0f1115;
+  --home-text: #0f1115;
+  --home-text-muted: rgba(15, 17, 21, 0.84);
+  --home-text-soft: rgba(15, 17, 21, 0.72);
+  --home-gray-320: #39404e;
+  --home-gray-250: #2a303b;
+  --home-panel-rgb: 248, 249, 251;
+  --home-glass-surface: rgba(255, 255, 255, 0.9);
+  --home-glass-bg: linear-gradient(160deg, rgba(15, 17, 21, 0.08), rgba(15, 17, 21, 0.02));
+  --home-glass-highlight: radial-gradient(circle at 88% 10%, rgba(15, 17, 21, 0.08), transparent 34%);
+  --home-glass-border: rgba(15, 17, 21, 0.22);
+  --home-glass-border-soft: rgba(15, 17, 21, 0.16);
+  --home-shadow-glass: 0 18px 38px rgba(0, 0, 0, 0.12);
+  --home-shadow-soft: 0 12px 24px rgba(0, 0, 0, 0.1);
+  --home-shadow-strong: 0 16px 30px rgba(0, 0, 0, 0.14);
+  --home-shadow-image: 0 14px 24px rgba(0, 0, 0, 0.14);
+}
+
+.home-section.home-section--hero > app-home-hero {
+  display: block;
+  width: min(1280px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.home-section--faq {
+  padding-top: clamp(48px, 6vw, 80px);
+}
+
+.home-section--contact {
+  background: var(--home-bg-deep);
+  padding-top: clamp(48px, 6vw, 80px);
+  padding-bottom: clamp(64px, 10vw, 112px);
+  --home-accent: var(--home-accent-primary);
+  --home-accent-rgb: 178, 135, 79;
+  --home-accent-ink: var(--home-text-inverse);
+  --home-text: var(--home-text-inverse);
+  --home-whitesmoke: var(--home-text-inverse);
+  --home-text-muted: var(--home-text-muted-inverse);
+  --home-text-soft: var(--home-text-muted-inverse);
+  --home-panel-rgb: 23, 18, 20;
+  --home-glass-border: rgba(74, 61, 63, 0.72);
+  --home-glass-border-soft: rgba(74, 61, 63, 0.42);
+}
+
+@media (max-width: 760px) {
+  .home-section {
+    padding-top: clamp(56px, 10vw, 80px);
+    padding-bottom: clamp(56px, 10vw, 80px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-container *,
+  .home-container *::before,
+  .home-container *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

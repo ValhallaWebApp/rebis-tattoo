@@ -16,12 +16,32 @@ const defaultOrigins = [
   'http://localhost:4200',
   'https://rebis-tattoo-55816.web.app',
   'https://rebis-tattoo-55816.firebaseapp.com',
+  'https://gestionale-tattuaggi.pages.dev',
+  'https://*.gestionale-tattuaggi.pages.dev',
+  'https://fragrant-band-53b1.valhallawebapp.workers.dev',
 ];
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || defaultOrigins.join(','))
   .split(',')
   .map((v) => v.trim())
   .filter(Boolean);
+
+function escapeRegExp(input) {
+  return String(input).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function matchesAllowedOrigin(origin, rule) {
+  if (!origin || !rule) return false;
+  if (rule === '*') return true;
+  if (!rule.includes('*')) return origin === rule;
+  const pattern = `^${escapeRegExp(rule).replace(/\\\*/g, '.*')}$`;
+  return new RegExp(pattern).test(origin);
+}
+
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  return allowedOrigins.some((rule) => matchesAllowedOrigin(origin, rule));
+}
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -40,7 +60,7 @@ const processedEvents = new Set();
 const corsOptions = {
   origin(origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (isOriginAllowed(origin)) return callback(null, true);
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

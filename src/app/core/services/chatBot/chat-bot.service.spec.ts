@@ -1,14 +1,11 @@
 import { ChatService, ChatMessage } from './chat-bot.service';
-import { LocalLlmService } from './local-llm.service';
 
-describe('ChatService (AI-only message flow)', () => {
+describe('ChatService (rule-based studio flow)', () => {
   let service: ChatService;
-  let llmSpy: jasmine.SpyObj<LocalLlmService>;
 
   beforeEach(() => {
     localStorage.clear();
-    llmSpy = jasmine.createSpyObj<LocalLlmService>('LocalLlmService', ['generateSupportReply']);
-    service = new ChatService(llmSpy);
+    service = new ChatService();
   });
 
   function userHistory(text: string): ChatMessage[] {
@@ -21,38 +18,30 @@ describe('ChatService (AI-only message flow)', () => {
     ];
   }
 
-  it('usa la risposta AI per richieste chat', async () => {
-    llmSpy.generateSupportReply.and.resolveTo('Risposta AI locale.');
+  it('instrada il client alla chat studio quando richiesta assistenza umana', async () => {
+    const result = await service.replyWithPlan('chat-1', userHistory('voglio parlare con lo studio'), { role: 'client' });
 
-    const result = await service.replyWithPlan('chat-1', userHistory('ciao assistente'), { role: 'client' });
-
-    expect(llmSpy.generateSupportReply).toHaveBeenCalled();
-    expect(result.message).toBe('Risposta AI locale.');
+    expect(result.message.toLowerCase()).toContain('chat con lo studio');
+    expect(result.chips).toContain('Apri chat studio');
   });
 
-  it('fallback quando il modello non risponde', async () => {
-    llmSpy.generateSupportReply.and.resolveTo(null);
+  it('richiede login per guest che chiede chat studio', async () => {
+    const result = await service.replyWithPlan('chat-2', userHistory('voglio parlare con operatore studio'), { role: 'guest' });
 
-    const result = await service.replyWithPlan('chat-2', userHistory('messaggio qualsiasi'), { role: 'guest' });
-
-    expect(llmSpy.generateSupportReply).toHaveBeenCalled();
-    expect(result.message).toContain('Non riesco a rispondere');
+    expect(result.message.toLowerCase()).toContain('devi prima accedere');
+    expect(result.chips).toContain('Accedi per chat studio');
   });
 
-  it('usa chips coerenti con il ruolo', async () => {
-    llmSpy.generateSupportReply.and.resolveTo('Supporto operativo admin.');
-
-    const result = await service.replyWithPlan('chat-3', userHistory('dammi supporto'), { role: 'admin' });
-
-    expect(result.chips).toEqual(['Vai al profilo', 'Apri consulenza']);
+  it('fornisce contatti studio su richiesta', async () => {
+    const result = await service.replyWithPlan('chat-3', userHistory('mi dai telefono e indirizzo?'), { role: 'public' });
+    expect(result.message).toContain('Telefono:');
+    expect(result.message).toContain('Email:');
+    expect(result.message).toContain('Indirizzo:');
   });
 
-  it('non crea action consulenza: la chat usa solo risposta AI', async () => {
-    llmSpy.generateSupportReply.and.resolveTo('Per la prenotazione ti guido passo passo.');
-
-    const result = await service.replyWithPlan('chat-4', userHistory('prenota domani alle 15'), { role: 'client' });
-
-    expect(llmSpy.generateSupportReply).toHaveBeenCalled();
-    expect(result.chips).toContain('Apri consulenza');
+  it('gestisce fallback testuale senza modello LLM', async () => {
+    const result = await service.replyWithPlan('chat-4', userHistory('testo casuale senza intent chiaro'), { role: 'client' });
+    expect(result.message.toLowerCase()).toContain('posso aiutarti');
+    expect(result.chips).toContain('Apri chat studio');
   });
 });

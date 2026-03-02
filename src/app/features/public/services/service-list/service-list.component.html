@@ -1,27 +1,69 @@
 <section class="services">
   <header class="services__head">
-    <h2 class="services__title">{{ lang.t('home.services.title') }}</h2>
-    <p class="services__subtitle">{{ lang.t('home.services.subtitle') }}</p>
+    <h2 class="services__title">{{ titleText() }}</h2>
+    <p class="services__subtitle">{{ subtitleText() }}</p>
   </header>
 
   <ng-container *ngIf="services$ | async as services">
     <div class="services__grid" *ngIf="services.length; else empty">
-      <article class="service-card" *ngFor="let service of services">
-        <div class="preview">
-          <div class="icon">
-            <img [src]="iconFor(service)" [alt]="titleOf(service) + ' icon'" loading="lazy" decoding="async" />
-          </div>
-          <div class="content">
-            <h3>{{ titleOf(service) }}</h3>
-            <p>{{ descOf(service) }}</p>
-            <div class="meta">
-              <span class="pill">
-                {{ service.prezzoDaConcordare ? 'Prezzo su richiesta' : ('€' + service.prezzo) }}
-              </span>
-              <span class="pill">
-                {{ service.durataDaConcordare ? 'Durata su richiesta' : (service.durata + ' min') }}
-              </span>
+      <article class="service-card" *ngFor="let service of services" [class.is-flipped]="isFlipped(service.id)">
+        <div class="service-card__inner">
+          <div class="service-card__face service-card__face--front">
+            <span class="service-card__accent" aria-hidden="true"></span>
+            <div class="preview preview--front">
+              <div class="icon">
+                <img
+                  [src]="iconFor(service)"
+                  [alt]="titleOf(service) + ' ' + lang.t('home.services.iconAltSuffix')"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <div class="content">
+                <h3>{{ titleOf(service) }}</h3>
+                <p class="teaser">{{ descOf(service) }}</p>
+                <div class="meta meta--front">
+                  <span class="pill pill--front">
+                    {{ priceLabelOf(service) }}
+                  </span>
+                  <span class="pill pill--front">
+                    {{ durationLabelOf(service) }}
+                  </span>
+                </div>
+                <p class="flip-hint">{{ lang.t('home.services.flipHint') }}</p>
+              </div>
             </div>
+            <button
+              class="flip-toggle"
+              type="button"
+              (click)="toggleFlip(service.id)"
+              [attr.aria-label]="lang.t('home.services.flipAction') + ' ' + titleOf(service)"
+            >
+              {{ lang.t('home.services.flipAction') }}
+            </button>
+          </div>
+
+          <div class="service-card__face service-card__face--back">
+            <div class="content">
+              <h3>{{ titleOf(service) }}</h3>
+              <p>{{ descOf(service) }}</p>
+              <div class="meta">
+                <span class="pill">
+                  {{ priceLabelOf(service) }}
+                </span>
+                <span class="pill">
+                  {{ durationLabelOf(service) }}
+                </span>
+              </div>
+            </div>
+            <button
+              class="flip-toggle flip-toggle--back"
+              type="button"
+              (click)="closeFlip(service.id)"
+              [attr.aria-label]="lang.t('home.services.flipBackAction') + ' ' + titleOf(service)"
+            >
+              {{ lang.t('home.services.flipBackAction') }}
+            </button>
           </div>
         </div>
       </article>
@@ -32,8 +74,8 @@
     <div class="empty">
       <mat-icon>search_off</mat-icon>
       <div>
-        <strong>Nessun servizio disponibile</strong>
-        <div class="muted">Torna a trovarci presto.</div>
+        <strong>{{ emptyTitleText() }}</strong>
+        <div class="muted">{{ emptySubtitleText() }}</div>
       </div>
     </div>
   </ng-template>

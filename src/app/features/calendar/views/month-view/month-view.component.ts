@@ -53,4 +53,11 @@ export class MonthViewComponent implements OnChanges {
   countForDay(key: string): number {
     return this.eventsSig().filter(e => toDateKey(new Date(e.start)) === key).length;
   }
+
+  intensityClass(count: number): string {
+    if (count === 0) return 'c0';
+    if (count === 1) return 'c1';
+    if (count <= 3) return 'c2';
+    return 'c3';
+  }
 }

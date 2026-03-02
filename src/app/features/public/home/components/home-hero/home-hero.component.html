@@ -1,15 +1,15 @@
 <section class="hero-pensavo">
   <div class="hero-header">
     <div class="hero-logo">
-      <img src="/loghi/logo.png" alt="Logo Rebis" />
+      <img src="/loghi/logo.png" [alt]="lang.t('home.hero.logoAlt')" />
     </div>
 
     <div class="hero-quote">
       <h1>
-        {{ lang.t('home.hero.headlineLine1') }}<br />
-        {{ lang.t('home.hero.headlineLine2') }}
+        {{ hero().homeHeroHeadlineLine1 || lang.t('home.hero.headlineLine1') }}<br />
+        {{ hero().homeHeroHeadlineLine2 || lang.t('home.hero.headlineLine2') }}
       </h1>
-      <p class="quote-subtext">{{ lang.t('home.hero.subtext') }}</p>
+      <p class="quote-subtext">{{ hero().homeHeroSubtext || lang.t('home.hero.subtext') }}</p>
     </div>
   </div>
 
@@ -18,10 +18,10 @@
   </div>
 
   <div class="hero-footer">
-    <p class="hero-description">{{ lang.t('home.hero.description') }}</p>
+    <p class="hero-description">{{ hero().homeHeroDescription || lang.t('home.hero.description') }}</p>
     <a class="hero-cta" routerLink="/fast-booking">
-      {{ lang.t('home.hero.ctaLine1') }}<br />
-      <strong>{{ lang.t('home.hero.ctaLine2') }}</strong>
+      {{ hero().homeHeroCtaLine1 || lang.t('home.hero.ctaLine1') }}<br />
+      <strong>{{ hero().homeHeroCtaLine2 || lang.t('home.hero.ctaLine2') }}</strong>
     </a>
   </div>
 </section>

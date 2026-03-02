@@ -1,51 +1,169 @@
-.month-wrap { padding: 12px; }
+.month-wrap {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  color: var(--cal-text, var(--app-main-text, #f3f4f7));
+}
 
 .weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 2px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--cal-border, var(--app-surface-border, rgba(255, 255, 255, 0.12)));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01) 48%, rgba(0, 0, 0, 0.34)),
+    var(--cal-surface, rgba(14, 17, 24, 0.74));
 
   div {
     text-align: center;
     font-weight: 800;
-    opacity: .75;
+    color: whitesmoke;
+    opacity: 0.92;
+    letter-spacing: 0.02em;
   }
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
 }
 
 .cell {
+  position: relative;
+  overflow: hidden;
   height: 96px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.02);
+  border-radius: 14px;
+  border: 1px solid var(--cal-border, rgba(255, 255, 255, 0.12));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 42%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface, rgba(10, 11, 16, 0.64));
+  backdrop-filter: blur(16px) saturate(132%);
+  -webkit-backdrop-filter: blur(16px) saturate(132%);
   padding: 10px;
   text-align: left;
   cursor: pointer;
+  color: var(--cal-text, var(--app-main-text, #f3f4f7));
+  transition: transform 0.12s ease, filter 0.2s ease, border-color 0.2s ease;
 
-  &.dim { opacity: .45; }
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: 12px;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.08), transparent 48%);
+  }
+
+  &.dim {
+    opacity: 0.62;
+    filter: saturate(0.75);
+  }
 
   .top {
     display: flex;
     justify-content: space-between;
     align-items: center;
 
-    .day { font-weight: 900; }
+    .day {
+      font-weight: 900;
+      color: whitesmoke;
+    }
+
     .badge {
       font-weight: 900;
       border-radius: 999px;
       padding: 2px 8px;
-      background: rgba(46, 125, 50, 0.28);
-      border: 1px solid rgba(46, 125, 50, 0.35);
+      background: var(--cal-accent, #b79b55);
+      color: var(--cal-text-on-accent, #111111);
+      border: 1px solid rgba(0, 0, 0, 0.18);
     }
   }
 
-  .hint { margin-top: 10px; opacity: .75; font-size: 12px; }
+  .hint {
+    margin-top: 10px;
+    color: var(--cal-text-muted, var(--app-main-text-muted, #c8ced8));
+    font-size: 12px;
+    letter-spacing: 0.01em;
+  }
 
-  &:hover { filter: brightness(1.08); }
+  &:hover {
+    border-color: var(--cal-border-strong, rgba(255, 255, 255, 0.24));
+    transform: translateY(-1px);
+    filter: brightness(1.04);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--cal-accent, #b79b55);
+    outline-offset: 2px;
+  }
+}
+
+.cell.c0 {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 44%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface, rgba(10, 11, 16, 0.64));
+}
+
+.cell.c1 {
+  border-color: rgba(134, 239, 172, 0.44);
+  background:
+    linear-gradient(145deg, rgba(134, 239, 172, 0.2) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface, rgba(10, 11, 16, 0.64));
+}
+
+.cell.c2 {
+  border-color: rgba(251, 191, 36, 0.5);
+  background:
+    linear-gradient(145deg, rgba(251, 191, 36, 0.2) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface, rgba(10, 11, 16, 0.64));
+}
+
+.cell.c3 {
+  border-color: rgba(239, 68, 68, 0.5);
+  background:
+    linear-gradient(145deg, rgba(239, 68, 68, 0.2) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(0, 0, 0, 0.4) 100%),
+    var(--cal-surface, rgba(10, 11, 16, 0.64));
+}
+
+@media (max-width: 900px) {
+  .cell {
+    height: 86px;
+    padding: 8px;
+
+    .hint {
+      margin-top: 8px;
+      font-size: 11px;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .month-wrap {
+    padding: 8px;
+  }
+
+  .weekdays,
+  .grid {
+    gap: 6px;
+  }
+
+  .cell {
+    height: 74px;
+    padding: 6px;
+
+    .badge {
+      padding: 1px 6px;
+      font-size: 11px;
+    }
+
+    .hint {
+      margin-top: 6px;
+      font-size: 10px;
+    }
+  }
 }

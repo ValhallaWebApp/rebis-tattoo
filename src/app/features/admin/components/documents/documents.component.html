@@ -1,20 +1,120 @@
 <section class="documents-section">
-  <h2 class="section-title">{{'Documenti Scaricabili'.toUpperCase()}}</h2>
+  <mat-drawer-container class="documents-shell" autosize>
+    <mat-drawer
+      class="documents-drawer"
+      mode="over"
+      position="end"
+      [opened]="drawerOpen()"
+      (openedChange)="onDrawerOpenedChange($event)"
+    >
+      <div class="drawer-head">
+        <div>
+          <h3 class="drawer-title">{{ isEditing() ? 'Modifica documento' : 'Nuovo documento' }}</h3>
+          <p class="drawer-subtitle">Compila il form e salva il documento in archivio.</p>
+        </div>
+        <button mat-icon-button type="button" (click)="closeDrawer()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
 
-  <div class="documents-grid">
-    <mat-card class="doc-card" *ngFor="let doc of documents">
-      <mat-card-header>
-        <mat-icon>description</mat-icon>
-        <mat-card-title>{{ doc.title }}</mat-card-title>
-        <mat-card-subtitle>{{ doc.description }}</mat-card-subtitle>
-      </mat-card-header>
+      <form class="drawer-form" [formGroup]="form" (ngSubmit)="saveDocument()">
+        <mat-form-field appearance="outline">
+          <mat-label>Titolo</mat-label>
+          <input matInput formControlName="title" maxlength="120" />
+          <mat-error *ngIf="form.controls.title.hasError('required')">Titolo obbligatorio</mat-error>
+        </mat-form-field>
 
-      <mat-card-actions>
-        <a [href]="doc.fileUrl" target="_blank" download>
-          <button mat-flat-button color="primary">Scarica</button>
+        <mat-form-field appearance="outline">
+          <mat-label>Descrizione</mat-label>
+          <textarea matInput rows="3" formControlName="description" maxlength="320"></textarea>
+          <mat-error *ngIf="form.controls.description.hasError('required')">Descrizione obbligatoria</mat-error>
+        </mat-form-field>
+
+        <div
+          class="dropzone"
+          [class.drag-active]="dropActive()"
+          [class.uploading]="uploading()"
+          (dragover)="onDropZoneDragOver($event)"
+          (dragleave)="onDropZoneDragLeave($event)"
+          (drop)="onDropZoneDrop($event)"
+        >
+          <mat-icon>{{ uploading() ? 'cloud_sync' : 'upload_file' }}</mat-icon>
+          <strong>Drag & drop file</strong>
+          <span>oppure</span>
+          <label class="pick-file-btn">
+            <input type="file" [accept]="acceptTypes" (change)="onFileInputChange($event)" />
+            Seleziona file
+          </label>
+          <small>Formati: PDF, DOC, DOCX, PNG, JPG, WEBP (max 15MB)</small>
+        </div>
+
+        <div class="upload-status" *ngIf="uploadedFilename()">
+          <span>{{ uploadedFilename() }}</span>
+          <span *ngIf="uploading()">Caricamento {{ uploadProgress() }}%</span>
+          <span *ngIf="!uploading() && uploadProgress() >= 100">Caricato</span>
+        </div>
+
+        <div class="upload-hint" *ngIf="form.controls.fileUrl.hasError('required') && form.controls.fileUrl.touched">
+          Carica un file per completare il documento.
+        </div>
+
+        <a
+          class="current-file-link"
+          *ngIf="form.controls.fileUrl.value"
+          [href]="form.controls.fileUrl.value"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Apri file caricato
         </a>
-      </mat-card-actions>
-    </mat-card>
-  </div>
+
+        <div class="drawer-actions">
+          <button mat-stroked-button type="button" (click)="startCreate()" [disabled]="saving() || uploading()">
+            Reset
+          </button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving() || uploading()">
+            {{ submitLabel() }}
+          </button>
+        </div>
+      </form>
+    </mat-drawer>
+
+    <mat-drawer-content>
+      <header class="section-header">
+        <div>
+          <h2 class="section-title">{{ 'Documenti'.toUpperCase() }}</h2>
+          <p class="section-subtitle">Creazione e modifica rapida documenti archivio.</p>
+        </div>
+        <button mat-stroked-button type="button" class="new-btn" (click)="openCreateDrawer()">
+          <mat-icon>add</mat-icon>
+          Nuovo
+        </button>
+      </header>
+
+      <div class="documents-grid" *ngIf="documents().length > 0; else emptyState">
+        <mat-card class="doc-card" *ngFor="let doc of documents(); trackBy: trackByDocument">
+          <mat-card-header>
+            <mat-icon>description</mat-icon>
+            <mat-card-title>{{ doc.title }}</mat-card-title>
+            <mat-card-subtitle>{{ doc.description }}</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-actions>
+            <a mat-stroked-button [href]="doc.fileUrl" target="_blank" rel="noopener noreferrer">
+              Apri
+            </a>
+            <button mat-stroked-button type="button" (click)="openEditDrawer(doc)">Modifica</button>
+            <button mat-button color="warn" type="button" (click)="deleteDocument(doc)">Elimina</button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+
+      <ng-template #emptyState>
+        <mat-card class="empty-card">
+          <mat-card-content>Nessun documento disponibile.</mat-card-content>
+        </mat-card>
+      </ng-template>
+    </mat-drawer-content>
+  </mat-drawer-container>
 </section>
 

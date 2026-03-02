@@ -94,7 +94,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       )
       .subscribe(p => {
         const normalized = p ? this.normalizeProject(p as any) : undefined;
-        if (normalized && ((normalized as any).isPublic === false || String((normalized as any).status ?? '').trim() !== 'completed')) {
+        if (normalized && ((normalized as any).isPublic === false || !this.isCompletedStatus((normalized as any).status))) {
           this.project = undefined;
           this.notFound = true;
           this.loading = false;
@@ -200,6 +200,10 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       case 'active': return 'Attivo';
       case 'healing': return 'Guarigione';
       case 'completed': return 'Concluso';
+      case 'complete': return 'Concluso';
+      case 'concluso': return 'Concluso';
+      case 'done': return 'Concluso';
+      case 'finished': return 'Concluso';
       case 'cancelled': return 'Annullato';
 
       case 'approved': return 'Approvato';
@@ -233,6 +237,15 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     const imgs = Array.isArray(this.project?.finalImages) ? this.project!.finalImages! : [];
     const idx = imgs.findIndex(i => !!i?.isCover);
     return idx >= 0 ? idx : 0;
+  }
+
+  private isCompletedStatus(status: unknown): boolean {
+    const normalized = String(status ?? '').trim().toLowerCase();
+    return normalized === 'completed'
+      || normalized === 'complete'
+      || normalized === 'concluso'
+      || normalized === 'done'
+      || normalized === 'finished';
   }
 
   private normalizeProject(raw: any): PublicTattooProject {

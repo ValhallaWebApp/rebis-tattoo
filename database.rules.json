@@ -11,6 +11,11 @@
       }
     },
 
+    "events": {
+      ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')",
+      ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')"
+    },
+
     "users": {
       ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin')",
       "$uid": {
@@ -85,6 +90,12 @@
       ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin')"
     },
 
+    "documents": {
+      ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('staffProfiles/' + auth.uid + '/isActive').val() === true || root.child('users/' + auth.uid + '/role').val() === 'staff')",
+      ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('staffProfiles/' + auth.uid + '/isActive').val() === true || root.child('users/' + auth.uid + '/role').val() === 'staff')",
+      ".indexOn": ["title", "createdAt", "updatedAt"]
+    },
+
     "studioProfile": {
       ".read": true,
       ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin')"
@@ -96,8 +107,11 @@
     },
 
     "projects": {
-      ".read": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || data.child('clientId').val() === auth.uid || (root.child('users/' + auth.uid + '/role').val() === 'staff' && root.child('staffProfiles/' + auth.uid + '/isActive').val() === true && data.child('bookingId').val() !== null && data.child('bookingId').val() !== '' && root.child('bookings/' + data.child('bookingId').val() + '/artistId').val() === auth.uid))",
+      ".read": "(auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || data.child('clientId').val() === auth.uid || (root.child('users/' + auth.uid + '/role').val() === 'staff' && root.child('staffProfiles/' + auth.uid + '/isActive').val() === true && data.child('bookingId').val() !== null && data.child('bookingId').val() !== '' && root.child('bookings/' + data.child('bookingId').val() + '/artistId').val() === auth.uid))) || (auth == null && query.orderByChild === 'isPublic' && query.equalTo === true)",
       ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || (root.child('users/' + auth.uid + '/role').val() === 'staff' && root.child('staffProfiles/' + auth.uid + '/isActive').val() === true && ((newData.child('bookingId').exists() ? newData.child('bookingId').val() : data.child('bookingId').val()) !== null && (newData.child('bookingId').exists() ? newData.child('bookingId').val() : data.child('bookingId').val()) !== '' && root.child('bookings/' + (newData.child('bookingId').exists() ? newData.child('bookingId').val() : data.child('bookingId').val()) + '/artistId').val() === auth.uid)))",
+      "$projectId": {
+        ".read": "(auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || data.child('clientId').val() === auth.uid || (root.child('users/' + auth.uid + '/role').val() === 'staff' && root.child('staffProfiles/' + auth.uid + '/isActive').val() === true && data.child('bookingId').val() !== null && data.child('bookingId').val() !== '' && root.child('bookings/' + data.child('bookingId').val() + '/artistId').val() === auth.uid))) || (data.child('isPublic').val() === true && (data.child('status').val() === 'completed' || data.child('status').val() === 'complete' || data.child('status').val() === 'concluso' || data.child('status').val() === 'done' || data.child('status').val() === 'finished'))"
+      },
       ".indexOn": ["clientId", "artistId", "status", "isPublic", "createdAt"]
     },
 

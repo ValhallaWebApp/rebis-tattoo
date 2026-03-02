@@ -1,13 +1,13 @@
 <section class="showcase-container">
   <div class="showcase-content">
     <div class="showcase-text">
-      <h2>{{ lang.t('home.showcase.title') }}</h2>
-      <h3 [innerHTML]="lang.t('home.showcase.subtitle')"></h3>
-      <p>{{ lang.t('home.showcase.description') }}</p>
-      <a class="showcase-link" routerLink="/progetti">{{ lang.t('home.showcase.cta') }}</a>
+      <h2>{{ titleText() }}</h2>
+      <h3 [innerHTML]="subtitleText()"></h3>
+      <p>{{ descriptionText() }}</p>
+      <a class="showcase-link" routerLink="/progetti">{{ ctaText() }}</a>
     </div>
     <div class="showcase-image">
-      <img src="/home/home-1-5-549x422.jpg" alt="galleria tatuaggi" />
+      <img src="/home/home-1-5-549x422.jpg" [alt]="lang.t('home.showcase.imageAlt')" />
     </div>
   </div>
 </section>

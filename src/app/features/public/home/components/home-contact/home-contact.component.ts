@@ -1,11 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { StaffMember, StaffService } from '../../../../../core/services/staff/staff.service';
 import { AuthService } from '../../../../../core/services/auth/auth.service';
+import { LanguageService } from '../../../../../core/services/language/language.service';
 import { FastBookingStore } from '../../../fast-booking/state/fast-booking-store.service';
 import { DynamicField } from '../../../../../shared/components/form/dynamic-form/dynamic-form.component';
+import {
+  DEFAULT_STUDIO_PROFILE,
+  StudioProfileService
+} from '../../../../../core/services/studio/studio-profile.service';
 
 @Component({
   selector: 'app-home-contact',
@@ -18,51 +24,63 @@ export class HomeContactComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly staffService = inject(StaffService);
-    private readonly fastBookingStore = inject(FastBookingStore);
+  private readonly fastBookingStore = inject(FastBookingStore);
+  private readonly studioProfile = inject(StudioProfileService);
 
   readonly auth = inject(AuthService);
+  readonly lang = inject(LanguageService);
+  readonly profileSig = toSignal(this.studioProfile.getProfile(), {
+    initialValue: DEFAULT_STUDIO_PROFILE
+  });
 
   bookingForm: FormGroup = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     phone: ['', Validators.required],
     procedure: ['', Validators.required],
-    artist: ['', Validators.required], // ✅ deve contenere ARTIST ID
+    artist: ['', Validators.required],
     comments: [''],
     privacyConsent: [false, Validators.requiredTrue]
   });
 
-  staff = signal<StaffMember[]>([]);
-  loading = signal(true);
+  readonly staff = signal<StaffMember[]>([]);
+  readonly loading = signal(true);
 
-  procedures = [
-    'Tatuaggio Permanente',
-    'Tatuaggio Temporaneo',
-    'Sketch & Progettazione',
-    'Copertura e Correzione',
-    'Rimozione Tatuaggi',
-    'Piercing'
-  ];
+  private readonly procedureKeys = [
+    'permanentTattoo',
+    'temporaryTattoo',
+    'sketchDesign',
+    'coverCorrection',
+    'tattooRemoval',
+    'piercing'
+  ] as const;
 
-  // ✅ user signals
   readonly user = computed(() => this.auth.userSig());
   readonly isLogged = computed(() => !!this.user());
-  readonly userEmail = computed(() => (this.user() as any)?.email ?? null);
+  readonly userEmail = computed(() => (this.user() as { email?: string } | null)?.email ?? null);
+
+  private readonly procedureOptions = computed(() =>
+    this.procedureKeys.map((key) => {
+      const label = this.lang.t(`home.contactSection.form.procedures.${key}`);
+      return { label, value: label };
+    })
+  );
+
   readonly bookingFields = computed<DynamicField[]>(() => {
-    const procedureOptions = this.procedures.map((proc) => ({ label: proc, value: proc }));
     const validArtists = this.staff().filter((artist) => !!artist.id);
     const artistOptions = validArtists.length
       ? validArtists.map((artist) => ({ label: artist.name, value: artist.id as string }))
-      : [{ label: 'Nessun artista disponibile', value: '' }];
+      : [{ label: this.lang.t('home.contactSection.form.noArtistAvailable'), value: '' }];
+
     const isLogged = this.isLogged();
-    const prefillHint = isLogged ? 'Campo precompilato' : undefined;
+    const prefillHint = isLogged ? this.lang.t('home.contactSection.form.prefilledHint') : undefined;
 
     return [
       {
         type: 'text',
         name: 'fullName',
-        label: 'Nome completo',
-        placeholder: 'Inserisci nome e cognome',
+        label: this.lang.t('home.contactSection.form.fields.fullNameLabel'),
+        placeholder: this.lang.t('home.contactSection.form.fields.fullNamePlaceholder'),
         required: true,
         minLength: 2,
         hint: prefillHint,
@@ -71,51 +89,55 @@ export class HomeContactComponent {
       {
         type: 'email',
         name: 'email',
-        label: 'Email',
-        placeholder: 'nome@email.com',
+        label: this.lang.t('home.contactSection.form.fields.emailLabel'),
+        placeholder: this.lang.t('home.contactSection.form.fields.emailPlaceholder'),
         required: true,
         hint: prefillHint,
         readonly: isLogged
       },
-      { type: 'text', name: 'phone', label: 'Telefono', placeholder: '+39 ...', required: true },
+      {
+        type: 'text',
+        name: 'phone',
+        label: this.lang.t('home.contactSection.form.fields.phoneLabel'),
+        placeholder: this.lang.t('home.contactSection.form.fields.phonePlaceholder'),
+        required: true
+      },
       {
         type: 'select',
         name: 'procedure',
-        label: 'Procedura',
-        placeholder: 'Seleziona una procedura',
+        label: this.lang.t('home.contactSection.form.fields.procedureLabel'),
+        placeholder: this.lang.t('home.contactSection.form.fields.procedurePlaceholder'),
         required: true,
-        options: procedureOptions
+        options: this.procedureOptions()
       },
       {
         type: 'select',
         name: 'artist',
-        label: 'Artista',
-        placeholder: 'Seleziona un artista',
+        label: this.lang.t('home.contactSection.form.fields.artistLabel'),
+        placeholder: this.lang.t('home.contactSection.form.fields.artistPlaceholder'),
         required: true,
         options: artistOptions
       },
       {
         type: 'textarea',
         name: 'comments',
-        label: 'Commenti',
-        placeholder: 'Raccontaci la tua idea',
+        label: this.lang.t('home.contactSection.form.fields.commentsLabel'),
+        placeholder: this.lang.t('home.contactSection.form.fields.commentsPlaceholder'),
         rows: 4,
         className: 'full-width'
       },
       {
         type: 'checkbox',
         name: 'privacyConsent',
-        label: 'Acconsento al trattamento dei dati personali',
+        label: this.lang.t('home.contactSection.form.fields.privacyConsentLabel'),
         required: true,
         className: 'full-width'
       }
     ];
   });
 
-  // ✅ evita re-run fastidiosi mentre l’utente compila
   readonly prefilledOnce = signal(false);
 
-  // ✅ effect in injection context (field initializer)
   private readonly prefillEffect = effect(() => {
     const u = this.user();
 
@@ -130,11 +152,11 @@ export class HomeContactComponent {
     if (this.prefilledOnce()) return;
 
     const fullName =
-      (u as any)?.name ??
-      (u as any)?.displayName ??
-      ((u as any)?.email ? String((u as any).email).split('@')[0] : '');
+      (u as { name?: string; displayName?: string; email?: string }).name ??
+      (u as { displayName?: string }).displayName ??
+      ((u as { email?: string }).email ? String((u as { email?: string }).email).split('@')[0] : '');
 
-    const email = (u as any)?.email ?? '';
+    const email = (u as { email?: string }).email ?? '';
 
     if (fullNameCtrl && !String(fullNameCtrl.value || '').trim()) {
       fullNameCtrl.setValue(fullName, { emitEvent: false });
@@ -154,12 +176,12 @@ export class HomeContactComponent {
   private async loadStaff(): Promise<void> {
     try {
       const staffList = await firstValueFrom(this.staffService.getAllStaff());
-      const activeStaff = (staffList ?? []).filter(s => s.isActive !== false);
-      const artists = activeStaff.filter(s => s.role === 'tatuatore');
+      const activeStaff = (staffList ?? []).filter((s) => s.isActive !== false);
+      const artists = activeStaff.filter((s) => s.role === 'tatuatore');
       const fallback = artists.length > 0 ? artists : activeStaff;
 
       if (artists.length === 0) {
-        console.warn('[HOME_CONTACT][STAFF] Nessun tatuatore attivo trovato, uso fallback staff attivo');
+        console.warn('[HOME_CONTACT][STAFF] No active tattoo artist found, using active staff fallback');
       }
 
       this.staff.set(fallback);
@@ -187,16 +209,16 @@ export class HomeContactComponent {
       return;
     }
 
-    // 1️⃣ prendi i dati del form (inclusi disabled)
     const formData = this.bookingForm.getRawValue();
-
-    // 2️⃣ COMPILA SOLO I CAMPI nello store (nessuno step, nessun redirect interno)
     this.fastBookingStore.applyHomeSeed(formData);
-
-    // 3️⃣ vai al wizard Fast Booking
     this.router.navigate(['/fast-booking']);
   }
 
+  contactTitlePrefix(): string {
+    return this.profileSig().homeContactTitlePrefix || this.lang.t('home.contactSection.titlePrefix');
+  }
+
+  contactTitleSuffix(): string {
+    return this.profileSig().homeContactTitleSuffix || this.lang.t('home.contactSection.titleSuffix');
+  }
 }
-
-

@@ -7,17 +7,44 @@ export const dataIt = {
       description: 'Paura del dolore? Ce l hanno tutti. Poi entrano da Rebis e capiscono che...',
       cta: 'Prenota ora',
       ctaLine1: 'PRENOTA ORA',
-      ctaLine2: 'IL TUO TATUAGGIO'
+      ctaLine2: 'IL TUO TATUAGGIO',
+      logoAlt: 'Logo Rebis'
     },
     about: {
       title: 'APPROCCIO AL CLIENTE',
       paragraph1: 'Da Rebis Tattoo ogni tatuaggio e un opera unica.',
       paragraph2: 'Prenota ora la tua consulenza gratuita.',
-      cta: 'Scopri di piu'
+      cta: 'Scopri di piu',
+      imageAlt: 'Tattoo in corso',
+      approach: [
+        {
+          title: 'Ascolto e consulenza',
+          text: 'Partiamo da idea, stile, zona e budget per definire un progetto realistico.'
+        },
+        {
+          title: 'Proposta su misura',
+          text: 'Prepariamo bozza e indicazioni tecniche prima della seduta.'
+        },
+        {
+          title: 'Seduta e follow-up',
+          text: 'Seduta in studio in sicurezza e supporto post tattoo per la cura.'
+        }
+      ]
     },
     services: {
       title: 'I Nostri Servizi',
       subtitle: 'Scopri i diversi stili e approcci artistici',
+      fallbackTitle: 'Servizio',
+      iconAltSuffix: 'icona',
+      priceOnRequest: 'Prezzo su richiesta',
+      durationOnRequest: 'Durata su richiesta',
+      currencySuffix: 'EUR',
+      durationUnitMinutes: 'min',
+      flipAction: 'Dettagli',
+      flipBackAction: 'Chiudi',
+      flipHint: 'Tap per approfondire',
+      emptyTitle: 'Nessun servizio disponibile',
+      emptySubtitle: 'Torna a trovarci presto.',
       items: [
         { title: 'Cover-up', desc: 'Copriamo vecchi tatuaggi indesiderati' },
         { title: 'Fine Line', desc: 'Linee sottili e dettagliate' },
@@ -27,13 +54,62 @@ export const dataIt = {
     },
     projects: {
       title: 'I Progetti Recenti',
-      subtitle: 'Una selezione dei nostri lavori piu rappresentativi.'
+      subtitle: 'Una selezione dei nostri lavori piu rappresentativi.',
+      empty: 'Nessun progetto pubblico disponibile al momento.',
+      viewAll: 'Guarda tutti i progetti',
+      fallbackTitle: 'Progetto',
+      fallbackDescription: 'Progetto realizzato in studio.',
+      noPhotoLabel: 'Nessuna foto'
     },
     showcase: {
       title: 'La nostra vetrina artistica',
       subtitle: 'Rebis Tattoo e il luogo dove i migliori tatuatori mostrano le loro opere.<strong>Ti invitiamo a scoprire i nostri lavori piu straordinari.</strong>',
       description: 'Il nostro studio offre uno spazio creativo a ogni artista per esprimere talento e idee uniche. Clienti e visitatori sono sempre benvenuti a esplorare i nostri migliori tatuaggi e opere, realizzati dagli artisti Rebis. Dai un occhiata alla nostra galleria e lasciati ispirare per il tuo prossimo tattoo.',
-      cta: 'VEDI TUTTI I LAVORI ->'
+      cta: 'VEDI TUTTI I LAVORI ->',
+      imageAlt: 'Galleria tatuaggi'
+    },
+    collabEvents: {
+      fallbackHighlight: 'Dettagli disponibili a breve.'
+    },
+    contactSection: {
+      titlePrefix: 'Prenota',
+      titleSuffix: 'un Appuntamento',
+      auth: {
+        guestTitle: 'Vuoi fare prima?',
+        guestText: 'Accedi o registrati per compilare automaticamente Nome ed Email.',
+        login: 'Accedi',
+        register: 'Registrati',
+        loggedTitle: 'Sei loggato',
+        loggedText: 'Nome ed Email sono stati precompilati dal tuo account'
+      },
+      form: {
+        noArtistAvailable: 'Nessun artista disponibile',
+        prefilledHint: 'Campo precompilato',
+        submit: 'Scegli la Data',
+        fields: {
+          fullNameLabel: 'Nome completo',
+          fullNamePlaceholder: 'Inserisci nome e cognome',
+          emailLabel: 'Email',
+          emailPlaceholder: 'nome@email.com',
+          phoneLabel: 'Telefono',
+          phonePlaceholder: '+39 ...',
+          procedureLabel: 'Procedura',
+          procedurePlaceholder: 'Seleziona una procedura',
+          artistLabel: 'Artista',
+          artistPlaceholder: 'Seleziona un artista',
+          commentsLabel: 'Commenti',
+          commentsPlaceholder: 'Raccontaci la tua idea',
+          privacyConsentLabel: 'Acconsento al trattamento dei dati personali'
+        },
+        procedures: {
+          permanentTattoo: 'Tatuaggio Permanente',
+          temporaryTattoo: 'Tatuaggio Temporaneo',
+          sketchDesign: 'Sketch e Progettazione',
+          coverCorrection: 'Copertura e Correzione',
+          tattooRemoval: 'Rimozione Tatuaggi',
+          piercing: 'Piercing'
+        }
+      }
     },
     faqTitle: 'DOMANDE FREQUENTI',
     faq: [

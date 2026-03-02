@@ -1,6 +1,16 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { animate, state, style, transition, trigger } from '@angular/animations';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { LanguageService } from '../../../../../core/services/language/language.service';
+import {
+  DEFAULT_STUDIO_PROFILE,
+  StudioProfileService
+} from '../../../../../core/services/studio/studio-profile.service';
+
+type HomeFaqItem = {
+  question: string;
+  answer: string;
+};
 
 @Component({
   selector: 'app-home-faq',
@@ -17,36 +27,30 @@ import { LanguageService } from '../../../../../core/services/language/language.
   ]
 })
 export class HomeFaqComponent {
-  faqs = [
-    {
-      question: 'Come posso prenotare un appuntamento?',
-      answer: 'Puoi usare il pulsante "Prenota un Appuntamento" sulla homepage o il form alla fine della pagina. Puoi anche prenotare direttamente dal profilo dell\'artista.'
-    },
-    {
-      question: 'Quanti anni devo avere per farmi un tatuaggio?',
-      answer: 'Devi avere almeno 18 anni. In alcuni casi e richiesta un\'autorizzazione scritta da un genitore se sei minorenne.'
-    },
-    {
-      question: 'Fa male farsi un tatuaggio?',
-      answer: 'Il dolore varia a seconda della zona e della sensibilita personale, ma e generalmente sopportabile.'
-    },
-    {
-      question: 'Come devo prendermi cura del mio tatuaggio?',
-      answer: 'Ti forniremo istruzioni dettagliate post-seduta. In generale: mantieni pulito, idrata e proteggi il tatuaggio.'
-    },
-    {
-      question: 'Posso proporre i miei disegni allo studio?',
-      answer: 'Certo. Gli artisti apprezzano lavorare su idee personali. Porta pure i tuoi sketch.'
-    },
-    {
-      question: 'Quanto costa un tatuaggio?',
-      answer: 'Dipende da dimensione, stile e durata. I prezzi partono da 49 EUR.'
-    }
-  ];
+  private readonly studioProfile = inject(StudioProfileService);
+  private readonly profileSig = toSignal(this.studioProfile.getProfile(), {
+    initialValue: DEFAULT_STUDIO_PROFILE
+  });
+
+  readonly faqs = computed<readonly HomeFaqItem[]>(() => {
+    const rows = this.lang.get<unknown[]>('home.faq');
+    if (!Array.isArray(rows)) return [];
+
+    return rows
+      .map((entry) => ({
+        question: String((entry as { question?: unknown })?.question ?? '').trim(),
+        answer: String((entry as { answer?: unknown })?.answer ?? '').trim()
+      }))
+      .filter((entry) => entry.question.length > 0 && entry.answer.length > 0);
+  });
 
   activeIndex: number | null = null;
 
   constructor(public lang: LanguageService) {}
+
+  titleText(): string {
+    return this.profileSig().homeFaqTitle || this.lang.t('home.faqTitle');
+  }
 
   toggle(index: number): void {
     this.activeIndex = this.activeIndex === index ? null : index;

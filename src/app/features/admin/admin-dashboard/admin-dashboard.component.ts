@@ -7,6 +7,7 @@ import { Review, ReviewsService } from '../../../core/services/reviews/reviews.s
 import { ClientService } from '../../../core/services/clients/client.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { StatusHelperService } from '../../../core/services/helpers/status-helper.service';
+import { EventsService, StudioEventOccurrence } from '../../../core/services/events/events.service';
 
 type QuickLink = {
   title: string;
@@ -29,6 +30,7 @@ export class AdminDashboardComponent implements OnInit {
   private readonly bookingService = inject(BookingService);
   private readonly reviewsService = inject(ReviewsService);
   private readonly clientService = inject(ClientService);
+  private readonly eventsService = inject(EventsService);
   private readonly auth = inject(AuthService);
   private readonly status = inject(StatusHelperService);
 
@@ -44,6 +46,9 @@ export class AdminDashboardComponent implements OnInit {
   totalRevenue = 0;
   quickLinks: QuickLink[] = [];
   backofficeBase: '/admin' | '/staff' = '/admin';
+  canAccessMessaging = false;
+  canAccessEvents = false;
+  upcomingEvents: StudioEventOccurrence[] = [];
 
   private readonly allQuickLinks: QuickLink[] = [
     {
@@ -112,6 +117,14 @@ export class AdminDashboardComponent implements OnInit {
       requiredPermission: 'canManageMessages'
     },
     {
+      title: 'Eventi',
+      description: 'Guest e open day in gestione',
+      icon: 'celebration',
+      route: 'eventi',
+      showForStaff: true,
+      requiredPermission: 'canManageEvents'
+    },
+    {
       title: 'Fatturazione',
       description: 'Pagamenti e stato incassi',
       icon: 'payments',
@@ -153,6 +166,8 @@ export class AdminDashboardComponent implements OnInit {
     const user = this.auth.userSig();
     const isStaff = user?.role === 'staff';
     const canManageRoles = this.auth.canManageRoles(user);
+    this.canAccessMessaging = !!user && (user.role === 'admin' || user.permissions?.canManageMessages === true);
+    this.canAccessEvents = !!user && (user.role === 'admin' || user.permissions?.canManageEvents === true);
     const basePath: '/admin' | '/staff' = isStaff ? '/staff' : '/admin';
     this.backofficeBase = basePath;
 
@@ -196,6 +211,13 @@ export class AdminDashboardComponent implements OnInit {
 
     this.bookingService.getTotalRevenueThisMonth().subscribe(value => {
       this.totalRevenue = value;
+    });
+
+    this.eventsService.getPublicTimeline().subscribe((timeline) => {
+      const now = Date.now();
+      this.upcomingEvents = (timeline ?? [])
+        .filter((event) => this.eventStartsAt(event) >= now)
+        .slice(0, 6);
     });
   }
 
@@ -247,6 +269,34 @@ export class AdminDashboardComponent implements OnInit {
 
   reviewAuthor(review: any): string {
     return String(review?.userName ?? review?.userId ?? 'Utente').trim() || 'Utente';
+  }
+
+  eventKindLabel(type: unknown): string {
+    return String(type) === 'guest' ? 'Guest Spot' : 'Open Day';
+  }
+
+  eventDateLabel(event: StudioEventOccurrence): string {
+    const start = this.formatDate(event.startDate);
+    if (!event.endDate || event.endDate === event.startDate) return start;
+    return `${start} - ${this.formatDate(event.endDate)}`;
+  }
+
+  eventTimeLabel(event: StudioEventOccurrence): string {
+    if (!event.startTime && !event.endTime) return 'Orario da definire';
+    if (!event.endTime) return event.startTime;
+    return `${event.startTime} - ${event.endTime}`;
+  }
+
+  private eventStartsAt(event: StudioEventOccurrence): number {
+    const time = String(event.startTime ?? '').trim() || '00:00';
+    const date = new Date(`${event.startDate}T${time}:00`);
+    return Number.isFinite(date.getTime()) ? date.getTime() : 0;
+  }
+
+  private formatDate(ymd: string): string {
+    const d = new Date(`${ymd}T12:00:00`);
+    if (!Number.isFinite(d.getTime())) return ymd;
+    return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 }
 

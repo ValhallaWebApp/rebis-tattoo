@@ -1,0 +1,21 @@
+<section class="studio-updates">
+  <header class="updates-head">
+    <p class="kicker">{{ kicker() }}</p>
+    <h2 class="title">{{ title() }}</h2>
+    <p class="subtitle">{{ subtitle() }}</p>
+  </header>
+
+  <div class="updates-grid">
+    <article class="update-card" *ngFor="let card of cards()">
+      <span class="badge">{{ card.badge }}</span>
+      <h3>{{ card.title }}</h3>
+      <p class="description">{{ card.description }}</p>
+
+      <ul class="highlights">
+        <li *ngFor="let point of card.highlights">{{ point }}</li>
+      </ul>
+
+      <a class="card-link" [routerLink]="card.ctaRoute">{{ card.ctaLabel }} -></a>
+    </article>
+  </div>
+</section>

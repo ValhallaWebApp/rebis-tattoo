@@ -1,66 +1,102 @@
-﻿<section class="about-section">
-  <div class="about-wrapper">
-    <div class="about-image">
-      <img [src]="heroImageUrl" [alt]="profile.ownerName" loading="lazy" />
-    </div>
-
-    <div class="about-text">
-      <p class="eyebrow">Ingresso pubblico</p>
-      <h1 class="title">Chi siamo</h1>
-      <p>
+<section class="about-page">
+  <header class="about-hero">
+    <div class="container">
+      <p class="hero-kicker">{{ profile.publicChiSiamoHeroKicker }}</p>
+      <h1 class="hero-title">{{ profile.publicChiSiamoHeroTitle }}</h1>
+      <p class="hero-subtitle">
         {{ profile.mission }}
       </p>
-      <p class="meta">
-        <a [href]="'mailto:' + profile.email">{{ profile.email }}</a>
-        <span>•</span>
-        <a [href]="profile.instagramUrl" target="_blank" rel="noopener">{{ profile.instagramHandle }}</a>
-        <span>•</span>
-        <span>{{ profile.address }}</span>
-      </p>
-
-      <div class="approach-box">
-        <h3>{{ profile.ownerName }}</h3>
-        <p>{{ profile.ownerRoleLabel }}</p>
-        <span>{{ profile.ownerBio }}</span>
-      </div>
 
       <div class="hero-actions">
-        <a class="ghost-btn" routerLink="/progetti">Vedi lavori</a>
-        <a class="primary-btn" routerLink="/fast-booking">Prenota</a>
+        <a class="btn btn--primary" routerLink="/fast-booking">{{ profile.publicChiSiamoPrimaryCta }}</a>
+        <a class="btn btn--ghost" routerLink="/progetti">{{ profile.publicChiSiamoSecondaryCta }}</a>
       </div>
     </div>
-  </div>
-</section>
+  </header>
 
-<section class="team-section">
-  <div class="team-head">
-    <h2>Team</h2>
-    <p>{{ profile.teamIntro }}</p>
-    <div class="team-badges">
-      <span class="chip">Titolare: {{ profile.ownerName }}</span>
-      <span class="chip">Tatuatori: {{ tattooersCount }}</span>
-      <span class="chip" *ngIf="guestCount > 0">Guest: {{ guestCount }}</span>
-    </div>
-  </div>
+  <main class="container body">
+    <section class="top-grid">
+      <article class="panel panel--media">
+        <img [src]="heroImageUrl" [alt]="profile.ownerName" loading="lazy" />
+        <div class="media-overlay">
+          <p class="owner-name">{{ profile.ownerName }}</p>
+          <p class="owner-role">{{ profile.ownerRoleLabel }}</p>
+        </div>
+      </article>
 
-  <div class="team-grid" *ngIf="team?.length; else noTeam">
-    <mat-card class="artist-card" *ngFor="let m of team; trackBy: trackById">
-      <div class="thumb">
-        <img [src]="getPhoto(m)" [alt]="m.name" loading="lazy" />
-      </div>
-      <div class="artist-meta">
-        <h3>{{ m.name }}</h3>
-        <p class="role">{{ roleLabel(m.role) }}</p>
-        <p class="bio">{{ m.bio || 'Profilo in aggiornamento.' }}</p>
-      </div>
-      <div class="actions">
-        <a class="ghost-btn" routerLink="/progetti">Lavori</a>
-        <a class="primary-btn" routerLink="/fast-booking">Prenota</a>
-      </div>
-    </mat-card>
-  </div>
+      <article class="panel panel--story">
+        <h2 class="panel-title">{{ profile.publicChiSiamoStudioProfileTitle }}</h2>
+        <p class="panel-subtitle">{{ profile.teamIntro }}</p>
 
-  <ng-template #noTeam>
-    <p class="empty">Nessun artista disponibile al momento.</p>
-  </ng-template>
+        <div class="owner-box">
+          <h3>{{ profile.ownerName }}</h3>
+          <p>{{ profile.ownerRoleLabel }}</p>
+          <span>{{ profile.ownerBio }}</span>
+        </div>
+
+        <ul class="meta-list">
+          <li>
+            <span class="badge">Email</span>
+            <a [href]="'mailto:' + profile.email">{{ profile.email }}</a>
+          </li>
+          <li>
+            <span class="badge">Instagram</span>
+            <a [href]="profile.instagramUrl" target="_blank" rel="noopener">{{ profile.instagramHandle }}</a>
+          </li>
+          <li>
+            <span class="badge">Sede</span>
+            <span>{{ profile.address }}</span>
+          </li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="panel panel--stats">
+      <h2 class="panel-title">{{ profile.publicChiSiamoTeamSnapshotTitle }}</h2>
+      <div class="stats-row">
+        <div class="stat">
+          <span class="label">Titolare</span>
+          <strong>{{ profile.ownerName }}</strong>
+        </div>
+        <div class="stat">
+          <span class="label">Tatuatori</span>
+          <strong>{{ tattooersCount }}</strong>
+        </div>
+        <div class="stat" *ngIf="guestCount > 0">
+          <span class="label">Guest</span>
+          <strong>{{ guestCount }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel--team">
+      <div class="team-head">
+        <h2 class="panel-title">{{ profile.publicChiSiamoArtistsTitle }}</h2>
+        <p class="panel-subtitle">{{ profile.publicChiSiamoArtistsSubtitle }}</p>
+      </div>
+
+      <div class="team-grid" *ngIf="team?.length; else noTeam">
+        <article class="artist-card" *ngFor="let m of team; trackBy: trackById">
+          <div class="thumb">
+            <img [src]="getPhoto(m)" [alt]="m.name" loading="lazy" />
+          </div>
+
+          <div class="artist-meta">
+            <h3>{{ m.name }}</h3>
+            <p class="role">{{ roleLabel(m.role) }}</p>
+            <p class="bio">{{ m.bio || 'Profilo in aggiornamento.' }}</p>
+          </div>
+
+          <div class="card-actions">
+            <a class="btn btn--ghost" routerLink="/progetti">Lavori</a>
+            <a class="btn btn--accent" routerLink="/fast-booking">Prenota</a>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #noTeam>
+        <p class="empty">{{ profile.publicChiSiamoNoTeamText }}</p>
+      </ng-template>
+    </section>
+  </main>
 </section>

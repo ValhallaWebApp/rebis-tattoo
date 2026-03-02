@@ -1,0 +1,93 @@
+<section class="event-detail-page">
+  <div class="container">
+    <a class="back-link" routerLink="/eventi">Torna agli eventi</a>
+
+    <section class="state" *ngIf="loading()">
+      <p>Caricamento evento...</p>
+    </section>
+
+    <section class="state" *ngIf="notFound()">
+      <h1>Evento non trovato</h1>
+      <p>Il contenuto richiesto non e disponibile o non e piu pubblico.</p>
+      <a class="btn-link" routerLink="/eventi">Vai alla lista eventi</a>
+    </section>
+
+    <ng-container *ngIf="!loading() && !notFound() && event() as event">
+      <header class="hero">
+        <p class="kicker">{{ kindLabel() }}</p>
+        <h1>{{ event.title }}</h1>
+        <p class="subtitle">{{ event.description || 'Dettagli evento in aggiornamento.' }}</p>
+        <div class="chips">
+          <span>{{ eventDateRangeLabel() }}</span>
+          <span>{{ accessLabel() }}</span>
+          <span>{{ event.location || profile().studioName }}</span>
+          <span *ngIf="event.guestName">{{ event.guestName }}</span>
+        </div>
+      </header>
+
+      <section class="layout">
+        <article class="panel panel--dates">
+          <h2>Date disponibili</h2>
+          <ul class="occurrence-list">
+            <li *ngFor="let occ of occurrences(); trackBy: trackByOccurrence">
+              <div class="occurrence-date">{{ formatOccurrenceDate(occ) }}</div>
+              <div class="occurrence-time">{{ formatOccurrenceSlot(occ.startTime, occ.endTime) }}</div>
+            </li>
+          </ul>
+        </article>
+
+        <article class="panel panel--meta">
+          <h2>Contatti</h2>
+          <p class="meta-line">
+            Instagram:
+            <a [href]="profile().instagramUrl" target="_blank" rel="noopener">{{ profile().instagramHandle }}</a>
+          </p>
+          <p class="meta-line">
+            Email:
+            <a [href]="'mailto:' + profile().email">{{ profile().email }}</a>
+          </p>
+          <p class="meta-line">
+            Telefono:
+            <a [href]="'tel:' + profile().phoneDisplay.replaceAll(' ', '')">{{ profile().phoneDisplay }}</a>
+          </p>
+          <a class="btn-link" routerLink="/contatti">Richiedi informazioni</a>
+        </article>
+      </section>
+
+      <section class="related-layout">
+        <article class="panel panel--nearby">
+          <p class="section-kicker">In prossimita</p>
+          <h2>Altri eventi vicini</h2>
+          <div class="related-list" *ngIf="nearbyEvents().length; else noNearbyEvents">
+            <a class="related-item" *ngFor="let item of nearbyEvents(); trackBy: trackByEventPreview" [routerLink]="item.route">
+              <p class="related-kind">{{ item.kind }}</p>
+              <h3>{{ item.title }}</h3>
+              <p class="related-meta">{{ item.dateLabel }} - {{ item.slotLabel }}</p>
+              <p class="related-meta">{{ item.locationLabel }}</p>
+            </a>
+          </div>
+          <ng-template #noNearbyEvents>
+            <p class="related-empty">Nessun altro evento vicino in calendario.</p>
+          </ng-template>
+        </article>
+
+        <article class="panel panel--recurring">
+          <p class="section-kicker">Serie eventi</p>
+          <h2>Eventi ricorrenti</h2>
+          <div class="related-list" *ngIf="recurringEvents().length; else noRecurringEvents">
+            <a class="related-item" *ngFor="let item of recurringEvents(); trackBy: trackByEventPreview" [routerLink]="item.route">
+              <p class="related-kind">{{ item.kind }}</p>
+              <h3>{{ item.title }}</h3>
+              <p class="related-meta">{{ item.dateLabel }} - {{ item.slotLabel }}</p>
+              <p class="related-meta">{{ item.locationLabel }}</p>
+              <p class="related-recurring" *ngIf="item.recurringLabel">{{ item.recurringLabel }}</p>
+            </a>
+          </div>
+          <ng-template #noRecurringEvents>
+            <p class="related-empty">Nessun altro evento ricorrente disponibile.</p>
+          </ng-template>
+        </article>
+      </section>
+    </ng-container>
+  </div>
+</section>

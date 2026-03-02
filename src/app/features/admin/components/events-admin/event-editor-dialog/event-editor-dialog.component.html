@@ -1,0 +1,60 @@
+<div class="event-editor">
+  <header class="event-editor__head">
+    <div>
+      <h3>{{ data.mode === 'edit' ? 'Modifica evento' : 'Nuovo evento' }}</h3>
+      <p>Guest, open day, ricorrenza, stato e regole prenotazione.</p>
+    </div>
+    <button mat-icon-button type="button" (click)="cancel()" aria-label="Chiudi">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="event-editor__body">
+    <form [formGroup]="form" class="event-editor__form">
+      <section>
+        <h4>Dettagli</h4>
+        <app-dynamic-form
+          [fields]="mainFields"
+          [formGroupInput]="form"
+          [showSubmit]="false"
+        ></app-dynamic-form>
+      </section>
+
+      <section>
+        <h4>Pianificazione</h4>
+        <app-dynamic-form
+          [fields]="scheduleFields"
+          [formGroupInput]="form"
+          [showSubmit]="false"
+        ></app-dynamic-form>
+      </section>
+
+      <section>
+        <h4>Regole</h4>
+        <app-dynamic-form
+          [fields]="policyFields"
+          [formGroupInput]="form"
+          [showSubmit]="false"
+        ></app-dynamic-form>
+
+        <div class="image-upload">
+          <label class="upload-label" for="event-image-file">Carica immagine locale</label>
+          <input id="event-image-file" type="file" accept="image/*" (change)="onImageFileSelected($event)" />
+          <small>L immagine viene salvata nel record evento (data URL), non su storage esterno.</small>
+        </div>
+
+        <div class="image-preview" *ngIf="form.value.imageUrl">
+          <img [src]="form.value.imageUrl" alt="Anteprima evento" />
+          <button mat-stroked-button type="button" (click)="clearImage()">Rimuovi immagine</button>
+        </div>
+      </section>
+    </form>
+  </div>
+
+  <footer class="event-editor__foot">
+    <button mat-stroked-button type="button" (click)="cancel()">Annulla</button>
+    <button mat-flat-button color="primary" type="button" (click)="save()">
+      {{ data.mode === 'edit' ? 'Salva modifiche' : 'Crea evento' }}
+    </button>
+  </footer>
+</div>

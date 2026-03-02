@@ -1,0 +1,188 @@
+body.theme-public {
+  app-chi-siamo .about-page,
+  app-contatti .contact-page,
+  app-service-list,
+  app-project-list,
+  app-project-detail {
+    background:
+      radial-gradient(circle at 10% 8%, rgba(178, 135, 79, 0.14), transparent 34%),
+      radial-gradient(circle at 84% 2%, rgba(178, 135, 79, 0.1), transparent 28%),
+      linear-gradient(180deg, var(--home-bg-inverse) 0%, var(--home-bg-deep) 100%) !important;
+    color: var(--app-main-text) !important;
+  }
+
+  app-chi-siamo .panel,
+  app-contatti .panel,
+  app-service-list .services__head,
+  app-project-list .projects-hero,
+  app-project-list .projects-filter-panel ::ng-deep .mat-expansion-panel,
+  app-project-detail .panel {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--app-surface-border) !important;
+    background: linear-gradient(
+      160deg,
+      rgba(var(--app-main-text-rgb), 0.09),
+      rgba(var(--app-main-text-rgb), 0.02)
+    ) !important;
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(130%);
+  }
+
+  app-chi-siamo .hero-kicker,
+  app-contatti .hero-kicker,
+  app-project-list .hero-kicker,
+  app-project-detail .detail-hero .kicker {
+    color: rgba(var(--app-main-text-rgb), 0.68);
+    font-weight: 400;
+  }
+
+  app-chi-siamo .hero-title,
+  app-contatti .hero-title,
+  app-project-list .projects-hero h1,
+  app-project-detail .detail-hero h1 {
+    font-weight: 400;
+    letter-spacing: -0.03em;
+  }
+
+  app-chi-siamo .hero-subtitle,
+  app-contatti .hero-subtitle,
+  app-project-list .projects-hero p,
+  app-project-detail .desc,
+  app-project-detail .notes {
+    color: rgba(var(--app-main-text-rgb), 0.82);
+  }
+
+  app-chi-siamo .btn,
+  app-contatti .btn {
+    font-weight: 400;
+    border-radius: var(--radius-md);
+  }
+
+  app-chi-siamo .btn--primary,
+  app-contatti .btn--primary {
+    background: var(--home-surface-3);
+    color: var(--home-text-strong);
+    border: 1px solid var(--home-border-subtle);
+  }
+
+  app-chi-siamo .btn--accent,
+  app-contatti .btn--accent {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  app-chi-siamo .btn--ghost,
+  app-contatti .btn--ghost {
+    background: rgba(var(--app-main-text-rgb), 0.08);
+    border-color: var(--app-surface-border);
+    color: var(--app-main-text);
+  }
+
+  app-service-list .services__title,
+  app-service-list .preview h3 {
+    color: var(--home-text-inverse);
+    font-weight: 400;
+  }
+
+  app-service-list .services__subtitle,
+  app-service-list .preview p,
+  app-service-list .muted {
+    color: rgba(var(--app-main-text-rgb), 0.8);
+  }
+
+  app-service-list .service-card,
+  app-project-list .project-card,
+  app-project-detail .state {
+    border-radius: var(--radius-lg);
+    border-color: var(--app-surface-border);
+    background: linear-gradient(
+      165deg,
+      rgba(23, 18, 20, 0.92),
+      rgba(34, 27, 29, 0.84)
+    );
+  }
+
+  app-service-list .service-card:hover,
+  app-project-list .project-card:hover {
+    border-color: var(--accent-secondary);
+    box-shadow: 0 16px 40px -22px rgba(0, 0, 0, 0.24);
+  }
+
+  app-project-list .chip.active,
+  app-project-list .chip:hover,
+  app-project-list .project-card:hover .details,
+  app-project-detail .thumb.active {
+    border-color: var(--accent-secondary);
+  }
+
+  app-project-list .chip.active,
+  app-project-list .time.active,
+  app-project-detail .hero-meta .chip {
+    background: rgba(178, 135, 79, 0.16);
+  }
+
+  app-project-list .details,
+  app-project-list .photo-count,
+  app-project-list .count-badge,
+  app-project-detail .hero-meta .chip,
+  app-project-detail .thumb {
+    border-color: var(--app-surface-border);
+    background: rgba(23, 18, 20, 0.72);
+  }
+
+  app-project-list .meta-row,
+  app-project-detail .row .k,
+  app-project-detail .state__text {
+    color: rgba(var(--app-main-text-rgb), 0.74);
+  }
+
+  app-fast-booking-layout {
+    --fb-bg: var(--home-bg-deep);
+    --fb-text: var(--home-text-inverse);
+    --fb-surface: rgba(23, 18, 20, 0.92);
+    --fb-border: var(--app-surface-border);
+  }
+
+  app-fast-booking-layout .top {
+    font-weight: 400;
+    letter-spacing: 0.1em;
+  }
+
+  app-fast-booking-page {
+    --fb-bg: var(--home-bg-deep);
+    --fb-surface: rgba(23, 18, 20, 0.9);
+    --fb-border: var(--app-surface-border);
+    --fb-text: var(--home-text-inverse);
+    --fb-muted: var(--home-text-muted-inverse);
+    --fb-accent: var(--accent);
+    --fb-accent-ink: var(--accent-ink);
+  }
+
+  app-fast-booking-page .ghost {
+    border-color: var(--app-surface-border) !important;
+  }
+
+  app-fast-booking-page .primary {
+    background: var(--accent) !important;
+    color: var(--accent-ink) !important;
+    font-weight: 400;
+  }
+
+  app-fast-booking-page .footer {
+    border-top-color: var(--app-surface-border);
+    background: rgba(23, 18, 20, 0.9);
+  }
+
+  app-step-artist .dot {
+    background: var(--app-success);
+  }
+
+  app-step-success .badge {
+    background: color-mix(in srgb, var(--app-success) 24%, transparent);
+  }
+
+  app-step-success .code {
+    background: rgba(var(--app-main-text-rgb), 0.06);
+  }
+}

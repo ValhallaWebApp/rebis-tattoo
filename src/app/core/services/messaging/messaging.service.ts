@@ -15,7 +15,12 @@ import {
   ConversationMessage,
   ConversationStatus,
   MessageKind,
-  ParticipantRole
+  ParticipantRole,
+  TicketCategory,
+  TicketPriority,
+  TicketSource,
+  TicketStatus,
+  TicketType
 } from '../../models/messaging.model';
 import { NotificationService } from '../notifications/notification.service';
 import { AuditLogService } from '../audit/audit-log.service';
@@ -36,6 +41,12 @@ export class MessagingService {
 
   private toRecord(value: unknown): Record<string, unknown> {
     return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  }
+
+  private stripUndefined<T extends Record<string, unknown>>(value: T): T {
+    return Object.fromEntries(
+      Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined)
+    ) as T;
   }
 
   private isPermissionDeniedReason(reason: unknown): boolean {
@@ -65,6 +76,40 @@ export class MessagingService {
       unreadBy[uid] = Number(count ?? 0) || 0;
     }
     return unreadBy;
+  }
+
+  private normalizeTicketStatus(value: unknown): TicketStatus {
+    const status = String(value ?? '').trim().toLowerCase();
+    if (status === 'triage' || status === 'in_progress' || status === 'waiting_client' || status === 'resolved' || status === 'closed') {
+      return status;
+    }
+    return 'new';
+  }
+
+  private normalizeTicketPriority(value: unknown): TicketPriority {
+    const priority = String(value ?? '').trim().toLowerCase();
+    if (priority === 'low' || priority === 'high' || priority === 'urgent') return priority;
+    return 'normal';
+  }
+
+  private normalizeTicketCategory(value: unknown): TicketCategory {
+    const category = String(value ?? '').trim().toLowerCase();
+    if (category === 'booking' || category === 'billing' || category === 'aftercare' || category === 'tattoo-advice' || category === 'technical') {
+      return category;
+    }
+    return 'generic';
+  }
+
+  private normalizeTicketType(value: unknown): TicketType {
+    const type = String(value ?? '').trim().toLowerCase();
+    if (type === 'booking' || type === 'info' || type === 'advice') return type;
+    return 'support';
+  }
+
+  private normalizeTicketSource(value: unknown): TicketSource {
+    const source = String(value ?? '').trim().toLowerCase();
+    if (source === 'manual' || source === 'system') return source;
+    return 'chatbot';
   }
 
   private roleOf(uid: string, conv: Conversation): ParticipantRole | undefined {
@@ -176,12 +221,30 @@ export class MessagingService {
     });
   }
 
-  async createConversationForClient(clientId: string, summary = 'Conversazione con studio'): Promise<string> {
+  async createConversationForClient(
+    clientId: string,
+    summary = 'Conversazione con studio',
+    options?: {
+      ticketType?: TicketType;
+      ticketCategory?: TicketCategory;
+      ticketPriority?: TicketPriority;
+      ticketSource?: TicketSource;
+      linkedBookingId?: string;
+      tags?: string[];
+      slaDueAt?: string;
+    }
+  ): Promise<string> {
     const actor = this.auth.userSig();
     const now = new Date().toISOString();
     const node = push(ref(this.db, this.conversationsPath));
     const id = node.key!;
     const participants: Record<string, ParticipantRole> = { [clientId]: 'client' };
+    const tags = Array.isArray(options?.tags)
+      ? options!.tags
+          .map(v => String(v ?? '').trim())
+          .filter(Boolean)
+          .slice(0, 12)
+      : undefined;
 
     const conversation: Conversation = {
       id,
@@ -191,10 +254,18 @@ export class MessagingService {
       updatedAt: now,
       createdBy: actor?.uid ?? clientId,
       participants,
-      unreadBy: {}
+      unreadBy: {},
+      ticketStatus: 'new',
+      ticketPriority: this.normalizeTicketPriority(options?.ticketPriority),
+      ticketCategory: this.normalizeTicketCategory(options?.ticketCategory),
+      ticketType: this.normalizeTicketType(options?.ticketType),
+      ticketSource: this.normalizeTicketSource(options?.ticketSource),
+      linkedBookingId: String(options?.linkedBookingId ?? '').trim() || undefined,
+      tags,
+      slaDueAt: String(options?.slaDueAt ?? '').trim() || undefined
     };
 
-    await set(node, conversation);
+    await set(node, this.stripUndefined(conversation as unknown as Record<string, unknown>));
     await this.touchParticipants(id, Object.keys(participants), now);
 
     void this.audit.log({
@@ -207,6 +278,66 @@ export class MessagingService {
       targetUserId: clientId,
       meta: { participants: Object.keys(participants).length }
     });
+
+    return id;
+  }
+
+  async createOrOpenSupportTicketForClient(params: {
+    clientId: string;
+    summary?: string;
+    category?: TicketCategory;
+    priority?: TicketPriority;
+    type?: TicketType;
+    source?: TicketSource;
+    linkedBookingId?: string;
+    tags?: string[];
+    initialMessage?: string;
+  }): Promise<string> {
+    const clientId = String(params.clientId ?? '').trim();
+    if (!clientId) throw new Error('clientId obbligatorio');
+
+    const list = await this.readConversationsForUser(clientId);
+    const normalizedCategory = this.normalizeTicketCategory(params.category);
+    const open = list.find((conv) => {
+      const isOpen = conv.ticketStatus !== 'closed' && conv.status !== 'closed';
+      const sameCategory = this.normalizeTicketCategory(conv.ticketCategory) === normalizedCategory;
+      return isOpen && sameCategory;
+    });
+    if (open?.id) {
+      if (params.initialMessage?.trim()) {
+        await this.sendMessage({
+          conversationId: open.id,
+          senderId: clientId,
+          senderRole: 'client',
+          text: params.initialMessage.trim(),
+          kind: 'system'
+        });
+      }
+      return open.id;
+    }
+
+    const id = await this.createConversationForClient(
+      clientId,
+      params.summary || 'Ticket assistenza studio',
+      {
+        ticketType: params.type ?? 'support',
+        ticketCategory: normalizedCategory,
+        ticketPriority: params.priority ?? 'normal',
+        ticketSource: params.source ?? 'chatbot',
+        linkedBookingId: params.linkedBookingId,
+        tags: params.tags
+      }
+    );
+
+    if (params.initialMessage?.trim()) {
+      await this.sendMessage({
+        conversationId: id,
+        senderId: clientId,
+        senderRole: 'client',
+        text: params.initialMessage.trim(),
+        kind: 'system'
+      });
+    }
 
     return id;
   }
@@ -229,15 +360,36 @@ export class MessagingService {
     if (!convSnap.exists()) throw new Error('Conversazione non trovata');
 
     const conv = this.toConversation(conversationId, convSnap.val());
-    const isSenderParticipant = !!this.roleOf(senderId, conv);
+    const actor = this.auth.userSig();
+    let isSenderParticipant = !!this.roleOf(senderId, conv);
     const isSenderAdmin = senderRole === 'admin';
     const isSenderStaff = senderRole === 'staff';
+    const senderHasStaffMessagingPermission = actor?.uid === senderId && actor?.permissions?.['canManageMessages'] === true;
+
+    if (isSenderStaff && !isSenderParticipant) {
+      if (!senderHasStaffMessagingPermission) {
+        throw new Error('Staff non assegnato a questa conversazione');
+      }
+
+      await update(convRef, {
+        [`participants/${senderId}`]: 'staff',
+        ownerStaffId: String(conv.ownerStaffId ?? '').trim() || senderId,
+        assignedAt: String(conv.assignedAt ?? '').trim() || now,
+        ticketStatus: this.normalizeTicketStatus(conv.ticketStatus) === 'new' ? 'triage' : this.normalizeTicketStatus(conv.ticketStatus),
+        updatedAt: now
+      });
+      await this.touchParticipants(conversationId, [senderId], now);
+      conv.participants = { ...(conv.participants ?? {}), [senderId]: 'staff' };
+      if (!String(conv.ownerStaffId ?? '').trim()) conv.ownerStaffId = senderId;
+      if (!String(conv.assignedAt ?? '').trim()) conv.assignedAt = now;
+      if (this.normalizeTicketStatus(conv.ticketStatus) === 'new') conv.ticketStatus = 'triage';
+      isSenderParticipant = true;
+    }
+
     if (!isSenderAdmin && !isSenderParticipant) {
       throw new Error('Utente non autorizzato a scrivere in questa conversazione');
     }
-    if (isSenderStaff && !isSenderParticipant) {
-      throw new Error('Staff non assegnato a questa conversazione');
-    }
+
     const participants = Object.keys(conv.participants ?? {});
     const unreadBy: Record<string, number> = { ...(conv.unreadBy ?? {}) };
     participants.forEach(uid => {
@@ -256,6 +408,26 @@ export class MessagingService {
       createdAt: now
     };
 
+    let nextTicketStatus = this.normalizeTicketStatus(conv.ticketStatus);
+    const ticketPatch: Record<string, unknown> = {};
+    if (senderRole === 'client') {
+      if (nextTicketStatus === 'resolved' || nextTicketStatus === 'closed') {
+        nextTicketStatus = 'triage';
+      }
+    } else {
+      if (!String(conv.firstResponseAt ?? '').trim()) {
+        ticketPatch['firstResponseAt'] = now;
+      }
+      if (senderRole === 'staff' && !String(conv.ownerStaffId ?? '').trim()) {
+        ticketPatch['ownerStaffId'] = senderId;
+        ticketPatch['assignedAt'] = now;
+      }
+      if (nextTicketStatus === 'new' || nextTicketStatus === 'triage' || nextTicketStatus === 'waiting_client') {
+        nextTicketStatus = 'in_progress';
+      }
+    }
+    ticketPatch['ticketStatus'] = nextTicketStatus;
+
     await set(msgNode, message);
     await update(convRef, {
       updatedAt: now,
@@ -263,7 +435,8 @@ export class MessagingService {
       lastMessageAt: now,
       lastMessageBy: senderId,
       lastMessageText: content.slice(0, 180),
-      unreadBy
+      unreadBy,
+      ...ticketPatch
     });
     await this.touchParticipants(conversationId, participants, now);
 
@@ -331,6 +504,102 @@ export class MessagingService {
     });
   }
 
+  async updateTicketMeta(
+    conversationId: string,
+    actorId: string,
+    actorRole: string | undefined,
+    patch: {
+      ticketStatus?: TicketStatus;
+      ticketPriority?: TicketPriority;
+      ticketCategory?: TicketCategory;
+      ticketType?: TicketType;
+      ownerStaffId?: string | null;
+      linkedBookingId?: string | null;
+      slaDueAt?: string | null;
+      tags?: string[] | null;
+    }
+  ): Promise<void> {
+    const convSnap = await get(ref(this.db, `${this.conversationsPath}/${conversationId}`));
+    if (!convSnap.exists()) throw new Error('Conversazione non trovata');
+    const conv = this.toConversation(conversationId, convSnap.val());
+    const role = String(actorRole ?? '').trim() || this.auth.userSig()?.role || 'guest';
+    const isAdminLikeRole = this.isAdminLike(role);
+    if (!isAdminLikeRole) throw new Error('Solo admin o staff possono aggiornare metadati ticket');
+    if (role === 'staff' && !this.canStaffAccessConversation(actorId, conv)) {
+      throw new Error('Staff non assegnato a questa conversazione');
+    }
+
+    const now = new Date().toISOString();
+    const updates: Record<string, unknown> = {
+      updatedAt: now
+    };
+
+    if (Object.prototype.hasOwnProperty.call(patch ?? {}, 'ticketStatus')) {
+      updates['ticketStatus'] = this.normalizeTicketStatus(patch.ticketStatus);
+      if (updates['ticketStatus'] === 'resolved' || updates['ticketStatus'] === 'closed') {
+        updates['resolvedAt'] = now;
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(patch ?? {}, 'ticketPriority')) {
+      updates['ticketPriority'] = this.normalizeTicketPriority(patch.ticketPriority);
+    }
+    if (Object.prototype.hasOwnProperty.call(patch ?? {}, 'ticketCategory')) {
+      updates['ticketCategory'] = this.normalizeTicketCategory(patch.ticketCategory);
+    }
+    if (Object.prototype.hasOwnProperty.call(patch ?? {}, 'ticketType')) {
+      updates['ticketType'] = this.normalizeTicketType(patch.ticketType);
+    }
+    if (Object.prototype.hasOwnProperty.call(patch ?? {}, 'ownerStaffId')) {
+      const owner = String(patch.ownerStaffId ?? '').trim();
+      updates['ownerStaffId'] = owner || null;
+      updates['assignedAt'] = owner ? now : null;
+      if (owner) {
+        updates[`participants/${owner}`] = 'staff';
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(patch ?? {}, 'linkedBookingId')) {
+      const linkedBookingId = String(patch.linkedBookingId ?? '').trim();
+      updates['linkedBookingId'] = linkedBookingId || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch ?? {}, 'slaDueAt')) {
+      const slaDueAt = String(patch.slaDueAt ?? '').trim();
+      updates['slaDueAt'] = slaDueAt || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch ?? {}, 'tags')) {
+      const tags = Array.isArray(patch.tags)
+        ? patch.tags.map(v => String(v ?? '').trim()).filter(Boolean).slice(0, 12)
+        : [];
+      updates['tags'] = tags.length ? tags : null;
+    }
+
+    await update(ref(this.db, `${this.conversationsPath}/${conversationId}`), updates);
+    if (typeof updates['ownerStaffId'] === 'string' && updates['ownerStaffId']) {
+      await this.touchParticipants(conversationId, [String(updates['ownerStaffId'])], now);
+    }
+
+    void this.audit.log({
+      action: 'messaging.ticket.update',
+      resource: 'conversation',
+      resourceId: conversationId,
+      status: 'success',
+      actorId,
+      actorRole,
+      meta: { keys: Object.keys(patch ?? {}) }
+    });
+  }
+
+  async assignTicketToStaff(
+    conversationId: string,
+    staffId: string,
+    actorId: string,
+    actorRole?: string
+  ): Promise<void> {
+    await this.updateTicketMeta(conversationId, actorId, actorRole, {
+      ownerStaffId: staffId,
+      ticketStatus: 'triage'
+    });
+  }
+
   async markAsRead(conversationId: string, userId: string): Promise<void> {
     if (!conversationId || !userId) return;
     const convSnap = await get(ref(this.db, `${this.conversationsPath}/${conversationId}`));
@@ -394,6 +663,27 @@ export class MessagingService {
     }
   }
 
+  private async readConversationsForUser(userId: string): Promise<Conversation[]> {
+    const safeUserId = String(userId ?? '').trim();
+    if (!safeUserId) return [];
+
+    const indexSnap = await get(ref(this.db, `${this.userConversationsPath}/${safeUserId}`));
+    if (!indexSnap.exists()) return [];
+    const index = this.toRecord(indexSnap.val());
+    const ids = Object.keys(index);
+    if (!ids.length) return [];
+
+    const rows = await Promise.all(ids.map(async (id) => {
+      const convSnap = await get(ref(this.db, `${this.conversationsPath}/${id}`));
+      if (!convSnap.exists()) return null;
+      return this.toConversation(id, convSnap.val());
+    }));
+
+    return rows
+      .filter((row): row is Conversation => !!row)
+      .sort((a, b) => (b.lastMessageAt ?? b.updatedAt).localeCompare(a.lastMessageAt ?? a.updatedAt));
+  }
+
   private toConversation(id: string, raw: unknown): Conversation {
     const source = this.toRecord(raw);
     return {
@@ -407,7 +697,21 @@ export class MessagingService {
       lastMessageText: source['lastMessageText'] ? String(source['lastMessageText']) : undefined,
       lastMessageAt: source['lastMessageAt'] ? String(source['lastMessageAt']) : undefined,
       lastMessageBy: source['lastMessageBy'] ? String(source['lastMessageBy']) : undefined,
-      unreadBy: this.toUnreadBy(source['unreadBy'])
+      unreadBy: this.toUnreadBy(source['unreadBy']),
+      ticketStatus: this.normalizeTicketStatus(source['ticketStatus']),
+      ticketPriority: this.normalizeTicketPriority(source['ticketPriority']),
+      ticketCategory: this.normalizeTicketCategory(source['ticketCategory']),
+      ticketType: this.normalizeTicketType(source['ticketType']),
+      ticketSource: this.normalizeTicketSource(source['ticketSource']),
+      ownerStaffId: source['ownerStaffId'] ? String(source['ownerStaffId']) : undefined,
+      assignedAt: source['assignedAt'] ? String(source['assignedAt']) : undefined,
+      firstResponseAt: source['firstResponseAt'] ? String(source['firstResponseAt']) : undefined,
+      resolvedAt: source['resolvedAt'] ? String(source['resolvedAt']) : undefined,
+      slaDueAt: source['slaDueAt'] ? String(source['slaDueAt']) : undefined,
+      linkedBookingId: source['linkedBookingId'] ? String(source['linkedBookingId']) : undefined,
+      tags: Array.isArray(source['tags'])
+        ? source['tags'].map(v => String(v ?? '').trim()).filter(Boolean).slice(0, 12)
+        : undefined
     };
   }
 

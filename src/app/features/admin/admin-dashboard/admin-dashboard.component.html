@@ -4,10 +4,16 @@
       <h1>{{ 'Dashboard Amministrativa'.toUpperCase() }}</h1>
       <p class="subtitle">Vista operativa rapida: priorita del giorno e azioni immediate.</p>
     </div>
-    <button mat-stroked-button [routerLink]="toRoute('calendar')">
-      <mat-icon>today</mat-icon>
-      Apri calendario
-    </button>
+    <div class="head-actions">
+      <button mat-stroked-button [routerLink]="toRoute('calendar')">
+        <mat-icon>today</mat-icon>
+        Apri calendario
+      </button>
+      <button mat-flat-button color="primary" *ngIf="canAccessMessaging" [routerLink]="toRoute('messaging')">
+        <mat-icon>forum</mat-icon>
+        Apri chat admin
+      </button>
+    </div>
   </header>
 
   <section class="kpi-grid">
@@ -42,6 +48,14 @@
         <div class="kpi-value">{{ totalClients }}</div>
       </div>
     </mat-card>
+
+    <mat-card class="kpi-card" *ngIf="canAccessEvents">
+      <mat-icon>celebration</mat-icon>
+      <div>
+        <div class="kpi-label">Eventi prossimi</div>
+        <div class="kpi-value">{{ upcomingEvents.length }}</div>
+      </div>
+    </mat-card>
   </section>
 
   <section class="ops-grid">
@@ -67,6 +81,17 @@
             <mat-icon>palette</mat-icon>
             Progetti in corso
             <span class="badge">{{ todayInProgressCount }}</span>
+          </button>
+
+          <button mat-stroked-button *ngIf="canAccessMessaging" [routerLink]="toRoute('messaging')">
+            <mat-icon>forum</mat-icon>
+            Chat admin
+          </button>
+
+          <button mat-stroked-button *ngIf="canAccessEvents" [routerLink]="toRoute('eventi')">
+            <mat-icon>celebration</mat-icon>
+            Eventi
+            <span class="badge">{{ upcomingEvents.length }}</span>
           </button>
         </div>
       </mat-card-content>
@@ -114,6 +139,33 @@
           <p class="empty-text">Nessuna recensione disponibile.</p>
         </ng-template>
       </mat-card-content>
+    </mat-card>
+
+    <mat-card class="wide-card" *ngIf="canAccessEvents">
+      <mat-card-header>
+        <mat-card-title>Eventi prossimi</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="list" *ngIf="upcomingEvents.length; else noUpcomingEvents">
+          <div class="list-item" *ngFor="let event of upcomingEvents">
+            <div class="list-main">
+              <strong>{{ event.title }}</strong>
+              <small>{{ eventDateLabel(event) }} - {{ eventTimeLabel(event) }}</small>
+            </div>
+            <span class="status-pill info">
+              {{ eventKindLabel(event.type) }}
+            </span>
+          </div>
+        </div>
+        <ng-template #noUpcomingEvents>
+          <p class="empty-text">Nessun evento imminente pubblicato.</p>
+        </ng-template>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" [routerLink]="toRoute('eventi')">
+          Gestisci eventi
+        </button>
+      </mat-card-actions>
     </mat-card>
   </section>
 

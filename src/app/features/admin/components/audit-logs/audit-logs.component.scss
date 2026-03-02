@@ -1,12 +1,50 @@
 .audit-page {
-  padding: 1rem;
+  padding: 8vh 2rem 2rem;
   display: grid;
   gap: 1rem;
+  min-height: 100vh;
+  background: var(--app-main-bg);
+  color: var(--app-main-text);
 }
 
-.toolbar {
-  display: grid;
-  gap: 0.8rem;
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-title {
+  margin: 0;
+  color: var(--app-main-text);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.filters-accordion {
+  display: block;
+}
+
+:host ::ng-deep .filters-accordion .mat-expansion-panel {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--app-main-text) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+:host ::ng-deep .filters-accordion .mat-expansion-panel-header {
+  background: var(--glass-bg) !important;
+  color: var(--app-main-text) !important;
+}
+
+:host ::ng-deep .filters-accordion .mat-expansion-panel-header:hover,
+:host ::ng-deep .filters-accordion .mat-expansion-panel-header:focus,
+:host ::ng-deep .filters-accordion .mat-expansion-panel-header.mat-expanded {
+  background: var(--glass-bg) !important;
+}
+
+:host ::ng-deep .filters-accordion .mat-expansion-panel-header-title,
+:host ::ng-deep .filters-accordion .mat-expansion-indicator::after {
+  color: var(--app-main-text) !important;
 }
 
 .filters {
@@ -19,14 +57,20 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
 .table-card {
   overflow: hidden;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--app-main-text);
+  box-shadow: var(--shadow-soft);
 }
 
 .table-header {
   padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .table-wrap {
@@ -35,22 +79,63 @@
 
 table {
   width: 100%;
+  background: transparent;
 }
 
 .status {
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(134, 239, 172, 0.2);
-  color: var(--app-success);
+  background: var(--app-status-success-bg);
+  color: var(--app-status-success-text);
+  border: 1px solid color-mix(in srgb, var(--app-status-success-text) 50%, transparent);
 }
 
 .status.err {
-  background: rgba(239, 68, 68, 0.2);
-  color: var(--app-danger);
+  background: var(--app-status-danger-bg);
+  color: var(--app-status-danger-text);
+  border-color: color-mix(in srgb, var(--app-status-danger-text) 50%, transparent);
 }
 
 .loading {
   display: grid;
   place-items: center;
   padding: 1.5rem;
+}
+
+small {
+  color: var(--app-main-text-muted);
+}
+
+:host ::ng-deep .audit-page .mat-mdc-table {
+  background: transparent !important;
+}
+
+:host ::ng-deep .audit-page .mat-mdc-header-row,
+:host ::ng-deep .audit-page .mat-mdc-row {
+  background: transparent !important;
+}
+
+:host ::ng-deep .audit-page .mat-mdc-header-cell {
+  color: var(--accent) !important;
+  border-bottom-color: var(--glass-border) !important;
+  font-weight: 700;
+}
+
+:host ::ng-deep .audit-page .mat-mdc-cell {
+  color: var(--app-main-text) !important;
+  border-bottom-color: color-mix(in srgb, var(--glass-border) 80%, transparent) !important;
+}
+
+:host ::ng-deep .audit-page .mat-mdc-row:hover .mat-mdc-cell {
+  background: color-mix(in srgb, var(--glass-bg-strong) 70%, transparent);
+}
+
+@media (max-width: 900px) {
+  .audit-page {
+    padding: 8vh 1rem 1rem;
+  }
+
+  .page-title {
+    font-size: 1.35rem;
+  }
 }

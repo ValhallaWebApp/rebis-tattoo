@@ -58,12 +58,71 @@ $radius: 12px;
       object-fit: cover;
       border: 4px solid var(--accent);
     }
+  }
 
-    input[type='file'] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
+  .avatar-picker {
+    margin: 0.9rem 0 1.1rem;
+  }
+
+  .avatar-picker__actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.55rem;
+  }
+
+  .avatar-file-input {
+    display: none;
+  }
+
+  .avatar-picker__title {
+    margin: 0 0 0.5rem;
+    font-size: 0.82rem;
+    opacity: 0.78;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+
+  .avatar-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .avatar-picker__item {
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg-strong);
+    border-radius: 999px;
+    padding: 0;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+
+    &:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--accent) 68%, white 32%);
+      outline-offset: 2px;
+    }
+
+    &.is-selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 26%, transparent);
     }
   }
 
@@ -406,6 +465,10 @@ button.mat-raised-button {
   .profile-card .actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .profile-card .avatar-picker__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .profile-card h2,

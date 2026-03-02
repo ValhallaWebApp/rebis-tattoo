@@ -3,7 +3,7 @@ import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { MaterialModule } from '../../../../core/modules/material.module';
-import { Conversation, ConversationMessage, ParticipantRole } from '../../../../core/models/messaging.model';
+import { Conversation, ConversationMessage, ParticipantRole, TicketPriority, TicketStatus } from '../../../../core/models/messaging.model';
 import { AuthService } from '../../../../core/services/auth/auth.service';
 import { MessagingService } from '../../../../core/services/messaging/messaging.service';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
@@ -144,12 +144,51 @@ export class MessagingDashboardComponent implements OnDestroy {
     }
   }
 
+  async setTicketStatus(status: TicketStatus): Promise<void> {
+    if (!this.selectedThread || !this.actorId) return;
+
+    try {
+      await this.messaging.updateTicketMeta(this.selectedThread.id, this.actorId, this.actorRole, {
+        ticketStatus: status
+      });
+      this.ui.info(`Ticket aggiornato: ${this.ticketStatusLabel(status)}`);
+    } catch (error) {
+      this.ui.error(this.readErrorMessage(error, 'Aggiornamento ticket non riuscito'));
+    }
+  }
+
   labelStatus(status?: string): string {
     return status === 'closed' ? 'chiusa' : 'aperta';
   }
 
   statusChipClass(status?: string): 'open' | 'closed' {
     return status === 'closed' ? 'closed' : 'open';
+  }
+
+  ticketStatusLabel(status?: string): string {
+    switch (String(status ?? '').toLowerCase()) {
+      case 'new': return 'Nuovo';
+      case 'triage': return 'Triage';
+      case 'in_progress': return 'In lavorazione';
+      case 'waiting_client': return 'Attesa cliente';
+      case 'resolved': return 'Risolto';
+      case 'closed': return 'Chiuso';
+      default: return 'Nuovo';
+    }
+  }
+
+  ticketPriorityLabel(priority?: string): string {
+    const normalized = String(priority ?? '').toLowerCase() as TicketPriority;
+    if (normalized === 'low') return 'Bassa';
+    if (normalized === 'high') return 'Alta';
+    if (normalized === 'urgent') return 'Urgente';
+    return 'Normale';
+  }
+
+  ticketPriorityClass(priority?: string): 'low' | 'normal' | 'high' | 'urgent' {
+    const normalized = String(priority ?? '').toLowerCase();
+    if (normalized === 'low' || normalized === 'high' || normalized === 'urgent') return normalized;
+    return 'normal';
   }
 
   unreadCount(thread: Conversation): number {

@@ -6,6 +6,7 @@ import { UserService } from '../../../../core/services/users/user.service';
 import { PaymentApiService } from '../../../../core/services/payments/payment-api.service';
 import { AuthService } from '../../../../core/services/auth/auth.service';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
+import { EventsService } from '../../../../core/services/events/events.service';
 
 type Step =
   | 'intro'
@@ -53,6 +54,7 @@ export class FastBookingStore {
   private readonly paymentApi = inject(PaymentApiService);
   private readonly auth = inject(AuthService);
   private readonly ui = inject(UiFeedbackService);
+  private readonly eventsService = inject(EventsService);
 
  readonly HOME_SEED_KEY = 'FAST_BOOKING_HOME_SEED';
 
@@ -81,6 +83,8 @@ export class FastBookingStore {
   readonly selectedDate = signal<string | null>(null); // "YYYY-MM-DD"
   readonly slots = signal<Slot[]>([]);
   readonly loadingSlots = signal(false);
+  readonly hasEventBlock = signal(false);
+  readonly blockingEventId = signal<string | null>(null);
 
   // PAYMENT
   readonly bookingId = signal<string | null>(null);
@@ -253,12 +257,16 @@ effect(() => {
     // reset step when
     this.selectedDate.set(null);
     this.slots.set([]);
+    this.hasEventBlock.set(false);
+    this.blockingEventId.set(null);
     this.setWhen(null, null);
   }
 
   // ACTIONS: when
   setDate(date: string | null) {
     this.selectedDate.set(date);
+    this.hasEventBlock.set(false);
+    this.blockingEventId.set(null);
     // reset time selezionato quando cambi giorno
     this.draft.update((d) => ({ ...d, date, time: null }));
   }
@@ -323,6 +331,8 @@ effect(() => {
         { time: '11:00' },
         { time: '15:00' }
       ]);
+      this.hasEventBlock.set(false);
+      this.blockingEventId.set(null);
       this.loadingSlots.set(false);
       this.error.set(null);
       return;
@@ -331,22 +341,35 @@ effect(() => {
     try {
       this.loadingSlots.set(true);
       this.error.set(null);
+      this.hasEventBlock.set(false);
+      this.blockingEventId.set(null);
 
       const duration = this.durationMin();
+      const [slots, occurrences] = await Promise.all([
+        this.bookingService.getFreeSlotsInDay(artistId, date, duration),
+        this.eventsService.getBlockingOccurrencesForDate(date).catch(() => [])
+      ]);
 
-      // ✅ bookingService ritorna Promise, quindi await diretto
-      const slots = await this.bookingService.getFreeSlotsInDay(artistId, date, duration);
+      const uniqueEventIds = new Set(
+        (occurrences ?? [])
+          .map((item) => String(item.eventId ?? item.id ?? '').trim())
+          .filter(Boolean)
+      );
+      const firstBlockingEventId = Array.from(uniqueEventIds)[0] ?? null;
 
       this.slots.set(slots ?? []);
+      this.hasEventBlock.set(uniqueEventIds.size > 0);
+      this.blockingEventId.set(firstBlockingEventId);
     } catch (e) {
       console.error('[FAST_BOOKING][SLOTS] ERROR', e);
       this.slots.set([]);
+      this.hasEventBlock.set(false);
+      this.blockingEventId.set(null);
       this.error.set('Impossibile caricare gli orari disponibili per questo giorno.');
     } finally {
       this.loadingSlots.set(false);
     }
   }
-
   // PAYMENT FLOW (REAL DATA + hook)
   async startPayment() {
     if (this.isE2EMockMode) {
@@ -531,6 +554,8 @@ resetAll() {
   this.paymentIntentId.set(null);
   this.selectedDate.set(null);
   this.slots.set([]);
+  this.hasEventBlock.set(false);
+  this.blockingEventId.set(null);
 
   const u = this.auth.userSig();
   const nameFromUser = u ? (u.name || null) : null;
@@ -593,6 +618,8 @@ seedFromHome(seed: HomeSeed) {
   // reset data slots
   this.selectedDate.set(null);
   this.slots.set([]);
+  this.hasEventBlock.set(false);
+  this.blockingEventId.set(null);
 
   // vai diretto a WHEN se ho artistId, altrimenti ARTIST
   this.step.set(artistId ? 'when' : 'artist');
@@ -676,5 +703,6 @@ private getErrorMessage(error: unknown, fallback: string): string {
 }
 
 }
+
 
 

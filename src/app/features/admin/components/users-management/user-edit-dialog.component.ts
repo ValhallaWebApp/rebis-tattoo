@@ -62,6 +62,14 @@ export type UserEditPatch = Pick<User, 'name' | 'email' | 'phone' | 'urlAvatar' 
     </mat-dialog-actions>
   `,
   styles: [`
+    :host {
+      color: var(--app-main-text, whitesmoke);
+    }
+
+    h2[mat-dialog-title] {
+      color: whitesmoke;
+    }
+
     .dialog-content {
       display: grid;
       gap: 0.7rem;
@@ -71,6 +79,8 @@ export type UserEditPatch = Pick<User, 'name' | 'email' | 'phone' | 'urlAvatar' 
 
     .meta-card {
       padding: 0.8rem;
+      background: color-mix(in srgb, var(--glass-bg, rgba(255, 255, 255, 0.08)) 88%, #141922 12%);
+      border-color: var(--glass-border, rgba(255, 255, 255, 0.18));
     }
 
     .meta-grid {
@@ -87,13 +97,14 @@ export type UserEditPatch = Pick<User, 'name' | 'email' | 'phone' | 'urlAvatar' 
 
     .meta-item .k {
       font-size: 0.75rem;
-      opacity: 0.7;
+      color: var(--app-main-text-muted, rgba(245, 245, 245, 0.7));
       margin-bottom: 0.15rem;
     }
 
     .meta-item .v {
       font-size: 0.9rem;
       line-height: 1.2;
+      color: whitesmoke;
     }
 
     .mono {

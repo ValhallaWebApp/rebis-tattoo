@@ -1,132 +1,112 @@
 <div class="messaging-layout">
-  <!-- SIDEBAR -->
-  <aside class="sidebar" [class.is-open]="sidebarOpen">
-    <header>
+  <aside class="sidebar" [class.hidden-mobile]="!sidebarOpen && !isDesktop">
+    <header class="sidebar-header">
       <h3>Conversazioni</h3>
-      <button mat-icon-button class="close-btn" *ngIf="!isDesktop" (click)="sidebarOpen = false">
-        <mat-icon>close</mat-icon>
-      </button>
+      <div class="header-meta">
+        <span class="badge" *ngIf="totalUnreadCount() > 0">{{ totalUnreadCount() }} non lette</span>
+        <button mat-icon-button class="mobile-only" (click)="sidebarOpen = false" *ngIf="!isDesktop" aria-label="Chiudi lista">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
     </header>
 
-    <!-- Search -->
     <mat-form-field appearance="outline" class="search-field">
       <mat-icon matPrefix>search</mat-icon>
-      <input matInput placeholder="Cerca nelle chat" [formControl]="searchCtrl" />
+      <input matInput placeholder="Cerca conversazioni" [formControl]="searchCtrl" />
     </mat-form-field>
 
-    <!-- Filtri stato -->
     <div class="filters">
-      <button mat-stroked-button [color]="statusFilter() === 'aperte' ? 'primary' : ''"
-              (click)="statusFilter.set('aperte')">Aperte</button>
-      <button mat-stroked-button [color]="statusFilter() === 'chiuse' ? 'primary' : ''"
-              (click)="statusFilter.set('chiuse')">Chiuse</button>
-      <button mat-stroked-button [color]="statusFilter() === 'tutte' ? 'primary' : ''"
-              (click)="statusFilter.set('tutte')">Tutte</button>
+      <button mat-stroked-button [color]="statusFilter() === 'aperte' ? 'primary' : ''" (click)="statusFilter.set('aperte')">Aperte</button>
+      <button mat-stroked-button [color]="statusFilter() === 'chiuse' ? 'primary' : ''" (click)="statusFilter.set('chiuse')">Chiuse</button>
+      <button mat-stroked-button [color]="statusFilter() === 'tutte' ? 'primary' : ''" (click)="statusFilter.set('tutte')">Tutte</button>
     </div>
 
-    <!-- Lista conversazioni -->
-    <ul class="conversation-list">
-      <li *ngFor="let thread of filteredThreads()"
-          (click)="selectThread(thread); sidebarOpen = false"
-          [class.active]="thread.id === (selectedThread()?.id || null)">
-        <span class="state" [ngClass]="statusLabel(thread.status)"></span>
-        <div class="info">
-          <strong>{{ thread.summary || ('Conversazione #' + (thread.id | slice:-6)) }}</strong>
-          <small>{{ (thread.lastMessageAt || thread.createdAt) | date:'short' }}</small>
+    <ul class="thread-list">
+      <li
+        *ngFor="let thread of filteredThreads(); trackBy: trackThread"
+        (click)="selectThread(thread)"
+        [class.active]="isThreadSelected(thread)"
+        [class.unread]="unreadCount(thread) > 0"
+      >
+        <div class="thread-main">
+          <div class="thread-title">{{ conversationTitle(thread) }}</div>
+          <span class="status-chip" [ngClass]="statusChipClass(thread.status)">{{ statusLabel(thread.status) }}</span>
+        </div>
+        <div class="thread-preview">{{ conversationPreview(thread) }}</div>
+        <div class="thread-meta">
+          <span>{{ lastActivityDate(thread) | date:'short' }}</span>
+          <span class="unread-pill" *ngIf="unreadCount(thread) > 0">{{ unreadCount(thread) }}</span>
         </div>
       </li>
 
-      <li *ngIf="!filteredThreads()?.length" class="empty-state">
-        Nessuna chat trovata.
-        <div class="cta">
-          <button mat-stroked-button color="primary" (click)="createConversation(); sidebarOpen = false">Nuova chat</button>
-        </div>
+      <li class="empty" *ngIf="!filteredThreads().length">
+        Nessuna conversazione trovata.
+        <button mat-stroked-button color="primary" (click)="createConversation()">Nuova chat</button>
       </li>
     </ul>
   </aside>
 
-  <!-- CHAT -->
-  <section class="chat">
-    <!-- Header chat -->
-    <div class="chat-header">
-      <div class="title">
-        <button mat-icon-button class="only-mobile" (click)="sidebarOpen = true" *ngIf="!isDesktop">
+  <section class="chat-window" *ngIf="selectedThread() as activeThread; else noThread">
+    <header class="chat-header">
+      <div class="chat-title-wrap">
+        <button mat-icon-button class="mobile-only" (click)="sidebarOpen = true" *ngIf="!isDesktop" aria-label="Apri lista conversazioni">
           <mat-icon>menu</mat-icon>
         </button>
         <div>
-          <div>
-            {{ selectedThread()?.summary || 'Seleziona una conversazione' }}
-          </div>
-          <div class="pill"
-               [ngClass]="statusLabel(selectedThread()?.status)"
-               *ngIf="selectedThread()">
-            {{ statusLabel(selectedThread()?.status) | titlecase }}
+          <h3>{{ conversationTitle(activeThread) }}</h3>
+          <div class="chat-subtitle">
+            <span class="status-chip" [ngClass]="statusChipClass(activeThread.status)">{{ statusLabel(activeThread.status) }}</span>
+            <span>Ultima attivita: {{ lastActivityDate(activeThread) | date:'short' }}</span>
           </div>
         </div>
       </div>
 
-      <div class="actions" *ngIf="selectedThread()">
+      <div class="status-actions">
         <button mat-icon-button matTooltip="Galleria media" (click)="openGallery()" [disabled]="!hasGallery()">
           <mat-icon>collections</mat-icon>
         </button>
-
-        <button mat-stroked-button color="primary"
-                *ngIf="statusLabel(selectedThread()?.status) === 'aperto'"
-                (click)="setStatus('chiuso')">
-          <mat-icon>check_circle</mat-icon>&nbsp;Chiudi
+        <button mat-stroked-button color="primary" *ngIf="activeThread.status !== 'closed'" (click)="setStatus('chiuso')">
+          Chiudi
         </button>
-
-        <button mat-stroked-button color="primary"
-                *ngIf="statusLabel(selectedThread()?.status) === 'chiuso'"
-                (click)="setStatus('aperto')">
-          <mat-icon>undo</mat-icon>&nbsp;Riapri
+        <button mat-stroked-button color="primary" *ngIf="activeThread.status === 'closed'" (click)="setStatus('aperto')">
+          Riapri
         </button>
-
         <button mat-icon-button matTooltip="Elimina conversazione" (click)="deleteThread()">
           <mat-icon>delete</mat-icon>
         </button>
       </div>
-    </div>
+    </header>
 
-    <!-- Messaggi -->
     <div class="messages" #msgBox>
-      <ng-container *ngIf="selectedThread(); else noThread">
-        <div *ngFor="let m of messages()" class="bubble" [class.user]="isOwnMessage(m)" [class.bot]="!isOwnMessage(m)">
-          <div class="text" [innerHTML]="m.text"></div>
-          <div class="meta">
-            <span>{{ m.createdAt ? (m.createdAt | date:'shortTime') : 'adesso' }}</span>
-          </div>
+      <article
+        class="message"
+        *ngFor="let m of messages(); trackBy: trackMessage"
+        [class.mine]="isOwnMessage(m)"
+        [class.chatbot]="m.senderRole === 'bot'"
+      >
+        <div class="message-head">
+          <strong>{{ m.senderRole | titlecase }}</strong>
+          <span>{{ m.createdAt | date:'shortTime' }}</span>
         </div>
-      </ng-container>
-
-      <ng-template #noThread>
-        <div class="empty-state">
-          Seleziona una conversazione dalla lista a sinistra.
-        </div>
-      </ng-template>
+        <div class="message-text" [innerHTML]="m.text"></div>
+      </article>
     </div>
 
-    <!-- Chips suggerimenti (opzionale) -->
-    <!-- <div class="chips" *ngIf=\"selectedThread() && suggestionChips?.length\">
-      <button *ngFor=\"let c of suggestionChips\" (click)=\"newMessage = c\">{{ c }}</button>
-    </div> -->
-
-    <!-- Composer -->
-    <div class="composer" *ngIf="selectedThread()">
-      <div class="left">
+    <div class="composer">
+      <div class="composer-actions">
         <button mat-icon-button (click)="emojiPickerVisible = !emojiPickerVisible" matTooltip="Emoji">
           <mat-icon>insert_emoticon</mat-icon>
         </button>
-        <label mat-icon-button for="mediaInput" matTooltip="Allega immagine">
+        <label class="media-upload" for="mediaInput" matTooltip="Allega immagine">
           <mat-icon>attach_file</mat-icon>
         </label>
         <input id="mediaInput" type="file" accept="image/*" (change)="uploadMedia($event)" hidden />
       </div>
 
-      <div class="input-wrap">
+      <div class="composer-input">
         <textarea
-          rows="1"
-          placeholder="Scrivi un messaggio…"
+          rows="2"
+          placeholder="Scrivi un messaggio..."
           [formControl]="messageCtrl"
           (keydown.enter)="sendMessage(); $event.preventDefault()"
         ></textarea>
@@ -136,19 +116,26 @@
         </div>
       </div>
 
-      <div class="right">
-        <button mat-raised-button color="primary" (click)="sendMessage()" [disabled]="!messageCtrl.value.trim()">
-          Invia
-        </button>
-      </div>
+      <button mat-flat-button color="primary" (click)="sendMessage()" [disabled]="!messageCtrl.value.trim() || activeThread.status === 'closed'">
+        Invia
+      </button>
     </div>
   </section>
 </div>
 
-<!-- GALLERIA MEDIA -->
+<ng-template #noThread>
+  <section class="chat-window empty-chat">
+    <button mat-icon-button class="mobile-only" (click)="sidebarOpen = true" *ngIf="!isDesktop" aria-label="Apri lista conversazioni">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <p>Seleziona una conversazione dalla lista.</p>
+    <button mat-stroked-button color="primary" (click)="createConversation()">Nuova chat</button>
+  </section>
+</ng-template>
+
 <div class="gallery-drawer" [class.open]="galleryOpen">
   <header>
-    <h3>Media della conversazione</h3>
+    <h3>Media conversazione</h3>
     <button mat-icon-button (click)="galleryOpen = false">
       <mat-icon>close</mat-icon>
     </button>
@@ -156,7 +143,8 @@
 
   <div class="grid">
     <div class="img" *ngFor="let img of projectImages" [class.expanded]="expandedImage === img" (click)="toggleExpand(img)">
-      <img [src]="img" alt="" />
+      <img [src]="img" alt="Media allegato" />
     </div>
   </div>
 </div>
+

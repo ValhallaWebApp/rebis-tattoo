@@ -1,48 +1,46 @@
 <section class="booking-form-section">
-  <h2 class="section-title"><span>{{ 'Prenota'.toUpperCase() }}</span> {{ 'un Appuntamento'.toUpperCase() }}</h2>
+  <h2 class="section-title">
+    <span>{{ contactTitlePrefix() | uppercase }}</span>
+    {{ contactTitleSuffix() | uppercase }}
+  </h2>
 
   <div *ngIf="loading()" class="spinner-wrapper">
     <mat-spinner diameter="40"></mat-spinner>
   </div>
 
-  <!-- ✅ Banner login / registrazione (solo se NON loggato) -->
   <ng-container *ngIf="!loading()">
     <mat-card class="auth-banner" *ngIf="!isLogged()">
       <div class="auth-banner__left">
         <mat-icon class="auth-ico">account_circle</mat-icon>
         <div class="auth-text">
-          <div class="auth-title">Vuoi fare prima?</div>
-          <div class="auth-sub">
-            Accedi o registrati per compilare automaticamente <b>Nome</b> ed <b>Email</b>.
-          </div>
+          <div class="auth-title">{{ lang.t('home.contactSection.auth.guestTitle') }}</div>
+          <div class="auth-sub">{{ lang.t('home.contactSection.auth.guestText') }}</div>
         </div>
       </div>
 
       <div class="auth-banner__actions">
         <button mat-stroked-button (click)="goLogin()">
-          Accedi
+          {{ lang.t('home.contactSection.auth.login') }}
         </button>
         <button mat-flat-button color="primary" (click)="goRegister()">
-          Registrati
+          {{ lang.t('home.contactSection.auth.register') }}
         </button>
       </div>
     </mat-card>
 
-    <!-- ✅ Info se loggato -->
     <mat-card class="auth-banner ok" *ngIf="isLogged()">
       <div class="auth-banner__left">
         <mat-icon class="auth-ico">verified</mat-icon>
         <div class="auth-text">
-          <div class="auth-title">Sei loggato</div>
+          <div class="auth-title">{{ lang.t('home.contactSection.auth.loggedTitle') }}</div>
           <div class="auth-sub">
-            Nome ed Email sono stati precompilati dal tuo account
+            {{ lang.t('home.contactSection.auth.loggedText') }}
             <span *ngIf="userEmail()">({{ userEmail() }})</span>.
           </div>
         </div>
       </div>
     </mat-card>
 
-    <!-- Form -->
     <form (ngSubmit)="onSubmit()" class="form-grid">
       <app-dynamic-form
         [fields]="bookingFields()"
@@ -52,10 +50,9 @@
 
       <div class="form-footer full-width">
         <button mat-raised-button color="primary" type="submit" [disabled]="bookingForm.invalid">
-          Scegli la Data
+          {{ lang.t('home.contactSection.form.submit') }}
         </button>
       </div>
-
     </form>
   </ng-container>
 </section>

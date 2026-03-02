@@ -3,6 +3,7 @@ import { LoginComponent } from './features/auth/login/login.component';
 import { ServiceListComponent } from './features/public/services/service-list/service-list.component';
 import { ChiSiamoComponent } from './features/public/chi-siamo/chi-siamo.component';
 import { ContattiComponent } from './features/public/contatti/contatti.component';
+import { EventiComponent } from './features/public/eventi/eventi.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { AdminGuard } from './core/guards/admin.guard';
 import { AdminOnlyGuard } from './core/guards/admin-only.guard';
@@ -42,6 +43,13 @@ export const routes: Routes = [
   },
 
   { path: 'fast-booking', component: FastBookingPageComponent },
+  {
+    path: 'eventi/:eventId',
+    loadComponent: () =>
+      import('./features/public/eventi/evento-detail/evento-detail.component')
+        .then(m => m.EventoDetailComponent),
+  },
+  { path: 'eventi', component: EventiComponent },
   { path: 'chi-siamo', component: ChiSiamoComponent },
   { path: 'contatti', component: ContattiComponent },
 

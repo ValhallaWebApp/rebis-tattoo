@@ -1,5 +1,10 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { LanguageService } from '../../../../../core/services/language/language.service';
+import {
+  DEFAULT_STUDIO_PROFILE,
+  StudioProfileService
+} from '../../../../../core/services/studio/studio-profile.service';
 
 @Component({
   selector: 'app-home-hero',
@@ -9,9 +14,13 @@ import { LanguageService } from '../../../../../core/services/language/language.
   styleUrls: ['./home-hero.component.scss']
 })
 export class HomeHeroComponent {
-  constructor(public lang: LanguageService) {
-    // Debug opzionale
-    console.log(this.lang.t('home.hero.cta'));
-  }
+  private readonly studioProfile = inject(StudioProfileService);
+  private readonly profileSig = toSignal(this.studioProfile.getProfile(), {
+    initialValue: DEFAULT_STUDIO_PROFILE
+  });
+
+  readonly hero = computed(() => this.profileSig());
+
+  constructor(public lang: LanguageService) {}
 }
 

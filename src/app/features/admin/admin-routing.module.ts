@@ -19,6 +19,7 @@ import { RoleManagementGuard } from '../../core/guards/role-management.guard';
 import { PermissionsAdminComponent } from './components/permissions-admin/permissions-admin.component';
 import { StaffPermissionGuard } from '../../core/guards/staff-permission.guard';
 import { StaffDetailAdminComponent } from './components/staff-detail-admin/staff-detail-admin.component';
+import { EventsAdminComponent } from './components/events-admin/events-admin.component';
 
 export const ADMIN_ROUTES: Routes = [
   { path: '', component: AdminDashboardComponent },
@@ -35,6 +36,7 @@ export const ADMIN_ROUTES: Routes = [
 
   { path: 'portfolio', component: ProjectManagerComponent, canActivate: [StaffPermissionGuard], data: { permission: 'canManageProjects' } },
   { path: 'portfolio/:projectId', component: ProjectTrackerComponent, canActivate: [StaffPermissionGuard], data: { permission: 'canManageProjects' } },
+  { path: 'eventi', component: EventsAdminComponent, canActivate: [StaffPermissionGuard], data: { permission: 'canManageEvents' } },
 
   { path: 'servizi', component: ServicesAdminComponent, canActivate: [AdminOnlyGuard] },
 

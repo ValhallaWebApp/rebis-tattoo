@@ -8,17 +8,29 @@
     <mat-button-toggle value="staff">Staff</mat-button-toggle>
   </mat-button-toggle-group>
 
-  <app-dynamic-form
-    class="filters"
-    [fields]="filterFields"
-    [formGroupInput]="filterForm"
-    [showSubmit]="false"
-  ></app-dynamic-form>
+  <div class="filters-row">
+    <app-dynamic-form
+      class="filters"
+      [fields]="filterFields"
+      [formGroupInput]="filterForm"
+      [showSubmit]="false"
+    ></app-dynamic-form>
+
+    <button
+      class="filters-reset-btn"
+      mat-stroked-button
+      type="button"
+      (click)="resetFilters()"
+      [disabled]="!hasActiveFilters()"
+    >
+      Reset filtri
+    </button>
+  </div>
 
   <div class="pager-row" *ngIf="filteredUsers.length > 0">
     <mat-form-field appearance="outline" class="page-size-field">
       <mat-label>Per pagina</mat-label>
-      <mat-select [value]="pageSize" (selectionChange)="onPageSizeChange($event.value)">
+      <mat-select panelClass="users-management-select-panel" [value]="pageSize" (selectionChange)="onPageSizeChange($event.value)">
         <mat-option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</mat-option>
       </mat-select>
     </mat-form-field>
@@ -52,6 +64,7 @@
           <mat-form-field class="role-select" *ngIf="userService.isCurrentUserAdmin()" appearance="outline">
             <mat-label>Ruolo</mat-label>
             <mat-select
+              panelClass="users-management-select-panel"
               [value]="displayRole(u)"
               [disabled]="isSelf(u) || isRoleUpdating(u.id)"
               (selectionChange)="changeUserRole(u, $event.value)"

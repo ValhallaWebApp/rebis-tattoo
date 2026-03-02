@@ -22,8 +22,17 @@ export class UsersManagementComponent implements OnInit {
   readonly allowedRoles: UserRole[] = ['client', 'staff', 'admin'];
   activeRoleTab: 'client' | 'staff' = 'client';
   readonly filterFields: DynamicField[] = [
+    {
+      type: 'text',
+      name: 'q',
+      label: 'Ricerca rapida',
+      placeholder: 'Nome, email, telefono o ID utente',
+      className: 'full',
+      hint: 'La ricerca rapida controlla tutti i campi principali'
+    },
     { type: 'text', name: 'name', label: 'Nome', placeholder: 'Mario Rossi' },
-    { type: 'email', name: 'email', label: 'Email', placeholder: 'mario@email.com' }
+    { type: 'text', name: 'email', label: 'Email', placeholder: 'mario@email.com' },
+    { type: 'text', name: 'userId', label: 'User ID', placeholder: 'UID Firebase' }
   ];
   filterForm!: FormGroup;
   allUsers: User[] = [];
@@ -85,6 +94,8 @@ export class UsersManagementComponent implements OnInit {
 
   applyFilters(): void {
     const { name, email, userId, q } = this.filterForm.value;
+    const nameFilter = String(name ?? '').trim().toLowerCase();
+    const emailFilter = String(email ?? '').trim().toLowerCase();
     const idFilter = String(userId ?? '').trim().toLowerCase();
     const generic = String(q ?? '').trim().toLowerCase();
 
@@ -98,13 +109,31 @@ export class UsersManagementComponent implements OnInit {
 
       return (
         normalizedRole === this.activeRoleTab &&
-        (!name || userName.includes(String(name).toLowerCase())) &&
-        (!email || userEmail.includes(String(email).toLowerCase())) &&
-        (!idFilter || userIdVal === idFilter)
+        (!nameFilter || userName.includes(nameFilter)) &&
+        (!emailFilter || userEmail.includes(emailFilter)) &&
+        (!idFilter || userIdVal.includes(idFilter))
         && (!generic || genericHay.includes(generic))
       );
     });
     this.currentPage = 1;
+  }
+
+  hasActiveFilters(): boolean {
+    const { name, email, userId, q } = this.filterForm.value;
+    return [name, email, userId, q].some((value) => String(value ?? '').trim().length > 0);
+  }
+
+  resetFilters(): void {
+    this.filterForm.patchValue(
+      {
+        name: '',
+        email: '',
+        userId: '',
+        q: ''
+      },
+      { emitEvent: false }
+    );
+    this.applyFilters();
   }
 
   private applyRouteFilters(): void {

@@ -1,19 +1,27 @@
 <section class="audit-page">
-  <mat-card class="toolbar">
-    <mat-card-title>Audit Logs</mat-card-title>
+  <header class="page-head">
+    <h2 class="page-title">Audit Logs</h2>
+  </header>
 
-    <app-dynamic-form
-      class="filters"
-      [fields]="filterFields"
-      [formGroupInput]="filterForm"
-      [showSubmit]="false"
-    ></app-dynamic-form>
+  <mat-accordion class="filters-accordion">
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>Filtri</mat-panel-title>
+      </mat-expansion-panel-header>
 
-    <div class="actions">
-      <button mat-stroked-button (click)="resetFilters()">Reset filtri</button>
-      <button mat-flat-button color="primary" (click)="exportCsv()">Esporta CSV</button>
-    </div>
-  </mat-card>
+      <app-dynamic-form
+        class="filters"
+        [fields]="filterFields"
+        [formGroupInput]="filterForm"
+        [showSubmit]="false"
+      ></app-dynamic-form>
+
+      <div class="actions">
+        <button mat-stroked-button (click)="resetFilters()">Reset filtri</button>
+        <button mat-flat-button color="primary" (click)="exportCsv()">Esporta CSV</button>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
 
   <mat-card class="table-card">
     <div class="table-header">
