@@ -8,6 +8,7 @@ import { AuthService } from '../auth/auth.service';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuditLogService } from '../audit/audit-log.service';
 import { ConfirmActionService } from '../ui/confirm-action.service';
+import { StaffService } from '../staff/staff.service';
 import { environment } from '../../../../environment';
 import { mapHttpError } from '../../http/http-error.mapper';
 import { withCriticalHttpPolicy } from '../../http/http-policy';
@@ -62,6 +63,7 @@ export class UserService {
   private http = inject(HttpClient);
   private firebaseAuth = inject(Auth);
   private auth = inject(AuthService);
+  private staff = inject(StaffService);
   private ui = inject(UiFeedbackService);
   private audit = inject(AuditLogService);
   private confirmAction = inject(ConfirmActionService);
@@ -241,6 +243,12 @@ export class UserService {
     return of([]); // non autenticato
   }
 
+  getAllUsers(): Observable<User[]> {
+    return this.streamRtdbUsers().pipe(
+      map(users => users.filter(user => this.isVisibleAndNotDeleted(user)))
+    );
+  }
+
   getManageableUsers(): Observable<User[]> {
     if (!this.isCurrentUserAdmin()) return of([]);
 
@@ -253,84 +261,6 @@ export class UserService {
   private isVisibleUser(data: Record<string, unknown> | undefined): boolean {
     if (!data) return false;
     return data['isVisible'] !== false && !data['deletedAt'];
-  }
-
-  private async syncStaffProfileForRoleChange(
-    userId: string,
-    currentUser: Record<string, unknown>,
-    nextUser: Record<string, unknown>,
-    prevRole: string,
-    nextRole: string,
-    nowIso: string
-  ): Promise<void> {
-    const profileRef = ref(this.db, `staffProfiles/${userId}`);
-    const publicRef = ref(this.db, `publicStaff/${userId}`);
-    const normalizedPrevRole = String(prevRole ?? '').toLowerCase();
-    const normalizedNextRole = String(nextRole ?? '').toLowerCase();
-
-    if (normalizedPrevRole !== 'staff' && normalizedNextRole === 'staff') {
-      const profileSnap = await getDb(profileRef);
-      const existing = (profileSnap.exists() ? profileSnap.val() : {}) as Record<string, unknown>;
-      const staffProfilePatch: Record<string, unknown> = {
-        id: userId,
-        userId,
-        name: String(nextUser['name'] ?? currentUser['name'] ?? '').trim() || userId,
-        role: String(existing['role'] ?? 'altro'),
-        bio: String(existing['bio'] ?? ''),
-        photoUrl: String(nextUser['urlAvatar'] ?? currentUser['urlAvatar'] ?? ''),
-        email: String(nextUser['email'] ?? currentUser['email'] ?? ''),
-        phone: String(nextUser['phone'] ?? currentUser['phone'] ?? ''),
-        isActive: nextUser['isActive'] !== false,
-        deletedAt: null,
-      };
-      await updateDb(profileRef, staffProfilePatch);
-
-      const publicStaffPatch: Record<string, unknown> = {
-        id: userId,
-        userId,
-        name: String(nextUser['name'] ?? currentUser['name'] ?? '').trim() || userId,
-        role: 'staff',
-        bio: String(existing['bio'] ?? ''),
-        photoUrl: String(nextUser['urlAvatar'] ?? currentUser['urlAvatar'] ?? ''),
-        email: String(nextUser['email'] ?? currentUser['email'] ?? ''),
-        phone: String(nextUser['phone'] ?? currentUser['phone'] ?? ''),
-        isActive: nextUser['isActive'] !== false,
-        deletedAt: null,
-      };
-      await updateDb(publicRef, publicStaffPatch);
-      return;
-    }
-
-    if (normalizedPrevRole === 'staff' && normalizedNextRole !== 'staff') {
-      const disablePatch: Record<string, unknown> = { isActive: false, deletedAt: nowIso };
-      await updateDb(profileRef, disablePatch);
-      await updateDb(publicRef, disablePatch);
-      return;
-    }
-
-    if (normalizedNextRole === 'staff') {
-      const staffProfileUpdatePatch: Record<string, unknown> = {
-        name: String(nextUser['name'] ?? currentUser['name'] ?? '').trim(),
-        photoUrl: String(nextUser['urlAvatar'] ?? currentUser['urlAvatar'] ?? ''),
-        email: String(nextUser['email'] ?? currentUser['email'] ?? ''),
-        phone: String(nextUser['phone'] ?? currentUser['phone'] ?? ''),
-        isActive: nextUser['isActive'] !== false,
-      };
-      await updateDb(profileRef, staffProfileUpdatePatch);
-
-      const publicStaffUpdatePatch: Record<string, unknown> = {
-        id: userId,
-        userId,
-        name: String(nextUser['name'] ?? currentUser['name'] ?? '').trim(),
-        role: 'staff',
-        photoUrl: String(nextUser['urlAvatar'] ?? currentUser['urlAvatar'] ?? ''),
-        email: String(nextUser['email'] ?? currentUser['email'] ?? ''),
-        phone: String(nextUser['phone'] ?? currentUser['phone'] ?? ''),
-        isActive: nextUser['isActive'] !== false,
-        deletedAt: null,
-      };
-      await updateDb(publicRef, publicStaffUpdatePatch);
-    }
   }
 
   private async syncStaffProfileForRoleChangeViaBackend(
@@ -468,14 +398,14 @@ export class UserService {
           );
         } catch (syncErr) {
           try {
-            await this.syncStaffProfileForRoleChange(
+            await this.staff.syncStaffProfileFromUserTransition({
               userId,
-              current,
-              { ...current, ...(safePatch as Record<string, unknown>) } as Record<string, unknown>,
-              currentRole,
-              String(nextRole),
+              currentUser: current,
+              nextUser: { ...current, ...(safePatch as Record<string, unknown>) } as Record<string, unknown>,
+              prevRole: currentRole,
+              nextRole: String(nextRole),
               nowIso
-            );
+            });
           } catch (fallbackSyncErr) {
             syncWarning = this.isPermissionDeniedError(fallbackSyncErr)
               ? 'Utente aggiornato, ma sincronizzazione staff non consentita dalle regole database.'

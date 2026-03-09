@@ -1,0 +1,190 @@
+:host {
+  display: block;
+  color: var(--app-main-text, #f3f4f7);
+}
+
+.dialog-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+  color: var(--app-main-text, #f3f4f7);
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-chip.pending {
+  background: color-mix(in srgb, #f59e0b 22%, transparent);
+  border-color: color-mix(in srgb, #f59e0b 58%, transparent);
+}
+
+.status-chip.confirmed {
+  background: color-mix(in srgb, #10b981 20%, transparent);
+  border-color: color-mix(in srgb, #10b981 56%, transparent);
+}
+
+.status-chip.in-progress {
+  background: color-mix(in srgb, #3b82f6 20%, transparent);
+  border-color: color-mix(in srgb, #3b82f6 56%, transparent);
+}
+
+.status-chip.done {
+  background: color-mix(in srgb, #22c55e 22%, transparent);
+  border-color: color-mix(in srgb, #22c55e 58%, transparent);
+}
+
+.status-chip.cancelled {
+  background: color-mix(in srgb, #ef4444 22%, transparent);
+  border-color: color-mix(in srgb, #ef4444 58%, transparent);
+}
+
+.status-chip.draft {
+  background: color-mix(in srgb, #94a3b8 22%, transparent);
+  border-color: color-mix(in srgb, #94a3b8 58%, transparent);
+}
+
+.dialog-content {
+  display: grid;
+  gap: 14px;
+  padding-top: 6px;
+}
+
+.hero,
+.info-card {
+  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.18));
+  background: var(--app-surface, rgba(16, 17, 24, 0.68));
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.kind-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  width: fit-content;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--accent, #b79b55) 24%, transparent);
+  color: var(--app-main-text, #f3f4f7);
+  margin-bottom: 12px;
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.time-item {
+  border: 1px solid var(--app-surface-border, rgba(255, 255, 255, 0.16));
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+  background: var(--app-surface-muted, rgba(20, 22, 30, 0.58));
+
+  .label {
+    font-size: 12px;
+    color: var(--app-main-text-muted, #c8ced8);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  strong {
+    font-size: 14px;
+    line-height: 1.25;
+    color: var(--app-main-text, #f3f4f7);
+  }
+
+  span {
+    color: var(--app-main-text-muted, #c8ced8);
+  }
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.info-card h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--app-main-text, #f3f4f7);
+}
+
+.kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--app-surface-border, rgba(255, 255, 255, 0.18)) 70%, transparent);
+
+  &:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  span {
+    color: var(--app-main-text-muted, #c8ced8);
+    font-size: 13px;
+  }
+
+  strong {
+    color: var(--app-main-text, #f3f4f7);
+    font-size: 13px;
+    text-align: right;
+    word-break: break-word;
+  }
+}
+
+.notes-card p {
+  margin: 0;
+  color: var(--app-main-text-muted, #c8ced8);
+  white-space: pre-wrap;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--app-main-text-muted, #c8ced8);
+  font-size: 12px;
+}
+
+.dialog-actions {
+  padding-top: 8px;
+}
+
+@media (max-width: 760px) {
+  .time-grid,
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
+import { AdminSectionsVisibilityService } from './admin-sections-visibility.service';
+import { LanguageService } from '../language/language.service';
 
 export interface MenuItem {
   label: string;
@@ -27,67 +29,81 @@ export interface MenuUserContext {
 
 @Injectable({ providedIn: 'root' })
 export class MenuService {
-  private readonly publicMenu: MenuItem[] = [
-    { label: 'Home', route: '/home' },
-    { label: 'Servizi', route: '/servizi' },
-    { label: 'Vetrina', route: '/progetti' },
-    { label: 'Eventi', route: '/eventi' },
-    { label: 'Fast Consulenza', route: '/fast-booking' },
-    { label: 'Chi Siamo', route: '/chi-siamo' },
-    { label: 'Contatti', route: '/contatti' }
-  ];
+  constructor(
+    private readonly sectionsVisibility: AdminSectionsVisibilityService,
+    private readonly lang: LanguageService
+  ) {}
 
-  private readonly dashboardMenu: MenuItem = {
-    label: 'Dashboard',
-    route: '/dashboard',
-    roles: ['client', 'staff', 'admin'],
-    children: [
-      { label: 'Profilo', route: '/dashboard' },
-      { label: 'Storico consulenze', route: '/dashboard/booking-history' },
-      { label: 'Buoni', route: '/dashboard/buoni' },
-      { label: 'Recensioni', route: '/dashboard/reviews' },
-      { label: 'Chat', route: '/dashboard/chat' }
-    ]
-  };
+  private buildPublicMenuItems(): MenuItem[] {
+    return [
+      { label: this.lang.t('menu.public.home'), route: '/home' },
+      { label: this.lang.t('menu.public.services'), route: '/servizi' },
+      { label: this.lang.t('menu.public.showcase'), route: '/progetti' },
+      { label: this.lang.t('menu.public.events'), route: '/eventi' },
+      { label: this.lang.t('menu.public.fastConsultation'), route: '/fast-booking' },
+      { label: this.lang.t('menu.public.about'), route: '/chi-siamo' },
+      { label: this.lang.t('menu.public.contacts'), route: '/contatti' }
+    ];
+  }
 
-  private readonly staffClientZoneMenu: MenuItem = {
-    label: 'Client Zone',
-    route: '/dashboard',
-    roles: ['staff'],
-    children: [
-      { label: 'Profilo', route: '/dashboard' },
-      { label: 'Storico consulenze', route: '/dashboard/booking-history' },
-      { label: 'Buoni', route: '/dashboard/buoni' },
-      { label: 'Recensioni', route: '/dashboard/reviews' },
-      { label: 'Chat', route: '/dashboard/chat' }
-    ]
-  };
+  private buildDashboardMenu(): MenuItem {
+    return {
+      label: this.lang.t('menu.dashboard.title'),
+      route: '/dashboard',
+      roles: ['client', 'staff', 'admin'],
+      children: [
+        { label: this.lang.t('menu.dashboard.profile'), route: '/dashboard' },
+        { label: this.lang.t('menu.dashboard.bookingHistory'), route: '/dashboard/booking-history' },
+        { label: this.lang.t('menu.dashboard.bonus'), route: '/dashboard/buoni' },
+        { label: this.lang.t('menu.dashboard.reviews'), route: '/dashboard/reviews' },
+        { label: this.lang.t('menu.dashboard.chat'), route: '/dashboard/chat' }
+      ]
+    };
+  }
 
-  private readonly adminMenu: MenuItem = {
-    label: 'Admin',
-    route: '/admin',
-    roles: ['admin'],
-    children: [
-      { label: 'Dashboard', route: '/admin' },
-      { label: 'Calendario', route: '/admin/calendar' },
-      { label: 'Utenti', route: '/admin/users' },
-      { label: 'Clienti', route: '/admin/clients' },
-      { label: 'Staff', route: '/admin/staff' },
-      { label: 'Permessi', route: '/admin/permissions' },
-      { label: 'Portfolio', route: '/admin/portfolio' },
-      { label: 'Servizi', route: '/admin/servizi' },
-      { label: 'Recensioni', route: '/admin/reviews' },
-      { label: 'Messaggi', route: '/admin/messaging' },
-      { label: 'Eventi', route: '/admin/eventi' },
-      { label: 'Fatturazione', route: '/admin/billing' },
-      { label: 'Bonus', route: '/admin/bonus' },
-      { label: 'Analytics', route: '/admin/analytics' },
-      { label: 'Audit Logs', route: '/admin/audit-logs' },
-      { label: 'Documenti', route: '/admin/documents' },
-      { label: 'Waitlist', route: '/admin/waitlist' },
-      { label: 'Impostazioni Studio', route: '/admin/settings' }
-    ]
-  };
+  private buildStaffClientZoneMenu(): MenuItem {
+    return {
+      label: this.lang.t('menu.staffClientZone.title'),
+      route: '/dashboard',
+      roles: ['staff'],
+      children: [
+        { label: this.lang.t('menu.dashboard.profile'), route: '/dashboard' },
+        { label: this.lang.t('menu.dashboard.bookingHistory'), route: '/dashboard/booking-history' },
+        { label: this.lang.t('menu.dashboard.bonus'), route: '/dashboard/buoni' },
+        { label: this.lang.t('menu.dashboard.reviews'), route: '/dashboard/reviews' },
+        { label: this.lang.t('menu.dashboard.chat'), route: '/dashboard/chat' }
+      ]
+    };
+  }
+
+  private buildAdminMenuDefinition(): MenuItem {
+    return {
+      label: this.lang.t('menu.admin.title'),
+      route: '/admin',
+      roles: ['admin'],
+      children: [
+        { label: this.lang.t('menu.admin.dashboard'), route: '/admin' },
+        { label: this.lang.t('menu.admin.calendar'), route: '/admin/calendar' },
+        { label: this.lang.t('menu.admin.users'), route: '/admin/users' },
+        { label: this.lang.t('menu.admin.clients'), route: '/admin/clients' },
+        { label: this.lang.t('menu.admin.staff'), route: '/admin/staff' },
+        { label: this.lang.t('menu.admin.permissions'), route: '/admin/permissions' },
+        { label: this.lang.t('menu.admin.portfolio'), route: '/admin/portfolio' },
+        { label: this.lang.t('menu.admin.services'), route: '/admin/servizi' },
+        { label: this.lang.t('menu.admin.reviews'), route: '/admin/reviews' },
+        { label: this.lang.t('menu.admin.messaging'), route: '/admin/messaging' },
+        { label: this.lang.t('menu.admin.events'), route: '/admin/eventi' },
+        { label: this.lang.t('menu.admin.billing'), route: '/admin/billing' },
+        { label: this.lang.t('menu.admin.bonus'), route: '/admin/bonus' },
+        { label: this.lang.t('menu.admin.analytics'), route: '/admin/analytics' },
+        { label: this.lang.t('menu.admin.auditLogs'), route: '/admin/audit-logs' },
+        { label: this.lang.t('menu.admin.documents'), route: '/admin/documents' },
+        { label: this.lang.t('menu.admin.waitlist'), route: '/admin/waitlist' },
+        { label: this.lang.t('menu.admin.settings'), route: '/admin/settings' },
+        { label: this.lang.t('menu.admin.sectionsVisibility'), route: '/admin/sections-visibility' }
+      ]
+    };
+  }
 
   getMenuByRole(role: MenuSection): Observable<MenuItem[]> {
     switch (role) {
@@ -129,55 +145,87 @@ export class MenuService {
   }
 
   private buildPublicMenu(): MenuItem[] {
-    return [...this.publicMenu];
+    return this.buildPublicMenuItems();
   }
 
   private buildClientMenu(): MenuItem[] {
-    return [...this.publicMenu, this.dashboardMenu];
+    const dashboardMenu = this.filterMenuChildrenByVisibility(this.buildDashboardMenu());
+    const publicMenu = this.buildPublicMenuItems();
+    return dashboardMenu ? [...publicMenu, dashboardMenu] : [...publicMenu];
   }
 
   private buildAdminMenu(): MenuItem[] {
-    return [...this.publicMenu, this.dashboardMenu, this.adminMenu];
+    const dashboardMenu = this.filterMenuChildrenByVisibility(this.buildDashboardMenu());
+    const adminMenu = this.buildAdminMenuDefinition();
+    const filteredChildren = (adminMenu.children ?? []).filter((item) => {
+      if (item.route === '/admin/sections-visibility') return true;
+      return this.sectionsVisibility.isVisible(item.route);
+    });
+
+    const publicMenu = this.buildPublicMenuItems();
+    return [
+      ...publicMenu,
+      ...(dashboardMenu ? [dashboardMenu] : []),
+      { ...adminMenu, children: filteredChildren }
+    ];
   }
 
   private buildStaffMenu(flags: { canManageRoles: boolean; canManageBookings: boolean; canManageProjects: boolean; canManageEvents: boolean; canManageMessages: boolean }): MenuItem[] {
     const staffAdminMenu = this.buildStaffAdminMenu(flags);
+    const staffClientZoneMenu = this.filterMenuChildrenByVisibility(this.buildStaffClientZoneMenu());
+    const publicMenu = this.buildPublicMenuItems();
     return staffAdminMenu
-      ? [...this.publicMenu, this.staffClientZoneMenu, staffAdminMenu]
-      : [...this.publicMenu, this.staffClientZoneMenu];
+      ? [...publicMenu, ...(staffClientZoneMenu ? [staffClientZoneMenu] : []), staffAdminMenu]
+      : [...publicMenu, ...(staffClientZoneMenu ? [staffClientZoneMenu] : [])];
   }
 
   private buildStaffAdminMenu(flags: { canManageRoles: boolean; canManageBookings: boolean; canManageProjects: boolean; canManageEvents: boolean; canManageMessages: boolean }): MenuItem | null {
     const children: MenuItem[] = [];
 
     if (flags.canManageBookings) {
-      children.push({ label: 'Calendario', route: '/staff/calendar' });
+      if (this.sectionsVisibility.isVisible('/staff/calendar')) {
+        children.push({ label: this.lang.t('menu.staff.calendar'), route: '/staff/calendar' });
+      }
     }
 
     if (flags.canManageProjects) {
-      children.push({ label: 'Progetti', route: '/staff/portfolio' });
+      if (this.sectionsVisibility.isVisible('/staff/portfolio')) {
+        children.push({ label: this.lang.t('menu.staff.projects'), route: '/staff/portfolio' });
+      }
     }
 
     if (flags.canManageEvents) {
-      children.push({ label: 'Eventi', route: '/staff/eventi' });
+      if (this.sectionsVisibility.isVisible('/staff/eventi')) {
+        children.push({ label: this.lang.t('menu.staff.events'), route: '/staff/eventi' });
+      }
     }
 
     if (flags.canManageMessages) {
-      children.push({ label: 'Chat', route: '/staff/messaging' });
+      if (this.sectionsVisibility.isVisible('/staff/messaging')) {
+        children.push({ label: this.lang.t('menu.staff.chat'), route: '/staff/messaging' });
+      }
     }
 
     if (flags.canManageRoles) {
-      children.push({ label: 'Clienti', route: '/staff/clients' });
+      if (this.sectionsVisibility.isVisible('/staff/clients')) {
+        children.push({ label: this.lang.t('menu.staff.clients'), route: '/staff/clients' });
+      }
     }
 
     if (children.length === 0) return null;
 
     return {
-      label: 'Staff',
+      label: this.lang.t('menu.staff.title'),
       route: '/staff',
       roles: ['staff'],
       children
     };
+  }
+
+  private filterMenuChildrenByVisibility(menu: MenuItem): MenuItem | null {
+    const children = (menu.children ?? []).filter((child) => this.sectionsVisibility.isVisible(child.route));
+    if (!children.length) return null;
+    return { ...menu, children };
   }
 
   private normalizeRole(role: string | undefined): MenuSection {

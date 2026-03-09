@@ -1,0 +1,90 @@
+.sections-visibility-admin {
+  padding: 2rem;
+  display: grid;
+  gap: 1rem;
+  color: var(--app-main-text);
+  background-color: var(--app-main-bg);
+}
+
+.sections-visibility-admin__header h2 {
+  margin: 0 0 4px;
+}
+
+.sections-visibility-admin__header p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.sections-visibility-admin__legend,
+.sections-visibility-admin__state,
+.section-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-soft);
+  color: var(--app-main-text);
+}
+
+.legend-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-row p {
+  margin: 0;
+}
+
+.sections-visibility-admin__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+}
+
+.sections-visibility-admin__list {
+  display: grid;
+  gap: 10px;
+}
+
+.section-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+}
+
+.section-card__main {
+  min-width: 0;
+}
+
+.section-card__title {
+  font-weight: 700;
+}
+
+.section-card__desc {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+}
+
+.section-card__route {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.sections-visibility-admin mat-icon {
+  color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .sections-visibility-admin {
+    padding: 1rem;
+  }
+
+  .section-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

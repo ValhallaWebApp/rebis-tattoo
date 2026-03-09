@@ -90,7 +90,7 @@
   <ng-template #empty>
     <div class="empty">
       <mat-icon>search_off</mat-icon>
-      <p>Nessun progetto trovato con i filtri selezionati.</p>
+      <p>{{ loadError ? errorText : 'Nessun progetto trovato con i filtri selezionati.' }}</p>
       <button mat-stroked-button type="button" (click)="resetFilters()">Reset filtri</button>
     </div>
   </ng-template>

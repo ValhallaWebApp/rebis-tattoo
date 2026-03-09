@@ -1,0 +1,37 @@
+<h2 mat-dialog-title class="artist-dialog-title">
+  {{ artistName }}
+</h2>
+
+<mat-dialog-content class="artist-dialog-content">
+  <div class="artist-top">
+    <img *ngIf="photoUrl" class="artist-photo" [src]="photoUrl" [alt]="artistName" />
+    <div class="artist-meta">
+      <div class="artist-badge">{{ roleLabel }}</div>
+      <div class="artist-state">{{ isActiveLabel }}</div>
+    </div>
+  </div>
+
+  <div class="artist-grid">
+    <div class="row">
+      <span class="k">Email</span>
+      <span class="v">{{ emailLabel }}</span>
+    </div>
+    <div class="row">
+      <span class="k">Telefono</span>
+      <span class="v">{{ phoneLabel }}</span>
+    </div>
+    <div class="row">
+      <span class="k">Specialità</span>
+      <span class="v">{{ specialtyLabel }}</span>
+    </div>
+  </div>
+
+  <div class="artist-bio">
+    <span class="k">Bio</span>
+    <p>{{ bioLabel }}</p>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button mat-dialog-close>Chiudi</button>
+</mat-dialog-actions>

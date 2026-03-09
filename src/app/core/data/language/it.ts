@@ -293,5 +293,172 @@ export const dataIt = {
         giftMessage: 'Gift card {code} riscattata: +{amount} EUR'
       }
     }
+  },
+  app: {
+    notifications: {
+      tooltip: 'Notifiche recenti',
+      markAllRead: 'Segna tutte come lette',
+      empty: 'Nessuna notifica'
+    },
+    auth: {
+      login: 'Login',
+      logout: 'Logout'
+    }
+  },
+  menu: {
+    public: {
+      home: 'Home',
+      services: 'Servizi',
+      showcase: 'Vetrina',
+      events: 'Eventi',
+      fastConsultation: 'Fast Consulenza',
+      about: 'Chi Siamo',
+      contacts: 'Contatti'
+    },
+    dashboard: {
+      title: 'Dashboard',
+      profile: 'Profilo',
+      bookingHistory: 'Storico consulenze',
+      bonus: 'Buoni',
+      reviews: 'Recensioni',
+      chat: 'Chat'
+    },
+    staffClientZone: {
+      title: 'Client Zone'
+    },
+    admin: {
+      title: 'Admin',
+      dashboard: 'Dashboard',
+      calendar: 'Calendario',
+      users: 'Utenti',
+      clients: 'Clienti',
+      staff: 'Staff',
+      permissions: 'Permessi',
+      portfolio: 'Portfolio',
+      services: 'Servizi',
+      reviews: 'Recensioni',
+      messaging: 'Messaggi',
+      events: 'Eventi',
+      billing: 'Fatturazione',
+      bonus: 'Bonus',
+      analytics: 'Analytics',
+      auditLogs: 'Audit Logs',
+      documents: 'Documenti',
+      waitlist: 'Waitlist',
+      settings: 'Impostazioni Studio',
+      sectionsVisibility: 'Visibilita Sezioni'
+    },
+    staff: {
+      title: 'Staff',
+      calendar: 'Calendario',
+      projects: 'Progetti',
+      events: 'Eventi',
+      chat: 'Chat',
+      clients: 'Clienti'
+    }
+  },
+  chatbot: {
+    teaser: 'Hai un idea? Parliamone.',
+    brandTitle: 'REBIS CONCIERGE',
+    brandSubtitle: 'Assistenza privata per consulenze',
+    close: 'Chiudi',
+    bookingGuided: 'Prenotazione guidata',
+    emptyTitle: 'Parliamo del tuo progetto',
+    emptySubtitle: 'Inizia da una domanda rapida o usa le azioni sopra.',
+    restart: 'Ricomincia',
+    successTitle: 'Richiesta ricevuta',
+    successSubtitle: 'Ti rispondiamo con una proposta dedicata in tempi rapidi.',
+    openFastBooking: 'Apri Fast Booking',
+    contactsStudio: 'Contatti studio',
+    writeHere: 'Scrivi qui',
+    writeIdea: 'Scrivi la tua idea...',
+    send: 'Invia',
+    attachRef: '+ Ref',
+    welcome: 'Benvenuto in Rebis. Ti aiuto a chiarire idee, tempi e prossimi step per la tua consulenza.',
+    referenceAttached: 'Reference allegata',
+    referenceReceived: 'Ricevuta. Ottimo punto di partenza per una consulenza precisa.',
+    errorConnection: 'Connessione instabile. Possiamo continuare qui o passare ai contatti studio.',
+    quickActions: {
+      book: 'Prenota consulenza',
+      pricing: 'Chiedi prezzi',
+      styles: 'Parla degli stili',
+      artists: 'Mostra artisti',
+      aftercare: 'Cura del tatuaggio',
+      contacts: 'Contatti studio'
+    },
+    flow: {
+      start: 'Perfetto. Partiamo dallo stile che desideri.',
+      placement: 'Perfetto. In quale zona del corpo vuoi lavorare?',
+      timing: 'Quando preferisci fare la consulenza?',
+      contact: 'Ultimo passaggio: lasciami un contatto (email o telefono).',
+      success: 'Richiesta inviata. Ti ricontattiamo al piu presto per confermare la consulenza Rebis.'
+    },
+    fallback: {
+      pricing: 'Per una stima premium precisa servono stile, zona e dimensione. Possiamo aprire subito una consulenza guidata.',
+      aftercare: 'Aftercare essenziale: detersione delicata, crema sottile, no sole e no acqua prolungata fino a guarigione completa.',
+      styles: 'Ti aiutiamo a definire lo stile piu adatto al tuo progetto: blackwork, fine line, ornamental, realistico.',
+      artists: 'Possiamo aiutarti a scegliere l artista giusto in base a stile, zona e budget. Scrivimi il tuo obiettivo e ti propongo i profili migliori.',
+      booking: 'Perfetto, possiamo avviare subito una consulenza guidata: stile, zona, tempistiche e contatto.',
+      contacts: 'Puoi contattarci dalla sezione Contatti o avviare qui una richiesta consulenza rapida.',
+      default: 'Ti aiuto volentieri. Dimmi il tuo obiettivo e ti guido al passo successivo senza perdere tempo.'
+    }
+  },
+  adminDashboard: {
+    title: 'Dashboard Amministrativa',
+    subtitle: 'Vista operativa rapida: priorita del giorno e azioni immediate.',
+    actions: {
+      openCalendar: 'Apri calendario',
+      openAdminChat: 'Apri chat admin',
+      manageEvents: 'Gestisci eventi',
+      go: 'Vai'
+    },
+    kpi: {
+      todayAppointments: 'Appuntamenti oggi',
+      pendingToday: 'In attesa oggi',
+      monthRevenue: 'Incasso mese',
+      totalClients: 'Clienti totali',
+      upcomingEvents: 'Eventi prossimi'
+    },
+    sections: {
+      operationalFocus: 'Focus operativo',
+      todayAgenda: 'Agenda di oggi',
+      recentReviews: 'Recensioni recenti',
+      upcomingEvents: 'Eventi prossimi',
+      quickSections: 'Sezioni rapide'
+    },
+    focus: {
+      pendingBookings: 'Prenotazioni in attesa',
+      reviewsToModerate: 'Recensioni da moderare',
+      activeProjects: 'Progetti in corso',
+      adminChat: 'Chat admin',
+      events: 'Eventi'
+    },
+    empty: {
+      noTodayBookings: 'Nessun appuntamento previsto per oggi.',
+      noReviews: 'Nessuna recensione disponibile.',
+      noUpcomingEvents: 'Nessun evento imminente pubblicato.'
+    },
+    labels: {
+      rating: 'Rating'
+    },
+    quickLinks: {
+      calendar: { title: 'Calendario', description: 'Gestione appuntamenti e disponibilita' },
+      users: { title: 'Utenti', description: 'Gestione unificata clienti e staff' },
+      permissions: { title: 'Permessi', description: 'Gestione permessi e deleghe staff' },
+      clients: { title: 'Clienti', description: 'Anagrafica clienti e filtri rapidi' },
+      staff: { title: 'Staff', description: 'Profili staff, turni e competenze' },
+      settings: { title: 'Impostazioni Studio', description: 'Contenuti pubblici e dati studio' },
+      reviews: { title: 'Recensioni', description: 'Moderazione recensioni utenti' },
+      portfolio: { title: 'Portfolio', description: 'Progetti e tatuaggi completati' },
+      messaging: { title: 'Messaggi', description: 'Chat e ticket da gestire' },
+      events: { title: 'Eventi', description: 'Guest e open day in gestione' },
+      billing: { title: 'Fatturazione', description: 'Pagamenti e stato incassi' },
+      bonus: { title: 'Bonus', description: 'Wallet e codici promo' },
+      documents: { title: 'Documenti', description: 'Archivio documentale studio' },
+      waitlist: { title: 'Waitlist', description: 'Clienti in attesa e follow-up' },
+      analytics: { title: 'Analytics', description: 'Panoramica KPI e trend' },
+      auditLogs: { title: 'Audit Logs', description: 'Tracciamento azioni e sicurezza' },
+      sectionsVisibility: { title: 'Visibilita Sezioni', description: 'Controlla cosa e visibile nel menu gestionale' }
+    }
   }
 };

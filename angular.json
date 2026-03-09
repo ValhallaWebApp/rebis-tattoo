@@ -80,13 +80,6 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
-          "options": {
-            "prebundle": {
-              "exclude": [
-                "@huggingface/transformers"
-              ]
-            }
-          },
           "configurations": {
             "production": {
               "buildTarget": "gestionale-tattuaggi:build:production"

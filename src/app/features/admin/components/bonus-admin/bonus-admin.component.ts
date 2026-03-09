@@ -1,15 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, TemplateRef, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, shareReplay } from 'rxjs';
 import {
   BonusService,
-  GiftCard,
-  PromoCode
+  GiftCard
 } from '../../../../core/services/bonus/bonus.service';
+import { MatDialog } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { LanguageService } from '../../../../core/services/language/language.service';
 import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
+import {
+  PaymentCollectionDialogComponent,
+  PaymentCollectionDialogData,
+  PaymentCollectionDialogResult
+} from '../../../../shared/components/dialogs/payment-collection-dialog/payment-collection-dialog.component';
 
 @Component({
   selector: 'app-bonus-admin',
@@ -20,71 +25,37 @@ import { DynamicField, DynamicFormComponent } from '../../../../shared/component
 })
 export class BonusAdminComponent {
   private fb = inject(FormBuilder);
+  private dialog = inject(MatDialog);
+  @ViewChild('createGiftDialog') createGiftDialog?: TemplateRef<unknown>;
+  private readonly assignmentFilter$ = new BehaviorSubject<'all' | 'assigned' | 'unassigned'>('all');
+  private readonly activeFilter$ = new BehaviorSubject<'all' | 'active' | 'inactive'>('all');
+  private readonly searchFilter$ = new BehaviorSubject<string>('');
 
-  readonly promoCodes$: Observable<PromoCode[]>;
   readonly giftCards$: Observable<GiftCard[]>;
-
-  promoForm = this.fb.group({
-    code: [''],
-    creditAmount: [10, [Validators.required, Validators.min(1)]],
-    maxUses: [null as number | null],
-    expiresAt: [''],
-    description: ['']
-  });
+  readonly filteredGiftCards$: Observable<GiftCard[]>;
+  displayMode: 'table' | 'card' = 'table';
+  assignmentFilter: 'all' | 'assigned' | 'unassigned' = 'all';
+  activeFilter: 'all' | 'active' | 'inactive' = 'all';
+  searchTerm = '';
 
   giftForm = this.fb.group({
-    code: [''],
+    name: [''],
     amount: [50, [Validators.required, Validators.min(1)]],
     expiresAt: [''],
     note: ['']
   });
 
-  savingPromo = false;
   savingGift = false;
-
-  get promoFields(): DynamicField[] {
-    return [
-      {
-        type: 'text',
-        name: 'code',
-        label: this.lang.t('bonus.admin.promoForm.codeLabel'),
-        placeholder: this.lang.t('bonus.admin.promoForm.codePlaceholder')
-      },
-      {
-        type: 'number',
-        name: 'creditAmount',
-        label: this.lang.t('bonus.admin.promoForm.creditLabel'),
-        min: 1,
-        required: true
-      },
-      {
-        type: 'number',
-        name: 'maxUses',
-        label: this.lang.t('bonus.admin.promoForm.maxUsesLabel'),
-        min: 1
-      },
-      {
-        type: 'date-native',
-        name: 'expiresAt',
-        label: this.lang.t('bonus.admin.promoForm.expiryLabel')
-      },
-      {
-        type: 'textarea',
-        name: 'description',
-        label: this.lang.t('bonus.admin.promoForm.descriptionLabel'),
-        rows: 2,
-        className: 'full'
-      }
-    ];
-  }
+  togglingGiftId: string | null = null;
+  collectingGiftId: string | null = null;
 
   get giftFields(): DynamicField[] {
     return [
       {
         type: 'text',
-        name: 'code',
-        label: this.lang.t('bonus.admin.giftForm.codeLabel'),
-        placeholder: this.lang.t('bonus.admin.giftForm.codePlaceholder')
+        name: 'name',
+        label: 'Nome Gift Card',
+        placeholder: 'Es. Gift Natale 2026'
       },
       {
         type: 'number',
@@ -112,34 +83,107 @@ export class BonusAdminComponent {
     private bonusService: BonusService,
     public lang: LanguageService
   ) {
-    this.promoCodes$ = this.bonusService.streamPromoCodes();
-    this.giftCards$ = this.bonusService.streamGiftCards();
+    this.giftCards$ = this.bonusService.streamGiftCards().pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    this.filteredGiftCards$ = combineLatest([
+      this.giftCards$,
+      this.assignmentFilter$,
+      this.activeFilter$,
+      this.searchFilter$
+    ]).pipe(
+      map(([cards, assignmentFilter, activeFilter, searchFilter]) => {
+        const normalizedSearch = searchFilter.trim().toLowerCase();
+
+        return (cards ?? []).filter((card) => {
+          const isAssigned = this.isAssigned(card);
+          const assignmentMatch =
+            assignmentFilter === 'all' ||
+            (assignmentFilter === 'assigned' && isAssigned) ||
+            (assignmentFilter === 'unassigned' && !isAssigned);
+
+          const activeMatch =
+            activeFilter === 'all' ||
+            (activeFilter === 'active' && card.active) ||
+            (activeFilter === 'inactive' && !card.active);
+
+          const searchMatch =
+            !normalizedSearch ||
+            card.code.toLowerCase().includes(normalizedSearch) ||
+            String(card.redeemedBy ?? '').toLowerCase().includes(normalizedSearch) ||
+            String(card.giftedToName ?? '').toLowerCase().includes(normalizedSearch) ||
+            String(card.createdBy ?? '').toLowerCase().includes(normalizedSearch) ||
+            String(card.note ?? '').toLowerCase().includes(normalizedSearch);
+
+          return assignmentMatch && activeMatch && searchMatch;
+        });
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
   }
 
-  async createPromo(): Promise<void> {
-    if (this.promoForm.invalid || this.savingPromo) return;
+  openCreateGiftDialog(): void {
+    if (!this.createGiftDialog) return;
+    this.dialog.open(this.createGiftDialog, {
+      width: '640px',
+      maxWidth: '96vw',
+      autoFocus: false
+    });
+  }
 
-    this.savingPromo = true;
+  setDisplayMode(mode: 'table' | 'card'): void {
+    this.displayMode = mode;
+  }
+
+  setAssignmentFilter(value: 'all' | 'assigned' | 'unassigned'): void {
+    this.assignmentFilter = value;
+    this.assignmentFilter$.next(value);
+  }
+
+  setActiveFilter(value: 'all' | 'active' | 'inactive'): void {
+    this.activeFilter = value;
+    this.activeFilter$.next(value);
+  }
+
+  setSearchTerm(value: string): void {
+    this.searchTerm = value;
+    this.searchFilter$.next(value);
+  }
+
+  async toggleGiftActive(card: GiftCard): Promise<void> {
+    if (this.togglingGiftId) return;
+    this.togglingGiftId = card.id;
     try {
-      await this.bonusService.createPromoCode({
-        code: this.promoForm.value.code || undefined,
-        creditAmount: Number(this.promoForm.value.creditAmount),
-        maxUses: this.promoForm.value.maxUses ? Number(this.promoForm.value.maxUses) : null,
-        expiresAt: this.promoForm.value.expiresAt || null,
-        description: this.promoForm.value.description || undefined
-      });
-
-      this.promoForm.reset({
-        code: '',
-        creditAmount: 10,
-        maxUses: null,
-        expiresAt: '',
-        description: ''
-      });
+      await this.bonusService.setGiftCardActive(card.id, !card.active);
     } catch (error) {
-      console.error('[BonusAdminComponent] createPromo error', error);
+      console.error('[BonusAdminComponent] toggleGiftActive error', error);
     } finally {
-      this.savingPromo = false;
+      this.togglingGiftId = null;
+    }
+  }
+
+  async collectGiftCardPayment(card: GiftCard): Promise<void> {
+    if (this.collectingGiftId) return;
+    this.collectingGiftId = card.id;
+    try {
+      const defaultAmount = Number(card.initialAmount ?? card.balance ?? 0) || 0;
+      const amount = await this.openCollectPaymentDialog({
+        title: 'Incassa Gift Card',
+        subtitle: `Codice: ${card.code}`,
+        defaultAmountEuro: defaultAmount,
+        bookingId: `gift:${card.id}`,
+        description: `Acquisto gift card ${card.code}`,
+        referenceType: 'gift_card',
+        referenceId: card.id,
+        referenceLabel: card.code
+      });
+      if (amount == null) return;
+
+      console.log('[BonusAdmin] gift card payment collected', {
+        giftId: card.id,
+        code: card.code,
+        amount
+      });
+    } finally {
+      this.collectingGiftId = null;
     }
   }
 
@@ -149,18 +193,19 @@ export class BonusAdminComponent {
     this.savingGift = true;
     try {
       await this.bonusService.createGiftCard({
-        code: this.giftForm.value.code || undefined,
+        name: this.giftForm.value.name || undefined,
         amount: Number(this.giftForm.value.amount),
         expiresAt: this.giftForm.value.expiresAt || null,
         note: this.giftForm.value.note || undefined
       });
 
       this.giftForm.reset({
-        code: '',
+        name: '',
         amount: 50,
         expiresAt: '',
         note: ''
       });
+      this.dialog.closeAll();
     } catch (error) {
       console.error('[BonusAdminComponent] createGiftCard error', error);
     } finally {
@@ -168,32 +213,36 @@ export class BonusAdminComponent {
     }
   }
 
-  async togglePromo(item: PromoCode): Promise<void> {
-    try {
-      await this.bonusService.setPromoActive(item.id, !item.active);
-    } catch (error) {
-      console.error('[BonusAdminComponent] togglePromo error', error);
-    }
-  }
-
-  async toggleGift(item: GiftCard): Promise<void> {
-    try {
-      await this.bonusService.setGiftCardActive(item.id, !item.active);
-    } catch (error) {
-      console.error('[BonusAdminComponent] toggleGift error', error);
-    }
-  }
-
-  trackPromo(_index: number, item: PromoCode): string {
-    return item.id;
-  }
-
   trackGift(_index: number, item: GiftCard): string {
     return item.id;
   }
 
-  promoUsageLabel(item: PromoCode): string {
-    const maxPart = item.maxUses !== null ? `/${item.maxUses}` : '';
-    return `${this.lang.t('bonus.admin.list.usagePrefix')} ${item.usedCount}${maxPart}`;
+  isAssigned(card: GiftCard): boolean {
+    return !!String(card.redeemedBy ?? '').trim();
+  }
+
+  giftTarget(card: GiftCard): string {
+    if (!card.gifted) return '-';
+    return card.giftedToName || card.giftedToEmail || card.giftedToPhone || card.giftedToUserId || '-';
+  }
+
+  statusLabel(card: GiftCard): string {
+    if (card.status === 'redeemed') return 'Riscattata';
+    if (card.status === 'partially_redeemed') return 'Parzialmente usata';
+    if (card.status === 'expired') return 'Scaduta';
+    if (card.status === 'disabled') return 'Disattiva';
+    return 'Attiva';
+  }
+
+  private async openCollectPaymentDialog(data: PaymentCollectionDialogData): Promise<number | null> {
+    const ref = this.dialog.open(PaymentCollectionDialogComponent, {
+      width: '640px',
+      maxWidth: '96vw',
+      data
+    });
+    const result = await ref.afterClosed().toPromise() as PaymentCollectionDialogResult | undefined;
+    if (!result?.ok) return null;
+    const amount = Number(result.amountEuro ?? 0);
+    return Number.isFinite(amount) && amount > 0 ? amount : null;
   }
 }

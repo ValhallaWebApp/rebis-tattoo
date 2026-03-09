@@ -18,7 +18,6 @@ function shouldAttachToken(req: HttpRequest<unknown>): boolean {
   const url = req.url;
   if (url.startsWith('/api/')) return true;
   if (url.startsWith(environment.paymentApiBaseUrl)) return true;
-  if (url.startsWith('http://localhost:3001/api/')) return true;
 
   return false;
 }
@@ -62,4 +61,3 @@ export const authHttpInterceptor: HttpInterceptorFn = (
     })
   );
 };
-

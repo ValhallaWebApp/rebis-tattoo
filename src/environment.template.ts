@@ -4,7 +4,7 @@ import { AppEnvironment } from './environment.model';
 export const environment: AppEnvironment = {
   production: false,
   environmentName: 'development',
-  paymentApiBaseUrl: 'https://replace-me.example/api/payments',
+  paymentApiBaseUrl: 'http://localhost:3000/api/payments',
   firebaseConfig: {
     apiKey: 'replace-me',
     authDomain: 'replace-me',

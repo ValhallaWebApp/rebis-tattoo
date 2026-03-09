@@ -293,5 +293,172 @@ export const dataEn = {
         giftMessage: 'Gift card {code} redeemed: +{amount} EUR'
       }
     }
+  },
+  app: {
+    notifications: {
+      tooltip: 'Recent notifications',
+      markAllRead: 'Mark all as read',
+      empty: 'No notifications'
+    },
+    auth: {
+      login: 'Login',
+      logout: 'Logout'
+    }
+  },
+  menu: {
+    public: {
+      home: 'Home',
+      services: 'Services',
+      showcase: 'Showcase',
+      events: 'Events',
+      fastConsultation: 'Fast Consultation',
+      about: 'About Us',
+      contacts: 'Contacts'
+    },
+    dashboard: {
+      title: 'Dashboard',
+      profile: 'Profile',
+      bookingHistory: 'Booking history',
+      bonus: 'Bonus',
+      reviews: 'Reviews',
+      chat: 'Chat'
+    },
+    staffClientZone: {
+      title: 'Client Zone'
+    },
+    admin: {
+      title: 'Admin',
+      dashboard: 'Dashboard',
+      calendar: 'Calendar',
+      users: 'Users',
+      clients: 'Clients',
+      staff: 'Staff',
+      permissions: 'Permissions',
+      portfolio: 'Portfolio',
+      services: 'Services',
+      reviews: 'Reviews',
+      messaging: 'Messages',
+      events: 'Events',
+      billing: 'Billing',
+      bonus: 'Bonus',
+      analytics: 'Analytics',
+      auditLogs: 'Audit Logs',
+      documents: 'Documents',
+      waitlist: 'Waitlist',
+      settings: 'Studio Settings',
+      sectionsVisibility: 'Sections Visibility'
+    },
+    staff: {
+      title: 'Staff',
+      calendar: 'Calendar',
+      projects: 'Projects',
+      events: 'Events',
+      chat: 'Chat',
+      clients: 'Clients'
+    }
+  },
+  chatbot: {
+    teaser: 'Have an idea? Let us talk.',
+    brandTitle: 'REBIS CONCIERGE',
+    brandSubtitle: 'Private consultation assistance',
+    close: 'Close',
+    bookingGuided: 'Guided booking',
+    emptyTitle: 'Let us talk about your project',
+    emptySubtitle: 'Start with a quick question or use the actions above.',
+    restart: 'Restart',
+    successTitle: 'Request received',
+    successSubtitle: 'We will reply quickly with a tailored proposal.',
+    openFastBooking: 'Open Fast Booking',
+    contactsStudio: 'Studio contacts',
+    writeHere: 'Write here',
+    writeIdea: 'Write your idea...',
+    send: 'Send',
+    attachRef: '+ Ref',
+    welcome: 'Welcome to Rebis. I help you clarify ideas, timing and next steps for your consultation.',
+    referenceAttached: 'Reference attached',
+    referenceReceived: 'Received. Great starting point for an accurate consultation.',
+    errorConnection: 'Connection unstable. We can continue here or move to studio contacts.',
+    quickActions: {
+      book: 'Book consultation',
+      pricing: 'Ask pricing',
+      styles: 'Talk styles',
+      artists: 'Show artists',
+      aftercare: 'Tattoo aftercare',
+      contacts: 'Studio contacts'
+    },
+    flow: {
+      start: 'Perfect. Let us start from your preferred style.',
+      placement: 'Great. Which body area do you want to work on?',
+      timing: 'When would you like to have the consultation?',
+      contact: 'Last step: leave me a contact (email or phone).',
+      success: 'Request sent. We will contact you soon to confirm your Rebis consultation.'
+    },
+    fallback: {
+      pricing: 'For an accurate premium estimate we need style, body area and size. We can start a guided consultation now.',
+      aftercare: 'Essential aftercare: gentle cleaning, light cream, avoid sun and prolonged water exposure until fully healed.',
+      styles: 'We can help define the best style for your project: blackwork, fine line, ornamental, realism.',
+      artists: 'We can help choose the right artist based on style, area and budget. Tell me your goal and I will suggest the best profiles.',
+      booking: 'Perfect, we can start a guided consultation now: style, area, timing and contact.',
+      contacts: 'You can reach us from the Contacts section or start a quick consultation request here.',
+      default: 'Happy to help. Tell me your goal and I will guide you step by step.'
+    }
+  },
+  adminDashboard: {
+    title: 'Admin Dashboard',
+    subtitle: 'Quick operational overview: daily priorities and immediate actions.',
+    actions: {
+      openCalendar: 'Open calendar',
+      openAdminChat: 'Open admin chat',
+      manageEvents: 'Manage events',
+      go: 'Go'
+    },
+    kpi: {
+      todayAppointments: 'Today appointments',
+      pendingToday: 'Pending today',
+      monthRevenue: 'Month revenue',
+      totalClients: 'Total clients',
+      upcomingEvents: 'Upcoming events'
+    },
+    sections: {
+      operationalFocus: 'Operational focus',
+      todayAgenda: 'Today agenda',
+      recentReviews: 'Recent reviews',
+      upcomingEvents: 'Upcoming events',
+      quickSections: 'Quick sections'
+    },
+    focus: {
+      pendingBookings: 'Pending bookings',
+      reviewsToModerate: 'Reviews to moderate',
+      activeProjects: 'Active projects',
+      adminChat: 'Admin chat',
+      events: 'Events'
+    },
+    empty: {
+      noTodayBookings: 'No appointments scheduled for today.',
+      noReviews: 'No reviews available.',
+      noUpcomingEvents: 'No upcoming events published.'
+    },
+    labels: {
+      rating: 'Rating'
+    },
+    quickLinks: {
+      calendar: { title: 'Calendar', description: 'Appointments and availability management' },
+      users: { title: 'Users', description: 'Unified clients and staff management' },
+      permissions: { title: 'Permissions', description: 'Staff delegation and roles' },
+      clients: { title: 'Clients', description: 'Client registry and quick filters' },
+      staff: { title: 'Staff', description: 'Staff profiles, shifts and skills' },
+      settings: { title: 'Studio Settings', description: 'Public content and studio data' },
+      reviews: { title: 'Reviews', description: 'User review moderation' },
+      portfolio: { title: 'Portfolio', description: 'Projects and completed tattoos' },
+      messaging: { title: 'Messages', description: 'Chats and tickets to handle' },
+      events: { title: 'Events', description: 'Guest and open day management' },
+      billing: { title: 'Billing', description: 'Payments and revenue status' },
+      bonus: { title: 'Bonus', description: 'Wallet and promo codes' },
+      documents: { title: 'Documents', description: 'Studio document archive' },
+      waitlist: { title: 'Waitlist', description: 'Waiting clients and follow-up' },
+      analytics: { title: 'Analytics', description: 'KPI overview and trends' },
+      auditLogs: { title: 'Audit Logs', description: 'Action tracking and security' },
+      sectionsVisibility: { title: 'Sections Visibility', description: 'Control which sections are visible in the menu' }
+    }
   }
 };

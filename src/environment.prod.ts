@@ -4,7 +4,7 @@ import { withRuntimeConfig } from './runtime-config';
 const baseEnvironment: AppEnvironment = {
   production: true,
   environmentName: 'production',
-  paymentApiBaseUrl: '',
+  paymentApiBaseUrl: 'https://payment-service.valhallawebapp.workers.dev/api/payments',
   firebaseConfig: {
     apiKey: '',
     authDomain: '',

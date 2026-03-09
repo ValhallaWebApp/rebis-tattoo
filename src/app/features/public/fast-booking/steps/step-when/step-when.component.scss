@@ -36,6 +36,11 @@
   border-color: rgba(245, 244, 242, .28) !important;
 }
 
+.day.disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 .day.active {
   color: #111111 !important;
   background: var(--fb-accent) !important;
@@ -49,6 +54,12 @@
   align-items: center;
   padding: 12px 0;
   opacity: .75;
+}
+
+.loading.loading--light {
+  padding-top: 6px;
+  opacity: .65;
+  font-size: .9rem;
 }
 
 .times {

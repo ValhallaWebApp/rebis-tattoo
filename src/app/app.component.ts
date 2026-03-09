@@ -1,19 +1,21 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
-import { Component, DestroyRef, effect, Inject, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, computed, effect, Inject, inject, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSidenav } from '@angular/material/sidenav';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
-import { Observable, of, filter } from 'rxjs';
+import { Observable, filter, of } from 'rxjs';
 import { AuthService } from './core/services/auth/auth.service';
-import { MenuItem, MenuService, MenuUserContext } from './core/services/menu/menu.service';
 import { MaterialModule } from './core/modules/material.module';
 import { AppNotification } from './core/models/notification.model';
 import { NotificationService } from './core/services/notifications/notification.service';
-import { ChatBotPopupComponent } from './shared/components/chat-bot/chat-bot-popup.component';
+import { RebisChatbotPopupComponent } from './shared/components/chat-bot/rebis-chatbot-popup.component';
+import { AppMenuFacade } from './core/services/menu/app-menu.facade';
+import { AdminSectionsVisibilityService } from './core/services/menu/admin-sections-visibility.service';
+import { LanguageService } from './core/services/language/language.service';
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, RouterModule, MaterialModule, ChatBotPopupComponent],
+  imports: [CommonModule, RouterModule, MaterialModule, RebisChatbotPopupComponent],
   standalone: true,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
@@ -21,19 +23,27 @@ import { ChatBotPopupComponent } from './shared/components/chat-bot/chat-bot-pop
 export class AppComponent implements OnInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
   private readonly destroyRef = inject(DestroyRef);
+  private readonly menuFacade = inject(AppMenuFacade);
+  private readonly sectionsVisibility = inject(AdminSectionsVisibilityService);
+  readonly lang = inject(LanguageService);
 
   modeSidenav: 'over' | 'side' = 'over';
-  isMenuOpen = false;
   activeTheme: 'public' | 'client' | 'admin' = 'public';
-  userRole: 'public' | 'client' | 'staff' | 'admin' = 'public';
-  navItem$!: Observable<MenuItem[]>;
-  isLoggedIn = false;
+  readonly menuItems = this.menuFacade.menuItems;
+  readonly isMenuOpen = this.menuFacade.isMenuOpen;
+  readonly isLoggedIn = this.menuFacade.isLoggedIn;
+  readonly userRole = this.menuFacade.userRole;
+  readonly showChatbot = computed(() => {
+    const role = this.userRole();
+    if (role === 'admin' || role === 'staff') return false;
+    const clientChatVisible = this.sectionsVisibility.isVisible('/dashboard/chat');
+    return clientChatVisible;
+  });
 
   notifications$: Observable<AppNotification[]> = of([]);
   unreadCount$: Observable<number> = of(0);
 
   constructor(
-    private menuService: MenuService,
     private auth: AuthService,
     private notificationService: NotificationService,
     private router: Router,
@@ -42,21 +52,17 @@ export class AppComponent implements OnInit {
 
   private userEffect = effect(() => {
     const user = this.auth.userSig();
-    this.isLoggedIn = !!user;
 
     if (user) {
-      this.loadMenuForUser(user);
       this.bindNotifications(user.uid);
       return;
     }
 
-    this.loadMenuForUser(null);
     this.notifications$ = of([]);
     this.unreadCount$ = of(0);
   });
 
   ngOnInit(): void {
-    this.loadMenuForUser(null);
     this.applyThemeByUrl(this.router.url);
 
     this.router.events
@@ -67,17 +73,6 @@ export class AppComponent implements OnInit {
       .subscribe(event => {
         this.applyThemeByUrl(event.urlAfterRedirects || event.url);
       });
-  }
-
-  loadMenuForUser(user: MenuUserContext | null): void {
-    const role = this.toMenuRole(user?.role);
-    this.userRole = role;
-    this.navItem$ = this.menuService.getMenuByUser(user);
-  }
-
-  private toMenuRole(role: string | undefined): 'public' | 'client' | 'staff' | 'admin' {
-    if (role === 'admin' || role === 'client' || role === 'staff' || role === 'public') return role;
-    return 'public';
   }
 
   private bindNotifications(userId: string): void {
@@ -109,11 +104,15 @@ export class AppComponent implements OnInit {
   }
 
   toggleMenu(): void {
-    this.isMenuOpen = !this.isMenuOpen;
+    this.menuFacade.toggleMenu();
   }
 
   closeMenu(): void {
-    this.isMenuOpen = false;
+    this.menuFacade.closeMenu();
+  }
+
+  onMenuOpenChange(isOpen: boolean): void {
+    this.menuFacade.setMenuOpen(isOpen);
   }
 
   logout(): void {
@@ -128,7 +127,7 @@ export class AppComponent implements OnInit {
       await this.notificationService.markAsRead(user.uid, notification.id);
     }
 
-    const role = this.toMenuRole(user.role);
+    const role = this.userRole();
     const target = this.notificationService.resolveNotificationLink(notification, role);
     await this.router.navigateByUrl(target);
   }

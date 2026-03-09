@@ -13,13 +13,18 @@ import { ProjectsService, TattooProject } from '../../../../core/services/projec
 import { BookingService, Booking } from '../../../../core/services/bookings/booking.service';
 import { SessionService, Session } from '../../../../core/services/session/session.service';
 import { InvoicesService, Invoice } from '../../../../core/services/invoices/invoices.service';
-import { ClientService, Client } from '../../../../core/services/clients/client.service';
+import { ClientService, Client, getClientDisplayName } from '../../../../core/services/clients/client.service';
 import { DateTimeHelperService } from '../../../../core/services/helpers/date-time-helper.service';
 import { CurrencyHelperService } from '../../../../core/services/helpers/currency-helper.service';
 import { BackofficeAccessService } from '../../../../core/services/helpers/backoffice-access.service';
 import { ExternalActionsHelperService } from '../../../../core/services/helpers/external-actions-helper.service';
 import { StatusHelperService } from '../../../../core/services/helpers/status-helper.service';
 import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
+import {
+  PaymentCollectionDialogComponent,
+  PaymentCollectionDialogData,
+  PaymentCollectionDialogResult
+} from '../../../../shared/components/dialogs/payment-collection-dialog/payment-collection-dialog.component';
 
 import { Database, onValue, ref } from '@angular/fire/database';
 
@@ -344,6 +349,7 @@ export class ProjectManagerComponent {
             p.name,
             p.id,
             p.clientId,
+            x.client?.fullName,
             x.client?.name,
             x.client?.surname,
             x.client?.email,
@@ -474,6 +480,98 @@ export class ProjectManagerComponent {
 
   editBooking(b: Booking) {
     void b;
+  }
+
+  async collectBookingPayment(row: VmRow): Promise<void> {
+    if (!row.booking?.id) {
+      this.snackBar.open('Consulenza non disponibile per incasso.', 'OK', { duration: 2200 });
+      return;
+    }
+
+    const booking = row.booking as any;
+    const fallbackAmount =
+      this.num(booking.depositRequired) ??
+      this.num(booking.price) ??
+      Math.max(0, this.num(row.remaining) ?? 0);
+
+    const amount = await this.openCollectPaymentDialog({
+      title: 'Incassa consulenza',
+      subtitle: `Progetto: ${this.titleOf(row.project)}`,
+      defaultAmountEuro: fallbackAmount ?? 0,
+      bookingId: String(booking.id),
+      description: `Pagamento consulenza progetto ${String((row.project as any).id ?? '')}`,
+      referenceType: 'booking',
+      referenceId: String(booking.id),
+      referenceLabel: `Consulenza ${this.titleOf(row.project)}`
+    });
+
+    if (amount == null) return;
+
+    const nextPaid = (this.num(booking.paidAmount) ?? 0) + amount;
+    const patch: Partial<Booking> = { paidAmount: nextPaid };
+    if ((this.num(booking.price) ?? 0) > 0 && nextPaid >= (this.num(booking.price) ?? 0)) {
+      patch.status = 'paid';
+    }
+
+    await this.bookingService.updateBooking(String(booking.id), patch);
+    this.snackBar.open('Pagamento consulenza registrato.', 'OK', { duration: 2200 });
+  }
+
+  async collectSessionPayment(row: VmRow, session: UiSession): Promise<void> {
+    const sessionId = String((session as any)?.id ?? '').trim();
+    if (!sessionId) {
+      this.snackBar.open('Seduta non valida per incasso.', 'OK', { duration: 2200 });
+      return;
+    }
+
+    const sessionPrice = this.num((session as any).price) ?? 0;
+    const alreadyPaid = this.num((session as any).paidAmount) ?? 0;
+    const defaultAmount = Math.max(0, sessionPrice - alreadyPaid) || sessionPrice || 0;
+
+    const amount = await this.openCollectPaymentDialog({
+      title: 'Incassa seduta',
+      subtitle: `${this.titleOf(row.project)} - ${String((session as any)._start ?? '')}`,
+      defaultAmountEuro: defaultAmount,
+      bookingId: `session:${sessionId}`,
+      description: `Pagamento seduta ${sessionId} progetto ${String((row.project as any).id ?? '')}`,
+      referenceType: 'session',
+      referenceId: sessionId,
+      referenceLabel: `Seduta ${this.titleOf(row.project)}`
+    });
+
+    if (amount == null) return;
+
+    const nextPaid = alreadyPaid + amount;
+    await this.sessionService.update(sessionId, { paidAmount: nextPaid });
+    this.snackBar.open('Pagamento seduta registrato.', 'OK', { duration: 2200 });
+  }
+
+  async collectProjectPayment(row: VmRow): Promise<void> {
+    const projectId = String((row.project as any)?.id ?? '').trim();
+    if (!projectId) {
+      this.snackBar.open('Progetto non valido per incasso.', 'OK', { duration: 2200 });
+      return;
+    }
+
+    const defaultAmount = Math.max(0, this.num(row.remaining) ?? this.num(row.expectedTotal) ?? 0);
+    const amount = await this.openCollectPaymentDialog({
+      title: 'Incassa progetto',
+      subtitle: this.titleOf(row.project),
+      defaultAmountEuro: defaultAmount,
+      bookingId: `project:${projectId}`,
+      description: `Pagamento progetto ${projectId}`,
+      referenceType: 'project',
+      referenceId: projectId,
+      referenceLabel: this.titleOf(row.project)
+    });
+
+    if (amount == null) return;
+
+    const currentPaid = this.num((row.project as any).paidAmount) ?? 0;
+    await this.projectsService.updateProject(projectId, {
+      paidAmount: currentPaid + amount
+    } as any);
+    this.snackBar.open('Pagamento progetto registrato.', 'OK', { duration: 2200 });
   }
 
   addSessionToProject(p: TattooProject) {
@@ -828,8 +926,7 @@ export class ProjectManagerComponent {
   }
 
   private clientLabel(c?: Client, fallbackId?: string): string {
-    const name = `${c?.name ?? ''} ${c?.surname ?? ''}`.trim();
-    return name || c?.email || c?.phone || fallbackId || '—';
+    return getClientDisplayName(c, fallbackId || '-');
   }
 
   private num(v: any): number | undefined {
@@ -875,7 +972,20 @@ export class ProjectManagerComponent {
     };
   }
 
+  private async openCollectPaymentDialog(data: PaymentCollectionDialogData): Promise<number | null> {
+    const ref = this.dialog.open(PaymentCollectionDialogComponent, {
+      width: '640px',
+      maxWidth: '96vw',
+      data
+    });
+    const result = await ref.afterClosed().toPromise() as PaymentCollectionDialogResult | undefined;
+    if (!result?.ok) return null;
+    const amount = Number(result.amountEuro ?? 0);
+    return Number.isFinite(amount) && amount > 0 ? amount : null;
+  }
+
 }
+
 
 
 

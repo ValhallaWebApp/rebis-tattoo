@@ -56,22 +56,14 @@
             <p>{{ u.email }}</p>
           </div>
           <div class="role-editor">
-            <span class="role">{{ displayRole(u) }}</span>
-            <span class="role active-flag" [class.off]="u.isActive === false">
-              {{ u.isActive === false ? 'inactive' : 'active' }}
-            </span>
+            <div class="role-meta">
+              <span class="role">{{ displayRole(u) }}</span>
+              <span class="role active-flag" [class.off]="u.isActive === false">
+                {{ u.isActive === false ? 'inactive' : 'active' }}
+              </span>
+            </div>
+            <p class="role-hint" *ngIf="userService.isCurrentUserAdmin()">Modifica ruoli via il pulsante "Modifica profilo".</p>
           </div>
-          <mat-form-field class="role-select" *ngIf="userService.isCurrentUserAdmin()" appearance="outline">
-            <mat-label>Ruolo</mat-label>
-            <mat-select
-              panelClass="users-management-select-panel"
-              [value]="displayRole(u)"
-              [disabled]="isSelf(u) || isRoleUpdating(u.id)"
-              (selectionChange)="changeUserRole(u, $event.value)"
-            >
-              <mat-option *ngFor="let role of roleOptionsFor(u)" [value]="role">{{ role }}</mat-option>
-            </mat-select>
-          </mat-form-field>
         </div>
       </div>
       <div class="user-actions">
@@ -89,6 +81,31 @@
         </button>
       </div>
     </mat-card>
+  </div>
+
+  <div class="staff-create-card" *ngIf="activeRoleTab === 'staff' && userService.isCurrentUserAdmin()">
+    <mat-form-field appearance="outline" class="staff-create-select">
+      <mat-label>Seleziona utente da abilitare come staff</mat-label>
+      <mat-select
+        panelClass="users-management-select-panel"
+        [(value)]="selectedStaffCandidateId"
+      >
+        <mat-option value="" disabled>Seleziona un utente</mat-option>
+        <mat-option *ngFor="let candidate of staffCreationCandidates" [value]="candidate.id">
+          {{ candidate.name || candidate.email || candidate.id }} <span *ngIf="candidate.email">({{ candidate.email }})</span>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      [disabled]="!selectedStaffCandidateId"
+      (click)="createStaffFromSelected()"
+    >
+      Crea utenza staff
+    </button>
   </div>
 
   <div class="staff-cards" *ngIf="activeRoleTab === 'staff'">

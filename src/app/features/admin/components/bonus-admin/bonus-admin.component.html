@@ -1,86 +1,155 @@
 <section class="bonus-admin-page">
   <header class="page-head">
-    <h2>{{ lang.t('bonus.admin.header.title') }}</h2>
-    <p>{{ lang.t('bonus.admin.header.subtitle') }}</p>
+    <h2>Gift Card Admin</h2>
+    <p>Crea nuove gift card e controlla quali sono assegnate.</p>
   </header>
 
-  <div class="forms-grid">
-    <mat-card>
-      <mat-card-header>
-        <mat-icon mat-card-avatar>sell</mat-icon>
-        <mat-card-title>{{ lang.t('bonus.admin.promoForm.title') }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <app-dynamic-form
-          class="form-grid"
-          [fields]="promoFields"
-          [formGroupInput]="promoForm"
-          [showSubmit]="true"
-          [submitColor]="'primary'"
-          [submitLabel]="savingPromo ? lang.t('bonus.admin.promoForm.loading') : lang.t('bonus.admin.promoForm.submit')"
-          [submitDisabled]="promoForm.invalid || savingPromo"
-          (formSubmit)="createPromo()"
-        ></app-dynamic-form>
-      </mat-card-content>
-    </mat-card>
+  <div class="top-actions">
+    <button mat-flat-button color="accent" type="button" class="create-btn" (click)="openCreateGiftDialog()">
+      <mat-icon>add</mat-icon>
+      Nuova Gift Card
+    </button>
 
-    <mat-card>
-      <mat-card-header>
-        <mat-icon mat-card-avatar>redeem</mat-icon>
-        <mat-card-title>{{ lang.t('bonus.admin.giftForm.title') }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <app-dynamic-form
-          class="form-grid"
-          [fields]="giftFields"
-          [formGroupInput]="giftForm"
-          [showSubmit]="true"
-          [submitColor]="'accent'"
-          [submitLabel]="savingGift ? lang.t('bonus.admin.giftForm.loading') : lang.t('bonus.admin.giftForm.submit')"
-          [submitDisabled]="giftForm.invalid || savingGift"
-          (formSubmit)="createGiftCard()"
-        ></app-dynamic-form>
-      </mat-card-content>
-    </mat-card>
+    <mat-button-toggle-group
+      class="view-toggle"
+      [value]="displayMode"
+      (change)="setDisplayMode($event.value)"
+      aria-label="Modalita visualizzazione"
+    >
+      <mat-button-toggle value="table">Tabella</mat-button-toggle>
+      <mat-button-toggle value="card">Card</mat-button-toggle>
+    </mat-button-toggle-group>
   </div>
 
-  <div class="lists-grid">
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>{{ lang.t('bonus.admin.list.promoTitle') }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="list" *ngIf="promoCodes$ | async as promos">
-          <div class="row" *ngFor="let item of promos; trackBy: trackPromo">
-            <div class="info">
-              <p class="code">{{ item.code }}</p>
-              <p class="meta">+{{ item.creditAmount | currency:'EUR':'symbol':'1.2-2' }} - {{ promoUsageLabel(item) }}</p>
-            </div>
-            <mat-slide-toggle [checked]="item.active" (change)="togglePromo(item)">{{ lang.t('bonus.admin.list.activeToggle') }}</mat-slide-toggle>
-          </div>
+  <mat-card class="gift-list-card">
+    <mat-card-header>
+      <mat-card-title>Tutte le Gift Card</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="filters-bar">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Cerca</mat-label>
+          <input matInput [value]="searchTerm" (input)="setSearchTerm($any($event.target).value)" placeholder="Codice, assegnata a, nota..." />
+        </mat-form-field>
 
-          <p class="empty" *ngIf="!promos.length">{{ lang.t('bonus.admin.list.noPromos') }}</p>
+        <mat-button-toggle-group [value]="assignmentFilter" (change)="setAssignmentFilter($event.value)" aria-label="Filtro assegnazione">
+          <mat-button-toggle value="all">Assegnazione: Tutte</mat-button-toggle>
+          <mat-button-toggle value="assigned">Assegnate</mat-button-toggle>
+          <mat-button-toggle value="unassigned">Non assegnate</mat-button-toggle>
+        </mat-button-toggle-group>
+
+        <mat-button-toggle-group [value]="activeFilter" (change)="setActiveFilter($event.value)" aria-label="Filtro stato attivo">
+          <mat-button-toggle value="all">Stato: Tutte</mat-button-toggle>
+          <mat-button-toggle value="active">Attive</mat-button-toggle>
+          <mat-button-toggle value="inactive">Non attive</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <div *ngIf="filteredGiftCards$ | async as cards">
+        <div class="table-wrap" *ngIf="displayMode === 'table'; else cardView">
+          <table class="gift-table" *ngIf="cards.length; else emptyState">
+            <thead>
+              <tr>
+                <th>Codice</th>
+                <th>Creata da</th>
+                <th>Regalata a</th>
+                <th>Assegnazione</th>
+                <th>Stato</th>
+                <th>Uso</th>
+                <th>Residuo</th>
+                <th>Scadenza</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of cards; trackBy: trackGift">
+                <td>{{ item.code }}</td>
+                <td>{{ item.createdByDisplay || item.createdBy }} <small>({{ item.source }})</small></td>
+                <td>{{ giftTarget(item) }}</td>
+                <td>{{ isAssigned(item) ? (item.redeemedBy || '-') : 'Non assegnata' }}</td>
+                <td>{{ statusLabel(item) }}</td>
+                <td>{{ item.usesCount }}{{ item.maxUses ? (' / ' + item.maxUses) : '' }}</td>
+                <td>{{ item.balance | currency:'EUR':'symbol':'1.2-2' }} / {{ item.initialAmount | currency:'EUR':'symbol':'1.2-2' }}</td>
+                <td>{{ item.expiresAt ? (item.expiresAt | date:'dd/MM/yyyy') : '-' }}</td>
+                <td>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="collectingGiftId === item.id"
+                    (click)="collectGiftCardPayment(item)"
+                  >
+                    Incassa
+                  </button>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="togglingGiftId === item.id || collectingGiftId === item.id"
+                    (click)="toggleGiftActive(item)"
+                  >
+                    {{ item.active ? 'Disattiva' : 'Attiva' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </mat-card-content>
-    </mat-card>
 
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>{{ lang.t('bonus.admin.list.giftTitle') }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="list" *ngIf="giftCards$ | async as gifts">
-          <div class="row" *ngFor="let item of gifts; trackBy: trackGift">
-            <div class="info">
-              <p class="code">{{ item.code }}</p>
-              <p class="meta">{{ item.balance | currency:'EUR':'symbol':'1.2-2' }} {{ lang.t('bonus.admin.list.balanceSuffix') }} {{ item.initialAmount | currency:'EUR':'symbol':'1.2-2' }}</p>
+        <ng-template #cardView>
+          <div class="list" *ngIf="cards.length; else emptyState">
+            <div class="row" *ngFor="let item of cards; trackBy: trackGift">
+              <div class="info">
+                <p class="code">{{ item.code }}</p>
+                <p class="meta">Creata da: {{ item.createdByDisplay || item.createdBy }} ({{ item.source }})</p>
+                <p class="meta">Regalata a: {{ giftTarget(item) }}</p>
+                <p class="meta">Assegnazione: {{ isAssigned(item) ? (item.redeemedBy || '-') : 'Non assegnata' }}</p>
+                <p class="meta">Stato: {{ statusLabel(item) }}</p>
+                <p class="meta">Uso: {{ item.usesCount }}{{ item.maxUses ? (' / ' + item.maxUses) : '' }}</p>
+                <p class="meta">Residuo: {{ item.balance | currency:'EUR':'symbol':'1.2-2' }} / {{ item.initialAmount | currency:'EUR':'symbol':'1.2-2' }}</p>
+                <p class="meta" *ngIf="item.expiresAt">Scadenza: {{ item.expiresAt | date:'dd/MM/yyyy' }}</p>
+              </div>
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="collectingGiftId === item.id"
+                (click)="collectGiftCardPayment(item)"
+              >
+                Incassa
+              </button>
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="togglingGiftId === item.id || collectingGiftId === item.id"
+                (click)="toggleGiftActive(item)"
+              >
+                {{ item.active ? 'Disattiva' : 'Attiva' }}
+              </button>
             </div>
-            <mat-slide-toggle [checked]="item.active" (change)="toggleGift(item)">{{ lang.t('bonus.admin.list.activeToggle') }}</mat-slide-toggle>
           </div>
+        </ng-template>
 
-          <p class="empty" *ngIf="!gifts.length">{{ lang.t('bonus.admin.list.noGifts') }}</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+        <ng-template #emptyState>
+          <p class="empty">Nessuna gift card trovata con i filtri attuali.</p>
+        </ng-template>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <ng-template #createGiftDialog>
+    <h3 mat-dialog-title>Nuova Gift Card</h3>
+    <mat-dialog-content>
+      <app-dynamic-form
+        class="form-grid"
+        [fields]="giftFields"
+        [formGroupInput]="giftForm"
+        [showSubmit]="true"
+        [submitColor]="'accent'"
+        [submitLabel]="savingGift ? lang.t('bonus.admin.giftForm.loading') : lang.t('bonus.admin.giftForm.submit')"
+        [submitDisabled]="giftForm.invalid || savingGift"
+        (formSubmit)="createGiftCard()"
+      ></app-dynamic-form>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button type="button" [disabled]="savingGift" mat-dialog-close>Annulla</button>
+    </mat-dialog-actions>
+  </ng-template>
 </section>

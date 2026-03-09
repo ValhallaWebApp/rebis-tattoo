@@ -94,7 +94,7 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
       )
       .subscribe(p => {
         const normalized = p ? this.normalizeProject(p as any) : undefined;
-        if (normalized && ((normalized as any).isPublic === false || !this.isCompletedStatus((normalized as any).status))) {
+        if (normalized && (!this.isPublicEnabled((normalized as any).isPublic) || this.isCancelledStatus((normalized as any).status))) {
           this.project = undefined;
           this.notFound = true;
           this.loading = false;
@@ -239,13 +239,19 @@ export class ProjectDetailComponent implements OnInit, OnDestroy {
     return idx >= 0 ? idx : 0;
   }
 
-  private isCompletedStatus(status: unknown): boolean {
+  private isCancelledStatus(status: unknown): boolean {
     const normalized = String(status ?? '').trim().toLowerCase();
-    return normalized === 'completed'
-      || normalized === 'complete'
-      || normalized === 'concluso'
-      || normalized === 'done'
-      || normalized === 'finished';
+    return normalized === 'cancelled' || normalized === 'canceled' || normalized === 'annullato';
+  }
+
+  private isPublicEnabled(value: unknown): boolean {
+    if (value === true) return true;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      return normalized === 'true' || normalized === '1' || normalized === 'yes';
+    }
+    if (typeof value === 'number') return value === 1;
+    return false;
   }
 
   private normalizeProject(raw: any): PublicTattooProject {

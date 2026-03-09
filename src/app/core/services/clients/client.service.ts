@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Database, get, onValue, ref } from '@angular/fire/database';
-import { map, Observable } from 'rxjs';
+import { map, Observable, take } from 'rxjs';
+import { User, UserService } from '../users/user.service';
 
 export type ClientRole = 'admin' | 'client' | 'guest';
 
@@ -9,6 +9,7 @@ export interface Client {
 
   name?: string;
   surname?: string;
+  fullName?: string;
 
   email?: string;
   phone?: string;
@@ -38,48 +39,41 @@ export interface ClientLite {
   phone?: string;
 }
 
+export function getClientDisplayName(client?: Partial<Client> | null, fallback = 'Utente'): string {
+  const fullName = String(client?.fullName ?? '').trim();
+  if (fullName) return fullName;
+
+  const composed = `${String(client?.name ?? '').trim()} ${String(client?.surname ?? '').trim()}`.trim();
+  if (composed) return composed;
+
+  const email = String(client?.email ?? '').trim();
+  if (email) return email;
+
+  const phone = String(client?.phone ?? '').trim();
+  if (phone) return phone;
+
+  return fallback;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ClientService {
-  constructor(private db: Database) {}
+  constructor(private readonly users: UserService) {}
 
-  // Realtime users from RTDB
+  // Realtime clients from canonical users stream
   getClients(): Observable<Client[]> {
-    return new Observable<Client[]>((observer) => {
-      const usersRef = ref(this.db, 'users');
-      const unsub = onValue(
-        usersRef,
-        (snap) => {
-          if (!snap.exists()) {
-            observer.next([]);
-            return;
-          }
-          const raw = snap.val() as Record<string, any>;
-          const list = Object.entries(raw).map(([id, value]) => ({ id, ...(value as any) } as Client));
-          observer.next(list);
-        },
-        (err) => observer.error(err)
-      );
-      return () => unsub();
-    });
+    return this.users.getAllUsers().pipe(
+      map((list) =>
+        (list ?? [])
+          .filter((u) => this.isClientRole(u))
+          .filter((u) => this.isSelectable(u))
+          .map((u) => this.toClient(u))
+      )
+    );
   }
 
-  // One-shot read from RTDB
+  // One-shot from canonical users stream
   getAllUsersOnce(): Observable<Client[]> {
-    return new Observable<Client[]>((observer) => {
-      get(ref(this.db, 'users'))
-        .then((snap) => {
-          if (!snap.exists()) {
-            observer.next([]);
-            observer.complete();
-            return;
-          }
-          const raw = snap.val() as Record<string, any>;
-          const list = Object.entries(raw).map(([id, value]) => ({ id, ...(value as any) } as Client));
-          observer.next(list);
-          observer.complete();
-        })
-        .catch((err) => observer.error(err));
-    });
+    return this.getClients().pipe(take(1));
   }
 
   getClientsLiteOnce(): Observable<ClientLite[]> {
@@ -106,8 +100,7 @@ export class ClientService {
   }
 
   private buildFullName(u: Client): string {
-    const full = `${u.name ?? ''} ${u.surname ?? ''}`.trim();
-    return full || (u.email ?? '') || (u.phone ?? '') || u.id || 'Utente';
+    return getClientDisplayName(u, String(u.id ?? '').trim() || 'Utente');
   }
 
   private toClientsLite(users: Client[]): ClientLite[] {
@@ -135,6 +128,35 @@ export class ClientService {
     if (u.isActive === false) return false;
     if (u.isVisible === false) return false;
     return true;
+  }
+
+  private toClient(u: User): Client {
+    const maybeSurname = String((u as any)?.surname ?? '').trim() || undefined;
+    const fullName = getClientDisplayName(
+      {
+        name: String(u.name ?? '').trim() || undefined,
+        surname: maybeSurname,
+        email: String(u.email ?? '').trim() || undefined,
+        phone: String(u.phone ?? '').trim() || undefined
+      },
+      String(u.id ?? '').trim() || 'Utente'
+    );
+
+    return {
+      id: String(u.id ?? '').trim() || undefined,
+      name: String(u.name ?? '').trim() || undefined,
+      surname: maybeSurname,
+      fullName,
+      email: String(u.email ?? '').trim() || undefined,
+      phone: String(u.phone ?? '').trim() || undefined,
+      avatar: String(u.urlAvatar ?? '').trim() || undefined,
+      createdAt: u.createdAt ?? undefined,
+      updatedAt: u.updatedAt ?? undefined,
+      role: String(u.role ?? '').trim() || undefined,
+      isActive: u.isActive,
+      isVisible: u.isVisible,
+      deletedAt: u.deletedAt ?? null
+    };
   }
 
   private dedupeByContact(list: ClientLite[]): ClientLite[] {

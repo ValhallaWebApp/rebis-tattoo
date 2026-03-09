@@ -1,0 +1,76 @@
+:host {
+  display: block;
+}
+
+.artist-dialog-title {
+  font-weight: 700;
+}
+
+.artist-dialog-content {
+  min-width: min(520px, 92vw);
+}
+
+.artist-top {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.artist-photo {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.artist-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.artist-badge {
+  font-weight: 700;
+}
+
+.artist-state {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.artist-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.k {
+  font-size: 0.8rem;
+  opacity: 0.75;
+  min-width: 70px;
+}
+
+.v {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.artist-bio .k {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.artist-bio p {
+  margin: 0;
+  line-height: 1.35;
+  white-space: pre-wrap;
+}

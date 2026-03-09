@@ -15,6 +15,7 @@ export interface CreateProjectDialogResult {
   title: string;
   zone?: string;
   notes?: string;
+  isPublic: boolean;
 }
 
 @Component({
@@ -28,6 +29,7 @@ export class CreateProjectDialogComponent {
   form:any
   readonly fields: DynamicField[] = [
     { type: 'text', name: 'title', label: 'Titolo progetto', required: true },
+    { type: 'toggle', name: 'isPublic', label: 'Visibile nel portfolio pubblico', className: 'full-width' },
     { type: 'text', name: 'zone', label: 'Zona (opzionale)' },
     { type: 'textarea', name: 'notes', label: 'Note (opzionali)', rows: 3, className: 'full-width' }
   ];
@@ -39,6 +41,7 @@ export class CreateProjectDialogComponent {
   ) {
      this.form = this.fb.group({
       title: [this.data?.suggestedTitle || '', [Validators.required]],
+      isPublic: [false],
       zone: [''],
       notes: [''],
     });
@@ -54,6 +57,7 @@ export class CreateProjectDialogComponent {
     const value = this.form.value;
     this.dialogRef.close({
       title: String(value.title || '').trim(),
+      isPublic: value.isPublic === true,
       zone: String(value.zone || '').trim() || undefined,
       notes: String(value.notes || '').trim() || undefined,
     } as CreateProjectDialogResult);

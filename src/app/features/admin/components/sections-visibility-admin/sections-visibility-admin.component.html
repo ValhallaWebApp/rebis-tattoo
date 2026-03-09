@@ -1,0 +1,39 @@
+<section class="sections-visibility-admin">
+  <header class="sections-visibility-admin__header">
+    <h2>Visibilita Sezioni Gestionale</h2>
+    <p>Seleziona quali sezioni backoffice devono essere visibili nel menu operativo.</p>
+  </header>
+
+  <mat-card class="sections-visibility-admin__legend">
+    <div class="legend-row">
+      <mat-icon>tune</mat-icon>
+      <p>Le modifiche sono applicate in tempo reale al menu Admin/Staff.</p>
+    </div>
+  </mat-card>
+
+  <mat-card *ngIf="!ready()" class="sections-visibility-admin__state">
+    <mat-icon>hourglass_top</mat-icon>
+    <p>Caricamento configurazione...</p>
+  </mat-card>
+
+  <div class="sections-visibility-admin__list" *ngIf="ready()">
+    <mat-card class="section-card" *ngFor="let section of sections()">
+      <div class="section-card__main">
+        <div class="section-card__title">{{ section.label }}</div>
+        <p class="section-card__desc">{{ section.description }}</p>
+        <small class="section-card__route">{{ section.route }}</small>
+      </div>
+
+      <mat-slide-toggle
+        color="primary"
+        [checked]="section.visible"
+        [disabled]="savingKey() === section.key"
+        (change)="onToggle(section.key, $event.checked)"
+        aria-label="Attiva o disattiva sezione"
+      >
+        {{ section.visible ? 'Visibile' : 'Nascosta' }}
+      </mat-slide-toggle>
+    </mat-card>
+  </div>
+</section>
+

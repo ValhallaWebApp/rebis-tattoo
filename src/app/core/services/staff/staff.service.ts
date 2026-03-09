@@ -75,6 +75,26 @@ export class StaffService {
     return fallback;
   }
 
+  private normalizeStaffRole(value: unknown): StaffMember['role'] {
+    const raw = String(value ?? '').trim().toLowerCase();
+    if (raw === 'tatuatore') return 'tatuatore';
+    if (raw === 'piercer') return 'piercer';
+    if (raw === 'guest') return 'guest';
+    if (raw === 'altro') return 'altro';
+    return 'altro';
+  }
+
+  private async safeGetObject(path: string): Promise<Record<string, any>> {
+    try {
+      const snap = await get(ref(this.db, path));
+      if (!snap.exists()) return {};
+      const value = snap.val();
+      return value && typeof value === 'object' ? (value as Record<string, any>) : {};
+    } catch {
+      return {};
+    }
+  }
+
   private isPermissionDeniedError(err: unknown): boolean {
     const code = String((err as any)?.code ?? '').toLowerCase();
     const msg = String((err as any)?.message ?? '').toLowerCase();
@@ -145,6 +165,161 @@ export class StaffService {
         return out.sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }));
       })
     );
+  }
+
+  async getStaffById(id: string): Promise<StaffMember | null> {
+    const uid = String(id ?? '').trim();
+    if (!uid) return null;
+
+    const [profile, publicProfile, user] = await Promise.all([
+      this.safeGetObject(`${this.profilePath}/${uid}`),
+      this.safeGetObject(`${this.publicPath}/${uid}`),
+      this.safeGetObject(`users/${uid}`)
+    ]);
+
+    if (
+      Object.keys(profile).length === 0 &&
+      Object.keys(publicProfile).length === 0 &&
+      Object.keys(user).length === 0
+    ) {
+      return null;
+    }
+
+    const deletedAt = this.normalizeDeletedAt(profile['deletedAt'] ?? publicProfile['deletedAt']);
+    if (deletedAt) return null;
+
+    const name = String(
+      profile['name'] ??
+      publicProfile['name'] ??
+      user['name'] ??
+      user['email'] ??
+      uid
+    ).trim();
+
+    return {
+      id: uid,
+      userId: uid,
+      name: name || uid,
+      role: this.normalizeStaffRole(profile['role'] ?? publicProfile['role']),
+      bio: String(profile['bio'] ?? publicProfile['bio'] ?? ''),
+      photoUrl: String(profile['photoUrl'] ?? publicProfile['photoUrl'] ?? user['urlAvatar'] ?? user['avatar'] ?? '').trim(),
+      isActive: this.normalizeBoolean(
+        profile['isActive'],
+        this.normalizeBoolean(publicProfile['isActive'], this.normalizeBoolean(user['isActive'], true))
+      ),
+      deletedAt,
+      email: String(profile['email'] ?? publicProfile['email'] ?? user['email'] ?? '').trim() || undefined,
+      phone: String(profile['phone'] ?? publicProfile['phone'] ?? user['phone'] ?? '').trim() || undefined,
+      calendar: ((profile['calendar'] ?? publicProfile['calendar'] ?? {}) as StaffCalendarSettings)
+    };
+  }
+
+  async syncStaffProfileFromUserTransition(params: {
+    userId: string;
+    currentUser: Record<string, unknown>;
+    nextUser: Record<string, unknown>;
+    prevRole: string;
+    nextRole: string;
+    nowIso: string;
+  }): Promise<void> {
+    const userId = String(params.userId ?? '').trim();
+    if (!userId) throw new Error('userId mancante');
+
+    const normalizedPrevRole = String(params.prevRole ?? '').trim().toLowerCase();
+    const normalizedNextRole = String(params.nextRole ?? '').trim().toLowerCase();
+    const currentUser = params.currentUser ?? {};
+    const nextUser = params.nextUser ?? {};
+    const name = String(nextUser['name'] ?? currentUser['name'] ?? '').trim() || userId;
+    const photoUrl = String(nextUser['urlAvatar'] ?? currentUser['urlAvatar'] ?? '').trim();
+    const email = String(nextUser['email'] ?? currentUser['email'] ?? '').trim();
+    const phone = String(nextUser['phone'] ?? currentUser['phone'] ?? '').trim();
+    const isActive = nextUser['isActive'] !== false;
+
+    if (normalizedPrevRole !== 'staff' && normalizedNextRole === 'staff') {
+      const existing = await this.safeGetObject(`${this.profilePath}/${userId}`);
+      const existingRole = this.normalizeStaffRole(existing['role']);
+      const existingBio = String(existing['bio'] ?? '').trim();
+
+      await update(
+        ref(this.db, `${this.profilePath}/${userId}`),
+        this.stripUndef({
+          id: userId,
+          userId,
+          name,
+          role: existingRole,
+          bio: existingBio,
+          photoUrl,
+          email,
+          phone,
+          isActive,
+          deletedAt: null
+        } as any)
+      );
+
+      await update(
+        ref(this.db, `${this.publicPath}/${userId}`),
+        this.stripUndef({
+          id: userId,
+          userId,
+          name,
+          role: 'staff',
+          bio: existingBio,
+          photoUrl,
+          email,
+          phone,
+          isActive,
+          deletedAt: null
+        } as any)
+      );
+      return;
+    }
+
+    if (normalizedPrevRole === 'staff' && normalizedNextRole !== 'staff') {
+      const disablePatch = { isActive: false, deletedAt: params.nowIso };
+      await Promise.all([
+        update(ref(this.db, `${this.profilePath}/${userId}`), disablePatch as any),
+        update(ref(this.db, `${this.publicPath}/${userId}`), disablePatch as any)
+      ]);
+      return;
+    }
+
+    if (normalizedNextRole === 'staff') {
+      const existing = await this.safeGetObject(`${this.profilePath}/${userId}`);
+      const existingRole = this.normalizeStaffRole(existing['role']);
+      const existingBio = String(existing['bio'] ?? '').trim();
+
+      await update(
+        ref(this.db, `${this.profilePath}/${userId}`),
+        this.stripUndef({
+          id: userId,
+          userId,
+          name,
+          role: existingRole,
+          bio: existingBio,
+          photoUrl,
+          email,
+          phone,
+          isActive,
+          deletedAt: null
+        } as any)
+      );
+
+      await update(
+        ref(this.db, `${this.publicPath}/${userId}`),
+        this.stripUndef({
+          id: userId,
+          userId,
+          name,
+          role: 'staff',
+          bio: existingBio,
+          photoUrl,
+          email,
+          phone,
+          isActive,
+          deletedAt: null
+        } as any)
+      );
+    }
   }
 
   addStaff(member: StaffMember): Promise<void> {
@@ -320,36 +495,6 @@ export class StaffService {
         this.ui.warn('Profilo staff eliminato');
       });
     });
-  }
-
-  async getStaffById(id: string): Promise<StaffMember | null> {
-    const uid = String(id ?? '').trim();
-    if (!uid) return null;
-
-    const [uSnap, pSnap] = await Promise.all([
-      get(ref(this.db, `users/${uid}`)),
-      get(ref(this.db, `${this.profilePath}/${uid}`))
-    ]);
-
-    if (!uSnap.exists()) return null;
-    const u = uSnap.val() as any;
-    if (String(u.role ?? '') !== 'staff') return null;
-
-    const p = (pSnap.exists() ? pSnap.val() : {}) as Partial<StaffMember>;
-    if (p.deletedAt) return null;
-
-    return {
-      id: uid,
-      userId: uid,
-      name: String(p.name ?? u.name ?? '').trim(),
-      role: (p.role as StaffMember['role']) ?? 'tatuatore',
-      bio: p.bio ? String(p.bio) : '',
-      photoUrl: String(p.photoUrl ?? u.urlAvatar ?? u.avatar ?? '').trim(),
-      isActive: p.isActive ?? (u.isActive !== false),
-      deletedAt: p.deletedAt ?? null,
-      email: u.email ? String(u.email) : undefined,
-      phone: u.phone ? String(u.phone) : undefined
-    };
   }
 
   getStaffCandidates(): Observable<Array<{ id: string; name: string; email?: string; phone?: string; role?: string; avatarUrl?: string; bio?: string }>> {

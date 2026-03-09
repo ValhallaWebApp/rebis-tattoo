@@ -8,10 +8,14 @@ import { ClientService } from '../../../core/services/clients/client.service';
 import { AuthService } from '../../../core/services/auth/auth.service';
 import { StatusHelperService } from '../../../core/services/helpers/status-helper.service';
 import { EventsService, StudioEventOccurrence } from '../../../core/services/events/events.service';
+import { AdminSectionsVisibilityService } from '../../../core/services/menu/admin-sections-visibility.service';
+import { LanguageService } from '../../../core/services/language/language.service';
 
 type QuickLink = {
   title: string;
   description: string;
+  titleKey?: string;
+  descriptionKey?: string;
   icon: string;
   route: string;
   showForStaff?: boolean;
@@ -33,6 +37,8 @@ export class AdminDashboardComponent implements OnInit {
   private readonly eventsService = inject(EventsService);
   private readonly auth = inject(AuthService);
   private readonly status = inject(StatusHelperService);
+  private readonly sectionsVisibility = inject(AdminSectionsVisibilityService);
+  readonly lang = inject(LanguageService);
 
   todayAppointments: any[] = [];
   todayPendingCount = 0;
@@ -52,113 +58,153 @@ export class AdminDashboardComponent implements OnInit {
 
   private readonly allQuickLinks: QuickLink[] = [
     {
-      title: 'Calendario',
-      description: 'Gestione appuntamenti e disponibilita',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.calendar.title',
+      descriptionKey: 'adminDashboard.quickLinks.calendar.description',
       icon: 'calendar_today',
       route: 'calendar',
       showForStaff: true,
       requiredPermission: 'canManageBookings'
     },
     {
-      title: 'Utenti',
-      description: 'Gestione unificata clienti e staff',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.users.title',
+      descriptionKey: 'adminDashboard.quickLinks.users.description',
       icon: 'groups',
       route: 'users',
       showForStaff: true,
       requiresRoleManagement: true
     },
     {
-      title: 'Permessi',
-      description: 'Gestione permessi e deleghe staff',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.permissions.title',
+      descriptionKey: 'adminDashboard.quickLinks.permissions.description',
       icon: 'admin_panel_settings',
       route: 'permissions'
     },
     {
-      title: 'Clienti',
-      description: 'Anagrafica clienti e filtri rapidi',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.clients.title',
+      descriptionKey: 'adminDashboard.quickLinks.clients.description',
       icon: 'person_search',
       route: 'clients',
       showForStaff: true,
       requiresRoleManagement: true
     },
     {
-      title: 'Staff',
-      description: 'Profili staff, turni e competenze',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.staff.title',
+      descriptionKey: 'adminDashboard.quickLinks.staff.description',
       icon: 'badge',
       route: 'staff',
       requiresRoleManagement: true
     },
     {
-      title: 'Impostazioni Studio',
-      description: 'Contenuti pubblici e dati studio',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.settings.title',
+      descriptionKey: 'adminDashboard.quickLinks.settings.description',
       icon: 'settings',
       route: 'settings'
     },
     {
-      title: 'Recensioni',
-      description: 'Moderazione recensioni utenti',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.reviews.title',
+      descriptionKey: 'adminDashboard.quickLinks.reviews.description',
       icon: 'rate_review',
       route: 'reviews'
     },
     {
-      title: 'Portfolio',
-      description: 'Progetti e tatuaggi completati',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.portfolio.title',
+      descriptionKey: 'adminDashboard.quickLinks.portfolio.description',
       icon: 'palette',
       route: 'portfolio',
       showForStaff: true,
       requiredPermission: 'canManageProjects'
     },
     {
-      title: 'Messaggi',
-      description: 'Chat e ticket da gestire',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.messaging.title',
+      descriptionKey: 'adminDashboard.quickLinks.messaging.description',
       icon: 'forum',
       route: 'messaging',
       showForStaff: true,
       requiredPermission: 'canManageMessages'
     },
     {
-      title: 'Eventi',
-      description: 'Guest e open day in gestione',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.events.title',
+      descriptionKey: 'adminDashboard.quickLinks.events.description',
       icon: 'celebration',
       route: 'eventi',
       showForStaff: true,
       requiredPermission: 'canManageEvents'
     },
     {
-      title: 'Fatturazione',
-      description: 'Pagamenti e stato incassi',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.billing.title',
+      descriptionKey: 'adminDashboard.quickLinks.billing.description',
       icon: 'payments',
       route: 'billing'
     },
     {
-      title: 'Bonus',
-      description: 'Wallet e codici promo',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.bonus.title',
+      descriptionKey: 'adminDashboard.quickLinks.bonus.description',
       icon: 'redeem',
       route: 'bonus'
     },
     {
-      title: 'Documenti',
-      description: 'Archivio documentale studio',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.documents.title',
+      descriptionKey: 'adminDashboard.quickLinks.documents.description',
       icon: 'description',
       route: 'documents'
     },
     {
-      title: 'Waitlist',
-      description: 'Clienti in attesa e follow-up',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.waitlist.title',
+      descriptionKey: 'adminDashboard.quickLinks.waitlist.description',
       icon: 'schedule_send',
       route: 'waitlist'
     },
     {
-      title: 'Analytics',
-      description: 'Panoramica KPI e trend',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.analytics.title',
+      descriptionKey: 'adminDashboard.quickLinks.analytics.description',
       icon: 'monitoring',
       route: 'analytics'
     },
     {
-      title: 'Audit Logs',
-      description: 'Tracciamento azioni e sicurezza',
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.auditLogs.title',
+      descriptionKey: 'adminDashboard.quickLinks.auditLogs.description',
       icon: 'history',
       route: 'audit-logs'
+    },
+    {
+      title: '',
+      description: '',
+      titleKey: 'adminDashboard.quickLinks.sectionsVisibility.title',
+      descriptionKey: 'adminDashboard.quickLinks.sectionsVisibility.description',
+      icon: 'tune',
+      route: 'sections-visibility'
     }
   ];
 
@@ -179,7 +225,14 @@ export class AdminDashboardComponent implements OnInit {
         if (!link.requiredPermission) return true;
         return user?.permissions?.[link.requiredPermission] === true;
       })
-      .map(link => ({ ...link, route: `${basePath}/${link.route}` }));
+      .filter(link => !isStaff || this.sectionsVisibility.isVisible(`/staff/${link.route}`))
+      .filter(link => isStaff || link.route === 'sections-visibility' || this.sectionsVisibility.isVisible(`/admin/${link.route}`))
+      .map(link => ({
+        ...link,
+        title: link.titleKey ? this.t(link.titleKey) : link.title,
+        description: link.descriptionKey ? this.t(link.descriptionKey) : link.description,
+        route: `${basePath}/${link.route}`
+      }));
 
     const today = new Date();
     this.bookingService.getBookingsByDate(today).subscribe(bookings => {
@@ -237,6 +290,14 @@ export class AdminDashboardComponent implements OnInit {
 
   toRoute(path: string): string {
     return `${this.backofficeBase}/${path}`;
+  }
+
+  canViewSection(sectionKey: string): boolean {
+    return this.sectionsVisibility.isVisible(`${this.backofficeBase}/${sectionKey}`);
+  }
+
+  t(path: string): string {
+    return this.lang.t(path);
   }
 
   bookingStatusLabel(status: unknown): string {

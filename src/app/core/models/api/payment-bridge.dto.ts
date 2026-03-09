@@ -6,6 +6,9 @@ export interface CreatePaymentIntentRequestDto {
   bookingId: string;
   currency?: PaymentCurrencyDto;
   description?: string;
+  referenceType?: 'booking' | 'project' | 'session' | 'gift_card' | string;
+  referenceId?: string;
+  referenceLabel?: string;
 }
 
 export interface CreatePaymentIntentResponseDto {
@@ -51,4 +54,26 @@ export interface BonusRedeemResponseDto {
   code: string;
   amount: number;
   walletBalance: number;
+}
+
+export interface BonusCreateGiftCardRequestDto {
+  name?: string;
+  amount: number;
+  note?: string;
+  expiresAt?: string | null;
+  buyerUserId?: string;
+  source?: 'client_purchase' | 'admin_manual' | 'system' | string;
+  paymentIntentId?: string;
+  giftedToUserId?: string;
+  giftedToName?: string;
+  giftedToEmail?: string;
+  giftedToPhone?: string;
+  giftMessage?: string;
+}
+
+export interface BonusCreateGiftCardResponseDto {
+  success: boolean;
+  giftId: string;
+  code: string;
+  amount: number;
 }

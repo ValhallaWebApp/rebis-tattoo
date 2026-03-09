@@ -17,9 +17,10 @@ export function validateEnvironmentOrThrow(environment: AppEnvironment): void {
   }
 
   if (environment.environmentName !== 'development') {
-    const endpoint = environment.paymentApiBaseUrl.toLowerCase();
-    if (endpoint.includes('localhost') || endpoint.startsWith('http://')) {
-      errors.push('Non-development builds must not target localhost or non-HTTPS payment endpoints.');
+    const endpoints = [environment.paymentApiBaseUrl.toLowerCase()];
+    const hasInvalidEndpoint = endpoints.some((endpoint) => endpoint.includes('localhost') || endpoint.startsWith('http://'));
+    if (hasInvalidEndpoint) {
+      errors.push('Non-development builds must not target localhost or non-HTTPS API endpoints.');
     }
   }
 

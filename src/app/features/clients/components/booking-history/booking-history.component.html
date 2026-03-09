@@ -18,11 +18,23 @@
     </div>
   </header>
 
+  <div class="kind-filter-toggle">
+    <button mat-stroked-button [class.is-active]="selectedKindFilter === 'all'" (click)="selectedKindFilter = 'all'">
+      Tutte
+    </button>
+    <button mat-stroked-button [class.is-active]="selectedKindFilter === 'consultation'" (click)="selectedKindFilter = 'consultation'">
+      Consulenze
+    </button>
+    <button mat-stroked-button [class.is-active]="selectedKindFilter === 'session'" (click)="selectedKindFilter = 'session'">
+      Sedute
+    </button>
+  </div>
+
   <div class="layout">
     <!-- MAIN -->
     <main class="main">
       <!-- HERO: prossimo -->
-      <section class="hero" *ngIf="nextBooking">
+      <section class="hero" *ngIf="displayedNextBooking as nextBooking">
         <div class="hero-label">
           <mat-icon>star</mat-icon> Prossimo appuntamento
         </div>
@@ -46,7 +58,9 @@
                   </span>
                   <span class="row">
                     <mat-icon inline>person</mat-icon>
-                    {{ artistMap[nextBooking.artistId] || 'Artista' }}
+                    <button type="button" class="artist-link" (click)="openArtistDetailsForBooking(nextBooking)">
+                      {{ getArtistNameForBooking(nextBooking) }}
+                    </button>
                   </span>
                 </div>
               </div>
@@ -98,6 +112,26 @@
               </div>
             </ng-container>
 
+            <ng-container *ngIf="getLinkedProject(nextBooking) as project">
+              <div class="project-link-card">
+                <div class="project-link-head">
+                  <div class="project-link-meta">
+                    <span class="project-link-label">Progetto collegato</span>
+                    <span class="project-link-artist">
+                      Artista:
+                      <button type="button" class="artist-link inline" (click)="openArtistDetailsForBooking(nextBooking)">
+                        {{ getArtistNameForBooking(nextBooking) }}
+                      </button>
+                    </span>
+                  </div>
+                  <span class="project-status-pill" [attr.data-status]="getProjectStatusClass(project.status)">
+                    {{ getProjectStatusLabel(project.status) }}
+                  </span>
+                </div>
+                <div class="project-link-title">{{ project.title || ('Progetto ' + project.id) }}</div>
+              </div>
+            </ng-container>
+
             <div class="card-actions">
               <button mat-flat-button class="primary" [matMenuTriggerFor]="supportMenuHero">
                 <mat-icon>support_agent</mat-icon> Assistenza
@@ -144,15 +178,15 @@
       <!-- tabs -->
       <nav class="tabs">
         <button class="tab" [class.active]="selectedView === 'active'" (click)="selectedView = 'active'">
-          Attive <span class="count">{{ activeBookings.length }}</span>
+          Attive <span class="count">{{ filteredActiveBookings.length }}</span>
         </button>
 
         <button class="tab" [class.active]="selectedView === 'history'" (click)="selectedView = 'history'">
-          Storico <span class="count">{{ historyBookings.length }}</span>
+          Storico <span class="count">{{ filteredHistoryBookings.length }}</span>
         </button>
 
         <button class="tab" [class.active]="selectedView === 'cancelled'" (click)="selectedView = 'cancelled'">
-          Annullate <span class="count">{{ cancelledBookings.length }}</span>
+          Annullate <span class="count">{{ filteredCancelledBookings.length }}</span>
         </button>
       </nav>
 
@@ -162,9 +196,9 @@
 
           <!-- ACTIVE -->
           <ng-container *ngSwitchCase="'active'">
-            <p class="empty" *ngIf="activeBookings.length === 0">Nessuna prenotazione attiva.</p>
+            <p class="empty" *ngIf="filteredActiveBookings.length === 0">Nessuna prenotazione attiva.</p>
 
-            <mat-card *ngFor="let b of activeBookings" class="booking-card active">
+            <mat-card *ngFor="let b of filteredActiveBookings" class="booking-card active">
               <div class="card-left">
                 <img class="artist-photo" [src]="artistPhotoMap[b.artistId]" alt="Avatar artista" />
               </div>
@@ -178,7 +212,10 @@
                         <mat-icon inline>schedule</mat-icon> {{ b.start | date:'short' }}
                       </span>
                       <span class="row">
-                        <mat-icon inline>person</mat-icon> {{ artistMap[b.artistId] || 'Artista' }}
+                        <mat-icon inline>person</mat-icon>
+                        <button type="button" class="artist-link" (click)="openArtistDetailsForBooking(b)">
+                          {{ getArtistNameForBooking(b) }}
+                        </button>
                       </span>
                     </div>
                   </div>
@@ -226,6 +263,26 @@
                     <div class="sessions-more" *ngIf="sessions.length > 3">
                       +{{ sessions.length - 3 }} altre sedute
                     </div>
+                  </div>
+                </ng-container>
+
+                <ng-container *ngIf="getLinkedProject(b) as project">
+                  <div class="project-link-card">
+                    <div class="project-link-head">
+                      <div class="project-link-meta">
+                        <span class="project-link-label">Progetto collegato</span>
+                        <span class="project-link-artist">
+                          Artista:
+                          <button type="button" class="artist-link inline" (click)="openArtistDetailsForBooking(b)">
+                            {{ getArtistNameForBooking(b) }}
+                          </button>
+                        </span>
+                      </div>
+                      <span class="project-status-pill" [attr.data-status]="getProjectStatusClass(project.status)">
+                        {{ getProjectStatusLabel(project.status) }}
+                      </span>
+                    </div>
+                    <div class="project-link-title">{{ project.title || ('Progetto ' + project.id) }}</div>
                   </div>
                 </ng-container>
 
@@ -274,9 +331,9 @@
 
           <!-- HISTORY -->
           <ng-container *ngSwitchCase="'history'">
-            <p class="empty" *ngIf="historyBookings.length === 0">Nessuna prenotazione nello storico.</p>
+            <p class="empty" *ngIf="filteredHistoryBookings.length === 0">Nessuna prenotazione nello storico.</p>
 
-            <mat-card *ngFor="let b of historyBookings" class="booking-card completed">
+            <mat-card *ngFor="let b of filteredHistoryBookings" class="booking-card completed">
               <div class="card-left">
                 <img class="artist-photo" [src]="artistPhotoMap[b.artistId]" alt="Avatar artista" />
               </div>
@@ -290,7 +347,10 @@
                         <mat-icon inline>history</mat-icon> {{ b.start | date:'short' }}
                       </span>
                       <span class="row">
-                        <mat-icon inline>person</mat-icon> {{ artistMap[b.artistId] || 'Artista' }}
+                        <mat-icon inline>person</mat-icon>
+                        <button type="button" class="artist-link" (click)="openArtistDetailsForBooking(b)">
+                          {{ getArtistNameForBooking(b) }}
+                        </button>
                       </span>
                     </div>
                   </div>
@@ -340,6 +400,26 @@
                   </div>
                 </ng-container>
 
+                <ng-container *ngIf="getLinkedProject(b) as project">
+                  <div class="project-link-card">
+                    <div class="project-link-head">
+                      <div class="project-link-meta">
+                        <span class="project-link-label">Progetto collegato</span>
+                        <span class="project-link-artist">
+                          Artista:
+                          <button type="button" class="artist-link inline" (click)="openArtistDetailsForBooking(b)">
+                            {{ getArtistNameForBooking(b) }}
+                          </button>
+                        </span>
+                      </div>
+                      <span class="project-status-pill" [attr.data-status]="getProjectStatusClass(project.status)">
+                        {{ getProjectStatusLabel(project.status) }}
+                      </span>
+                    </div>
+                    <div class="project-link-title">{{ project.title || ('Progetto ' + project.id) }}</div>
+                  </div>
+                </ng-container>
+
                 <div class="available-actions">
                   <span class="available-label">Azioni disponibili:</span>
                   <span class="action-chip" *ngFor="let action of getAvailableActions(b)">
@@ -375,9 +455,9 @@
 
           <!-- CANCELLED -->
           <ng-container *ngSwitchCase="'cancelled'">
-            <p class="empty" *ngIf="cancelledBookings.length === 0">Nessuna prenotazione annullata.</p>
+            <p class="empty" *ngIf="filteredCancelledBookings.length === 0">Nessuna prenotazione annullata.</p>
 
-            <mat-card *ngFor="let b of cancelledBookings" class="booking-card cancelled">
+            <mat-card *ngFor="let b of filteredCancelledBookings" class="booking-card cancelled">
               <div class="card-left">
                 <img class="artist-photo" [src]="artistPhotoMap[b.artistId]" alt="Avatar artista" />
               </div>
@@ -391,7 +471,10 @@
                         <mat-icon inline>event_busy</mat-icon> {{ b.start | date:'short' }}
                       </span>
                       <span class="row">
-                        <mat-icon inline>person</mat-icon> {{ artistMap[b.artistId] || 'Artista' }}
+                        <mat-icon inline>person</mat-icon>
+                        <button type="button" class="artist-link" (click)="openArtistDetailsForBooking(b)">
+                          {{ getArtistNameForBooking(b) }}
+                        </button>
                       </span>
                     </div>
                   </div>
@@ -407,6 +490,26 @@
                     </span>
                   </span>
                 </div>
+
+                <ng-container *ngIf="getLinkedProject(b) as project">
+                  <div class="project-link-card">
+                    <div class="project-link-head">
+                      <div class="project-link-meta">
+                        <span class="project-link-label">Progetto collegato</span>
+                        <span class="project-link-artist">
+                          Artista:
+                          <button type="button" class="artist-link inline" (click)="openArtistDetailsForBooking(b)">
+                            {{ getArtistNameForBooking(b) }}
+                          </button>
+                        </span>
+                      </div>
+                      <span class="project-status-pill" [attr.data-status]="getProjectStatusClass(project.status)">
+                        {{ getProjectStatusLabel(project.status) }}
+                      </span>
+                    </div>
+                    <div class="project-link-title">{{ project.title || ('Progetto ' + project.id) }}</div>
+                  </div>
+                </ng-container>
 
                 <div class="card-actions">
                   <button mat-stroked-button class="assist" [matMenuTriggerFor]="supportMenuC">

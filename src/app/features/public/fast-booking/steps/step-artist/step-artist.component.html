@@ -33,8 +33,36 @@
       </div>
     }
 
+    @if (artists().length > 1) {
+      <div class="quick-filters">
+        <div class="quick-filters-title">Filtra artista</div>
+        <mat-chip-set aria-label="Filtri artisti">
+          <mat-chip
+            [class.filter-active]="!activeArtistFilter()"
+            (click)="setArtistFilter(null)"
+            (keydown.enter)="setArtistFilter(null)"
+            clickable
+            tabindex="0"
+          >
+            Tutti
+          </mat-chip>
+          @for (artist of artistQuickFilters(); track artist.id) {
+            <mat-chip
+              [class.filter-active]="activeArtistFilter() === artist.id"
+              (click)="setArtistFilter(artist.id ?? null)"
+              (keydown.enter)="setArtistFilter(artist.id ?? null)"
+              clickable
+              tabindex="0"
+            >
+              {{ artist.name }}
+            </mat-chip>
+          }
+        </mat-chip-set>
+      </div>
+    }
+
     <div class="list">
-      @for (a of artists(); track a.id) {
+      @for (a of filteredArtists(); track a.id) {
         <mat-card
           class="artist"
           [class.active]="selectedId() === a.id"
@@ -45,7 +73,7 @@
           <div class="left">
             <div class="avatar">
               @if (a?.photoUrl) {
-                <img [src]="a.photoUrl" alt="" />
+                <img [src]="a.photoUrl" [alt]="a?.name || 'Artista'" (error)="onAvatarError($event)" />
               } @else {
                 <mat-icon>person</mat-icon>
               }

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const crypto = require('crypto');
 const Stripe = require('stripe');
 const { onRequest } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
@@ -121,6 +122,46 @@ function sanitizeNotificationMeta(meta) {
 
 function normalizeBonusCode(value) {
   return String(value || '').trim().toUpperCase().replace(/\s+/g, '');
+}
+
+function normalizeGiftName(value) {
+  const raw = String(value || '').trim().toUpperCase();
+  if (!raw) return 'GIFT';
+  return raw
+    .replace(/[^A-Z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 16) || 'GIFT';
+}
+
+function randomGiftToken(length = 4) {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.randomBytes(length);
+  let out = '';
+  for (let i = 0; i < length; i += 1) {
+    out += alphabet[bytes[i] % alphabet.length];
+  }
+  return out;
+}
+
+function normalizeOptionalIsoDate(value) {
+  const raw = toText(value);
+  if (!raw) return null;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
+
+async function generateUniqueGiftCode(db, name) {
+  const prefix = normalizeGiftName(name);
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const code = `${prefix}-${randomGiftToken(4)}-${randomGiftToken(4)}`;
+    // Defensive uniqueness check: avoids accidental collisions.
+    // eslint-disable-next-line no-await-in-loop
+    const existing = await db.ref('bonus/giftCards').orderByChild('code').equalTo(code).get();
+    if (!existing.exists()) return code;
+  }
+  throw new Error('GIFT_CODE_GENERATION_FAILED');
 }
 
 function roundMoney(value) {
@@ -524,6 +565,67 @@ app.post('/api/payments/staff/sync-profile', requireAdmin, async (req, res) => {
   } catch (err) {
     logger.error('staff.sync_profile.error', err);
     return res.status(500).json({ error: 'STAFF_SYNC_FAILED' });
+  }
+});
+
+app.post('/api/payments/bonus/create-gift-card', requireAuthenticated, async (req, res) => {
+  try {
+    const actor = req.actor || {};
+    const uid = toText(actor.uid);
+    if (!uid) {
+      return res.status(401).json({ error: 'AUTH_FAILED' });
+    }
+
+    const name = toText(req.body?.name, 'Gift Card Cliente');
+    const note = toText(req.body?.note);
+    const amount = roundMoney(Number(req.body?.amount || 0));
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ error: 'INVALID_GIFT_AMOUNT' });
+    }
+
+    const expiresAt = normalizeOptionalIsoDate(req.body?.expiresAt);
+    const db = getDatabase();
+    const code = normalizeBonusCode(await generateUniqueGiftCode(db, name));
+    const now = new Date().toISOString();
+    const node = db.ref('bonus/giftCards').push();
+    const giftId = node.key || `gift_${Date.now()}`;
+
+    await node.set(stripUndefined({
+      id: giftId,
+      code,
+      initialAmount: amount,
+      balance: amount,
+      note: note || undefined,
+      active: true,
+      redeemedBy: null,
+      redeemedAt: null,
+      usesCount: 0,
+      expiresAt,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: uid
+    }));
+
+    void writeAuditLog({
+      action: 'bonus.gift.create',
+      resource: 'gift_card',
+      resourceId: giftId,
+      status: 'success',
+      actorId: uid,
+      actorRole: toText(actor.role, 'authenticated'),
+      targetUserId: uid,
+      meta: { code, amount, name }
+    });
+
+    return res.status(200).json({
+      success: true,
+      giftId,
+      code,
+      amount
+    });
+  } catch (err) {
+    logger.error('bonus.create_gift_card.error', err);
+    return res.status(500).json({ error: 'BONUS_GIFT_CREATE_FAILED' });
   }
 });
 

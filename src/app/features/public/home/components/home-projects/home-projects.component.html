@@ -73,7 +73,9 @@
   </div>
 
   <ng-template #noProjects>
-    <div class="empty-state">{{ emptyText() }}</div>
+    <div class="empty-state">
+      {{ loadError ? errorText : emptyText() }}
+    </div>
   </ng-template>
 
   <div class="projects-cta">

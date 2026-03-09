@@ -1,6 +1,11 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { loadStripe, Stripe, StripeElements, StripePaymentElement } from '@stripe/stripe-js';
+import {
+  loadStripe,
+  Stripe,
+  StripeElements,
+  StripePaymentElement
+} from '@stripe/stripe-js';
 import { MaterialModule } from '../../../core/modules/material.module';
 
 @Component({
@@ -26,7 +31,7 @@ export class StripePaymentComponent implements OnInit, OnDestroy {
   elementReady = false;
 
   ngOnInit(): void {
-    // ⚠️ Safety: chiave o clientSecret mancanti
+    // Safety: chiave o clientSecret mancanti.
     if (!this.publishableKey || !this.clientSecret) {
       console.error('StripePaymentComponent: publishableKey o clientSecret mancanti');
       this.paymentError.emit('Configurazione Stripe non valida.');
@@ -34,10 +39,10 @@ export class StripePaymentComponent implements OnInit, OnDestroy {
     }
 
     this.stripePromise = loadStripe(this.publishableKey);
-    this.initStripe();
+    void this.initStripe();
   }
 
-  async initStripe() {
+  async initStripe(): Promise<void> {
     try {
       const stripe = await this.stripePromise;
       if (!stripe) {
@@ -51,7 +56,6 @@ export class StripePaymentComponent implements OnInit, OnDestroy {
       this.elements = stripe.elements({ clientSecret: this.clientSecret });
       this.paymentElement = this.elements.create('payment');
 
-      // Debug + stato di pronto
       this.paymentElement.on('ready', () => {
         console.log('Payment Element ready');
         this.elementReady = true;
@@ -63,7 +67,6 @@ export class StripePaymentComponent implements OnInit, OnDestroy {
       });
 
       this.paymentElement.mount('#payment-element');
-
     } catch (err: any) {
       console.error('Errore initStripe:', err);
       this.paymentError.emit(err?.message || 'Errore Stripe.');
@@ -74,13 +77,13 @@ export class StripePaymentComponent implements OnInit, OnDestroy {
     this.paymentElement?.unmount();
   }
 
-  async pay() {
+  async pay(): Promise<void> {
     if (!this.elements || !this.stripePromise) {
       this.paymentError.emit('Stripe non inizializzato correttamente.');
       return;
     }
     if (!this.elementReady) {
-      this.paymentError.emit('Il modulo di pagamento non è pronto. Riprova tra qualche secondo.');
+      this.paymentError.emit('Il modulo di pagamento non e pronto. Riprova tra qualche secondo.');
       return;
     }
 
@@ -93,7 +96,7 @@ export class StripePaymentComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // 🔹 1) OBBLIGATORIO con il nuovo Payment Element
+    // 1) Obbligatorio con il Payment Element.
     const { error: submitError } = await this.elements.submit();
     if (submitError) {
       console.error('Errore elements.submit():', submitError);
@@ -102,7 +105,7 @@ export class StripePaymentComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // 🔹 2) Solo dopo submit() chiamiamo confirmPayment
+    // 2) Solo dopo submit() chiamiamo confirmPayment.
     const { error } = await stripe.confirmPayment({
       elements: this.elements,
       clientSecret: this.clientSecret,

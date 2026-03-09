@@ -1,6 +1,6 @@
 .dialog-container {
-  background: #0a0a0a;
-  color: whitesmoke;
+  background: var(--app-surface-strong, rgba(10, 10, 10, 0.96));
+  color: var(--app-main-text, #f3f4f7);
   padding: 1.5rem;
   border-radius: 20px;
   max-width: 420px;
@@ -9,7 +9,7 @@
   h2 {
     font-size: 1.2rem;
     margin-bottom: 1.5rem;
-    color: #BE9045;
+    color: var(--accent, #be9045);
   }
 }
 
@@ -21,15 +21,15 @@
 }
 
 .gold-btn {
-  background-color: #BE9045;
-  color: #0a0a0a;
+  background-color: var(--accent, #be9045);
+  color: var(--accent-ink, #111111);
 
   mat-icon {
     margin-right: 6px;
   }
 
   &:hover {
-    background-color: #d5a65c;
+    background-color: var(--accent-strong, #d5a65c);
   }
 }
 
@@ -44,11 +44,11 @@
 }
 
 .delete-confirm {
-  background: #1a1a1a;
+  background: var(--app-surface, rgba(26, 26, 26, 0.9));
   padding: 1rem;
-  border: 1px solid #BE9045;
+  border: 1px solid var(--accent, #be9045);
   border-radius: 10px;
-  color: #f8d7da;
+  color: var(--app-main-text, #f3f4f7);
 
   p {
     margin: 0 0 1rem 0;

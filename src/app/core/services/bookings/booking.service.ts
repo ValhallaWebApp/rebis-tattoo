@@ -85,6 +85,10 @@ export type ServiceResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
+type WeekdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+type StaffTimeSlot = { start?: string; end?: string };
+type StaffAvailabilityWeek = Partial<Record<WeekdayKey, StaffTimeSlot[]>>;
+
 /* =============================================================================
  * BookingDraftService (in-memory)
  * ============================================================================= */
@@ -304,36 +308,144 @@ export class BookingService {
     duration: number = 60,
     stepMin: number = 60
   ): Promise<{ time: string }[]> {
-    const openingHour = 9;
-    const closingHour = 18;
-
     const day = this.normalizeDateOnly(date);
     if (!day) return [];
+    const artist = String(artistId ?? '').trim();
+    if (!artist) return [];
 
     const dayStartLocal = `${day}T00:00:00`;
     const dayEndLocal = `${day}T23:59:59`;
 
-    const existing = await this.getBookingsByArtistAndDayRange(artistId, dayStartLocal, dayEndLocal);
+    const schedule = await this.resolveArtistScheduleForDay(artist, day, stepMin);
+    if (!schedule.windows.length) return [];
+
+    const existing = await this.getBookingsByArtistAndDayRange(artist, dayStartLocal, dayEndLocal);
     const eventBlocks = await this.getEventBlockingWindowsForDay(day);
 
-    const slots: { time: string }[] = [];
-    const minutesStart = openingHour * 60;
-    const minutesEnd = closingHour * 60;
+    const effectiveDuration = Math.max(5, Math.round(duration || 60));
+    const effectiveStep = Math.max(5, Math.round(schedule.stepMinutes || stepMin || 60));
+    const nowMs = Date.now();
+    const out = new Set<string>();
 
-    for (let m = minutesStart; m <= minutesEnd - duration; m += stepMin) {
-      const hh = Math.floor(m / 60);
-      const mm = m % 60;
+    for (const win of schedule.windows) {
+      const minutesStart = this.timeToMinutes(win.start);
+      const minutesEnd = this.timeToMinutes(win.end);
+      if (minutesStart === null || minutesEnd === null || minutesEnd <= minutesStart) continue;
 
-      const time = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-      const slotStart = `${day}T${time}:00`;
-      const slotEnd = this.addMinutesLocal(slotStart, duration);
+      for (let m = minutesStart; m <= minutesEnd - effectiveDuration; m += effectiveStep) {
+        const hh = Math.floor(m / 60);
+        const mm = m % 60;
+        const time = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+        const slotStart = `${day}T${time}:00`;
+        const slotEnd = this.addMinutesLocal(slotStart, effectiveDuration);
 
-      const overlapsBooking = existing.some((b) => this.overlapsLocal(slotStart, slotEnd, b.start, b.end));
-      const overlapsEvent = eventBlocks.some((w) => this.overlapsLocal(slotStart, slotEnd, w.start, w.end));
-      if (!overlapsBooking && !overlapsEvent) slots.push({ time });
+        const slotStartMs = new Date(this.normalizeLocalDateTime(slotStart)).getTime();
+        if (Number.isFinite(slotStartMs) && slotStartMs < nowMs) continue;
+
+        const overlapsBooking = existing.some((b) => this.overlapsLocal(slotStart, slotEnd, b.start, b.end));
+        const overlapsEvent = eventBlocks.some((w) => this.overlapsLocal(slotStart, slotEnd, w.start, w.end));
+        if (!overlapsBooking && !overlapsEvent) out.add(time);
+      }
     }
 
-    return slots;
+    return Array.from(out)
+      .sort((a, b) => (this.timeToMinutes(a) ?? 0) - (this.timeToMinutes(b) ?? 0))
+      .map((time) => ({ time }));
+  }
+
+  private async resolveArtistScheduleForDay(
+    artistId: string,
+    day: string,
+    fallbackStepMin: number
+  ): Promise<{ stepMinutes: number; windows: Array<{ start: string; end: string }> }> {
+    const defaults = {
+      enabled: true,
+      workdayStart: '09:00',
+      workdayEnd: '18:00',
+      stepMinutes: fallbackStepMin || 60
+    };
+
+    const [calendarRaw, availabilityRaw] = await Promise.all([
+      this.getSafeNode(`staffProfiles/${artistId}/calendar`),
+      this.getSafeNode(`staffAvailability/${artistId}`)
+    ]);
+
+    const calendar = this.toRecord(calendarRaw);
+    const availability = this.toRecord(availabilityRaw);
+    const enabled = this.toBoolean(calendar['enabled'], defaults.enabled);
+    if (!enabled) return { stepMinutes: defaults.stepMinutes, windows: [] };
+
+    const start = this.normalizeTime(String(calendar['workdayStart'] ?? ''), defaults.workdayStart);
+    const end = this.normalizeTime(String(calendar['workdayEnd'] ?? ''), defaults.workdayEnd);
+    const stepMinutes = this.toPositiveInt(calendar['stepMinutes'], defaults.stepMinutes);
+
+    const weekday = this.weekdayKeyForDate(day);
+    const week = this.toRecord(availability['week']) as StaffAvailabilityWeek;
+    const daySlots = Array.isArray(week?.[weekday]) ? (week?.[weekday] ?? []) : [];
+    const hasConfiguredAvailability = this.hasAnyAvailabilityConfigured(week);
+
+    const windows = hasConfiguredAvailability
+      ? daySlots
+          .map((slot) => {
+            const from = this.normalizeTime(String(slot?.start ?? ''), '');
+            const to = this.normalizeTime(String(slot?.end ?? ''), '');
+            if (!from || !to) return null;
+            if ((this.timeToMinutes(to) ?? 0) <= (this.timeToMinutes(from) ?? 0)) return null;
+            return { start: from, end: to };
+          })
+          .filter((slot): slot is { start: string; end: string } => !!slot)
+      : [{ start, end }];
+
+    return { stepMinutes, windows };
+  }
+
+  private hasAnyAvailabilityConfigured(week: StaffAvailabilityWeek): boolean {
+    const keys: WeekdayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    return keys.some((k) => Array.isArray(week?.[k]) && (week[k] as StaffTimeSlot[]).length > 0);
+  }
+
+  private weekdayKeyForDate(day: string): WeekdayKey {
+    const d = new Date(`${day}T00:00:00`);
+    const jsDay = d.getDay();
+    if (jsDay === 0) return 'sun';
+    if (jsDay === 1) return 'mon';
+    if (jsDay === 2) return 'tue';
+    if (jsDay === 3) return 'wed';
+    if (jsDay === 4) return 'thu';
+    if (jsDay === 5) return 'fri';
+    return 'sat';
+  }
+
+  private timeToMinutes(time: string): number | null {
+    const t = String(time ?? '').trim();
+    const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(t);
+    if (!match) return null;
+    return Number(match[1]) * 60 + Number(match[2]);
+  }
+
+  private toBoolean(value: unknown, fallback: boolean): boolean {
+    if (value === true) return true;
+    if (value === false) return false;
+    const s = String(value ?? '').trim().toLowerCase();
+    if (s === 'true' || s === '1') return true;
+    if (s === 'false' || s === '0') return false;
+    return fallback;
+  }
+
+  private toPositiveInt(value: unknown, fallback: number): number {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return Math.max(1, Math.round(fallback));
+    return Math.max(1, Math.round(n));
+  }
+
+  private async getSafeNode(path: string): Promise<unknown> {
+    try {
+      const snap = await get(ref(this.db, path));
+      return snap.exists() ? snap.val() : null;
+    } catch (err) {
+      if (this.isPermissionDeniedError(err)) return null;
+      throw err;
+    }
   }
 
   private async getEventBlockingWindowsForDay(day: string): Promise<Array<{ start: string; end: string }>> {

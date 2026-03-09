@@ -1,15 +1,23 @@
 <section class="bonus-page">
+  <div class="purchase-lock-screen" *ngIf="finalizingGiftPurchase">
+    <div class="purchase-lock-card">
+      <mat-progress-spinner diameter="42" mode="indeterminate"></mat-progress-spinner>
+      <h3>Finalizzazione pagamento in corso</h3>
+      <p>Attendi: stiamo confermando il pagamento e generando la gift card dal backend.</p>
+    </div>
+  </div>
+
   <header class="bonus-header">
-    <h2>{{ lang.t('bonus.client.header.title') }}</h2>
-    <p>{{ lang.t('bonus.client.header.subtitle') }}</p>
+    <h2>Gift Card</h2>
+    <p>Riscatta la tua card credito.</p>
   </header>
 
   <div class="bonus-grid">
     <mat-card class="wallet-card" *ngIf="wallet$ | async as wallet">
       <mat-card-header>
         <mat-icon mat-card-avatar>account_balance_wallet</mat-icon>
-        <mat-card-title>{{ lang.t('bonus.client.wallet.title') }}</mat-card-title>
-        <mat-card-subtitle>{{ lang.t('bonus.client.wallet.updatedAt') }}: {{ wallet.updatedAt | date:'dd/MM/yyyy HH:mm' }}</mat-card-subtitle>
+        <mat-card-title>Credito disponibile</mat-card-title>
+        <mat-card-subtitle>Aggiornato: {{ wallet.updatedAt | date:'dd/MM/yyyy HH:mm' }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <p class="wallet-balance">{{ wallet.balance | currency:'EUR':'symbol':'1.2-2' }}</p>
@@ -18,27 +26,8 @@
 
     <mat-card class="action-card">
       <mat-card-header>
-        <mat-icon mat-card-avatar>sell</mat-icon>
-        <mat-card-title>{{ lang.t('bonus.client.promo.title') }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <app-dynamic-form
-          class="action-form"
-          [fields]="promoFields"
-          [formGroupInput]="promoForm"
-          [showSubmit]="true"
-          [submitColor]="'primary'"
-          [submitLabel]="applyingPromo ? lang.t('bonus.client.promo.loading') : lang.t('bonus.client.promo.submit')"
-          [submitDisabled]="promoForm.invalid || applyingPromo"
-          (formSubmit)="applyPromo()"
-        ></app-dynamic-form>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="action-card">
-      <mat-card-header>
         <mat-icon mat-card-avatar>redeem</mat-icon>
-        <mat-card-title>{{ lang.t('bonus.client.gift.title') }}</mat-card-title>
+        <mat-card-title>Riscatta card</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <app-dynamic-form
@@ -53,13 +42,108 @@
         ></app-dynamic-form>
       </mat-card-content>
     </mat-card>
+
+    <mat-card class="buy-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>credit_card</mat-icon>
+        <mat-card-title>Compra card</mat-card-title>
+        <mat-card-subtitle>Pagamento online dal gestionale</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="buyGiftForm" class="buy-form" (ngSubmit)="buyGiftCard()">
+          <mat-form-field appearance="outline">
+            <mat-label>Nome card</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Importo</mat-label>
+            <input matInput type="number" min="1" step="1" formControlName="amount" />
+            <span matTextSuffix>EUR</span>
+          </mat-form-field>
+
+          <div class="quick-amounts">
+            <button
+              mat-stroked-button
+              type="button"
+              *ngFor="let value of suggestedAmounts"
+              (click)="setSuggestedAmount(value)"
+            >
+              {{ value | currency:'EUR':'symbol':'1.0-0' }}
+            </button>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nota (opzionale)</mat-label>
+            <textarea matInput rows="2" formControlName="note"></textarea>
+          </mat-form-field>
+
+          <mat-checkbox formControlName="isGift">La sto regalando a qualcuno</mat-checkbox>
+
+          <ng-container *ngIf="buyGiftForm.value.isGift">
+            <mat-form-field appearance="outline">
+              <mat-label>Cerca utente</mat-label>
+              <input
+                matInput
+                formControlName="giftedRecipientSearch"
+                [matAutocomplete]="recipientAuto"
+                (input)="onGiftRecipientSearchInput($any($event.target).value)"
+              />
+              <mat-autocomplete #recipientAuto="matAutocomplete" (optionSelected)="onGiftRecipientSelected($event.option.value)">
+                <mat-option *ngFor="let recipient of (filteredRecipientUsers$ | async) ?? []" [value]="recipient">
+                  {{ recipientLabel(recipient) }}
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Nome destinatario</mat-label>
+              <input matInput formControlName="giftedToName" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Email destinatario</mat-label>
+              <input matInput type="email" formControlName="giftedToEmail" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Telefono destinatario</mat-label>
+              <input matInput formControlName="giftedToPhone" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Messaggio regalo</mat-label>
+              <textarea matInput rows="2" formControlName="giftMessage"></textarea>
+            </mat-form-field>
+          </ng-container>
+
+          <button mat-flat-button color="accent" type="submit" [disabled]="buyGiftForm.invalid || buyingGift">
+            {{ buyingGift ? 'Apertura pagamento...' : 'Paga e compra card' }}
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
   </div>
 
-  <mat-card class="ledger-card" *ngIf="ledger$ | async as ledger">
+  <mat-card class="how-to-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>help_outline</mat-icon>
+      <mat-card-title>Come comprare la card</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <ol class="how-to-list">
+        <li>Inserisci nome card e importo.</li>
+        <li>Clicca "Paga e compra card" e completa il pagamento.</li>
+        <li>Lo studio genera il codice reale e te lo invia.</li>
+      </ol>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="ledger-card" *ngIf="giftLedger$ | async as ledger">
     <mat-card-header>
       <mat-icon mat-card-avatar>history</mat-icon>
-      <mat-card-title>{{ lang.t('bonus.client.ledger.title') }}</mat-card-title>
-      <mat-card-subtitle>{{ lang.t('bonus.client.ledger.subtitle') }}</mat-card-subtitle>
+      <mat-card-title>Storico riscatti</mat-card-title>
+      <mat-card-subtitle>Movimenti da gift card</mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
@@ -77,7 +161,7 @@
       </div>
 
       <ng-template #noLedger>
-        <p class="empty">{{ lang.t('bonus.client.ledger.empty') }}</p>
+        <p class="empty">Nessun riscatto disponibile.</p>
       </ng-template>
     </mat-card-content>
   </mat-card>

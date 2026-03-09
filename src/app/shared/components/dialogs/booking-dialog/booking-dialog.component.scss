@@ -1,4 +1,5 @@
 .booking-dialog {
+  color: var(--app-main-text, #f3f4f7);
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -8,7 +9,7 @@
   }
   .dialog-title {
     font-size: 1.4rem;
-    color: #be9045; // oro
+    color: var(--accent, #be9045);
     margin-bottom: 1rem;
   }
 
@@ -30,7 +31,7 @@
     .payment-note {
       font-weight: bold;
       margin-bottom: 1rem;
-      color: #333;
+      color: var(--app-main-text, #f3f4f7);
     }
 
     mat-icon {

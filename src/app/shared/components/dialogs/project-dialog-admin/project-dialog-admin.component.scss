@@ -1,10 +1,11 @@
 .container-dialog {
   padding: 1rem;
+  color: var(--app-main-text, #f3f4f7);
 
   .dialog-title {
     font-size: 1.6rem;
     font-weight: 600;
-    color: #222;
+    color: var(--app-main-text, #f3f4f7);
     margin-bottom: 1rem;
   }
 
@@ -23,7 +24,7 @@
   .toggle-show {
     margin-top: 1rem;
     font-weight: 500;
-    color: #444;
+    color: var(--app-main-text-muted, #c8ced8);
   }
 
   .dialog-actions {

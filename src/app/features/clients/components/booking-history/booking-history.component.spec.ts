@@ -13,6 +13,7 @@ import { ReviewsService } from '../../../../core/services/reviews/reviews.servic
 import { Router } from '@angular/router';
 import { InvoicesService } from '../../../../core/services/invoices/invoices.service';
 import { ExternalActionsHelperService } from '../../../../core/services/helpers/external-actions-helper.service';
+import { BookingHistoryInvoiceHelperService } from '../../../../core/services/helpers/booking-history-invoice-helper.service';
 
 describe('BookingHistoryComponent', () => {
   let fixture: ComponentFixture<BookingHistoryComponent>;
@@ -167,9 +168,8 @@ describe('BookingHistoryComponent', () => {
   });
 
   it('should show readable client label in invoice html instead of client id', () => {
-    fixture.detectChanges();
-
-    const html = (component as any).buildInvoiceHtml(
+    const helper = TestBed.inject(BookingHistoryInvoiceHelperService);
+    const html = helper.buildInvoiceHtml(
       {
         id: 'inv-1',
         clientId: 'client-1',
@@ -180,7 +180,8 @@ describe('BookingHistoryComponent', () => {
         id: 'bk-1',
         artistId: 'artist-1',
         start: '2026-02-18T10:00:00'
-      }
+      },
+      { artistName: 'Rebis Tattoo', user: authServiceMock.userSig() }
     ) as string;
 
     expect(html).toContain('Mario Rossi');

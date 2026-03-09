@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Subscription, map } from 'rxjs';
 import { LanguageService } from '../../../../../core/services/language/language.service';
@@ -25,6 +25,7 @@ type HomeProjectCard = {
 export class HomeProjectsComponent implements OnInit, OnDestroy {
   private readonly projectsService = inject(ProjectsService);
   private readonly studioProfile = inject(StudioProfileService);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly profileSig = toSignal(this.studioProfile.getProfile(), {
     initialValue: DEFAULT_STUDIO_PROFILE
   });
@@ -32,6 +33,8 @@ export class HomeProjectsComponent implements OnInit, OnDestroy {
   readonly fallbackCover: string;
 
   loading = true;
+  loadError = false;
+  errorText = '';
   projects: HomeProjectCard[] = [];
 
   constructor(public lang: LanguageService) {
@@ -40,40 +43,55 @@ export class HomeProjectsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.sub = this.projectsService.getPublicProjects().pipe(
-      map(list =>
-        (list ?? [])
-          .filter(p =>
-            (p as any).isPublic !== false &&
-            this.isCompletedStatus((p as any).status)
-          )
-          .sort((a, b) => this.createdAtOf(b).localeCompare(this.createdAtOf(a)))
-          .slice(0, 6)
-          .map(p => ({
-            id: String(p.id ?? '').trim(),
-            title: this.titleOf(p),
-            description: this.descriptionOf(p),
-            imageUrl: this.coverOf(p)
-          }))
-      )
+      map(list => this.buildCards(list ?? []))
     ).subscribe({
       next: rows => {
         this.projects = rows;
+        this.loadError = false;
+        this.errorText = '';
         this.loading = false;
+        this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err) => {
+        const code = String((err as any)?.code ?? '').trim();
+        this.errorText = code ? `Errore caricamento progetti (${code})` : 'Errore caricamento progetti';
+        this.loadError = true;
         this.projects = [];
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
-  private isCompletedStatus(status: unknown): boolean {
+  private buildCards(list: TattooProject[]): HomeProjectCard[] {
+    const visible = (list ?? []).filter(p => this.isPublicEnabled((p as any).isPublic));
+    const notCancelled = visible.filter(p => !this.isCancelledStatus((p as any).status));
+    const source = notCancelled.length ? notCancelled : visible;
+
+    return source
+      .sort((a, b) => this.createdAtOf(b).localeCompare(this.createdAtOf(a)))
+      .slice(0, 6)
+      .map(p => ({
+        id: String(p.id ?? '').trim(),
+        title: this.titleOf(p),
+        description: this.descriptionOf(p),
+        imageUrl: this.coverOf(p)
+      }));
+  }
+
+  private isCancelledStatus(status: unknown): boolean {
     const normalized = String(status ?? '').trim().toLowerCase();
-    return normalized === 'completed'
-      || normalized === 'complete'
-      || normalized === 'concluso'
-      || normalized === 'done'
-      || normalized === 'finished';
+    return normalized === 'cancelled' || normalized === 'canceled' || normalized === 'annullato';
+  }
+
+  private isPublicEnabled(value: unknown): boolean {
+    if (value === true) return true;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      return normalized === 'true' || normalized === '1' || normalized === 'yes';
+    }
+    if (typeof value === 'number') return value === 1;
+    return false;
   }
 
   ngOnDestroy(): void {

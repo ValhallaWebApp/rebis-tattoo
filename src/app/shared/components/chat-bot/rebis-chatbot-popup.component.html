@@ -1,0 +1,141 @@
+<div class="rb-chatbot" [class.rb-chatbot--open]="panelState() === 'active' || panelState() === 'opening'">
+  @if (panelState() === 'opening' || panelState() === 'active') {
+    <button type="button" class="rb-backdrop" (click)="closeChat()" aria-label="Chiudi chatbot"></button>
+  }
+
+  @if (panelState() === 'teaser') {
+    <button class="rb-teaser" type="button" (click)="openChat()" aria-label="Apri assistente Rebis">
+      {{ teaserText() }}
+    </button>
+  }
+
+  <button class="rb-launcher" type="button" (click)="openChat()" aria-label="Apri chatbot Rebis">
+    <img src="/loghi/logo-white.jpg" alt="Rebis Tattoo" />
+  </button>
+
+  @if (panelState() === 'opening' || panelState() === 'active') {
+    <section class="rb-sheet" role="dialog" aria-label="Assistente Rebis Tattoo">
+      @if (panelState() === 'opening') {
+        <div class="rb-opening">
+          <img src="/loghi/logo-white.jpg" alt="Logo Rebis Tattoo" />
+          <p>{{ t('chatbot.brandTitle') }}</p>
+        </div>
+      }
+
+      @if (panelState() === 'active') {
+        <header class="rb-header">
+          <div class="rb-brand">
+            <img src="/loghi/logo-white.jpg" alt="Rebis Tattoo" />
+            <div>
+              <h3>{{ t('chatbot.brandTitle') }}</h3>
+              <p>{{ t('chatbot.brandSubtitle') }}</p>
+            </div>
+          </div>
+          <button type="button" class="rb-close" (click)="closeChat()" aria-label="Chiudi chatbot">{{ t('chatbot.close') }}</button>
+        </header>
+
+        @if (bookingActive()) {
+          <section class="rb-booking-progress">
+            <div class="rb-booking-progress__meta">
+              <span>{{ t('chatbot.bookingGuided') }}</span>
+              <strong>{{ bookingProgress() }}%</strong>
+            </div>
+            <div class="rb-booking-progress__bar">
+              <span [style.width.%]="bookingProgress()"></span>
+            </div>
+          </section>
+        }
+
+        <section class="rb-quick-actions" aria-label="Azioni rapide">
+          @for (action of quickActions; track action.id) {
+            <button type="button" (click)="pickQuickAction(action.id)">{{ action.label }}</button>
+          }
+        </section>
+
+        <section class="rb-messages" #messagesWrap>
+          @if (messages().length === 0) {
+            <article class="rb-empty">
+              <h4>{{ t('chatbot.emptyTitle') }}</h4>
+              <p>{{ t('chatbot.emptySubtitle') }}</p>
+            </article>
+          }
+
+          @for (message of messages(); track message.id) {
+            <article class="rb-bubble" [class.rb-bubble--user]="message.sender === 'user'">
+              <p>{{ message.text }}</p>
+            </article>
+          }
+
+          @if (typing()) {
+            <article class="rb-typing">
+              <span></span><span></span><span></span>
+            </article>
+          }
+
+          @if (error()) {
+            <article class="rb-error">
+              <p>{{ error() }}</p>
+              <div class="rb-error__actions">
+                <button type="button" (click)="goToContacts()">{{ t('chatbot.contactsStudio') }}</button>
+                <button type="button" (click)="restart()">{{ t('chatbot.restart') }}</button>
+              </div>
+            </article>
+          }
+
+          @if (bookingSuccess()) {
+            <article class="rb-success">
+              <h4>{{ t('chatbot.successTitle') }}</h4>
+              <p>{{ t('chatbot.successSubtitle') }}</p>
+              <div class="rb-success__actions">
+                <button type="button" (click)="goToFastBooking()">{{ t('chatbot.openFastBooking') }}</button>
+                <button type="button" (click)="goToContacts()">{{ t('chatbot.contactsStudio') }}</button>
+              </div>
+            </article>
+          }
+        </section>
+
+        @if (bookingActive()) {
+          <section class="rb-stepper">
+            <label>
+              @switch (bookingStep()) {
+                @case ('style') { Stile desiderato }
+                @case ('placement') { Zona del corpo }
+                @case ('timing') { Quando preferisci }
+                @default { Contatto }
+              }
+            </label>
+            <div class="rb-stepper__row">
+              <input
+                type="text"
+                [ngModel]="bookingInput()"
+                (ngModelChange)="bookingInput.set($event)"
+                (keydown)="onBookingKeydown($event)"
+                (focus)="onBookingFocus()"
+                [placeholder]="t('chatbot.writeHere')"
+                aria-label="Risposta step prenotazione"
+              />
+              <button type="button" [disabled]="!canSendBooking()" (click)="submitBooking()">{{ t('chatbot.send') }}</button>
+            </div>
+          </section>
+        } @else {
+          <footer class="rb-composer">
+            <button type="button" class="rb-attach" (click)="triggerReferencePicker()" aria-label="Allega reference">
+              {{ t('chatbot.attachRef') }}
+            </button>
+            <input
+              type="text"
+              [ngModel]="composerValue()"
+              (ngModelChange)="composerValue.set($event)"
+              (keydown)="onComposerKeydown($event)"
+              (focus)="onComposerFocus()"
+              [placeholder]="t('chatbot.writeIdea')"
+              aria-label="Messaggio chatbot"
+            />
+            <button type="button" [disabled]="!canSend()" (click)="send()">{{ t('chatbot.send') }}</button>
+            <input #filePicker type="file" accept="image/*" (change)="onReferencePicked($event)" hidden />
+          </footer>
+        }
+      }
+    </section>
+  }
+</div>

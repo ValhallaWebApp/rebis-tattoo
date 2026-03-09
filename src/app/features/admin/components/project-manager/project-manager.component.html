@@ -124,13 +124,14 @@
           </div>
 
           <div class="actions">
-            <a mat-stroked-button [routerLink]="openProject(row.project)">
+            <a mat-stroked-button class="action--white" [routerLink]="openProject(row.project)">
               <mat-icon>open_in_new</mat-icon>
               Scheda
             </a>
 
             <a
               mat-stroked-button
+              class="action--white"
               *ngIf="row.project?.clientId"
               [routerLink]="openClientsLink()"
               [queryParams]="clientFilterParams(row.project.clientId)">
@@ -138,7 +139,7 @@
               Cliente
             </a>
 
-            <button mat-stroked-button type="button" (click)="messageClient(row)" [disabled]="!row.client?.phone && !row.client?.email">
+            <button mat-stroked-button class="action--white" type="button" (click)="messageClient(row)" [disabled]="!row.client?.phone && !row.client?.email">
               <mat-icon>chat</mat-icon>
               Messaggia
             </button>
@@ -154,6 +155,7 @@
 
             <button
               mat-stroked-button
+              class="action--white"
               type="button"
               (click)="editProject(row.project)">
               <mat-icon>edit</mat-icon>
@@ -162,6 +164,7 @@
 
             <button
               mat-stroked-button
+              class="action--white"
               type="button"
               (click)="togglePublic(row.project)">
               <mat-icon>{{ row.project.isPublic === false ? 'visibility' : 'visibility_off' }}</mat-icon>
@@ -196,14 +199,25 @@
               <span>Consulenza</span>
             </div>
 
-            <button
-              mat-button
-              type="button"
-              *ngIf="row.booking"
-              (click)="editBooking(row.booking!)">
-              <mat-icon>edit</mat-icon>
-              Modifica
-            </button>
+            <div class="box-head-actions">
+              <button
+                mat-button
+                type="button"
+                *ngIf="row.booking"
+                (click)="collectBookingPayment(row)">
+                <mat-icon>credit_card</mat-icon>
+                Incassa
+              </button>
+
+              <button
+                mat-button
+                type="button"
+                *ngIf="row.booking"
+                (click)="editBooking(row.booking!)">
+                <mat-icon>edit</mat-icon>
+                Modifica
+              </button>
+            </div>
           </header>
 
           <div class="box__content" *ngIf="row.booking; else noBooking">
@@ -298,6 +312,10 @@
                     <mat-icon>receipt_long</mat-icon>
                   </button>
 
+                  <button mat-icon-button type="button" (click)="collectSessionPayment(row, s)" aria-label="incassa seduta">
+                    <mat-icon>payments</mat-icon>
+                  </button>
+
                   <button mat-icon-button type="button" (click)="editSession(s)" aria-label="modifica seduta">
                     <mat-icon>edit</mat-icon>
                   </button>
@@ -324,6 +342,10 @@
               <mat-icon>payments</mat-icon>
               <span>Pagamenti & Fatture</span>
             </div>
+            <button mat-button type="button" (click)="collectProjectPayment(row)">
+              <mat-icon>credit_score</mat-icon>
+              Incassa progetto
+            </button>
           </header>
 
           <div class="box__content">

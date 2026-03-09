@@ -1,19 +1,57 @@
-<h2 mat-dialog-title>Dettagli Appuntamento</h2>
+<h2 mat-dialog-title class="dialog-title">
+  <span>Dettagli Appuntamento</span>
+  <span class="status-chip" [ngClass]="statusClass()">{{ statusLabel() }}</span>
+</h2>
 
-<mat-dialog-content>
-  <p><strong>ID Cliente:</strong> {{ data.clientId || '-' }}</p>
-  <p><strong>ID Artista:</strong> {{ data.artistId || '-' }}</p>
-  <p><strong>Data di nascita:</strong> {{ data.eta || '-' }}</p>
-  <p><strong>Inizio:</strong> {{ data.start | date: 'fullDate' }} • {{ data.start | date: 'shortTime' }}</p>
-  <p><strong>Fine:</strong> {{ data.end | date: 'fullDate' }} • {{ data.end | date: 'shortTime' }}</p>
-  <p><strong>Stato:</strong> {{ data.status | titlecase }}</p>
-  <p><strong>Creato il:</strong> {{ data.createdAt | date: 'fullDate' }} • {{ data.createdAt | date: 'shortTime' }}</p>
-  <p><strong>Aggiornato il:</strong> {{ data.updatedAt | date: 'fullDate' }} • {{ data.updatedAt | date: 'shortTime' }}</p>
+<mat-dialog-content class="dialog-content">
+  <section class="hero">
+    <div class="kind-pill">{{ kindLabel() }}</div>
+    <div class="time-grid">
+      <div class="time-item">
+        <span class="label">Inizio</span>
+        <strong>{{ data.start | date: 'EEEE d MMMM y' }}</strong>
+        <span>{{ data.start | date: 'HH:mm' }}</span>
+      </div>
+      <div class="time-item">
+        <span class="label">Fine</span>
+        <strong>{{ data.end | date: 'EEEE d MMMM y' }}</strong>
+        <span>{{ data.end | date: 'HH:mm' }}</span>
+      </div>
+      <div class="time-item">
+        <span class="label">Durata</span>
+        <strong>{{ durationLabel() }}</strong>
+      </div>
+    </div>
+  </section>
 
-  <p><strong>Note:</strong></p>
-  <p>{{ data.notes || '—' }}</p>
+  <section class="cards-grid">
+    <article class="info-card">
+      <h3>Pagamento</h3>
+      <div class="kv"><span>Totale</span><strong>{{ totalPriceLabel() }}</strong></div>
+      <div class="kv"><span>Pagato</span><strong>{{ paidLabel() }}</strong></div>
+      <div class="kv"><span>Acconto richiesto</span><strong>{{ depositLabel() }}</strong></div>
+      <div class="kv"><span>Residuo</span><strong>{{ remainingLabel() }}</strong></div>
+    </article>
+
+    <article class="info-card">
+      <h3>Dettagli</h3>
+      <div class="kv"><span>Tipo</span><strong>{{ kindLabel() }}</strong></div>
+      <div class="kv"><span>Artista</span><strong>{{ $any(data).artistName || '-' }}</strong></div>
+      <div class="kv"><span>Cliente</span><strong>{{ $any(data).clientName || '-' }}</strong></div>
+    </article>
+  </section>
+
+  <section class="info-card notes-card">
+    <h3>Note</h3>
+    <p>{{ notesText() }}</p>
+  </section>
+
+  <section class="meta-row">
+    <span>Creato: {{ data.createdAt | date: 'd MMM y, HH:mm' }}</span>
+    <span>Aggiornato: {{ data.updatedAt | date: 'd MMM y, HH:mm' }}</span>
+  </section>
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Chiudi</button>
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-stroked-button mat-dialog-close>Chiudi</button>
 </mat-dialog-actions>

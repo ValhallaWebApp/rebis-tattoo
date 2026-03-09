@@ -12,7 +12,9 @@
         <button
           mat-stroked-button
           class="day"
+          [class.disabled]="!isDayEnabled(d.value)"
           [class.active]="selectedDate() === d.value"
+          [disabled]="!isDayEnabled(d.value)"
           [attr.aria-pressed]="selectedDate() === d.value"
           (click)="pickDate(d.value)">
           {{ d.label }}
@@ -23,6 +25,12 @@
     <mat-divider></mat-divider>
 
     <div class="label">Orari disponibili</div>
+    @if (loadingDayAvailability()) {
+      <div class="loading loading--light">
+        <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+        <span>Verifico i giorni disponibili per l'artista...</span>
+      </div>
+    }
 
     @if (loading()) {
       <div class="loading">

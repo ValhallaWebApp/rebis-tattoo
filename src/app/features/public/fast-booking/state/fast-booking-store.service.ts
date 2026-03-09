@@ -27,6 +27,13 @@ type HomeSeed = {
   comments?: string | null;
 };
 
+type ChatbotBookingSeed = {
+  artistId?: string | null;
+  date?: string | null; // YYYY-MM-DD o ISO
+  time?: string | null; // HH:mm opzionale se date e ISO
+  description?: string | null;
+};
+
 type FastBookingDraft = {
   artistId: string | null;
   artistName: string | null;
@@ -83,6 +90,8 @@ export class FastBookingStore {
   readonly selectedDate = signal<string | null>(null); // "YYYY-MM-DD"
   readonly slots = signal<Slot[]>([]);
   readonly loadingSlots = signal(false);
+  readonly loadingDayAvailability = signal(false);
+  readonly dayAvailability = signal<Record<string, boolean>>({});
   readonly hasEventBlock = signal(false);
   readonly blockingEventId = signal<string | null>(null);
 
@@ -181,6 +190,18 @@ effect(() => {
       queueMicrotask(() => this.fetchSlots(artistId, date));
     });
 
+    // prefetch disponibilita giorni (oggi + 6) quando entri nello step when
+    effect(() => {
+      const s = this.step();
+      const artistId = this.draft().artistId;
+      if (s !== 'when') return;
+      if (!artistId) {
+        this.dayAvailability.set({});
+        return;
+      }
+      queueMicrotask(() => this.prefetchDayAvailability(artistId));
+    });
+
     queueMicrotask(() => this.hydrateFromHomeSeed());
 
   }
@@ -257,6 +278,7 @@ effect(() => {
     // reset step when
     this.selectedDate.set(null);
     this.slots.set([]);
+    this.dayAvailability.set({});
     this.hasEventBlock.set(false);
     this.blockingEventId.set(null);
     this.setWhen(null, null);
@@ -264,6 +286,7 @@ effect(() => {
 
   // ACTIONS: when
   setDate(date: string | null) {
+    if (date && this.dayAvailability()[date] === false) return;
     this.selectedDate.set(date);
     this.hasEventBlock.set(false);
     this.blockingEventId.set(null);
@@ -369,6 +392,66 @@ effect(() => {
     } finally {
       this.loadingSlots.set(false);
     }
+  }
+
+  isDateEnabled(date: string): boolean {
+    const map = this.dayAvailability();
+    if (!Object.keys(map).length) return true;
+    return map[date] !== false;
+  }
+
+  private async prefetchDayAvailability(artistId: string): Promise<void> {
+    if (this.isE2EMockMode) {
+      const fake: Record<string, boolean> = {};
+      for (const day of this.nextDays(7)) fake[day] = true;
+      this.dayAvailability.set(fake);
+      return;
+    }
+
+    try {
+      this.loadingDayAvailability.set(true);
+      const duration = this.durationMin();
+      const dates = this.nextDays(7);
+      const checks = await Promise.all(
+        dates.map(async (day) => {
+          const slots = await this.bookingService.getFreeSlotsInDay(artistId, day, duration);
+          return { day, enabled: (slots ?? []).length > 0 };
+        })
+      );
+      const map = checks.reduce((acc, item) => {
+        acc[item.day] = item.enabled;
+        return acc;
+      }, {} as Record<string, boolean>);
+      this.dayAvailability.set(map);
+
+      const selected = this.selectedDate();
+      if (selected && map[selected] === false) {
+        this.selectedDate.set(null);
+        this.slots.set([]);
+        this.hasEventBlock.set(false);
+        this.blockingEventId.set(null);
+        this.draft.update((d) => ({ ...d, date: null, time: null }));
+      }
+    } catch {
+      // fallback UX: non bloccare i giorni se il prefetch fallisce
+      this.dayAvailability.set({});
+    } finally {
+      this.loadingDayAvailability.set(false);
+    }
+  }
+
+  private nextDays(count: number): string[] {
+    const out: string[] = [];
+    const now = new Date();
+    for (let i = 0; i < count; i++) {
+      const d = new Date(now);
+      d.setDate(now.getDate() + i);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      out.push(`${yyyy}-${mm}-${dd}`);
+    }
+    return out;
   }
   // PAYMENT FLOW (REAL DATA + hook)
   async startPayment() {
@@ -554,6 +637,7 @@ resetAll() {
   this.paymentIntentId.set(null);
   this.selectedDate.set(null);
   this.slots.set([]);
+  this.dayAvailability.set({});
   this.hasEventBlock.set(false);
   this.blockingEventId.set(null);
 
@@ -618,6 +702,7 @@ seedFromHome(seed: HomeSeed) {
   // reset data slots
   this.selectedDate.set(null);
   this.slots.set([]);
+  this.dayAvailability.set({});
   this.hasEventBlock.set(false);
   this.blockingEventId.set(null);
 
@@ -693,6 +778,65 @@ applyHomeSeed(seed: HomeSeed, opts?: { overwrite?: boolean }) {
       ? description
       : (d.description && String(d.description).trim() ? d.description : description),
   }));
+}
+
+seedFromChatbot(seed: ChatbotBookingSeed): void {
+  const artistId = String(seed.artistId ?? '').trim() || null;
+  const parsed = this.parseDateTimeSeed(seed.date ?? null, seed.time ?? null);
+  const description = String(seed.description ?? '').trim() || null;
+
+  this.draft.update((d) => ({
+    ...d,
+    artistId: artistId ?? d.artistId,
+    date: parsed.date ?? d.date,
+    time: parsed.time ?? d.time,
+    description: description ?? d.description
+  }));
+
+  if (parsed.date) {
+    this.selectedDate.set(parsed.date);
+  }
+
+  // Navigazione automatica step in base al livello di precompilazione.
+  const nextDraft = this.draft();
+  if (nextDraft.artistId && nextDraft.date && nextDraft.time) {
+    this.step.set('details');
+    return;
+  }
+  if (nextDraft.artistId) {
+    this.step.set('when');
+    return;
+  }
+  this.step.set('artist');
+}
+
+private parseDateTimeSeed(dateInput: string | null, timeInput: string | null): { date: string | null; time: string | null } {
+  const rawDate = String(dateInput ?? '').trim();
+  const rawTime = String(timeInput ?? '').trim();
+
+  if (!rawDate) {
+    return { date: null, time: rawTime || null };
+  }
+
+  // Caso già YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+    const safeTime = /^\d{2}:\d{2}$/.test(rawTime) ? rawTime : null;
+    return { date: rawDate, time: safeTime };
+  }
+
+  // Caso ISO completo
+  const parsed = new Date(rawDate);
+  if (Number.isNaN(parsed.getTime())) {
+    return { date: null, time: rawTime || null };
+  }
+
+  const yyyy = parsed.getFullYear();
+  const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+  const dd = String(parsed.getDate()).padStart(2, '0');
+  const hh = String(parsed.getHours()).padStart(2, '0');
+  const min = String(parsed.getMinutes()).padStart(2, '0');
+
+  return { date: `${yyyy}-${mm}-${dd}`, time: /^\d{2}:\d{2}$/.test(rawTime) ? rawTime : `${hh}:${min}` };
 }
 
 private getErrorMessage(error: unknown, fallback: string): string {

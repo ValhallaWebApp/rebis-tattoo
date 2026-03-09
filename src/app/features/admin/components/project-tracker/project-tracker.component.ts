@@ -11,7 +11,7 @@ import { ProjectsService, TattooProject, ProjectStatus } from '../../../../core/
 import { BookingService } from '../../../../core/services/bookings/booking.service';
 import { SessionService, Session } from '../../../../core/services/session/session.service';
 import { StaffService, StaffMember } from '../../../../core/services/staff/staff.service';
-import { ClientService, Client } from '../../../../core/services/clients/client.service';
+import { ClientService, Client, getClientDisplayName } from '../../../../core/services/clients/client.service';
 import { DateTimeHelperService } from '../../../../core/services/helpers/date-time-helper.service';
 import { CurrencyHelperService } from '../../../../core/services/helpers/currency-helper.service';
 import { BackofficeAccessService } from '../../../../core/services/helpers/backoffice-access.service';
@@ -438,8 +438,7 @@ export class ProjectTrackerComponent {
     const id = String(clientId ?? '').trim();
     if (!id) return '-';
     const c = clientMap.get(id);
-    const full = `${(c as any)?.name ?? ''} ${(c as any)?.surname ?? ''}`.trim();
-    return full || (c as any)?.email || (c as any)?.phone || id;
+    return getClientDisplayName(c, id);
   }
 
   private num(v: any): number | undefined {

@@ -9,7 +9,7 @@
         <img src="/loghi/logo-white.jpg" alt="REBIS TATTOO" class="logo-img" />
       </a>
 
-      <ng-container *ngIf="navItem$ | async as items">
+      <ng-container *ngIf="menuItems() as items">
         <nav class="desktop-nav">
           <ng-container *ngFor="let item of items">
             <ng-container *ngIf="item.children?.length; else noChildren">
@@ -33,7 +33,7 @@
       </ng-container>
 
       <div class="toolbar-actions">
-        <div class="notifications-wrapper" [matMenuTriggerFor]="notifMenu" matTooltip="Notifiche recenti">
+        <div class="notifications-wrapper" [matMenuTriggerFor]="notifMenu" [matTooltip]="lang.t('app.notifications.tooltip')">
           <button mat-icon-button>
             <mat-icon>notifications</mat-icon>
           </button>
@@ -50,7 +50,7 @@
           <ng-container *ngIf="notifications$ | async as notifications">
             <button mat-menu-item (click)="markAllNotificationsAsRead()" *ngIf="notifications.length > 0">
               <mat-icon>done_all</mat-icon>
-              <span>Segna tutte come lette</span>
+              <span>{{ lang.t('app.notifications.markAllRead') }}</span>
             </button>
 
             <ng-container *ngIf="notifications.length > 0; else noNotif">
@@ -78,12 +78,12 @@
           <ng-template #noNotif>
             <button mat-menu-item disabled>
               <mat-icon>notifications_off</mat-icon>
-              <span>Nessuna notifica</span>
+              <span>{{ lang.t('app.notifications.empty') }}</span>
             </button>
           </ng-template>
         </mat-menu>
 
-        <button mat-icon-button color="warn" (click)="logout()" matTooltip="Logout">
+        <button mat-icon-button color="warn" (click)="logout()" [matTooltip]="lang.t('app.auth.logout')">
           <mat-icon>logout</mat-icon>
         </button>
       </div>
@@ -94,12 +94,13 @@
     <mat-sidenav
       #sidenav
       [mode]="modeSidenav"
-      [(opened)]="isMenuOpen"
+      [opened]="isMenuOpen()"
+      (openedChange)="onMenuOpenChange($event)"
       (closed)="closeMenu()"
       class="mobile-sidenav"
     >
       <mat-nav-list>
-        <ng-container *ngIf="navItem$ | async as items">
+        <ng-container *ngIf="menuItems() as items">
           <ng-container *ngFor="let item of items">
             <ng-container *ngIf="item.children?.length; else singleLink">
               <mat-expansion-panel>
@@ -132,16 +133,16 @@
         </ng-container>
 
         <div class="auth-section">
-          <ng-container *ngIf="isLoggedIn; else loginBtnMobile">
+          <ng-container *ngIf="isLoggedIn(); else loginBtnMobile">
             <button mat-stroked-button color="warn" class="logout-btn" (click)="logout()">
               <mat-icon>logout</mat-icon>
-              Logout
+              {{ lang.t('app.auth.logout') }}
             </button>
           </ng-container>
           <ng-template #loginBtnMobile>
             <button mat-stroked-button color="primary" class="login-btn" routerLink="/login">
               <mat-icon>login</mat-icon>
-              Login
+              {{ lang.t('app.auth.login') }}
             </button>
           </ng-template>
         </div>
@@ -149,7 +150,7 @@
     </mat-sidenav>
 
     <mat-sidenav-content>
-      <app-chat-bot-popup></app-chat-bot-popup>
+      <app-rebis-chatbot-popup *ngIf="showChatbot()"></app-rebis-chatbot-popup>
       <router-outlet></router-outlet>
     </mat-sidenav-content>
   </mat-sidenav-container>

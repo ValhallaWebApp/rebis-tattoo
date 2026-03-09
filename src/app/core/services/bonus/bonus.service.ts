@@ -23,6 +23,8 @@ import { environment } from '../../../../environment';
 import { mapHttpError } from '../../http/http-error.mapper';
 import { withCriticalHttpPolicy } from '../../http/http-policy';
 import {
+  BonusCreateGiftCardRequestDto,
+  BonusCreateGiftCardResponseDto,
   BonusRedeemRequestDto,
   BonusRedeemResponseDto
 } from '../../models/api/payment-bridge.dto';
@@ -46,11 +48,30 @@ export interface GiftCard {
   code: string;
   initialAmount: number;
   balance: number;
+  redeemedAmount: number;
   note?: string;
   active: boolean;
+  status: 'active' | 'partially_redeemed' | 'redeemed' | 'expired' | 'disabled';
+  source: 'client_purchase' | 'admin_manual' | 'system' | string;
+  buyerUserId?: string | null;
+  createdByRole?: string;
+  createdByDisplay?: string;
+  gifted: boolean;
+  giftedToUserId?: string | null;
+  giftedToName?: string | null;
+  giftedToEmail?: string | null;
+  giftedToPhone?: string | null;
+  giftedAt?: string | null;
+  giftMessage?: string;
+  paymentIntentId?: string | null;
+  redeemed: boolean;
+  lastRedeemAmount?: number | null;
   redeemedBy?: string | null;
   redeemedAt?: string | null;
+  firstRedeemedAt?: string | null;
+  lastRedeemedAt?: string | null;
   usesCount: number;
+  maxUses?: number | null;
   expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -288,7 +309,7 @@ export class BonusService {
   }
 
   async createGiftCard(input: {
-    code?: string;
+    name?: string;
     amount: number;
     expiresAt?: string | null;
     note?: string;
@@ -301,7 +322,7 @@ export class BonusService {
       throw new Error(this.t('bonus.service.errors.invalidGiftAmount'));
     }
 
-    const code = this.normalizeCode(input.code || this.randomCode('GIFT'));
+    const code = this.normalizeCode(await this.generateGiftCardCodeFromBackend(input.name));
     await this.ensureCodeNotUsed('giftCards', code);
 
     const node = push(ref(this.db, `${this.path}/giftCards`));
@@ -312,11 +333,30 @@ export class BonusService {
       code,
       initialAmount: Math.round(amount * 100) / 100,
       balance: Math.round(amount * 100) / 100,
+      redeemedAmount: 0,
       note: input.note?.trim() || undefined,
       active: true,
+      status: 'active',
+      source: 'admin_manual',
+      buyerUserId: null,
+      createdByRole: actor.role,
+      createdByDisplay: actor.uid,
+      gifted: false,
+      giftedToUserId: null,
+      giftedToName: null,
+      giftedToEmail: null,
+      giftedToPhone: null,
+      giftedAt: null,
+      giftMessage: undefined,
+      paymentIntentId: null,
+      redeemed: false,
+      lastRedeemAmount: null,
       redeemedBy: null,
       redeemedAt: null,
+      firstRedeemedAt: null,
+      lastRedeemedAt: null,
       usesCount: 0,
+      maxUses: null,
       expiresAt: this.normalizeDate(input.expiresAt),
       createdAt: now,
       updatedAt: now,
@@ -415,9 +455,88 @@ export class BonusService {
     }
   }
 
+  async createGiftCardFromPurchase(input: {
+    name?: string;
+    amount: number;
+    note?: string;
+    expiresAt?: string | null;
+    buyerUserId?: string;
+    source?: 'client_purchase' | 'admin_manual' | 'system' | string;
+    paymentIntentId?: string;
+    giftedToUserId?: string;
+    giftedToName?: string;
+    giftedToEmail?: string;
+    giftedToPhone?: string;
+    giftMessage?: string;
+  }): Promise<{ giftId: string; code: string; amount: number }> {
+    const actor = await this.requireLogged();
+    const amount = Number(input.amount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error(this.t('bonus.service.errors.invalidGiftAmount'));
+    }
+
+    const headers = await this.getBackendAuthHeaders();
+    const request: BonusCreateGiftCardRequestDto = {
+      name: String(input.name ?? '').trim() || 'Gift Card Cliente',
+      amount: this.roundMoney(amount),
+      note: String(input.note ?? '').trim() || undefined,
+      expiresAt: input.expiresAt ?? null,
+      buyerUserId: String(input.buyerUserId ?? '').trim() || actor.uid,
+      source: String(input.source ?? '').trim() || 'client_purchase',
+      paymentIntentId: String(input.paymentIntentId ?? '').trim() || undefined,
+      giftedToUserId: String(input.giftedToUserId ?? '').trim() || undefined,
+      giftedToName: String(input.giftedToName ?? '').trim() || undefined,
+      giftedToEmail: String(input.giftedToEmail ?? '').trim() || undefined,
+      giftedToPhone: String(input.giftedToPhone ?? '').trim() || undefined,
+      giftMessage: String(input.giftMessage ?? '').trim() || undefined
+    };
+
+    let response: BonusCreateGiftCardResponseDto;
+    try {
+      response = await firstValueFrom(
+        this.http.post<BonusCreateGiftCardResponseDto>(
+          `${this.paymentApiBaseUrl}/bonus/create-gift-card`,
+          request,
+          { headers }
+        ).pipe(withCriticalHttpPolicy())
+      );
+    } catch (error) {
+      const mapped = mapHttpError(error, {
+        fallbackMessage: this.t('bonus.service.feedback.giftCreateError'),
+        timeoutMessage: this.t('bonus.service.feedback.giftCreateError'),
+        networkMessage: this.t('bonus.service.feedback.giftCreateError'),
+        unauthorizedMessage: this.t('bonus.service.errors.notAuthenticated'),
+        statusMessages: {
+          503: 'Backend pagamenti non configurato (Firebase Admin credenziali mancanti).'
+        }
+      });
+      throw new Error(mapped.message);
+    }
+
+    if (!response?.success) {
+      throw new Error(this.t('bonus.service.feedback.giftCreateError'));
+    }
+
+    const code = this.normalizeCode(response.code);
+    if (!code) {
+      throw new Error(this.t('bonus.service.feedback.giftCreateError'));
+    }
+
+    return {
+      giftId: String(response.giftId || ''),
+      code,
+      amount: this.roundMoney(response.amount)
+    };
+  }
+
   private async getBackendAuthHeaders(): Promise<HttpHeaders> {
     const token = await this.firebaseAuth.currentUser?.getIdToken();
-    if (!token) throw new Error(this.t('bonus.service.errors.notAuthenticated'));
+    // Se currentUser non e ancora pronto, lasciamo che l'interceptor aggiunga il token.
+    if (!token) {
+      return new HttpHeaders({
+        'Content-Type': 'application/json'
+      });
+    }
 
     return new HttpHeaders({
       Authorization: `Bearer ${token}`,
@@ -491,6 +610,34 @@ export class BonusService {
       amount: this.roundMoney(response.amount),
       walletBalance: this.roundMoney(response.walletBalance)
     };
+  }
+
+  private async generateGiftCardCodeFromBackend(name?: string): Promise<string> {
+    const headers = await this.getBackendAuthHeaders();
+    let response: { success?: boolean; code?: string } | undefined;
+    try {
+      response = await firstValueFrom(
+        this.http.post<{ success?: boolean; code?: string }>(
+          `${this.paymentApiBaseUrl}/gift-cards/generate-code`,
+          { name: String(name ?? '').trim() || 'Gift Card' },
+          { headers }
+        ).pipe(withCriticalHttpPolicy())
+      );
+    } catch (error) {
+      const mapped = mapHttpError(error, {
+        fallbackMessage: this.t('bonus.service.feedback.giftCreateError'),
+        timeoutMessage: this.t('bonus.service.feedback.giftCreateError'),
+        networkMessage: this.t('bonus.service.feedback.giftCreateError'),
+        unauthorizedMessage: this.t('bonus.service.errors.notAuthenticated')
+      });
+      throw new Error(mapped.message);
+    }
+
+    const generatedCode = this.normalizeCode(String(response?.code ?? ''));
+    if (!response?.success || !generatedCode) {
+      throw new Error(this.t('bonus.service.feedback.giftCreateError'));
+    }
+    return generatedCode;
   }
 
   private mapBonusBackendErrorToMessage(error: unknown, kind: 'promo' | 'gift'): string {
@@ -608,22 +755,76 @@ export class BonusService {
   private toGiftCard(id: string, item: Partial<GiftCard>): GiftCard {
     const initial = this.roundMoney(Number(item.initialAmount ?? item.balance ?? 0));
     const balance = this.roundMoney(Number(item.balance ?? initial));
+    const redeemedAmount = this.roundMoney(Number(item.redeemedAmount ?? Math.max(initial - balance, 0)));
+    const active = item.active !== false;
+    const usesCount = Number(item.usesCount ?? 0);
+    const expiresAt = item.expiresAt ? String(item.expiresAt) : null;
+    const redeemed = item.redeemed === true || balance <= 0;
+    const status = this.resolveGiftStatus({
+      active,
+      balance,
+      initialAmount: initial,
+      redeemed,
+      expiresAt,
+      status: item.status
+    });
 
     return {
       id,
       code: this.normalizeCode(item.code ?? ''),
       initialAmount: initial,
       balance,
+      redeemedAmount,
       note: item.note ? String(item.note) : undefined,
-      active: item.active !== false,
+      active,
+      status,
+      source: String(item.source ?? 'system'),
+      buyerUserId: item.buyerUserId ? String(item.buyerUserId) : null,
+      createdByRole: item.createdByRole ? String(item.createdByRole) : undefined,
+      createdByDisplay: item.createdByDisplay ? String(item.createdByDisplay) : undefined,
+      gifted: item.gifted === true,
+      giftedToUserId: item.giftedToUserId ? String(item.giftedToUserId) : null,
+      giftedToName: item.giftedToName ? String(item.giftedToName) : null,
+      giftedToEmail: item.giftedToEmail ? String(item.giftedToEmail) : null,
+      giftedToPhone: item.giftedToPhone ? String(item.giftedToPhone) : null,
+      giftedAt: item.giftedAt ? String(item.giftedAt) : null,
+      giftMessage: item.giftMessage ? String(item.giftMessage) : undefined,
+      paymentIntentId: item.paymentIntentId ? String(item.paymentIntentId) : null,
+      redeemed,
+      lastRedeemAmount:
+        item.lastRedeemAmount === undefined || item.lastRedeemAmount === null
+          ? null
+          : this.roundMoney(Number(item.lastRedeemAmount)),
       redeemedBy: item.redeemedBy ? String(item.redeemedBy) : null,
       redeemedAt: item.redeemedAt ? String(item.redeemedAt) : null,
-      usesCount: Number(item.usesCount ?? 0),
-      expiresAt: item.expiresAt ? String(item.expiresAt) : null,
+      firstRedeemedAt: item.firstRedeemedAt ? String(item.firstRedeemedAt) : null,
+      lastRedeemedAt: item.lastRedeemedAt ? String(item.lastRedeemedAt) : null,
+      usesCount,
+      maxUses: item.maxUses === undefined || item.maxUses === null ? null : Number(item.maxUses),
+      expiresAt,
       createdAt: String(item.createdAt ?? new Date(0).toISOString()),
       updatedAt: String(item.updatedAt ?? item.createdAt ?? new Date(0).toISOString()),
       createdBy: String(item.createdBy ?? 'system')
     };
+  }
+
+  private resolveGiftStatus(input: {
+    active: boolean;
+    balance: number;
+    initialAmount: number;
+    redeemed: boolean;
+    expiresAt: string | null;
+    status?: string;
+  }): GiftCard['status'] {
+    const forced = String(input.status ?? '').trim() as GiftCard['status'];
+    if (forced === 'active' || forced === 'partially_redeemed' || forced === 'redeemed' || forced === 'expired' || forced === 'disabled') {
+      return forced;
+    }
+    if (!input.active) return 'disabled';
+    if (input.expiresAt && input.expiresAt < new Date().toISOString()) return 'expired';
+    if (input.redeemed || input.balance <= 0) return 'redeemed';
+    if (input.balance < input.initialAmount) return 'partially_redeemed';
+    return 'active';
   }
 
   private toWallet(userId: string, item: Partial<UserWallet>): UserWallet {

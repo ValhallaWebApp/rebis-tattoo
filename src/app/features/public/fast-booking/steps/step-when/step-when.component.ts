@@ -24,6 +24,7 @@ export class StepWhenComponent {
   readonly selectedDate = this.store.selectedDate;
   readonly slots = this.store.slots;
   readonly loading = this.store.loadingSlots;
+  readonly loadingDayAvailability = this.store.loadingDayAvailability;
   readonly error = this.store.error;
   readonly hasEventBlock = this.store.hasEventBlock;
   readonly blockingEventId = this.store.blockingEventId;
@@ -66,6 +67,10 @@ export class StepWhenComponent {
 
   pickDate(value: string) {
     this.store.setDate(value);
+  }
+
+  isDayEnabled(value: string): boolean {
+    return this.store.isDateEnabled(value);
   }
 
   pickTime(time: string) {

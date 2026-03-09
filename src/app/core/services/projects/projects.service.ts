@@ -12,7 +12,7 @@ import {
   orderByChild,
   equalTo
 } from '@angular/fire/database';
-import { map, Observable } from 'rxjs';
+import { combineLatest, map, Observable } from 'rxjs';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuthService } from '../auth/auth.service';
 
@@ -127,8 +127,28 @@ export class ProjectsService {
   }
 
   getPublicProjects(opts: { onlyOnce?: boolean } = {}): Observable<TattooProject[]> {
-    const publicProjectsRef = query(ref(this.db, this.path), orderByChild('isPublic'), equalTo(true));
-    return this.streamProjects(publicProjectsRef, opts);
+    const qPublicBool = query(ref(this.db, this.path), orderByChild('isPublic'), equalTo(true));
+    const qPublicString = query(ref(this.db, this.path), orderByChild('isPublic'), equalTo('true'));
+    const qLegacyBool = query(ref(this.db, this.path), orderByChild('is_Public'), equalTo(true));
+    const qLegacyString = query(ref(this.db, this.path), orderByChild('is_Public'), equalTo('true'));
+
+    return combineLatest([
+      this.streamProjects(qPublicBool, opts),
+      this.streamProjects(qPublicString, opts),
+      this.streamProjects(qLegacyBool, opts),
+      this.streamProjects(qLegacyString, opts)
+    ]).pipe(
+      map(([a, b, c, d]) => {
+        const out = new Map<string, TattooProject>();
+        for (const p of [...a, ...b, ...c, ...d]) {
+          const id = String((p as any)?.id ?? '').trim();
+          if (!id) continue;
+          if (!this.isPublicEnabled((p as any)?.isPublic, (p as any)?.is_Public)) continue;
+          out.set(id, p);
+        }
+        return Array.from(out.values());
+      })
+    );
   }
 
   private streamProjects(projectsRef: any, opts: { onlyOnce?: boolean } = {}): Observable<TattooProject[]> {
@@ -210,6 +230,7 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
       id: node.key!,
       createdAt: data.createdAt ?? now,
       updatedAt: data.updatedAt ?? now,
+      isPublic: (data as any).isPublic === true,
       status: (data as any).status ?? 'draft',
       sessionIds: Array.isArray((data as any).sessionIds) ? (data as any).sessionIds : []
     };
@@ -367,6 +388,19 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
       return;
     }
     this.ui.success(message);
+  }
+
+  private isPublicEnabled(value: unknown, legacyValue?: unknown): boolean {
+    const normalize = (v: unknown): boolean => {
+      if (v === true) return true;
+      if (typeof v === 'string') {
+        const normalized = v.trim().toLowerCase();
+        return normalized === 'true' || normalized === '1' || normalized === 'yes';
+      }
+      if (typeof v === 'number') return v === 1;
+      return false;
+    };
+    return normalize(value) || normalize(legacyValue);
   }
 
   private stripUndef<T extends Record<string, any>>(o: T): T {

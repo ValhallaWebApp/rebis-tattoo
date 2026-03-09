@@ -44,6 +44,7 @@ export class UsersManagementComponent implements OnInit {
   pageSizeOptions: number[] = [5, 15, 20];
   pageSize = 15;
   currentPage = 1;
+  selectedStaffCandidateId = '';
   updatingRoleByUserId: Record<string, boolean> = {};
   updatingRolePermissionByUserId: Record<string, boolean> = {};
   updatingStatusByUserId: Record<string, boolean> = {};
@@ -170,6 +171,13 @@ export class UsersManagementComponent implements OnInit {
     return this.filteredUsers.slice(start, start + this.pageSize);
   }
 
+  get staffCreationCandidates(): User[] {
+    return (this.allUsers ?? []).filter((user) => {
+      const role = this.displayRole(user);
+      return role === 'client';
+    });
+  }
+
   onPageSizeChange(size: number): void {
     if (!this.pageSizeOptions.includes(size)) return;
     this.pageSize = size;
@@ -234,6 +242,16 @@ export class UsersManagementComponent implements OnInit {
     } finally {
       this.updatingRoleByUserId[user.id] = false;
     }
+  }
+
+  async createStaffFromSelected(): Promise<void> {
+    if (!this.userService.isCurrentUserAdmin()) return;
+    const selectedId = String(this.selectedStaffCandidateId ?? '').trim();
+    if (!selectedId) return;
+    const candidate = (this.allUsers ?? []).find((user) => String(user.id ?? '').trim() === selectedId);
+    if (!candidate) return;
+    await this.changeUserRole(candidate, 'staff');
+    this.selectedStaffCandidateId = '';
   }
 
   roleOptionsFor(_user: User): Array<'admin' | 'client' | 'staff'> {

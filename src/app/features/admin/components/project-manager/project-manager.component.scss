@@ -271,6 +271,21 @@
   justify-content: flex-end;
 
   button { border-radius: 14px; }
+
+  .action--white {
+    background: #ffffff;
+    color: #111111;
+    border-color: #d7d7d7;
+
+    mat-icon {
+      color: #111111;
+    }
+
+    &:hover:not([disabled]) {
+      background: #f3f3f3;
+      border-color: #cfcfcf;
+    }
+  }
 }
 
 @media (max-width: 980px) { .actions { justify-content: flex-start; } }
@@ -313,6 +328,12 @@
   gap: 10px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--pm-border);
+}
+
+.box-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .box__title {

@@ -46,7 +46,10 @@ export class PaymentApiService {
       amount: payload.amount,
       bookingId: payload.bookingId.trim(),
       currency: payload.currency ?? 'eur',
-      description: payload.description
+      description: payload.description,
+      referenceType: payload.referenceType,
+      referenceId: payload.referenceId,
+      referenceLabel: payload.referenceLabel,
     };
 
     return this.http

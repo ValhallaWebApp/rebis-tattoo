@@ -1,0 +1,33 @@
+.pcd-content {
+  display: grid;
+  gap: 0.75rem;
+  min-width: min(92vw, 560px);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--app-main-text-muted, #666);
+}
+
+.amount-form mat-form-field {
+  width: 100%;
+}
+
+.actions-top {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.error {
+  margin: 0;
+  color: #b00020;
+  font-weight: 600;
+}
+
+.stripe-wrap {
+  border: 1px solid var(--glass-border, #ddd);
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: var(--glass-bg, #fff);
+}
+

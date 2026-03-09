@@ -1,15 +1,57 @@
 .bonus-page {
-  padding: 20px;
+  width: 100%;
+  margin: 0 auto;
+  padding: clamp(0.75rem, 1.2vw, 1.25rem);
+  min-height: 100vh;
+  box-sizing: border-box;
   display: grid;
-  gap: 16px;
+  gap: clamp(0.65rem, 1.2vw, 1rem);
+  align-content: start;
   color: var(--app-main-text);
   background: var(--app-main-bg);
   font-family: var(--font-base, "Inter", "Segoe UI", Arial, sans-serif);
 }
 
+.purchase-lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 12, 24, 0.58);
+  backdrop-filter: blur(4px);
+  pointer-events: all;
+}
+
+.purchase-lock-card {
+  width: min(92vw, 460px);
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 0.65rem;
+}
+
+.purchase-lock-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-family: 'Barlow Semi Condensed', sans-serif;
+}
+
+.purchase-lock-card p {
+  margin: 0;
+  color: var(--app-main-text-muted);
+  font-size: 0.92rem;
+}
+
 .bonus-header h2 {
   margin: 0;
-  font-size: 1.8rem;
+  font-size: clamp(1.35rem, 2.2vw, 1.8rem);
   font-weight: 900;
   letter-spacing: 0.8px;
   text-transform: uppercase;
@@ -17,7 +59,7 @@
 }
 
 .bonus-header p {
-  margin: 6px 0 0;
+  margin: 0.35rem 0 0;
   color: var(--app-main-text-muted);
   font-size: 0.98rem;
   font-family: var(--font-base, "Inter", "Segoe UI", Arial, sans-serif);
@@ -25,12 +67,12 @@
 
 .bonus-grid {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(0.65rem, 1vw, 0.9rem);
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
 .wallet-balance {
-  font-size: 1.8rem;
+  font-size: clamp(1.35rem, 2.2vw, 1.8rem);
   font-weight: 800;
   margin: 10px 0 4px;
   font-family: 'Barlow Semi Condensed', sans-serif;
@@ -38,12 +80,60 @@
 
 .action-form {
   display: grid;
-  gap: 12px;
+  gap: clamp(0.55rem, 0.9vw, 0.75rem);
+}
+
+.buy-form {
+  display: grid;
+  gap: 0.55rem;
+}
+
+::ng-deep .bonus-page .buy-form .mat-mdc-input-element,
+::ng-deep .bonus-page .buy-form .mat-mdc-select-value-text,
+::ng-deep .bonus-page .buy-form .mat-mdc-select-min-line,
+::ng-deep .bonus-page .buy-form .mat-mdc-select-arrow,
+::ng-deep .bonus-page .buy-form .mat-mdc-form-field-text-suffix,
+::ng-deep .bonus-page .buy-form .mdc-label,
+::ng-deep .bonus-page .buy-form .mat-mdc-checkbox label,
+::ng-deep .bonus-page .buy-form .mat-mdc-checkbox .mdc-label {
+  color: var(--app-main-text) !important;
+}
+
+::ng-deep .cdk-overlay-pane .mat-mdc-option .mdc-list-item__primary-text {
+  color: #fff !important;
+}
+
+::ng-deep .bonus-page .buy-form .mat-mdc-input-element::placeholder,
+::ng-deep .bonus-page .buy-form textarea.mat-mdc-input-element::placeholder {
+  color: var(--app-main-text-muted) !important;
+  opacity: 1;
+}
+
+::ng-deep .bonus-page .buy-form .mdc-floating-label {
+  color: var(--app-main-text-muted) !important;
+}
+
+::ng-deep .bonus-page .buy-form .mat-mdc-button-base {
+  color: var(--app-main-text) !important;
+}
+
+.quick-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.how-to-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.25rem;
+  color: var(--app-main-text-muted);
 }
 
 .ledger-list {
   display: grid;
-  gap: 10px;
+  gap: clamp(0.5rem, 0.9vw, 0.7rem);
 }
 
 .ledger-row {
@@ -53,7 +143,13 @@
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: clamp(0.55rem, 0.9vw, 0.7rem) clamp(0.65rem, 1vw, 0.8rem);
+}
+
+::ng-deep .bonus-page .mat-mdc-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-soft);
 }
 
 .code {
@@ -96,6 +192,23 @@
 
 @media (max-width: 720px) {
   .bonus-page {
-    padding: 14px;
+    width: 100%;
+    padding: 0.7rem;
+    gap: 0.55rem;
+  }
+
+  .bonus-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ledger-row {
+    align-items: flex-start;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1024px) {
+  .bonus-page {
+    width: min(100%, 940px);
+    padding: 0.95rem 1rem;
   }
 }

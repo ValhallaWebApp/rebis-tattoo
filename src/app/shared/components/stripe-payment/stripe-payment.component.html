@@ -2,7 +2,7 @@
 
 <button mat-raised-button color="primary"
         (click)="pay()"
-        [disabled]="paying">
+        [disabled]="paying || !elementReady">
   <mat-progress-spinner
     *ngIf="paying"
     diameter="18"

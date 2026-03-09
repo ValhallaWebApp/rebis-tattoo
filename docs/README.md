@@ -1,6 +1,13 @@
-﻿# Documentazione Frontend - Rebis Tattoo
+# Documentazione Frontend - Rebis Tattoo
 
 Documentazione aggiornata sul codice reale del repository `gestionale-tattuaggi`.
+
+## Percorso consigliato (2 minuti)
+1. `00-context-rapido.md`
+2. `01-architettura-frontend.md`
+3. `08-stato-progetto-e-cosa-fatto.md`
+4. `05-interfacce-e-contratti.md`
+5. `02-catalogo-servizi.md`
 
 ## Baseline tecnica (snapshot 2026-02-25)
 - Angular 18.2 (app ibrida: standalone + NgModule)
@@ -18,6 +25,7 @@ Dati di scansione utili (esclusi `node_modules/.git/.angular/functions/node_modu
 - File test `*.spec.ts`: `81`
 
 ## Indice documenti
+- `00-context-rapido.md`
 - `01-architettura-frontend.md`
 - `02-catalogo-servizi.md`
 - `03-gestione-utenti-e-ruoli.md`
@@ -43,3 +51,10 @@ Per dubbi, usare prima questi file di codice:
 - `src/app/core/services/**`
 - `database.rules.json`
 - `functions/index.js`
+
+## Indici veloci locali
+Nel root del progetto sono disponibili cache `.codex*` utili per orientamento rapido:
+- `.codex_docs_snippets.txt`
+- `.codex_filelist.txt`, `.codex_src_files.txt`
+- `.codex_services_index.json`, `.codex_service_public_methods.json`
+- `.codex_components.txt`, `.codex_features.txt`

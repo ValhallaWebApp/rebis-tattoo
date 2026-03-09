@@ -1,11 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
 
 import { AppComponent } from './app.component';
 import { AuthService } from './core/services/auth/auth.service';
-import { MenuService } from './core/services/menu/menu.service';
+import { AppMenuFacade } from './core/services/menu/app-menu.facade';
 import { NotificationService } from './core/services/notifications/notification.service';
 
 describe('AppComponent', () => {
@@ -14,8 +13,14 @@ describe('AppComponent', () => {
     logout: jasmine.createSpy('logout')
   };
 
-  const menuStub = {
-    getMenuByUser: jasmine.createSpy('getMenuByUser').and.returnValue(of([]))
+  const appMenuFacadeStub = {
+    menuItems: () => [],
+    isMenuOpen: () => false,
+    isLoggedIn: () => false,
+    userRole: () => 'public',
+    toggleMenu: jasmine.createSpy('toggleMenu'),
+    closeMenu: jasmine.createSpy('closeMenu'),
+    setMenuOpen: jasmine.createSpy('setMenuOpen')
   };
 
   const notificationStub = {
@@ -32,7 +37,7 @@ describe('AppComponent', () => {
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: authStub },
-        { provide: MenuService, useValue: menuStub },
+        { provide: AppMenuFacade, useValue: appMenuFacadeStub },
         { provide: NotificationService, useValue: notificationStub }
       ]
     }).compileComponents();

@@ -2,6 +2,19 @@
   display: block;
 }
 
+.kind-filter-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.9rem;
+  flex-wrap: wrap;
+}
+
+.kind-filter-toggle .is-active {
+  border-color: var(--app-status-info-text, #60a5fa);
+  color: var(--app-status-info-text, #60a5fa);
+  background: var(--app-status-info-bg, rgba(96, 165, 250, 0.16));
+}
+
 .kind-pill {
   display: inline-flex;
   align-items: center;
@@ -26,4 +39,104 @@
   background: var(--app-status-info-bg, rgba(96, 165, 250, 0.2));
   color: var(--app-status-info-text, #60a5fa);
   border-color: var(--app-status-info-text, #60a5fa);
+}
+
+.project-link-card {
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.18));
+  background: var(--glass-bg, rgba(255, 255, 255, 0.06));
+}
+
+.project-link-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.project-link-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.project-link-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  background: rgba(250, 204, 21, 0.16);
+  color: #facc15;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.project-link-artist {
+  font-size: 0.76rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.artist-link {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  margin: 0;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.artist-link.inline {
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.project-link-title {
+  margin-top: 0.35rem;
+  font-weight: 700;
+}
+
+.project-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.18));
+  background: var(--glass-bg, rgba(255, 255, 255, 0.08));
+  color: var(--app-main-text, #f3f4f7);
+  padding: 0.12rem 0.52rem;
+  font-size: 0.67rem;
+  font-weight: 700;
+}
+
+.project-status-pill[data-status='active'],
+.project-status-pill[data-status='completed'] {
+  border-color: var(--app-status-success-text, #22c55e);
+  color: var(--app-status-success-text, #22c55e);
+  background: var(--app-status-success-bg, rgba(34, 197, 94, 0.16));
+}
+
+.project-status-pill[data-status='healing'],
+.project-status-pill[data-status='scheduled'] {
+  border-color: var(--app-status-info-text, #60a5fa);
+  color: var(--app-status-info-text, #60a5fa);
+  background: var(--app-status-info-bg, rgba(96, 165, 250, 0.16));
+}
+
+.project-status-pill[data-status='cancelled'] {
+  border-color: var(--app-status-danger-text, #f87171);
+  color: var(--app-status-danger-text, #f87171);
+  background: var(--app-status-danger-bg, rgba(248, 113, 113, 0.16));
 }

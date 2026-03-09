@@ -1,0 +1,41 @@
+<h2 mat-dialog-title>{{ data.title }}</h2>
+
+<mat-dialog-content class="pcd-content">
+  <p class="subtitle" *ngIf="data.subtitle">{{ data.subtitle }}</p>
+
+  <form [formGroup]="form" class="amount-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Importo da incassare (EUR)</mat-label>
+      <input matInput type="number" min="0.5" step="0.5" formControlName="amountEuro" />
+      <mat-error *ngIf="form.controls.amountEuro.invalid">Inserisci un importo valido.</mat-error>
+    </mat-form-field>
+  </form>
+
+  <div class="actions-top">
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      (click)="createIntent()"
+      [disabled]="form.invalid || creatingIntent"
+    >
+      {{ creatingIntent ? 'Creazione...' : 'Crea pagamento' }}
+    </button>
+  </div>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <div class="stripe-wrap" *ngIf="clientSecret">
+    <app-stripe-payment
+      [publishableKey]="publishableKey"
+      [clientSecret]="clientSecret"
+      (paymentSuccess)="onStripeSuccess()"
+      (paymentError)="onStripeError($event)"
+    ></app-stripe-payment>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="close()">Chiudi</button>
+</mat-dialog-actions>
+

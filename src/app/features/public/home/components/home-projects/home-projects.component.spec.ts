@@ -11,7 +11,7 @@ describe('HomeProjectsComponent', () => {
   let fixture: ComponentFixture<HomeProjectsComponent>;
 
   const projectsServiceStub = {
-    getProjects: () => of([])
+    getPublicProjects: () => of([])
   };
 
   const languageServiceStub = {

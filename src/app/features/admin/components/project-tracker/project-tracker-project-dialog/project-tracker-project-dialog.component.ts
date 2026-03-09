@@ -70,7 +70,7 @@ export class ProjectTrackerProjectDialogComponent {
       zone: [''],
       notes: [''],
       status: ['scheduled', Validators.required],
-      isPublic: [true],
+      isPublic: [false],
       style: [''],
       subject: [''],
       imageUrls: ['', [this.imageUrlsValidator]]
@@ -82,7 +82,7 @@ export class ProjectTrackerProjectDialogComponent {
       zone: p?.zone ?? '',
       notes: p?.notes ?? '',
       status: p?.status ?? 'scheduled',
-      isPublic: (p as any)?.isPublic !== false,
+      isPublic: (p as any)?.isPublic === true,
       style: String((p as any)?.style ?? (p as any)?.genere ?? '').trim(),
       subject: String((p as any)?.subject ?? '').trim(),
       imageUrls: Array.isArray((p as any)?.imageUrls) ? (p as any).imageUrls.join(', ') : ''
@@ -105,7 +105,7 @@ export class ProjectTrackerProjectDialogComponent {
       zone: v.zone || undefined,
       notes: v.notes || undefined,
       status: v.status,
-      isPublic: v.isPublic !== false,
+      isPublic: v.isPublic === true,
       style: v.style || undefined,
       subject: v.subject || undefined,
       imageUrls: imageUrls.length ? imageUrls : undefined

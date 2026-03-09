@@ -20,6 +20,7 @@ import { PermissionsAdminComponent } from './components/permissions-admin/permis
 import { StaffPermissionGuard } from '../../core/guards/staff-permission.guard';
 import { StaffDetailAdminComponent } from './components/staff-detail-admin/staff-detail-admin.component';
 import { EventsAdminComponent } from './components/events-admin/events-admin.component';
+import { SectionsVisibilityAdminComponent } from './components/sections-visibility-admin/sections-visibility-admin.component';
 
 export const ADMIN_ROUTES: Routes = [
   { path: '', component: AdminDashboardComponent },
@@ -47,6 +48,8 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'analytics', component: AnalyticsComponent, canActivate: [AdminOnlyGuard] },
   { path: 'audit-logs', component: AuditLogsComponent, canActivate: [AdminOnlyGuard] },
   { path: 'settings', component: StudioSettingsComponent, canActivate: [AdminOnlyGuard] },
+  { path: 'sections-visibility', component: SectionsVisibilityAdminComponent, canActivate: [AdminOnlyGuard] },
+  { path: 'sezioni-visibili', component: SectionsVisibilityAdminComponent, canActivate: [AdminOnlyGuard] },
   { path: 'review-list', component: ReviewListAdminComponent, canActivate: [AdminOnlyGuard] },
   { path: 'reviews', component: ReviewListAdminComponent, canActivate: [AdminOnlyGuard] }
 ];

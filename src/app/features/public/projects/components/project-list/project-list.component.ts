@@ -42,6 +42,8 @@ export class ProjectListComponent implements OnInit, OnDestroy {
   styles: string[] = [];
   subjects: string[] = [];
   zones: string[] = [];
+  loadError = false;
+  errorText = '';
 
   // UI
   readonly fallbackCover = `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -63,47 +65,57 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     );
 
     const projects$ = this.projectsService.getPublicProjects().pipe(
-      map(list => (list ?? []).filter(p => (p as any).isPublic !== false && this.isCompletedStatus((p as any).status)))
+      map(list => (list ?? []).filter(p => this.isPublicEnabled((p as any).isPublic) && !this.isCancelledStatus((p as any).status)))
     );
     const routeArtistId$ = this.route.paramMap.pipe(map(pm => pm.get('artistId')));
     const queryParams$ = this.route.queryParamMap;
 
-    this.sub = combineLatest([projects$, staff$, routeArtistId$, queryParams$]).subscribe(([projects, staff, routeArtistId, qpm]) => {
-      this.projects = projects ?? [];
-      this.artists = staff ?? [];
+    this.sub = combineLatest([projects$, staff$, routeArtistId$, queryParams$]).subscribe({
+      next: ([projects, staff, routeArtistId, qpm]) => {
+        this.loadError = false;
+        this.errorText = '';
+        this.projects = projects ?? [];
+        this.artists = staff ?? [];
 
-      const currentRouteId = routeArtistId ?? null;
-      if (currentRouteId !== this.lastRouteArtistId) {
-        this.lastRouteArtistId = currentRouteId;
-        this.selectedArtistId = currentRouteId ?? 'all';
+        const currentRouteId = routeArtistId ?? null;
+        if (currentRouteId !== this.lastRouteArtistId) {
+          this.lastRouteArtistId = currentRouteId;
+          this.selectedArtistId = currentRouteId ?? 'all';
+        }
+
+        const qArtist = qpm.get('artistId');
+        const qStyle = qpm.get('style');
+        const qSubject = qpm.get('subject');
+        const qZone = qpm.get('zone');
+        const qImages = qpm.get('images');
+
+        if (qArtist && qArtist !== this.selectedArtistId) this.selectedArtistId = qArtist;
+        if (qStyle && qStyle !== this.selectedStyle) this.selectedStyle = qStyle;
+        if (qSubject && qSubject !== this.selectedSubject) this.selectedSubject = qSubject;
+        if (qZone && qZone !== this.selectedZone) this.selectedZone = qZone;
+        if (qImages && qImages !== (this.onlyWithImages ? '1' : '0')) this.onlyWithImages = qImages === '1';
+
+        this.styles = Array.from(
+          new Set(this.projects.flatMap(p => this.stylesOf(p)).filter(Boolean))
+        ).sort((a, b) => a.localeCompare(b));
+
+        this.subjects = Array.from(
+          new Set(this.projects.flatMap(p => this.subjectsOf(p)).filter(Boolean))
+        ).sort((a, b) => a.localeCompare(b));
+
+        this.zones = Array.from(
+          new Set(this.projects.flatMap(p => this.zonesOf(p)).filter(Boolean))
+        ).sort((a, b) => a.localeCompare(b));
+
+        this.applyFilters();
+      },
+      error: (err) => {
+        const code = String((err as any)?.code ?? '').trim();
+        this.errorText = code ? `Errore caricamento progetti (${code})` : 'Errore caricamento progetti';
+        this.loadError = true;
+        this.projects = [];
+        this.filteredProjects = [];
       }
-
-      const qArtist = qpm.get('artistId');
-      const qStyle = qpm.get('style');
-      const qSubject = qpm.get('subject');
-      const qZone = qpm.get('zone');
-      const qImages = qpm.get('images');
-
-      if (qArtist && qArtist !== this.selectedArtistId) this.selectedArtistId = qArtist;
-      if (qStyle && qStyle !== this.selectedStyle) this.selectedStyle = qStyle;
-      if (qSubject && qSubject !== this.selectedSubject) this.selectedSubject = qSubject;
-      if (qZone && qZone !== this.selectedZone) this.selectedZone = qZone;
-      if (qImages && qImages !== (this.onlyWithImages ? '1' : '0')) this.onlyWithImages = qImages === '1';
-
-      // build options
-      this.styles = Array.from(
-        new Set(this.projects.flatMap(p => this.stylesOf(p)).filter(Boolean))
-      ).sort((a, b) => a.localeCompare(b));
-
-      this.subjects = Array.from(
-        new Set(this.projects.flatMap(p => this.subjectsOf(p)).filter(Boolean))
-      ).sort((a, b) => a.localeCompare(b));
-
-      this.zones = Array.from(
-        new Set(this.projects.flatMap(p => this.zonesOf(p)).filter(Boolean))
-      ).sort((a, b) => a.localeCompare(b));
-
-      this.applyFilters();
     });
   }
 
@@ -125,9 +137,7 @@ export class ProjectListComponent implements OnInit, OnDestroy {
       const matchSubject = subject === 'all' || this.matchTag(subject, this.subjectsOf(p));
       const matchZone = zone === 'all' || this.matchTag(zone, this.zonesOf(p));
 
-      // se isPublic e' undefined, trattiamolo come "visibile"
-      const isPublic = (p as any).isPublic as boolean | undefined;
-      const matchVisibility = isPublic !== false;
+      const matchVisibility = this.isPublicEnabled((p as any).isPublic);
 
       const hasImages = this.imageUrlsOf(p).length > 0;
       const matchImages = !onlyImages || hasImages;
@@ -298,13 +308,19 @@ export class ProjectListComponent implements OnInit, OnDestroy {
     }
   }
 
-  private isCompletedStatus(status: unknown): boolean {
+  private isCancelledStatus(status: unknown): boolean {
     const normalized = String(status ?? '').trim().toLowerCase();
-    return normalized === 'completed'
-      || normalized === 'complete'
-      || normalized === 'concluso'
-      || normalized === 'done'
-      || normalized === 'finished';
+    return normalized === 'cancelled' || normalized === 'canceled' || normalized === 'annullato';
+  }
+
+  private isPublicEnabled(value: unknown): boolean {
+    if (value === true) return true;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      return normalized === 'true' || normalized === '1' || normalized === 'yes';
+    }
+    if (typeof value === 'number') return value === 1;
+    return false;
   }
 
   trackById = (_: number, p: TattooProject) => p.id ?? `${p.artistId}-${p.clientId}-${p.title}`;
