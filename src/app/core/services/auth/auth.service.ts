@@ -9,6 +9,7 @@ import {
 } from '@angular/fire/auth';
 import { Database, get as getDb, ref as dbRef, set as setDb, update as updateDb } from '@angular/fire/database';
 import { firstValueFrom } from 'rxjs';
+import { User } from '@angular/fire/auth';
 import type { User as BaseUser, UserPermissions, UserRole } from '../users/user.service';
 
 export type AppUser = Omit<BaseUser, 'staffLevel' | 'permissions' | 'deletedAt' | 'createdAt' | 'updatedAt' | 'isActive' | 'isVisible' | 'urlAvatar'> & {
@@ -86,7 +87,16 @@ export class AuthService {
       try {
         const profile = await this.loadUserProfile(firebaseUser.uid, { allowIncomplete: true });
         this._userSig.set(profile);
-      } catch {
+      } catch (err) {
+        if (this.isPermissionDeniedError(err)) {
+          this.flowError('loadUserProfile.permission_denied', err, { uid: firebaseUser.uid });
+          const current = this._userSig();
+          if (current?.uid === firebaseUser.uid) {
+            return;
+          }
+          this._userSig.set(this.buildFallbackProfileFromAuth(firebaseUser));
+          return;
+        }
         this._userSig.set(null);
       }
     });
@@ -212,6 +222,35 @@ export class AuthService {
       city: this.toStringValue(raw?.city),
       postalCode: this.toStringValue(raw?.postalCode),
       country: this.toStringValue(raw?.country),
+    };
+  }
+
+  private buildFallbackProfileFromAuth(firebaseUser: User): AppUser {
+    const now = new Date().toISOString();
+    const uid = String(firebaseUser.uid ?? '').trim();
+    const email = String(firebaseUser.email ?? '').trim() || '-';
+    const name = String(firebaseUser.displayName ?? '').trim() || '-';
+    return {
+      id: uid,
+      uid,
+      name,
+      email,
+      role: 'client',
+      staffLevel: '-',
+      permissions: this.defaultPermissions(),
+      phone: '-',
+      isActive: true,
+      isVisible: true,
+      deletedAt: null,
+      createdAt: now,
+      updatedAt: now,
+      urlAvatar: '/personale/avatar_01.jpg',
+      avatar: '/personale/avatar_01.jpg',
+      dateOfBirth: '-',
+      address: '-',
+      city: '-',
+      postalCode: '-',
+      country: '-'
     };
   }
 
@@ -377,16 +416,33 @@ export class AuthService {
     const current = this._userSig();
     if (!current) throw new Error('auth/not-logged-in');
 
+    const cleanText = (value: unknown): string => String(value ?? '').trim();
+    const cleanOptional = (value: unknown): string | undefined => {
+      const clean = cleanText(value);
+      return clean || undefined;
+    };
+    const normalizeDateOnly = (value: unknown): string | undefined => {
+      const raw = cleanText(value);
+      if (!raw) return undefined;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+      const d = new Date(raw);
+      if (Number.isNaN(d.getTime())) return undefined;
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
     const rawPatch: Partial<AppUser> = {
-      name: data.name !== undefined ? this.toStringValue(data.name) : undefined,
-      phone: data.phone !== undefined ? this.toStringValue(data.phone) : undefined,
-      avatar: data.avatar !== undefined ? this.toStringValue(data.avatar) : undefined,
-      urlAvatar: data.urlAvatar !== undefined ? this.toStringValue(data.urlAvatar) : undefined,
-      dateOfBirth: data.dateOfBirth !== undefined ? this.toStringValue(data.dateOfBirth) : undefined,
-      address: data.address !== undefined ? this.toStringValue(data.address) : undefined,
-      city: data.city !== undefined ? this.toStringValue(data.city) : undefined,
-      postalCode: data.postalCode !== undefined ? this.toStringValue(data.postalCode) : undefined,
-      country: data.country !== undefined ? this.toStringValue(data.country) : undefined,
+      name: data.name !== undefined ? cleanOptional(data.name) : undefined,
+      phone: data.phone !== undefined ? cleanOptional(data.phone) : undefined,
+      avatar: data.avatar !== undefined ? cleanOptional(data.avatar) : undefined,
+      urlAvatar: data.urlAvatar !== undefined ? cleanOptional(data.urlAvatar) : undefined,
+      dateOfBirth: data.dateOfBirth !== undefined ? normalizeDateOnly(data.dateOfBirth) : undefined,
+      address: data.address !== undefined ? cleanOptional(data.address) : undefined,
+      city: data.city !== undefined ? cleanOptional(data.city) : undefined,
+      postalCode: data.postalCode !== undefined ? cleanOptional(data.postalCode) : undefined,
+      country: data.country !== undefined ? cleanOptional(data.country) : undefined,
       updatedAt: new Date().toISOString(),
     };
 
@@ -396,8 +452,16 @@ export class AuthService {
 
     if (!Object.keys(patch).length) return;
 
-    await updateDb(dbRef(this.db, `users/${current.uid}`), patch as any);
-    this._userSig.set({ ...current, ...patch } as AppUser);
+    try {
+      await updateDb(dbRef(this.db, `users/${current.uid}`), patch as any);
+      this._userSig.set({ ...current, ...patch } as AppUser);
+    } catch (err) {
+      if (this.isPermissionDeniedError(err)) {
+        this.flowError('updateCurrentUserProfile.permission_denied', err, { uid: current.uid, keys: Object.keys(patch) });
+        throw new Error('profile/permission-denied');
+      }
+      throw err;
+    }
   }
 
   consumeProfileWarning(): string | null {

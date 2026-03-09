@@ -532,7 +532,13 @@ export class BookingService {
           console.log('[BookingService] getAllBookings ← next', { count: list.length });
           obs.next(list);
         },
-        err => obs.error(err)
+        err => {
+          if (this.isPermissionDeniedError(err)) {
+            obs.next([]);
+            return;
+          }
+          obs.error(err);
+        }
       );
       return () => unsub();
     });
@@ -576,7 +582,13 @@ export class BookingService {
           const list = snap.exists() ? this.snapshotToList(snap) : [];
           obs.next(list);
         },
-        err => obs.error(err)
+        err => {
+          if (this.isPermissionDeniedError(err)) {
+            obs.next([]);
+            return;
+          }
+          obs.error(err);
+        }
       );
       return () => unsub();
     });
@@ -592,7 +604,13 @@ export class BookingService {
           const list = snap.exists() ? this.snapshotToList(snap) : [];
           obs.next(list);
         },
-        err => obs.error(err)
+        err => {
+          if (this.isPermissionDeniedError(err)) {
+            obs.next([]);
+            return;
+          }
+          obs.error(err);
+        }
       );
       return () => unsub();
     });
@@ -619,7 +637,13 @@ export class BookingService {
             : [];
           obs.next(list);
         },
-        err => obs.error(err)
+        err => {
+          if (this.isPermissionDeniedError(err)) {
+            obs.next([]);
+            return;
+          }
+          obs.error(err);
+        }
       );
       return () => unsub();
     });

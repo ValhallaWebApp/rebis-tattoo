@@ -101,6 +101,11 @@
       ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin')"
     },
 
+    "mediaAssets": {
+      ".read": "auth != null",
+      ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin' || root.child('users/' + auth.uid + '/role').val() === 'staff')"
+    },
+
     "i18n": {
       ".read": true,
       ".write": "auth != null && (root.child('adminUids/' + auth.uid).val() === true || root.child('users/' + auth.uid + '/role').val() === 'admin')"

@@ -61,7 +61,7 @@ export class MediaStorageService {
     });
 
     const now = new Date().toISOString();
-    const asset: MediaAsset = {
+    const rawAsset: MediaAsset = {
       id: this.createAssetId(),
       name: fileName,
       fullPath: uploadPath,
@@ -70,14 +70,30 @@ export class MediaStorageService {
       size: Number(input.file.size ?? 0),
       createdAt: now,
       updatedAt: now,
-      alt: this.cleanOptional(input.alt),
       role: input.role,
-      sortOrder: input.sortOrder,
       sourceType: input.sourceType,
       sourceId: this.cleanSourceId(input.sourceId)
     };
+    const cleanAlt = this.cleanOptional(input.alt);
+    const cleanSortOrder = Number.isFinite(Number(input.sortOrder)) ? Number(input.sortOrder) : undefined;
+    if (cleanAlt !== undefined) rawAsset.alt = cleanAlt;
+    if (cleanSortOrder !== undefined) rawAsset.sortOrder = cleanSortOrder;
+    const asset = this.sanitizeForRtdb(rawAsset) as MediaAsset;
 
-    await this.saveMetadata(asset);
+    try {
+      await this.saveMetadata(asset);
+    } catch (err) {
+      if (this.isPermissionDeniedError(err)) {
+        // Keep upload successful even if metadata node rules are not deployed yet.
+        console.warn('[MediaStorageService] metadata write denied, storage upload kept', {
+          path: asset.fullPath,
+          sourceType: asset.sourceType,
+          sourceId: asset.sourceId
+        });
+      } else {
+        throw err;
+      }
+    }
     return asset;
   }
 
@@ -189,7 +205,7 @@ export class MediaStorageService {
 
   private async saveMetadata(asset: MediaAsset): Promise<void> {
     const path = this.metadataPath(asset.sourceType, asset.sourceId, asset.id);
-    await set(dbRef(this.db, path), asset);
+    await set(dbRef(this.db, path), this.sanitizeForRtdb(asset));
   }
 
   private async deleteMetadata(sourceType: MediaAssetSourceType, sourceId: string, id: string): Promise<void> {
@@ -249,5 +265,25 @@ export class MediaStorageService {
   private createAssetId(): string {
     return `asset_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   }
-}
 
+  private isPermissionDeniedError(err: unknown): boolean {
+    const code = String((err as { code?: unknown } | null)?.code ?? '').toLowerCase();
+    const message = String((err as { message?: unknown } | null)?.message ?? '').toLowerCase();
+    return code.includes('permission-denied') || message.includes('permission_denied') || message.includes('permission denied');
+  }
+
+  private sanitizeForRtdb<T>(value: T): T {
+    if (Array.isArray(value)) {
+      return value.map(item => this.sanitizeForRtdb(item)) as T;
+    }
+    if (value && typeof value === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const [key, current] of Object.entries(value as Record<string, unknown>)) {
+        if (current === undefined) continue;
+        out[key] = this.sanitizeForRtdb(current);
+      }
+      return out as T;
+    }
+    return value;
+  }
+}

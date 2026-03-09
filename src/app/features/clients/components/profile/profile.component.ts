@@ -1,7 +1,9 @@
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, effect, Injector, runInInjectionContext } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, effect, Injector, runInInjectionContext } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Subscription, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { MaterialModule } from '../../../../core/modules/material.module';
 import { AppUser, AuthService } from '../../../../core/services/auth/auth.service';
 import { BookingService } from '../../../../core/services/bookings/booking.service';
@@ -25,7 +27,7 @@ type DashboardLink = {
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   readonly defaultAvatar = '/personale/avatar_01.jpg';
   readonly avatar404Placeholder = `data:image/svg+xml;utf8,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
@@ -94,6 +96,8 @@ export class ProfileComponent implements OnInit {
   private readonly ui = inject(UiFeedbackService);
   private readonly injector = inject(Injector);
   readonly lang = inject(LanguageService);
+  private bookingsSub?: Subscription;
+  private projectsSub?: Subscription;
 
   get profileFields(): DynamicField[] {
     return [
@@ -119,7 +123,16 @@ export class ProfileComponent implements OnInit {
     runInInjectionContext(this.injector, () => {
       effect(() => {
         const user = this.authService.userSig();
-        if (!user) return;
+        if (!user) {
+          this.releaseSubscriptions();
+          this.user = null;
+          this.projects = [];
+          this.nextBooking = null;
+          this.lastBooking = null;
+          this.isUpcomingSoon = false;
+          this.unreadMessagesCount = 0;
+          return;
+        }
 
         this.user = user;
         this.profileForm.patchValue({
@@ -140,6 +153,10 @@ export class ProfileComponent implements OnInit {
         this.hydrateSectionsLabels();
       });
     });
+  }
+
+  ngOnDestroy(): void {
+    this.releaseSubscriptions();
   }
 
   private hydrateSectionsLabels(): void {
@@ -178,7 +195,13 @@ export class ProfileComponent implements OnInit {
   }
 
   private loadProjects(clientId: string): void {
-    this.projectsService.getProjectsByClient(clientId).subscribe(projects => {
+    this.projectsSub?.unsubscribe();
+    this.projectsSub = this.projectsService.getProjectsByClient(clientId).pipe(
+      catchError((err) => {
+        console.warn('[ProfileComponent] loadProjects permission/fetch error', err);
+        return of([] as TattooProject[]);
+      })
+    ).subscribe(projects => {
       this.projects = (projects ?? [])
         .slice()
         .sort((a, b) => this.toTimestamp(b?.updatedAt) - this.toTimestamp(a?.updatedAt));
@@ -187,7 +210,13 @@ export class ProfileComponent implements OnInit {
   }
 
   loadBookings(clientId: string): void {
-    this.bookingService.getBookingsByClient(clientId).subscribe(bookings => {
+    this.bookingsSub?.unsubscribe();
+    this.bookingsSub = this.bookingService.getBookingsByClient(clientId).pipe(
+      catchError((err) => {
+        console.warn('[ProfileComponent] loadBookings permission/fetch error', err);
+        return of([]);
+      })
+    ).subscribe(bookings => {
       const list = (bookings ?? []).slice();
       if (!list.length) {
         this.lastBooking = null;
@@ -230,8 +259,15 @@ export class ProfileComponent implements OnInit {
     }
 
     const updated = this.profileForm.getRawValue();
-    const normalizedAvatar = this.normalizeAvatarUrl(updated.avatar) || this.defaultAvatar;
+    const avatarCandidate = this.normalizeAvatarUrl(updated.avatar);
+    const isDataUrlAvatar = avatarCandidate.startsWith('data:image/');
+    const normalizedAvatar = isDataUrlAvatar
+      ? (this.user?.avatar || this.defaultAvatar)
+      : (avatarCandidate || this.defaultAvatar);
     this.profileForm.patchValue({ avatar: normalizedAvatar });
+    if (isDataUrlAvatar) {
+      this.ui.warn('Avatar locale non persistito. Usa un avatar preset o URL pubblico.');
+    }
 
     try {
       await this.authService.updateCurrentUserProfile({
@@ -340,13 +376,20 @@ export class ProfileComponent implements OnInit {
   }
 
   private toDateOnlyString(value: unknown): string {
-    if (!value) return '-';
+    if (!value) return '';
     const date = value instanceof Date ? value : new Date(String(value));
-    if (Number.isNaN(date.getTime())) return '-';
+    if (Number.isNaN(date.getTime())) return '';
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const dd = String(date.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private releaseSubscriptions(): void {
+    this.bookingsSub?.unsubscribe();
+    this.bookingsSub = undefined;
+    this.projectsSub?.unsubscribe();
+    this.projectsSub = undefined;
   }
 
   private resolveUserAvatar(user: AppUser): string {
