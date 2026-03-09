@@ -1,7 +1,8 @@
 .week-wrap {
-  display: grid;
   gap: 12px;
   padding: 12px;
+     background: var(--app-main-bg);
+  min-height: 100%;
 }
 
 .days-grid {

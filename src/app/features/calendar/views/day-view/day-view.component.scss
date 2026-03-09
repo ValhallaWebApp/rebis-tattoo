@@ -2,7 +2,10 @@
   padding: 12px;
   color: var(--app-main-text, rgba(255,255,255,.96));
   max-width: 100%;
+  min-height: 100%;
   overflow-x: clip;
+     background: var(--app-main-bg);
+
 }
 
 .topbar {

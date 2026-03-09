@@ -1,12 +1,14 @@
 :host {
   display: block;
-  background-color: var(--app-main-bg);
+   background: var(--app-main-bg);
   color: var(--app-main-text);
   padding: 1rem;
   font-family: var(--font-base, "Inter", "Segoe UI", Arial, sans-serif);
 }
 section{
   padding: 8vh 1rem;
+     background: var(--app-main-bg);
+
   min-height: 100vh;
 }
 .calendar-header {
