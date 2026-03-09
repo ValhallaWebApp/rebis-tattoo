@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MaterialModule } from '../../../../core/modules/material.module';
+import { LanguageService } from '../../../../core/services/language/language.service';
 import { AdminSectionsVisibilityService } from '../../../../core/services/menu/admin-sections-visibility.service';
 
 @Component({
@@ -15,6 +16,7 @@ import { AdminSectionsVisibilityService } from '../../../../core/services/menu/a
 export class SectionsVisibilityAdminComponent {
   private readonly visibility = inject(AdminSectionsVisibilityService);
   private readonly snack = inject(MatSnackBar);
+  readonly lang = inject(LanguageService);
 
   readonly ready = this.visibility.ready;
   readonly sections = this.visibility.sections;
@@ -24,12 +26,15 @@ export class SectionsVisibilityAdminComponent {
     this.savingKey.set(sectionKey);
     try {
       await this.visibility.setVisible(sectionKey, checked);
-      this.snack.open('Visibilita aggiornata', 'OK', { duration: 1800 });
+      this.snack.open(this.t('adminSectionsVisibility.feedback.updated'), this.t('adminSectionsVisibility.feedback.ok'), { duration: 1800 });
     } catch {
-      this.snack.open('Errore durante il salvataggio', 'OK', { duration: 2400 });
+      this.snack.open(this.t('adminSectionsVisibility.feedback.error'), this.t('adminSectionsVisibility.feedback.ok'), { duration: 2400 });
     } finally {
       this.savingKey.set(null);
     }
   }
-}
 
+  t(path: string): string {
+    return this.lang.t(path);
+  }
+}

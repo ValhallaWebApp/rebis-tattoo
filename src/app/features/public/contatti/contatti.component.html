@@ -1,4 +1,6 @@
-<section class="contact-page">
+<section
+  class="contact-page"
+  [style.--contact-custom-bg]="backgroundImageUrl ? 'url(' + backgroundImageUrl + ')' : null">
   <header class="contact-hero">
     <div class="container">
       <p class="hero-kicker">{{ profile.publicContattiHeroKicker }}</p>

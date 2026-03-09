@@ -7,6 +7,33 @@
       [formGroupInput]="form"
       [showSubmit]="false"
     ></app-dynamic-form>
+
+    <section class="media-box">
+      <div class="media-box__head">
+        <h3>Foto seduta</h3>
+        <label class="upload-btn">
+          <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onImageFileSelected($event)" />
+          Carica foto
+        </label>
+      </div>
+
+      <mat-progress-bar
+        *ngIf="uploadingImage"
+        mode="determinate"
+        [value]="imageUploadProgress">
+      </mat-progress-bar>
+
+      <div class="media-list" *ngIf="imageItems.length; else noMedia">
+        <article class="media-item" *ngFor="let item of imageItems">
+          <img [src]="item.url" alt="Anteprima seduta" loading="lazy" />
+          <button mat-stroked-button type="button" color="warn" (click)="removeImage(item)">Rimuovi</button>
+        </article>
+      </div>
+
+      <ng-template #noMedia>
+        <p class="media-empty">Nessuna foto caricata.</p>
+      </ng-template>
+    </section>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">

@@ -1,3 +1,4 @@
+import { MediaAsset } from './media-asset.model';
 export type ProjectStatus = 'draft' | 'scheduled' | 'active' | 'healing' | 'completed' | 'cancelled';
 
 /** Progetto tatuaggio canonico applicativo. */
@@ -18,6 +19,9 @@ export interface Project {
   style?: string;
   subject?: string;
   imageUrls?: string[];
+  coverImage?: MediaAsset | null;
+  gallery?: MediaAsset[];
+  referenceImages?: MediaAsset[];
   createdAt: string;
   updatedAt?: string;
 

@@ -53,6 +53,7 @@ export class MenuService {
       roles: ['client', 'staff', 'admin'],
       children: [
         { label: this.lang.t('menu.dashboard.profile'), route: '/dashboard' },
+        { label: this.lang.t('menu.dashboard.tattoos'), route: '/dashboard/tatuaggi' },
         { label: this.lang.t('menu.dashboard.bookingHistory'), route: '/dashboard/booking-history' },
         { label: this.lang.t('menu.dashboard.bonus'), route: '/dashboard/buoni' },
         { label: this.lang.t('menu.dashboard.reviews'), route: '/dashboard/reviews' },
@@ -68,6 +69,7 @@ export class MenuService {
       roles: ['staff'],
       children: [
         { label: this.lang.t('menu.dashboard.profile'), route: '/dashboard' },
+        { label: this.lang.t('menu.dashboard.tattoos'), route: '/dashboard/tatuaggi' },
         { label: this.lang.t('menu.dashboard.bookingHistory'), route: '/dashboard/booking-history' },
         { label: this.lang.t('menu.dashboard.bonus'), route: '/dashboard/buoni' },
         { label: this.lang.t('menu.dashboard.reviews'), route: '/dashboard/reviews' },

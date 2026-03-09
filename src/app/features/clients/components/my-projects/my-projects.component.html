@@ -1,0 +1,112 @@
+<section
+  class="my-projects"
+  [style.--my-projects-bg-image]="backgroundImageUrl ? 'url(' + backgroundImageUrl + ')' : 'none'"
+>
+  <img
+    *ngIf="backgroundImageUrl"
+    class="my-projects__bg-probe"
+    [src]="backgroundImageUrl"
+    alt=""
+    aria-hidden="true"
+    (error)="onBackgroundImageError()"
+  />
+
+  <header class="my-projects__header">
+    <div class="my-projects__heading">
+      <span class="my-projects__eyebrow">{{ t('clientTattoos.header.eyebrow') }}</span>
+      <h1>{{ t('clientTattoos.header.title') }}</h1>
+      <p>{{ t('clientTattoos.header.subtitle') }}</p>
+    </div>
+    <a mat-stroked-button color="primary" class="my-projects__cta" routerLink="/dashboard/booking-history">{{ t('clientTattoos.actions.bookingHistory') }}</a>
+  </header>
+
+  @if (loading) {
+    <mat-card class="my-projects__state">{{ t('clientTattoos.states.loading') }}</mat-card>
+  }
+
+  @if (!loading && loadError) {
+    <mat-card class="my-projects__state my-projects__state--error">{{ loadError }}</mat-card>
+  }
+
+  @if (!loading && !loadError && !items.length) {
+    <mat-card class="my-projects__state">
+      <h3>{{ t('clientTattoos.states.emptyTitle') }}</h3>
+      <p>{{ t('clientTattoos.states.emptySubtitle') }}</p>
+      <div class="my-projects__actions">
+        <a mat-stroked-button color="primary" routerLink="/fast-booking">{{ t('clientTattoos.actions.bookConsultation') }}</a>
+        <a mat-button routerLink="/dashboard/ticket">{{ t('clientTattoos.actions.openTicket') }}</a>
+      </div>
+    </mat-card>
+  }
+
+  <div class="my-projects__list" *ngIf="!loading && !loadError && items.length">
+    <mat-card class="project-card" *ngFor="let item of items">
+      <div class="project-card__thumb">
+        <span class="project-card__thumb-badge" *ngIf="!item.hasCustomThumbnail">
+          {{ t('clientTattoos.labels.defaultThumbBadge') }}
+        </span>
+        <img
+          [src]="item.thumbnailUrl"
+          [alt]="t('clientTattoos.labels.projectThumbAlt')"
+          loading="lazy"
+          decoding="async"
+          (error)="onProjectThumbError($event)"
+        />
+      </div>
+
+      <header class="project-card__header">
+        <div>
+          <h2>{{ item.title }}</h2>
+          <p>{{ t('clientTattoos.labels.updatedAt') }}: {{ item.updatedAt | date:'medium' }}</p>
+        </div>
+        <span class="project-status" [attr.data-status]="item.statusClass">{{ item.statusLabel }}</span>
+      </header>
+
+      <mat-expansion-panel class="project-details-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title>{{ t('clientTattoos.actions.projectDetails') }}</mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="project-card__meta">
+          <span class="project-meta-chip"><strong>{{ t('clientTattoos.labels.zone') }}:</strong> {{ item.zone }}</span>
+          <span class="project-meta-chip"><strong>{{ t('clientTattoos.labels.style') }}:</strong> {{ item.style }}</span>
+          <span class="project-meta-chip"><strong>{{ t('clientTattoos.labels.completedSessions') }}:</strong> {{ item.completedSessionsCount }}</span>
+        </div>
+
+        <section class="project-card__block">
+          <h3>{{ t('clientTattoos.blocks.projectNotes') }}</h3>
+          <p>{{ item.projectNotes }}</p>
+        </section>
+
+        <section class="project-card__block" *ngIf="item.consultation as consult">
+          <h3>{{ t('clientTattoos.blocks.initialConsultation') }}</h3>
+          <p><strong>{{ t('clientTattoos.labels.when') }}:</strong> {{ consult.when | date:'fullDate' }} - {{ consult.when | date:'HH:mm' }}</p>
+          <p>
+            <strong>{{ t('clientTattoos.labels.status') }}:</strong>
+            <span class="session-status" [attr.data-status]="consult.statusKey">{{ consult.status }}</span>
+          </p>
+          <p><strong>{{ t('clientTattoos.labels.notes') }}:</strong> {{ consult.notes }}</p>
+        </section>
+
+        <section class="project-card__block">
+          <h3>{{ t('clientTattoos.blocks.upcomingSessions') }}</h3>
+          <ng-container *ngIf="item.upcomingSessions.length; else noSessions">
+            <div class="session-row" *ngFor="let session of item.upcomingSessions">
+              <div>
+                <strong>{{ session.start | date:'fullDate' }}</strong>
+                <p>{{ session.start | date:'HH:mm' }} - {{ session.end | date:'HH:mm' }}</p>
+              </div>
+              <div class="session-row__right">
+                <span class="session-status" [attr.data-status]="session.statusKey">{{ session.status }}</span>
+                <p>{{ session.notes }}</p>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #noSessions>
+            <p class="muted">{{ t('clientTattoos.states.noUpcomingSessions') }}</p>
+          </ng-template>
+        </section>
+      </mat-expansion-panel>
+    </mat-card>
+  </div>
+</section>

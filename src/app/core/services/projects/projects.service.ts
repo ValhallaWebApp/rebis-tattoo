@@ -12,9 +12,11 @@ import {
   orderByChild,
   equalTo
 } from '@angular/fire/database';
-import { combineLatest, map, Observable } from 'rxjs';
+import { combineLatest, map, Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuthService } from '../auth/auth.service';
+import { MediaAsset } from '../../models/media-asset.model';
 
 export type ProjectStatus = 'draft' | 'scheduled' | 'active' | 'healing' | 'completed' | 'cancelled';
 
@@ -45,6 +47,9 @@ export interface TattooProject {
   style?: string;
   subject?: string;
   imageUrls?: string[];
+  coverImage?: MediaAsset | null;
+  gallery?: MediaAsset[];
+  referenceImages?: MediaAsset[];
 
   // legacy fields still present in dataset
   genere?: string;
@@ -199,22 +204,42 @@ getProjectsLiteOnce(): Observable<ProjectLite[]> {
 
   /** opzionale: query per cliente */
   getProjectsByClient(clientId: string): Observable<TattooProject[]> {
-    const q = query(ref(this.db, this.path), orderByChild('clientId'), equalTo(clientId));
-    return new Observable<TattooProject[]>(obs => {
-      const unsub = onValue(
-        q,
-        snap => {
-          this.zone.run(() => {
-            const list = snap.exists()
-              ? Object.entries<any>(snap.val()).map(([id, v]) => ({ id, ...v }))
-              : [];
-            obs.next(list);
-          });
-        },
-        err => this.zone.run(() => obs.error(err))
-      );
-      return () => unsub();
-    });
+    const cid = String(clientId ?? '').trim();
+    if (!cid) {
+      return of([]);
+    }
+
+    const byClientId = query(ref(this.db, this.path), orderByChild('clientId'), equalTo(cid));
+    const byLegacyClientId = query(ref(this.db, this.path), orderByChild('idClient'), equalTo(cid));
+
+    const streamQuery = (q: any) =>
+      new Observable<TattooProject[]>((obs) => {
+        const unsub = onValue(
+          q,
+          (snap) => {
+            this.zone.run(() => {
+              const list = snap.exists()
+                ? Object.entries<any>(snap.val()).map(([id, v]) => ({ id, ...v }))
+                : [];
+              obs.next(list);
+            });
+          },
+          (err) => this.zone.run(() => obs.error(err))
+        );
+        return () => unsub();
+      }).pipe(catchError(() => of([] as TattooProject[])));
+
+    return combineLatest([streamQuery(byClientId), streamQuery(byLegacyClientId)]).pipe(
+      map(([modern, legacy]) => {
+        const out = new Map<string, TattooProject>();
+        for (const project of [...modern, ...legacy]) {
+          const id = String((project as any)?.id ?? '').trim();
+          if (!id) continue;
+          out.set(id, project);
+        }
+        return Array.from(out.values());
+      })
+    );
   }
 
   // -----------------------------

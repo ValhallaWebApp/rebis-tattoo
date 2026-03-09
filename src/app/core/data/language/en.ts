@@ -318,6 +318,7 @@ export const dataEn = {
     dashboard: {
       title: 'Dashboard',
       profile: 'Profile',
+      tattoos: 'My tattoos',
       bookingHistory: 'Booking history',
       bonus: 'Bonus',
       reviews: 'Reviews',
@@ -357,10 +358,116 @@ export const dataEn = {
       clients: 'Clients'
     }
   },
+  clientDashboard: {
+    sections: {
+      tattoos: {
+        title: 'My tattoos',
+        description: 'Tattoo status, initial consultation and upcoming sessions.'
+      }
+    }
+  },
+  clientTattoos: {
+    header: {
+      eyebrow: 'Client area',
+      title: 'My tattoos',
+      subtitle: 'Track project status, initial consultation and upcoming sessions.'
+    },
+    actions: {
+      bookingHistory: 'Open booking history',
+      bookConsultation: 'Book consultation',
+      openTicket: 'Open ticket',
+      projectDetails: 'Project details'
+    },
+    states: {
+      loading: 'Loading tattoos...',
+      error: 'Unable to load tattoos right now.',
+      emptyTitle: 'No tattoo linked to your profile',
+      emptySubtitle: 'Once you start a consultation, status, notes and sessions will appear here.',
+      noUpcomingSessions: 'No upcoming session scheduled.'
+    },
+    labels: {
+      updatedAt: 'Updated',
+      zone: 'Area',
+      style: 'Style',
+      completedSessions: 'Completed sessions',
+      projectThumbAlt: 'Tattoo project preview',
+      defaultThumbBadge: 'Project without thumbnail',
+      when: 'When',
+      status: 'Status',
+      notes: 'Notes'
+    },
+    blocks: {
+      projectNotes: 'Project notes',
+      initialConsultation: 'Initial consultation',
+      upcomingSessions: 'Upcoming sessions'
+    },
+    fallback: {
+      projectTitle: 'Tattoo',
+      sessionStatus: 'planned',
+      consultationStatus: 'pending',
+      noNotes: 'No notes available.'
+    },
+    status: {
+      planned: 'Planned',
+      pending: 'Pending',
+      confirmed: 'Confirmed',
+      inProgress: 'In progress',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+      unknown: 'Status unavailable'
+    }
+  },
+  adminSectionsVisibility: {
+    header: {
+      title: 'Sections visibility',
+      subtitle: 'Choose which operational sections are visible in the menu.'
+    },
+    legend: {
+      realtime: 'Changes are applied in real time to the Admin/Staff menu.'
+    },
+    states: {
+      loading: 'Loading configuration...'
+    },
+    toggle: {
+      ariaLabel: 'Enable or disable section',
+      visible: 'Visible',
+      hidden: 'Hidden'
+    },
+    feedback: {
+      updated: 'Visibility updated',
+      error: 'Error while saving',
+      ok: 'OK'
+    },
+    definitions: {
+      calendar: { label: 'Calendar', description: 'Agenda and appointment management' },
+      users: { label: 'Users', description: 'Global platform users' },
+      clients: { label: 'Clients', description: 'Client registry' },
+      staff: { label: 'Staff', description: 'Staff member management' },
+      permissions: { label: 'Permissions', description: 'Staff operational delegations' },
+      portfolio: { label: 'Portfolio', description: 'Projects and works' },
+      servizi: { label: 'Services', description: 'Studio services catalog' },
+      reviews: { label: 'Reviews', description: 'Review moderation' },
+      messaging: { label: 'Messages', description: 'Client chat and tickets' },
+      eventi: { label: 'Events', description: 'Open day and guest events' },
+      billing: { label: 'Billing', description: 'Payments and revenues' },
+      bonus: { label: 'Bonus', description: 'Promos, wallet and gift cards' },
+      analytics: { label: 'Analytics', description: 'KPI and performance' },
+      auditLogs: { label: 'Audit Logs', description: 'Operations history' },
+      documents: { label: 'Documents', description: 'Document archive' },
+      waitlist: { label: 'Waitlist', description: 'Clients waiting list' },
+      settings: { label: 'Studio settings', description: 'Studio data and content' },
+      clientProfile: { label: 'Client - Profile', description: 'Client profile section' },
+      clientTattoos: { label: 'Client - Tattoos', description: 'Tattoo status, consultations and sessions' },
+      clientBookingHistory: { label: 'Client - Booking history', description: 'Appointments and consultations history' },
+      clientBuoni: { label: 'Client - Bonus', description: 'Client bonus and promo section' },
+      clientReviews: { label: 'Client - Reviews', description: 'Client reviews area' },
+      clientChat: { label: 'Client - Chat', description: 'Client assistance chat' }
+    }
+  },
   chatbot: {
-    teaser: 'Have an idea? Let us talk.',
-    brandTitle: 'REBIS CONCIERGE',
-    brandSubtitle: 'Private consultation assistance',
+    teaser: '',
+    brandTitle: 'REBIS ASSISTANT',
+    brandSubtitle: 'Fast support for consultations and journey',
     close: 'Close',
     bookingGuided: 'Guided booking',
     emptyTitle: 'Let us talk about your project',

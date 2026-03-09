@@ -75,7 +75,15 @@ export class ChiSiamoComponent implements OnInit, OnDestroy {
   trackById = (_: number, item: StaffMember) => item.id ?? item.name ?? _;
 
   get heroImageUrl(): string {
-    return this.profile.ownerPhotoUrl || '/personale/1.jpg';
+    const preferred = String(this.profile.publicChiSiamoHeroImageUrl ?? '').trim();
+    if (preferred) return preferred;
+    const owner = String(this.profile.ownerPhotoUrl ?? '').trim();
+    if (owner) return owner;
+    return '/personale/1.jpg';
+  }
+
+  get backgroundImageUrl(): string {
+    return String(this.profile.publicChiSiamoBackgroundImageUrl ?? '').trim();
   }
 
   getPhoto(m: StaffMember): string {

@@ -3,13 +3,7 @@
     <button type="button" class="rb-backdrop" (click)="closeChat()" aria-label="Chiudi chatbot"></button>
   }
 
-  @if (panelState() === 'teaser') {
-    <button class="rb-teaser" type="button" (click)="openChat()" aria-label="Apri assistente Rebis">
-      {{ teaserText() }}
-    </button>
-  }
-
-  <button class="rb-launcher" type="button" (click)="openChat()" aria-label="Apri chatbot Rebis">
+  <button class="rb-launcher" type="button" (click)="openChat()" aria-label="Apri Assistente Rebis">
     <img src="/loghi/logo-white.jpg" alt="Rebis Tattoo" />
   </button>
 

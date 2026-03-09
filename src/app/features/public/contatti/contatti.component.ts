@@ -58,7 +58,15 @@ export class ContattiComponent implements OnInit {
   }
 
   get heroImageUrl(): string {
-    return'/personale/sara.webp';
+    const preferred = String(this.profile.publicContattiHeroImageUrl ?? '').trim();
+    if (preferred) return preferred;
+    const owner = String(this.profile.ownerPhotoUrl ?? '').trim();
+    if (owner) return owner;
+    return '/personale/sara.webp';
+  }
+
+  get backgroundImageUrl(): string {
+    return String(this.profile.publicContattiBackgroundImageUrl ?? '').trim();
   }
 
   get whatsappNumber(): string {

@@ -13,7 +13,10 @@
     </div>
   </div>
 
-  <div class="hero-image-slider">
+  <div
+    class="hero-image-slider"
+    [class.hero-image-slider--custom]="!!heroBackgroundUrl()"
+    [style.--hero-custom-bg]="heroBackgroundUrl() ? 'url(' + heroBackgroundUrl() + ')' : null">
     <!-- sfondo gestito via SCSS -->
   </div>
 

@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { DEFAULT_STUDIO_PROFILE, StudioProfileService } from '../../../../../core/services/studio/studio-profile.service';
 
 @Component({
   selector: 'app-home',
@@ -8,5 +10,9 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {
-
+  private readonly studioProfile = inject(StudioProfileService);
+  private readonly profileSig = toSignal(this.studioProfile.getProfile(), {
+    initialValue: DEFAULT_STUDIO_PROFILE
+  });
+  readonly homeBackgroundUrl = computed(() => String(this.profileSig().homeBackgroundImageUrl ?? '').trim());
 }

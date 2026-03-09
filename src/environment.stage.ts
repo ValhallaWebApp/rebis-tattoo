@@ -6,6 +6,7 @@ const baseEnvironment: AppEnvironment = {
   environmentName: 'stage',
   paymentApiBaseUrl: '',
   firebaseConfig: {
+    // Fill these values in env files or provide them via runtime __APP_CONFIG__.firebaseConfig
     apiKey: '',
     authDomain: '',
     databaseURL: '',

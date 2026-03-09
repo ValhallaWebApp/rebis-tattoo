@@ -6,6 +6,7 @@ const baseEnvironment: AppEnvironment = {
   environmentName: 'production',
   paymentApiBaseUrl: 'https://payment-service.valhallawebapp.workers.dev/api/payments',
   firebaseConfig: {
+    // Fill these values in env files or provide them via runtime __APP_CONFIG__.firebaseConfig
     apiKey: '',
     authDomain: '',
     databaseURL: '',

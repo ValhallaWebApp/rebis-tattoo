@@ -50,7 +50,6 @@ export class RebisChatbotPopupComponent {
   readonly bookingProgress = this.chat.bookingProgress;
   readonly bookingSuccess = this.chat.bookingSuccess;
 
-  readonly teaserText = computed(() => this.lang.t('chatbot.teaser'));
   readonly composerValue = signal('');
   readonly bookingInput = signal('');
   readonly canSend = computed(() => this.composerValue().trim().length > 0);
@@ -71,10 +70,6 @@ export class RebisChatbotPopupComponent {
 
   closeChat(): void {
     this.chat.close();
-  }
-
-  showTeaser(): void {
-    this.chat.showTeaser();
   }
 
   async send(): Promise<void> {

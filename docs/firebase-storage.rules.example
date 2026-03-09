@@ -1,0 +1,20 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdminOrStaff() {
+      return isSignedIn() &&
+        (request.auth.token.role == 'admin' || request.auth.token.role == 'staff');
+    }
+
+    // Centralized media tree used by Rebis Tattoo frontend.
+    match /rebis/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdminOrStaff();
+    }
+  }
+}
+

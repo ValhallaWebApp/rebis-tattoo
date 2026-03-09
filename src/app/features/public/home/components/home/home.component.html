@@ -1,4 +1,6 @@
-<div class="home-container">
+<div
+  class="home-container"
+  [style.--home-custom-bg]="homeBackgroundUrl() ? 'url(' + homeBackgroundUrl() + ')' : null">
   <section class="home-section home-section--hero">
     <app-home-hero></app-home-hero>
   </section>

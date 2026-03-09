@@ -11,6 +11,8 @@ export interface StudioProfile {
   ownerRoleLabel: string;
   ownerBio: string;
   ownerPhotoUrl: string;
+  homeBackgroundImageUrl: string;
+  homeHeroBackgroundImageUrl: string;
   address: string;
   phoneDisplay: string;
   email: string;
@@ -64,6 +66,8 @@ export interface StudioProfile {
   publicChiSiamoHeroTitle: string;
   publicChiSiamoPrimaryCta: string;
   publicChiSiamoSecondaryCta: string;
+  publicChiSiamoHeroImageUrl: string;
+  publicChiSiamoBackgroundImageUrl: string;
   publicChiSiamoStudioProfileTitle: string;
   publicChiSiamoTeamSnapshotTitle: string;
   publicChiSiamoArtistsTitle: string;
@@ -79,6 +83,8 @@ export interface StudioProfile {
   publicContattiButtonBook: string;
   publicContattiButtonChat: string;
   publicContattiButtonWhatsapp: string;
+  publicContattiHeroImageUrl: string;
+  publicContattiBackgroundImageUrl: string;
   publicContattiMediaOverlayTitle: string;
   publicContattiMediaOverlaySubtitle: string;
   publicContattiPanelFormTitle: string;
@@ -107,6 +113,8 @@ export const DEFAULT_STUDIO_PROFILE: StudioProfile = {
   ownerBio:
     'Rebis Tattoo nasce da una visione precisa: pochi progetti, curati davvero. Ogni tatuaggio viene seguito personalmente, con attenzione al posizionamento e alla durata nel tempo.',
   ownerPhotoUrl: '/personale/1.jpg',
+  homeBackgroundImageUrl: '',
+  homeHeroBackgroundImageUrl: '',
   address: 'Via al Carmine 1A, 07100 Sassari (SS)',
   phoneDisplay: '+39 340 099 8312',
   email: 'sarapushi@rebistattoo.info',
@@ -165,6 +173,8 @@ export const DEFAULT_STUDIO_PROFILE: StudioProfile = {
   publicChiSiamoHeroTitle: 'Chi siamo',
   publicChiSiamoPrimaryCta: 'Prenota consulenza',
   publicChiSiamoSecondaryCta: 'Guarda i lavori',
+  publicChiSiamoHeroImageUrl: '/personale/1.jpg',
+  publicChiSiamoBackgroundImageUrl: '',
   publicChiSiamoStudioProfileTitle: 'Studio profile',
   publicChiSiamoTeamSnapshotTitle: 'Team snapshot',
   publicChiSiamoArtistsTitle: 'Artisti',
@@ -181,6 +191,8 @@ export const DEFAULT_STUDIO_PROFILE: StudioProfile = {
   publicContattiButtonBook: 'Prenota consulenza',
   publicContattiButtonChat: 'Apri chat studio',
   publicContattiButtonWhatsapp: 'WhatsApp',
+  publicContattiHeroImageUrl: '/personale/sara.webp',
+  publicContattiBackgroundImageUrl: '',
   publicContattiMediaOverlayTitle: 'Consult first. Ink after.',
   publicContattiMediaOverlaySubtitle: 'Ogni progetto parte dalla consulenza, non dal caso.',
   publicContattiPanelFormTitle: 'Scrivici un messaggio',

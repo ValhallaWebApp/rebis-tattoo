@@ -17,6 +17,7 @@ import { UiFeedbackService } from '../ui/ui-feedback.service';
 import { AuthService } from '../auth/auth.service';
 import { ProjectsService } from '../projects/projects.service';
 import { BookingService } from '../bookings/booking.service';
+import { MediaAsset } from '../../models/media-asset.model';
 
 /** ✅ CANONICO APP (NUOVO) */
 export interface Session {
@@ -41,6 +42,10 @@ export interface Session {
   painLevel?: number;
   healingNotes?: string;
   photoUrlList?: string[];
+  gallery?: MediaAsset[];
+  beforeImage?: MediaAsset | null;
+  afterImage?: MediaAsset | null;
+  referenceImages?: MediaAsset[];
 
   status: 'planned' | 'completed' | 'cancelled';
 
@@ -391,6 +396,10 @@ export class SessionService {
       painLevel: dbRow.painLevel ?? dbRow.pain,
       healingNotes: dbRow.healingNotes ?? dbRow.healingNote,
       photoUrlList: Array.isArray(dbRow.photoUrlList) ? dbRow.photoUrlList : [],
+      gallery: this.normalizeMediaAssetArray(dbRow.gallery),
+      beforeImage: this.normalizeMediaAsset(dbRow.beforeImage),
+      afterImage: this.normalizeMediaAsset(dbRow.afterImage),
+      referenceImages: this.normalizeMediaAssetArray(dbRow.referenceImages),
       status: dbRow.status ?? 'planned',
       createdAt: this.normalizeLocalDateTime(dbRow.createdAt ?? ''),
       updatedAt: this.normalizeLocalDateTime(dbRow.updatedAt ?? '')
@@ -414,6 +423,10 @@ export class SessionService {
       painLevel: app.painLevel,
       healingNotes: app.healingNotes,
       photoUrlList: app.photoUrlList ?? [],
+      gallery: this.normalizeMediaAssetArray(app.gallery),
+      beforeImage: this.normalizeMediaAsset(app.beforeImage),
+      afterImage: this.normalizeMediaAsset(app.afterImage),
+      referenceImages: this.normalizeMediaAssetArray(app.referenceImages),
       status: app.status,
       createdAt: this.normalizeLocalDateTime(app.createdAt),
       updatedAt: this.normalizeLocalDateTime(app.updatedAt)
@@ -451,6 +464,36 @@ export class SessionService {
       return String(first ?? '').trim();
     }
     return String(value ?? '').trim();
+  }
+
+  private normalizeMediaAsset(value: any): MediaAsset | null {
+    if (!value || typeof value !== 'object') return null;
+    const id = String((value as any).id ?? '').trim();
+    const fullPath = String((value as any).fullPath ?? '').trim();
+    const downloadUrl = String((value as any).downloadUrl ?? '').trim();
+    if (!id || !fullPath || !downloadUrl) return null;
+    return {
+      id,
+      name: String((value as any).name ?? '').trim() || 'image',
+      fullPath,
+      downloadUrl,
+      contentType: String((value as any).contentType ?? 'application/octet-stream').trim(),
+      size: Number((value as any).size ?? 0) || 0,
+      createdAt: String((value as any).createdAt ?? '').trim() || new Date().toISOString(),
+      updatedAt: String((value as any).updatedAt ?? '').trim() || new Date().toISOString(),
+      alt: String((value as any).alt ?? '').trim() || undefined,
+      role: (String((value as any).role ?? '').trim() || 'gallery') as any,
+      sortOrder: Number.isFinite(Number((value as any).sortOrder))
+        ? Number((value as any).sortOrder)
+        : undefined,
+      sourceType: (String((value as any).sourceType ?? '').trim() || 'session') as any,
+      sourceId: String((value as any).sourceId ?? '').trim() || this.path
+    };
+  }
+
+  private normalizeMediaAssetArray(value: any): MediaAsset[] {
+    if (!Array.isArray(value)) return [];
+    return value.map(item => this.normalizeMediaAsset(item)).filter((item): item is MediaAsset => !!item);
   }
 
   private getProjectPartyIds(project: any): { artistId: string; clientId: string } {

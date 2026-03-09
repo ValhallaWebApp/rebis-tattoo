@@ -1,0 +1,324 @@
+.my-projects {
+  position: relative;
+  isolation: isolate;
+  padding: clamp(14px, 2.2vw, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100vh;
+  padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  background-color: var(--app-main-bg);
+  background-image:
+    linear-gradient(180deg, rgba(5, 5, 8, 0.82), rgba(5, 5, 8, 0.95)),
+    var(--my-projects-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: var(--app-main-text);
+  font-family: var(--font-base);
+}
+
+.my-projects__bg-probe {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.my-projects__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--glass-bg-strong), var(--glass-bg));
+  box-shadow: var(--shadow-soft);
+}
+
+.my-projects__heading {
+  min-width: 0;
+}
+
+.my-projects__eyebrow {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.my-projects__header h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  line-height: 1.15;
+}
+
+.my-projects__header p {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.my-projects__cta {
+  white-space: nowrap;
+}
+
+.my-projects__state {
+  padding: 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-soft);
+  border-radius: var(--radius-md);
+}
+
+.my-projects__state--error {
+  border-color: var(--app-danger);
+}
+
+.my-projects__actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.my-projects__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: stretch;
+  justify-content: center;
+}
+
+@media (min-width: 960px) {
+  .project-card {
+    flex: 1 1 calc(50% - 12px);
+  }
+}
+
+@media (min-width: 1280px) {
+  .project-card {
+    flex: 1 1 calc(33.333% - 12px);
+  }
+}
+
+@media (min-width: 1680px) {
+  .project-card {
+    flex: 1 1 calc(25% - 12px);
+  }
+}
+
+.project-card {
+  width: calc(100% - 0px);
+  flex: 1 1 100%;
+  max-width: 350px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-soft);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  padding: 14px;
+}
+
+.project-card__thumb {
+  position: relative;
+  margin: -14px -14px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  aspect-ratio: 16 / 7;
+  background: var(--app-surface-strong);
+  overflow: hidden;
+}
+
+.project-card__thumb-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(5, 5, 8, 0.72);
+  color: var(--app-main-text);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.project-card__thumb img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.project-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.project-card__header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.project-card__header p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+}
+
+.project-details-panel {
+  margin-top: 10px;
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+
+.project-details-panel .mat-expansion-panel-header {
+  min-height: 50px;
+  padding: 0 12px;
+}
+
+.project-details-panel .mat-expansion-panel-header .mat-expansion-panel-header-title,
+.project-details-panel .mat-expansion-panel-header .mat-panel-title,
+.project-details-panel .mat-expansion-panel-header:not(.mat-expanded) .mat-expansion-panel-header-title,
+.project-details-panel .mat-expansion-panel-header:not(.mat-expanded) .mat-panel-title {
+  color: var(--app-main-text) !important;
+}
+
+.project-status {
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  background: var(--app-status-neutral-bg);
+  color: var(--app-status-neutral-text);
+}
+
+.project-status[data-status='completed'] {
+  background: var(--app-status-success-bg);
+  color: var(--app-status-success-text);
+}
+
+.project-status[data-status='active'] {
+  background: var(--app-status-warning-bg);
+  color: var(--app-status-warning-text);
+}
+
+.project-status[data-status='healing'] {
+  background: var(--app-status-info-bg);
+  color: var(--app-status-info-text);
+}
+
+.project-status[data-status='cancelled'] {
+  background: var(--app-status-danger-bg);
+  color: var(--app-status-danger-text);
+}
+
+.project-card__meta {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--app-main-text);
+}
+
+.project-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: var(--glass-bg-strong);
+  font-size: 12px;
+}
+
+.project-card__block {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--app-surface-muted);
+}
+
+.project-card__block h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.project-card__block p {
+  margin: 4px 0;
+}
+
+.session-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-soft);
+}
+
+.session-row > div {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.session-row:first-of-type {
+  border-top: 0;
+}
+
+.session-row p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+}
+
+.session-row__right {
+  text-align: right;
+}
+
+.session-status {
+  display: inline-block;
+  font-size: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: var(--glass-bg-strong);
+  color: var(--app-status-neutral-text);
+}
+
+.session-status[data-status='planned'],
+.session-status[data-status='pending'] {
+  background: var(--app-status-warning-bg);
+  color: var(--app-status-warning-text);
+}
+
+.session-status[data-status='confirmed'],
+.session-status[data-status='inProgress'] {
+  background: var(--app-status-info-bg);
+  color: var(--app-status-info-text);
+}
+
+.session-status[data-status='completed'] {
+  background: var(--app-status-success-bg);
+  color: var(--app-status-success-text);
+}
+
+.session-status[data-status='cancelled'] {
+  background: var(--app-status-danger-bg);
+  color: var(--app-status-danger-text);
+}
+
+.muted {
+  color: var(--text-muted);
+}

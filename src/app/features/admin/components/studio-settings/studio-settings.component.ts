@@ -11,6 +11,7 @@ import {
   StudioProfileService
 } from '../../../../core/services/studio/studio-profile.service';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
+import { MediaStorageService } from '../../../../core/services/media/media-storage.service';
 
 @Component({
   selector: 'app-studio-settings',
@@ -24,8 +25,11 @@ export class StudioSettingsComponent implements OnInit {
   private readonly studioProfile = inject(StudioProfileService);
   private readonly ui = inject(UiFeedbackService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly mediaStorage = inject(MediaStorageService);
 
   saving = false;
+  mediaUploading: Record<string, boolean> = {};
+  mediaUploadProgress: Record<string, number> = {};
 
   readonly settingsForm: FormGroup = this.fb.group({
     studioName: [DEFAULT_STUDIO_PROFILE.studioName, [Validators.required, Validators.minLength(2)]],
@@ -37,6 +41,8 @@ export class StudioSettingsComponent implements OnInit {
     ownerRoleLabel: [DEFAULT_STUDIO_PROFILE.ownerRoleLabel, [Validators.required]],
     ownerBio: [DEFAULT_STUDIO_PROFILE.ownerBio, [Validators.required, Validators.minLength(10)]],
     ownerPhotoUrl: [DEFAULT_STUDIO_PROFILE.ownerPhotoUrl, [Validators.required]],
+    homeBackgroundImageUrl: [DEFAULT_STUDIO_PROFILE.homeBackgroundImageUrl],
+    homeHeroBackgroundImageUrl: [DEFAULT_STUDIO_PROFILE.homeHeroBackgroundImageUrl],
 
     address: [DEFAULT_STUDIO_PROFILE.address, [Validators.required]],
     phoneDisplay: [DEFAULT_STUDIO_PROFILE.phoneDisplay, [Validators.required]],
@@ -92,6 +98,8 @@ export class StudioSettingsComponent implements OnInit {
     publicChiSiamoHeroTitle: [DEFAULT_STUDIO_PROFILE.publicChiSiamoHeroTitle, [Validators.required]],
     publicChiSiamoPrimaryCta: [DEFAULT_STUDIO_PROFILE.publicChiSiamoPrimaryCta, [Validators.required]],
     publicChiSiamoSecondaryCta: [DEFAULT_STUDIO_PROFILE.publicChiSiamoSecondaryCta, [Validators.required]],
+    publicChiSiamoHeroImageUrl: [DEFAULT_STUDIO_PROFILE.publicChiSiamoHeroImageUrl, [Validators.required]],
+    publicChiSiamoBackgroundImageUrl: [DEFAULT_STUDIO_PROFILE.publicChiSiamoBackgroundImageUrl],
     publicChiSiamoStudioProfileTitle: [DEFAULT_STUDIO_PROFILE.publicChiSiamoStudioProfileTitle, [Validators.required]],
     publicChiSiamoTeamSnapshotTitle: [DEFAULT_STUDIO_PROFILE.publicChiSiamoTeamSnapshotTitle, [Validators.required]],
     publicChiSiamoArtistsTitle: [DEFAULT_STUDIO_PROFILE.publicChiSiamoArtistsTitle, [Validators.required]],
@@ -107,6 +115,8 @@ export class StudioSettingsComponent implements OnInit {
     publicContattiButtonBook: [DEFAULT_STUDIO_PROFILE.publicContattiButtonBook, [Validators.required]],
     publicContattiButtonChat: [DEFAULT_STUDIO_PROFILE.publicContattiButtonChat, [Validators.required]],
     publicContattiButtonWhatsapp: [DEFAULT_STUDIO_PROFILE.publicContattiButtonWhatsapp, [Validators.required]],
+    publicContattiHeroImageUrl: [DEFAULT_STUDIO_PROFILE.publicContattiHeroImageUrl, [Validators.required]],
+    publicContattiBackgroundImageUrl: [DEFAULT_STUDIO_PROFILE.publicContattiBackgroundImageUrl],
     publicContattiMediaOverlayTitle: [DEFAULT_STUDIO_PROFILE.publicContattiMediaOverlayTitle, [Validators.required]],
     publicContattiMediaOverlaySubtitle: [DEFAULT_STUDIO_PROFILE.publicContattiMediaOverlaySubtitle, [Validators.required]],
     publicContattiPanelFormTitle: [DEFAULT_STUDIO_PROFILE.publicContattiPanelFormTitle, [Validators.required]],
@@ -139,7 +149,9 @@ export class StudioSettingsComponent implements OnInit {
       name: 'ownerPhotoUrl',
       label: 'Foto titolare (url o path assets)',
       className: 'full'
-    }
+    },
+    { type: 'text', name: 'homeBackgroundImageUrl', label: 'Home background image URL', className: 'full' },
+    { type: 'text', name: 'homeHeroBackgroundImageUrl', label: 'Home hero background image URL', className: 'full' }
   ];
 
   readonly contactsFields: DynamicField[] = [
@@ -246,6 +258,8 @@ export class StudioSettingsComponent implements OnInit {
     { type: 'text', name: 'publicChiSiamoHeroTitle', label: 'Titolo hero' },
     { type: 'text', name: 'publicChiSiamoPrimaryCta', label: 'CTA primaria' },
     { type: 'text', name: 'publicChiSiamoSecondaryCta', label: 'CTA secondaria' },
+    { type: 'text', name: 'publicChiSiamoHeroImageUrl', label: 'Hero image URL', className: 'full' },
+    { type: 'text', name: 'publicChiSiamoBackgroundImageUrl', label: 'Section background URL', className: 'full' },
     { type: 'text', name: 'publicChiSiamoStudioProfileTitle', label: 'Titolo panel profilo studio' },
     { type: 'text', name: 'publicChiSiamoTeamSnapshotTitle', label: 'Titolo panel team snapshot' },
     { type: 'text', name: 'publicChiSiamoArtistsTitle', label: 'Titolo sezione artisti' },
@@ -263,6 +277,8 @@ export class StudioSettingsComponent implements OnInit {
     { type: 'text', name: 'publicContattiButtonBook', label: 'Label bottone prenota' },
     { type: 'text', name: 'publicContattiButtonChat', label: 'Label bottone chat' },
     { type: 'text', name: 'publicContattiButtonWhatsapp', label: 'Label bottone WhatsApp' },
+    { type: 'text', name: 'publicContattiHeroImageUrl', label: 'Hero image URL', className: 'full' },
+    { type: 'text', name: 'publicContattiBackgroundImageUrl', label: 'Section background URL', className: 'full' },
     { type: 'text', name: 'publicContattiMediaOverlayTitle', label: 'Titolo overlay media', className: 'full' },
     { type: 'text', name: 'publicContattiMediaOverlaySubtitle', label: 'Sottotitolo overlay media', className: 'full' },
     { type: 'text', name: 'publicContattiPanelFormTitle', label: 'Titolo panel form' },
@@ -304,6 +320,104 @@ export class StudioSettingsComponent implements OnInit {
       this.ui.error('Errore salvataggio impostazioni studio.');
     } finally {
       this.saving = false;
+    }
+  }
+
+  isUploading(slot: string): boolean {
+    return this.mediaUploading[slot] === true;
+  }
+
+  uploadProgress(slot: string): number {
+    return Number(this.mediaUploadProgress[slot] ?? 0);
+  }
+
+  async onOwnerPhotoUpload(event: Event): Promise<void> {
+    await this.uploadStudioImage(event, {
+      slot: 'ownerPhoto',
+      controlName: 'ownerPhotoUrl',
+      upload: (file, onProgress) => this.mediaStorage.uploadHomeImage('owner-photo', 'thumbnail', file, onProgress)
+    });
+  }
+
+  async onHomeHeroBackgroundUpload(event: Event): Promise<void> {
+    await this.uploadStudioImage(event, {
+      slot: 'homeHeroBg',
+      controlName: 'homeHeroBackgroundImageUrl',
+      upload: (file, onProgress) => this.mediaStorage.uploadHomeImage('hero-background', 'background', file, onProgress)
+    });
+  }
+
+  async onHomeBackgroundUpload(event: Event): Promise<void> {
+    await this.uploadStudioImage(event, {
+      slot: 'homeBg',
+      controlName: 'homeBackgroundImageUrl',
+      upload: (file, onProgress) => this.mediaStorage.uploadHomeImage('home-background', 'background', file, onProgress)
+    });
+  }
+
+  async onChiSiamoHeroUpload(event: Event): Promise<void> {
+    await this.uploadStudioImage(event, {
+      slot: 'chiHero',
+      controlName: 'publicChiSiamoHeroImageUrl',
+      upload: (file, onProgress) => this.mediaStorage.uploadPageSectionImage('chi-siamo', 'hero', 'hero', file, onProgress)
+    });
+  }
+
+  async onChiSiamoBackgroundUpload(event: Event): Promise<void> {
+    await this.uploadStudioImage(event, {
+      slot: 'chiBg',
+      controlName: 'publicChiSiamoBackgroundImageUrl',
+      upload: (file, onProgress) => this.mediaStorage.uploadPageSectionImage('chi-siamo', 'background', 'background', file, onProgress)
+    });
+  }
+
+  async onContattiHeroUpload(event: Event): Promise<void> {
+    await this.uploadStudioImage(event, {
+      slot: 'contattiHero',
+      controlName: 'publicContattiHeroImageUrl',
+      upload: (file, onProgress) => this.mediaStorage.uploadPageSectionImage('contatti', 'hero', 'hero', file, onProgress)
+    });
+  }
+
+  async onContattiBackgroundUpload(event: Event): Promise<void> {
+    await this.uploadStudioImage(event, {
+      slot: 'contattiBg',
+      controlName: 'publicContattiBackgroundImageUrl',
+      upload: (file, onProgress) => this.mediaStorage.uploadPageSectionImage('contatti', 'background', 'background', file, onProgress)
+    });
+  }
+
+  private async uploadStudioImage(
+    event: Event,
+    cfg: {
+      slot: string;
+      controlName: keyof StudioProfile;
+      upload: (file: File, onProgress?: (value: number) => void) => Promise<{ downloadUrl: string }>;
+    }
+  ): Promise<void> {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.item(0);
+    if (!file || this.isUploading(cfg.slot)) return;
+
+    this.mediaUploading[cfg.slot] = true;
+    this.mediaUploadProgress[cfg.slot] = 0;
+    try {
+      const asset = await cfg.upload(file, value => {
+        this.mediaUploadProgress[cfg.slot] = value;
+      });
+      const url = String(asset.downloadUrl ?? '').trim();
+      if (url) {
+        this.settingsForm.get(String(cfg.controlName))?.setValue(url);
+        this.settingsForm.get(String(cfg.controlName))?.markAsDirty();
+        this.ui.success('Immagine caricata con successo');
+      }
+    } catch (err) {
+      console.error('[StudioSettings] upload image failed', err);
+      this.ui.error('Errore upload immagine');
+    } finally {
+      this.mediaUploading[cfg.slot] = false;
+      this.mediaUploadProgress[cfg.slot] = 0;
+      if (input) input.value = '';
     }
   }
 }

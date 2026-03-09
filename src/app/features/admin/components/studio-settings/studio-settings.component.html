@@ -39,6 +39,84 @@
 
         <mat-expansion-panel>
           <mat-expansion-panel-header>
+            <mat-panel-title>Media immagini (Firebase Storage)</mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <section class="media-uploader-grid">
+            <article class="media-uploader-item">
+              <h4>Foto titolare</h4>
+              <img [src]="settingsForm.get('ownerPhotoUrl')?.value" alt="Owner" loading="lazy" />
+              <label class="media-upload-btn">
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onOwnerPhotoUpload($event)" />
+                Carica nuova immagine
+              </label>
+              <mat-progress-bar *ngIf="isUploading('ownerPhoto')" mode="determinate" [value]="uploadProgress('ownerPhoto')"></mat-progress-bar>
+            </article>
+
+            <article class="media-uploader-item">
+              <h4>Home hero background</h4>
+              <img [src]="settingsForm.get('homeHeroBackgroundImageUrl')?.value || '/home/slide-1-1920x879.jpg'" alt="Home hero" loading="lazy" />
+              <label class="media-upload-btn">
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onHomeHeroBackgroundUpload($event)" />
+                Carica nuova immagine
+              </label>
+              <mat-progress-bar *ngIf="isUploading('homeHeroBg')" mode="determinate" [value]="uploadProgress('homeHeroBg')"></mat-progress-bar>
+            </article>
+
+            <article class="media-uploader-item">
+              <h4>Home background pagina</h4>
+              <img [src]="settingsForm.get('homeBackgroundImageUrl')?.value || '/home/slide-2-1920x879.jpg'" alt="Home background" loading="lazy" />
+              <label class="media-upload-btn">
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onHomeBackgroundUpload($event)" />
+                Carica nuova immagine
+              </label>
+              <mat-progress-bar *ngIf="isUploading('homeBg')" mode="determinate" [value]="uploadProgress('homeBg')"></mat-progress-bar>
+            </article>
+
+            <article class="media-uploader-item">
+              <h4>Chi siamo hero</h4>
+              <img [src]="settingsForm.get('publicChiSiamoHeroImageUrl')?.value || settingsForm.get('ownerPhotoUrl')?.value" alt="Chi siamo hero" loading="lazy" />
+              <label class="media-upload-btn">
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onChiSiamoHeroUpload($event)" />
+                Carica nuova immagine
+              </label>
+              <mat-progress-bar *ngIf="isUploading('chiHero')" mode="determinate" [value]="uploadProgress('chiHero')"></mat-progress-bar>
+            </article>
+
+            <article class="media-uploader-item">
+              <h4>Chi siamo background</h4>
+              <img [src]="settingsForm.get('publicChiSiamoBackgroundImageUrl')?.value || '/home/slide-3-1920x879.jpg'" alt="Chi siamo background" loading="lazy" />
+              <label class="media-upload-btn">
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onChiSiamoBackgroundUpload($event)" />
+                Carica nuova immagine
+              </label>
+              <mat-progress-bar *ngIf="isUploading('chiBg')" mode="determinate" [value]="uploadProgress('chiBg')"></mat-progress-bar>
+            </article>
+
+            <article class="media-uploader-item">
+              <h4>Contatti hero</h4>
+              <img [src]="settingsForm.get('publicContattiHeroImageUrl')?.value || '/personale/sara.webp'" alt="Contatti hero" loading="lazy" />
+              <label class="media-upload-btn">
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onContattiHeroUpload($event)" />
+                Carica nuova immagine
+              </label>
+              <mat-progress-bar *ngIf="isUploading('contattiHero')" mode="determinate" [value]="uploadProgress('contattiHero')"></mat-progress-bar>
+            </article>
+
+            <article class="media-uploader-item">
+              <h4>Contatti background</h4>
+              <img [src]="settingsForm.get('publicContattiBackgroundImageUrl')?.value || '/home/slide-1-1920x879.jpg'" alt="Contatti background" loading="lazy" />
+              <label class="media-upload-btn">
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onContattiBackgroundUpload($event)" />
+                Carica nuova immagine
+              </label>
+              <mat-progress-bar *ngIf="isUploading('contattiBg')" mode="determinate" [value]="uploadProgress('contattiBg')"></mat-progress-bar>
+            </article>
+          </section>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
             <mat-panel-title>Home - Hero</mat-panel-title>
           </mat-expansion-panel-header>
           <app-dynamic-form

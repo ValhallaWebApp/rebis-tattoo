@@ -27,8 +27,7 @@
   gap: 0;
 }
 
-.rb-chatbot--open .rb-launcher,
-.rb-chatbot--open .rb-teaser {
+.rb-chatbot--open .rb-launcher {
   display: none;
 }
 
@@ -65,17 +64,6 @@
   height: 38px;
   object-fit: contain;
   filter: drop-shadow(0 0 6px rgba(178, 135, 79, 0.35));
-}
-
-.rb-teaser {
-  border: 1px solid var(--rb-border);
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.12), rgba(10, 8, 9, 0.82));
-  color: var(--rb-ink);
-  border-radius: 999px;
-  padding: 10px 14px;
-  font-size: 13px;
-  letter-spacing: 0.02em;
-  cursor: pointer;
 }
 
 .rb-sheet {

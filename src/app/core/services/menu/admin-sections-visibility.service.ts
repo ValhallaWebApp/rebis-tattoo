@@ -3,34 +3,35 @@ import { Database, onValue, ref, update } from '@angular/fire/database';
 
 export interface AdminSectionDefinition {
   key: string;
-  label: string;
+  labelKey: string;
   route: string;
-  description: string;
+  descriptionKey: string;
 }
 
 const ADMIN_SECTION_DEFINITIONS: AdminSectionDefinition[] = [
-  { key: 'calendar', label: 'Calendario', route: '/admin/calendar', description: 'Agenda e gestione appuntamenti' },
-  { key: 'users', label: 'Utenti', route: '/admin/users', description: 'Utenti globali del gestionale' },
-  { key: 'clients', label: 'Clienti', route: '/admin/clients', description: 'Anagrafica clienti' },
-  { key: 'staff', label: 'Staff', route: '/admin/staff', description: 'Gestione membri staff' },
-  { key: 'permissions', label: 'Permessi', route: '/admin/permissions', description: 'Deleghe operative staff' },
-  { key: 'portfolio', label: 'Portfolio', route: '/admin/portfolio', description: 'Progetti e lavori' },
-  { key: 'servizi', label: 'Servizi', route: '/admin/servizi', description: 'Catalogo servizi studio' },
-  { key: 'reviews', label: 'Recensioni', route: '/admin/reviews', description: 'Moderazione recensioni' },
-  { key: 'messaging', label: 'Messaggi', route: '/admin/messaging', description: 'Chat e ticket clienti' },
-  { key: 'eventi', label: 'Eventi', route: '/admin/eventi', description: 'Open day e guest event' },
-  { key: 'billing', label: 'Fatturazione', route: '/admin/billing', description: 'Pagamenti e incassi' },
-  { key: 'bonus', label: 'Bonus', route: '/admin/bonus', description: 'Promo, wallet e gift card' },
-  { key: 'analytics', label: 'Analytics', route: '/admin/analytics', description: 'KPI e andamento' },
-  { key: 'audit-logs', label: 'Audit Logs', route: '/admin/audit-logs', description: 'Storico operazioni' },
-  { key: 'documents', label: 'Documenti', route: '/admin/documents', description: 'Archivio documentale' },
-  { key: 'waitlist', label: 'Waitlist', route: '/admin/waitlist', description: 'Clienti in attesa' },
-  { key: 'settings', label: 'Impostazioni Studio', route: '/admin/settings', description: 'Contenuti e dati studio' },
-  { key: 'client-profile', label: 'Client - Profilo', route: '/dashboard', description: 'Scheda profilo cliente' },
-  { key: 'client-booking-history', label: 'Client - Storico consulenze', route: '/dashboard/booking-history', description: 'Storico appuntamenti e consulenze' },
-  { key: 'client-buoni', label: 'Client - Buoni', route: '/dashboard/buoni', description: 'Sezione buoni e promo cliente' },
-  { key: 'client-reviews', label: 'Client - Recensioni', route: '/dashboard/reviews', description: 'Recensioni lato cliente' },
-  { key: 'client-chat', label: 'Client - Chat', route: '/dashboard/chat', description: 'Chat assistenza cliente' }
+  { key: 'calendar', labelKey: 'adminSectionsVisibility.definitions.calendar.label', route: '/admin/calendar', descriptionKey: 'adminSectionsVisibility.definitions.calendar.description' },
+  { key: 'users', labelKey: 'adminSectionsVisibility.definitions.users.label', route: '/admin/users', descriptionKey: 'adminSectionsVisibility.definitions.users.description' },
+  { key: 'clients', labelKey: 'adminSectionsVisibility.definitions.clients.label', route: '/admin/clients', descriptionKey: 'adminSectionsVisibility.definitions.clients.description' },
+  { key: 'staff', labelKey: 'adminSectionsVisibility.definitions.staff.label', route: '/admin/staff', descriptionKey: 'adminSectionsVisibility.definitions.staff.description' },
+  { key: 'permissions', labelKey: 'adminSectionsVisibility.definitions.permissions.label', route: '/admin/permissions', descriptionKey: 'adminSectionsVisibility.definitions.permissions.description' },
+  { key: 'portfolio', labelKey: 'adminSectionsVisibility.definitions.portfolio.label', route: '/admin/portfolio', descriptionKey: 'adminSectionsVisibility.definitions.portfolio.description' },
+  { key: 'servizi', labelKey: 'adminSectionsVisibility.definitions.servizi.label', route: '/admin/servizi', descriptionKey: 'adminSectionsVisibility.definitions.servizi.description' },
+  { key: 'reviews', labelKey: 'adminSectionsVisibility.definitions.reviews.label', route: '/admin/reviews', descriptionKey: 'adminSectionsVisibility.definitions.reviews.description' },
+  { key: 'messaging', labelKey: 'adminSectionsVisibility.definitions.messaging.label', route: '/admin/messaging', descriptionKey: 'adminSectionsVisibility.definitions.messaging.description' },
+  { key: 'eventi', labelKey: 'adminSectionsVisibility.definitions.eventi.label', route: '/admin/eventi', descriptionKey: 'adminSectionsVisibility.definitions.eventi.description' },
+  { key: 'billing', labelKey: 'adminSectionsVisibility.definitions.billing.label', route: '/admin/billing', descriptionKey: 'adminSectionsVisibility.definitions.billing.description' },
+  { key: 'bonus', labelKey: 'adminSectionsVisibility.definitions.bonus.label', route: '/admin/bonus', descriptionKey: 'adminSectionsVisibility.definitions.bonus.description' },
+  { key: 'analytics', labelKey: 'adminSectionsVisibility.definitions.analytics.label', route: '/admin/analytics', descriptionKey: 'adminSectionsVisibility.definitions.analytics.description' },
+  { key: 'audit-logs', labelKey: 'adminSectionsVisibility.definitions.auditLogs.label', route: '/admin/audit-logs', descriptionKey: 'adminSectionsVisibility.definitions.auditLogs.description' },
+  { key: 'documents', labelKey: 'adminSectionsVisibility.definitions.documents.label', route: '/admin/documents', descriptionKey: 'adminSectionsVisibility.definitions.documents.description' },
+  { key: 'waitlist', labelKey: 'adminSectionsVisibility.definitions.waitlist.label', route: '/admin/waitlist', descriptionKey: 'adminSectionsVisibility.definitions.waitlist.description' },
+  { key: 'settings', labelKey: 'adminSectionsVisibility.definitions.settings.label', route: '/admin/settings', descriptionKey: 'adminSectionsVisibility.definitions.settings.description' },
+  { key: 'client-profile', labelKey: 'adminSectionsVisibility.definitions.clientProfile.label', route: '/dashboard', descriptionKey: 'adminSectionsVisibility.definitions.clientProfile.description' },
+  { key: 'client-tattoos', labelKey: 'adminSectionsVisibility.definitions.clientTattoos.label', route: '/dashboard/tatuaggi', descriptionKey: 'adminSectionsVisibility.definitions.clientTattoos.description' },
+  { key: 'client-booking-history', labelKey: 'adminSectionsVisibility.definitions.clientBookingHistory.label', route: '/dashboard/booking-history', descriptionKey: 'adminSectionsVisibility.definitions.clientBookingHistory.description' },
+  { key: 'client-buoni', labelKey: 'adminSectionsVisibility.definitions.clientBuoni.label', route: '/dashboard/buoni', descriptionKey: 'adminSectionsVisibility.definitions.clientBuoni.description' },
+  { key: 'client-reviews', labelKey: 'adminSectionsVisibility.definitions.clientReviews.label', route: '/dashboard/reviews', descriptionKey: 'adminSectionsVisibility.definitions.clientReviews.description' },
+  { key: 'client-chat', labelKey: 'adminSectionsVisibility.definitions.clientChat.label', route: '/dashboard/chat', descriptionKey: 'adminSectionsVisibility.definitions.clientChat.description' }
 ];
 
 type VisibilityMap = Record<string, boolean>;
@@ -102,6 +103,9 @@ export class AdminSectionsVisibilityService {
       switch (child) {
         case 'booking-history':
           return 'client-booking-history';
+        case 'projects':
+        case 'tatuaggi':
+          return 'client-tattoos';
         case 'buoni':
           return 'client-buoni';
         case 'reviews':
@@ -124,6 +128,9 @@ export class AdminSectionsVisibilityService {
 
   private normalize(raw: Record<string, unknown>): VisibilityMap {
     const out = this.defaultVisibility();
+    if (Object.prototype.hasOwnProperty.call(raw, 'client-projects') && !Object.prototype.hasOwnProperty.call(raw, 'client-tattoos')) {
+      out['client-tattoos'] = raw['client-projects'] === true;
+    }
     for (const def of this.definitions) {
       if (Object.prototype.hasOwnProperty.call(raw, def.key)) {
         out[def.key] = raw[def.key] === true;

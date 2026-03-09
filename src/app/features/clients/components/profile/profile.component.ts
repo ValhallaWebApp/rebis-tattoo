@@ -9,6 +9,7 @@ import { ProjectStatus, ProjectsService, TattooProject } from '../../../../core/
 import { StatusHelperService } from '../../../../core/services/helpers/status-helper.service';
 import { UiFeedbackService } from '../../../../core/services/ui/ui-feedback.service';
 import { DynamicField, DynamicFormComponent } from '../../../../shared/components/form/dynamic-form/dynamic-form.component';
+import { LanguageService } from '../../../../core/services/language/language.service';
 
 type DashboardLink = {
   icon: string;
@@ -54,6 +55,12 @@ export class ProfileComponent implements OnInit {
 
   sections: DashboardLink[] = [
     {
+      icon: 'auto_awesome_motion',
+      title: '',
+      description: '',
+      route: 'tatuaggi'
+    },
+    {
       icon: 'event',
       title: 'Le tue prenotazioni',
       description: 'Controlla prossime sedute, storico e modifiche.',
@@ -86,6 +93,7 @@ export class ProfileComponent implements OnInit {
   private readonly status = inject(StatusHelperService);
   private readonly ui = inject(UiFeedbackService);
   private readonly injector = inject(Injector);
+  readonly lang = inject(LanguageService);
 
   get profileFields(): DynamicField[] {
     return [
@@ -129,7 +137,19 @@ export class ProfileComponent implements OnInit {
         this.loadBookings(user.uid);
         this.loadProjects(user.uid);
         this.loadNotifications();
+        this.hydrateSectionsLabels();
       });
+    });
+  }
+
+  private hydrateSectionsLabels(): void {
+    this.sections = this.sections.map((section) => {
+      if (section.route !== 'tatuaggi') return section;
+      return {
+        ...section,
+        title: this.lang.t('clientDashboard.sections.tattoos.title'),
+        description: this.lang.t('clientDashboard.sections.tattoos.description')
+      };
     });
   }
 

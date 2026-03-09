@@ -6,9 +6,13 @@
   min-height: calc(100dvh - var(--app-toolbar-height, 64px));
   color: var(--app-main-text, #f3f4f7);
   background:
+    linear-gradient(rgba(6, 8, 13, 0.84), rgba(8, 10, 17, 0.9)),
+    var(--about-custom-bg, none),
     radial-gradient(circle at 10% 8%, rgba(183, 155, 85, 0.12), transparent 34%),
     radial-gradient(circle at 84% 2%, rgba(125, 211, 252, 0.1), transparent 26%),
     linear-gradient(180deg, #06080d 0%, #0a0e16 44%, #080a11 100%);
+  background-size: cover, cover, auto, auto, auto;
+  background-position: center, center, center, center, center;
   padding-bottom: 52px;
 }
 

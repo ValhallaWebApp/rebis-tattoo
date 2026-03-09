@@ -41,10 +41,15 @@
   .hero-image-slider {
     position: relative;
     margin-top: 18px;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
     overflow: hidden;
-    width: 100%;
+    width: 100vw;
+    max-width: 100vw;
     height: clamp(260px, 42vh, 430px);
-    border-radius: 16px;
+    border-radius: 0;
     border: 1px solid var(--home-glass-border-soft);
 
     &::before {
@@ -54,6 +59,11 @@
       background-size: cover;
       background-position: center;
       animation: bgSlideshow 14s infinite;
+    }
+
+    &.hero-image-slider--custom::before {
+      animation: none;
+      background-image: var(--hero-custom-bg);
     }
 
     &::after {

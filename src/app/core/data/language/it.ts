@@ -318,6 +318,7 @@ export const dataIt = {
     dashboard: {
       title: 'Dashboard',
       profile: 'Profilo',
+      tattoos: 'I miei tatuaggi',
       bookingHistory: 'Storico consulenze',
       bonus: 'Buoni',
       reviews: 'Recensioni',
@@ -357,10 +358,116 @@ export const dataIt = {
       clients: 'Clienti'
     }
   },
+  clientDashboard: {
+    sections: {
+      tattoos: {
+        title: 'I miei tatuaggi',
+        description: 'Stato tatuaggi, consulenza iniziale e prossime sedute.'
+      }
+    }
+  },
+  clientTattoos: {
+    header: {
+      eyebrow: 'Area cliente',
+      title: 'I miei tatuaggi',
+      subtitle: 'Monitora stato progetto, consulenza iniziale e prossime sedute.'
+    },
+    actions: {
+      bookingHistory: 'Vai allo storico',
+      bookConsultation: 'Prenota consulenza',
+      openTicket: 'Apri ticket',
+      projectDetails: 'Dettagli progetto'
+    },
+    states: {
+      loading: 'Caricamento tatuaggi in corso...',
+      error: 'Impossibile caricare i tatuaggi in questo momento.',
+      emptyTitle: 'Nessun tatuaggio collegato al tuo profilo',
+      emptySubtitle: 'Quando avvii una consulenza vedrai qui stato, note e calendario sedute.',
+      noUpcomingSessions: 'Nessuna seduta pianificata al momento.'
+    },
+    labels: {
+      updatedAt: 'Aggiornato',
+      zone: 'Zona',
+      style: 'Stile',
+      completedSessions: 'Sedute completate',
+      projectThumbAlt: 'Anteprima progetto tatuaggio',
+      defaultThumbBadge: 'Progetto senza thumbnail',
+      when: 'Quando',
+      status: 'Stato',
+      notes: 'Note'
+    },
+    blocks: {
+      projectNotes: 'Note progetto',
+      initialConsultation: 'Consulenza iniziale',
+      upcomingSessions: 'Prossime sedute'
+    },
+    fallback: {
+      projectTitle: 'Tatuaggio',
+      sessionStatus: 'planned',
+      consultationStatus: 'pending',
+      noNotes: 'Nessuna nota disponibile.'
+    },
+    status: {
+      planned: 'Pianificata',
+      pending: 'In attesa',
+      confirmed: 'Confermata',
+      inProgress: 'In lavorazione',
+      completed: 'Completata',
+      cancelled: 'Annullata',
+      unknown: 'Stato non disponibile'
+    }
+  },
+  adminSectionsVisibility: {
+    header: {
+      title: 'Visibilita sezioni gestionale',
+      subtitle: 'Seleziona quali sezioni operative devono essere visibili nel menu.'
+    },
+    legend: {
+      realtime: 'Le modifiche vengono applicate in tempo reale al menu Admin/Staff.'
+    },
+    states: {
+      loading: 'Caricamento configurazione...'
+    },
+    toggle: {
+      ariaLabel: 'Attiva o disattiva sezione',
+      visible: 'Visibile',
+      hidden: 'Nascosta'
+    },
+    feedback: {
+      updated: 'Visibilita aggiornata',
+      error: 'Errore durante il salvataggio',
+      ok: 'OK'
+    },
+    definitions: {
+      calendar: { label: 'Calendario', description: 'Agenda e gestione appuntamenti' },
+      users: { label: 'Utenti', description: 'Utenti globali del gestionale' },
+      clients: { label: 'Clienti', description: 'Anagrafica clienti' },
+      staff: { label: 'Staff', description: 'Gestione membri staff' },
+      permissions: { label: 'Permessi', description: 'Deleghe operative staff' },
+      portfolio: { label: 'Portfolio', description: 'Progetti e lavori' },
+      servizi: { label: 'Servizi', description: 'Catalogo servizi studio' },
+      reviews: { label: 'Recensioni', description: 'Moderazione recensioni' },
+      messaging: { label: 'Messaggi', description: 'Chat e ticket clienti' },
+      eventi: { label: 'Eventi', description: 'Open day e guest event' },
+      billing: { label: 'Fatturazione', description: 'Pagamenti e incassi' },
+      bonus: { label: 'Bonus', description: 'Promo, wallet e gift card' },
+      analytics: { label: 'Analytics', description: 'KPI e andamento' },
+      auditLogs: { label: 'Audit Logs', description: 'Storico operazioni' },
+      documents: { label: 'Documenti', description: 'Archivio documentale' },
+      waitlist: { label: 'Waitlist', description: 'Clienti in attesa' },
+      settings: { label: 'Impostazioni studio', description: 'Contenuti e dati studio' },
+      clientProfile: { label: 'Client - Profilo', description: 'Scheda profilo cliente' },
+      clientTattoos: { label: 'Client - Tatuaggi', description: 'Stato tatuaggi, consulenze e sedute' },
+      clientBookingHistory: { label: 'Client - Storico consulenze', description: 'Storico appuntamenti e consulenze' },
+      clientBuoni: { label: 'Client - Buoni', description: 'Sezione buoni e promo cliente' },
+      clientReviews: { label: 'Client - Recensioni', description: 'Recensioni lato cliente' },
+      clientChat: { label: 'Client - Chat', description: 'Chat assistenza cliente' }
+    }
+  },
   chatbot: {
-    teaser: 'Hai un idea? Parliamone.',
-    brandTitle: 'REBIS CONCIERGE',
-    brandSubtitle: 'Assistenza privata per consulenze',
+    teaser: '',
+    brandTitle: 'ASSISTENTE REBIS',
+    brandSubtitle: 'Supporto rapido per consulenze e percorso',
     close: 'Chiudi',
     bookingGuided: 'Prenotazione guidata',
     emptyTitle: 'Parliamo del tuo progetto',

@@ -10,7 +10,6 @@ import { AppNotification } from './core/models/notification.model';
 import { NotificationService } from './core/services/notifications/notification.service';
 import { RebisChatbotPopupComponent } from './shared/components/chat-bot/rebis-chatbot-popup.component';
 import { AppMenuFacade } from './core/services/menu/app-menu.facade';
-import { AdminSectionsVisibilityService } from './core/services/menu/admin-sections-visibility.service';
 import { LanguageService } from './core/services/language/language.service';
 
 @Component({
@@ -24,7 +23,6 @@ export class AppComponent implements OnInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
   private readonly destroyRef = inject(DestroyRef);
   private readonly menuFacade = inject(AppMenuFacade);
-  private readonly sectionsVisibility = inject(AdminSectionsVisibilityService);
   readonly lang = inject(LanguageService);
 
   modeSidenav: 'over' | 'side' = 'over';
@@ -36,8 +34,7 @@ export class AppComponent implements OnInit {
   readonly showChatbot = computed(() => {
     const role = this.userRole();
     if (role === 'admin' || role === 'staff') return false;
-    const clientChatVisible = this.sectionsVisibility.isVisible('/dashboard/chat');
-    return clientChatVisible;
+    return role === 'public' || role === 'client';
   });
 
   notifications$: Observable<AppNotification[]> = of([]);

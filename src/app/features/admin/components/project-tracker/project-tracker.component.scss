@@ -1,7 +1,9 @@
 .pt{
   padding: 18px;
   display: grid;
+   background: var(--app-main-bg);
   gap: 16px;
+  min-height: 100vh;
 }
 
 .pt__top{

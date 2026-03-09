@@ -20,6 +20,7 @@ export class HomeHeroComponent {
   });
 
   readonly hero = computed(() => this.profileSig());
+  readonly heroBackgroundUrl = computed(() => String(this.profileSig().homeHeroBackgroundImageUrl ?? '').trim());
 
   constructor(public lang: LanguageService) {}
 }

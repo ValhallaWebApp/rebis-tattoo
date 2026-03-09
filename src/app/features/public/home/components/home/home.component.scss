@@ -16,7 +16,12 @@
   margin: 0;
   padding: 0;
   color: var(--home-text);
-  background: transparent;
+  background:
+    linear-gradient(rgba(8, 6, 7, 0.75), rgba(8, 6, 7, 0.85)),
+    var(--home-custom-bg, none),
+    transparent;
+  background-size: cover, cover, auto;
+  background-position: center, center, center;
 }
 
 .home-container::before {
